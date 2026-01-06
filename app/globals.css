@@ -1,0 +1,234 @@
+/**
+ * @file globals.css
+ * @description Global styles and CSS custom properties for CopyWorx
+ * 
+ * Design System:
+ * - Uses CSS custom properties for theming
+ * - Ink/navy primary palette with amber accents
+ * - Optimized for readability (writing tool aesthetic)
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Background & Foreground */
+    --background: 40 33% 99%;
+    --foreground: 222 47% 11%;
+    
+    /* Card surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    /* Popover surfaces */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Primary - Deep Ink Navy */
+    --primary: 222 47% 16%;
+    --primary-foreground: 40 33% 99%;
+    
+    /* Secondary - Warm Gray */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 16%;
+    
+    /* Muted elements */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+    
+    /* Accent - Warm Amber */
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 11%;
+    
+    /* Destructive actions */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    /* Borders & Inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 38 92% 50%;
+    
+    /* Border Radius */
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    /* Dark mode - Ink aesthetic */
+    --background: 222 47% 8%;
+    --foreground: 40 33% 98%;
+    
+    --card: 222 47% 11%;
+    --card-foreground: 40 33% 98%;
+    
+    --popover: 222 47% 11%;
+    --popover-foreground: 40 33% 98%;
+    
+    --primary: 38 92% 50%;
+    --primary-foreground: 222 47% 8%;
+    
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 40 33% 98%;
+    
+    --muted: 222 30% 18%;
+    --muted-foreground: 220 14% 60%;
+    
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 8%;
+    
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 222 30% 22%;
+    --input: 222 30% 22%;
+    --ring: 38 92% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Enhanced typography for writing tool */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+
+  /* Selection styling */
+  ::selection {
+    @apply bg-amber-200 text-ink-900;
+  }
+
+  ::-moz-selection {
+    @apply bg-amber-200 text-ink-900;
+  }
+
+  /* Focus styling */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  /* Gradient text utility */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-ink-900 via-ink-700 to-ink-900;
+  }
+
+  .text-gradient-amber {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-white/70 backdrop-blur-lg border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-ink-900/70 backdrop-blur-lg border border-ink-700/20;
+  }
+
+  /* Subtle grid background */
+  .bg-grid {
+    background-image: 
+      linear-gradient(to right, hsl(220 13% 91% / 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(220 13% 91% / 0.5) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .bg-grid-dark {
+    background-image: 
+      linear-gradient(to right, hsl(222 30% 22% / 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(222 30% 22% / 0.5) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Dot pattern background */
+  .bg-dots {
+    background-image: radial-gradient(hsl(220 13% 91%) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Animated underline for links */
+  .link-underline {
+    @apply relative;
+  }
+
+  .link-underline::after {
+    @apply absolute left-0 bottom-0 w-0 h-0.5 bg-amber-500 transition-all duration-300;
+    content: '';
+  }
+
+  .link-underline:hover::after {
+    @apply w-full;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Glow effect for CTAs */
+  .glow-amber {
+    box-shadow: 0 0 40px -10px hsl(38 92% 50% / 0.5);
+  }
+
+  .glow-ink {
+    box-shadow: 0 0 40px -10px hsl(222 47% 16% / 0.5);
+  }
+}
+
+@layer utilities {
+  /* Staggered animation delays */
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+  .animation-delay-600 { animation-delay: 600ms; }
+  .animation-delay-700 { animation-delay: 700ms; }
+  .animation-delay-800 { animation-delay: 800ms; }
+
+  /* Hide scrollbar */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
+  }
+
+  /* Gradient borders */
+  .border-gradient {
+    border: 1px solid transparent;
+    background: 
+      linear-gradient(var(--background), var(--background)) padding-box,
+      linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))) border-box;
+  }
+}
+
