@@ -56,6 +56,25 @@ const config: Config = {
           900: '#78350f',
           950: '#451a03',
         },
+        // Apple aesthetic - CopyWorx v2
+        'apple-blue': {
+          DEFAULT: '#0071E3',
+          dark: '#0062CC',
+          light: '#0077ED',
+        },
+        'apple-gray': {
+          DEFAULT: '#86868B',
+          light: '#D2D2D7',
+          bg: '#F5F5F7',
+        },
+        'apple-text': {
+          dark: '#1D1D1F',
+          light: '#6E6E73',
+        },
+        'apple-editor': {
+          bg: '#2F3542',
+          paper: '#FFFFFF',
+        },
         // shadcn/ui compatible colors
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

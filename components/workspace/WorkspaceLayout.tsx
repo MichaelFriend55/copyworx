@@ -1,0 +1,103 @@
+/**
+ * @file components/workspace/WorkspaceLayout.tsx
+ * @description Three-column workspace layout container
+ * 
+ * Features:
+ * - Three-column grid layout
+ * - Left sidebar: 280px (tools/templates)
+ * - Center: Flexible width (editor)
+ * - Right sidebar: 320px (AI analysis)
+ * - Handles sidebar collapse/expand
+ * - Smooth transitions
+ * - Responsive breakpoints
+ * - Apple-style aesthetic
+ * 
+ * @example
+ * ```tsx
+ * <WorkspaceLayout
+ *   leftSidebar={<div>Tools</div>}
+ *   rightSidebar={<div>AI Analysis</div>}
+ * >
+ *   <EditorArea />
+ * </WorkspaceLayout>
+ * ```
+ */
+
+'use client';
+
+import React from 'react';
+import { Sidebar } from './Sidebar';
+import { Toolbar } from './Toolbar';
+import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { cn } from '@/lib/utils';
+
+interface WorkspaceLayoutProps {
+  /** Content for left sidebar */
+  leftSidebar?: React.ReactNode;
+  
+  /** Content for right sidebar */
+  rightSidebar?: React.ReactNode;
+  
+  /** Main editor content */
+  children: React.ReactNode;
+  
+  /** Optional CSS classes */
+  className?: string;
+}
+
+/**
+ * Three-column workspace layout with collapsible sidebars
+ */
+export function WorkspaceLayout({
+  leftSidebar,
+  rightSidebar,
+  children,
+  className,
+}: WorkspaceLayoutProps) {
+  const {
+    leftSidebarOpen,
+    rightSidebarOpen,
+    toggleLeftSidebar,
+    toggleRightSidebar,
+  } = useWorkspaceStore();
+
+  return (
+    <div className={cn('h-screen w-screen flex flex-col overflow-hidden', className)}>
+      {/* Top toolbar */}
+      <Toolbar />
+
+      {/* Main workspace area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left sidebar */}
+        {leftSidebar && (
+          <Sidebar
+            side="left"
+            isOpen={leftSidebarOpen}
+            onToggle={toggleLeftSidebar}
+          >
+            {leftSidebar}
+          </Sidebar>
+        )}
+
+        {/* Center editor area */}
+        <main className="flex-1 h-full overflow-hidden">
+          {children}
+        </main>
+
+        {/* Right sidebar */}
+        {rightSidebar && (
+          <Sidebar
+            side="right"
+            isOpen={rightSidebarOpen}
+            onToggle={toggleRightSidebar}
+          >
+            {rightSidebar}
+          </Sidebar>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+

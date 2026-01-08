@@ -31,7 +31,16 @@ export const metadata: Metadata = {
 /**
  * Project data (placeholder)
  */
-const projects = [
+const projects: Array<{
+  id: string;
+  name: string;
+  description: string;
+  template: string;
+  status: string;
+  wordCount: number;
+  lastEdited: string;
+  createdAt: string;
+}> = [
   {
     id: '1',
     name: 'Q4 Email Campaign',
