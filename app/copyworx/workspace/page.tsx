@@ -18,7 +18,16 @@ import { Sparkles, ChevronRight, ChevronDown, Layers } from 'lucide-react';
 import { WorkspaceLayout, ToneShifter } from '@/components/workspace';
 import { EditorArea } from '@/components/workspace';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
+import { TemplateGenerator } from '@/components/workspace/TemplateGenerator';
+import { ExpandTool } from '@/components/workspace/ExpandTool';
+import { ShortenTool } from '@/components/workspace/ShortenTool';
+import { RewriteChannelTool } from '@/components/workspace/RewriteChannelTool';
+import { BrandVoiceTool } from '@/components/workspace/BrandVoiceTool';
+import { PersonasTool } from '@/components/workspace/PersonasTool';
+import { ProjectSelector } from '@/components/workspace/ProjectSelector';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { initializeProjectSystem } from '@/lib/utils/project-utils';
+import { getTemplateById } from '@/lib/data/templates';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 import type { Editor } from '@tiptap/react';
@@ -47,13 +56,13 @@ function PlaceholderTool({ title, description }: { title: string; description: s
 const TOOL_COMPONENTS: Record<string, React.ComponentType<{ editor: Editor | null }>> = {
   // MY COPY OPTIMIZER
   'tone-shifter': ToneShifter,
-  'expand': (props) => <PlaceholderTool {...props} title="Expand" description="Make copy longer and more detailed" />,
-  'shorten': (props) => <PlaceholderTool {...props} title="Shorten" description="Make copy more concise" />,
-  'rewrite-channel': (props) => <PlaceholderTool {...props} title="Rewrite for Channel" description="Adapt for different platforms" />,
+  'expand': ExpandTool,
+  'shorten': ShortenTool,
+  'rewrite-channel': RewriteChannelTool,
   
   // MY BRAND & AUDIENCE
-  'personas': (props) => <PlaceholderTool {...props} title="Personas" description="Target audience profiles" />,
-  'brand-voice': (props) => <PlaceholderTool {...props} title="Brand Voice" description="Brand tone & style guidelines" />,
+  'personas': PersonasTool,
+  'brand-voice': BrandVoiceTool,
   
   // MY INSIGHTS
   'competitor-analyzer': (props) => <PlaceholderTool {...props} title="Competitor Analyzer" description="Analyze competitor copy" />,
@@ -65,7 +74,19 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<{ editor: Editor | nul
  * Left sidebar content - Tool selector with collapsible sections
  */
 function LeftSidebarContent() {
-  const { activeToolId, setActiveTool } = useWorkspaceStore();
+  const { 
+    activeToolId, 
+    setActiveTool, 
+    refreshProjects,
+    // State clearing functions
+    clearToneShiftResult,
+    clearExpandResult,
+    clearShortenResult,
+    clearRewriteChannelResult,
+    clearBrandAlignmentResult,
+    setSelectedTemplateId,
+    setIsGeneratingTemplate,
+  } = useWorkspaceStore();
   
   // Track which sections are expanded (Projects and Optimizer start expanded)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -74,6 +95,42 @@ function LeftSidebarContent() {
 
   // Templates modal state
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
+  
+  // Initialize projects on mount - FIX: Empty deps array to run only once
+  useEffect(() => {
+    refreshProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Clear all tool states before switching tools
+   */
+  const clearAllToolStates = () => {
+    // Clear Copy Optimizer results
+    clearToneShiftResult();
+    clearExpandResult();
+    clearShortenResult();
+    clearRewriteChannelResult();
+    
+    // Clear Brand & Audience results
+    clearBrandAlignmentResult();
+    
+    // Clear template state
+    setSelectedTemplateId(null);
+    setIsGeneratingTemplate(false);
+  };
+
+  /**
+   * Handle tool selection with automatic state clearing
+   */
+  const handleToolClick = (toolId: string) => {
+    // Only clear if switching to a different tool
+    if (activeToolId !== toolId) {
+      console.log('🧹 Clearing all tool states before switching to:', toolId);
+      clearAllToolStates();
+    }
+    setActiveTool(toolId);
+  };
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {
@@ -123,12 +180,15 @@ function LeftSidebarContent() {
 
         {/* Projects Content */}
         {isProjectsExpanded && (
-          <div className="ml-6 py-3 space-y-2">
-            <p className="text-xs text-gray-500 italic">
-              Documents & Folders coming soon
-            </p>
-            <div className="h-16 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center">
-              <span className="text-xs text-gray-400">No projects yet</span>
+          <div className="ml-6 py-3 space-y-3">
+            {/* Project Selector */}
+            <ProjectSelector />
+            
+            {/* Future: Documents & Folders */}
+            <div className="pt-2">
+              <p className="text-xs text-gray-500 italic">
+                Documents & Folders coming soon
+              </p>
             </div>
           </div>
         )}
@@ -212,7 +272,7 @@ function LeftSidebarContent() {
                       key={tool.id}
                       onClick={() => {
                         console.log('🖱️ Tool clicked:', tool.id);
-                        setActiveTool(tool.id);
+                        handleToolClick(tool.id);
                       }}
                       className={cn(
                         'w-full text-left p-2 rounded-lg',
@@ -263,16 +323,43 @@ function LeftSidebarContent() {
 function RightSidebarContent({ editor }: { editor: Editor | null }) {
   const activeToolId = useWorkspaceStore((state) => state.activeToolId);
   const activeDocument = useWorkspaceStore((state) => state.activeDocument);
+  const selectedTemplateId = useWorkspaceStore((state) => state.selectedTemplateId);
+  const setSelectedTemplateId = useWorkspaceStore((state) => state.setSelectedTemplateId);
+  const setActiveTool = useWorkspaceStore((state) => state.setActiveTool);
+  
+  // Get active project for template generation - FIX: Use selector to prevent infinite loop
+  const activeProject = useWorkspaceStore((state) => {
+    const project = state.projects.find((p) => p.id === state.activeProjectId);
+    return project || null;
+  });
 
   // Get the active tool component
   const ActiveToolComponent = activeToolId ? TOOL_COMPONENTS[activeToolId] : null;
+  
+  // Get selected template if in template generation mode
+  const selectedTemplate = selectedTemplateId ? getTemplateById(selectedTemplateId) : null;
+  
+  /**
+   * Handle template generator cancel
+   */
+  const handleTemplateCancel = () => {
+    setSelectedTemplateId(null);
+    setActiveTool(null);
+  };
 
-  // Debug logging
-  console.log('🔍 Right Sidebar Debug:', {
-    activeToolId,
-    hasActiveDocument: !!activeDocument,
-    hasToolComponent: !!ActiveToolComponent,
-  });
+  // Special case: Template Generator
+  if (selectedTemplate) {
+    return (
+      <div className="h-full">
+        <TemplateGenerator
+          template={selectedTemplate}
+          editor={editor}
+          activeProject={activeProject}
+          onCancel={handleTemplateCancel}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -329,7 +416,13 @@ export default function WorkspacePage() {
   // Store editor instance to pass to ToneShifter
   const [editor, setEditor] = useState<Editor | null>(null);
 
+  // Initialize project system on mount
   useEffect(() => {
+    console.log('🚀 Initializing workspace...');
+    
+    // Initialize project system (creates default project if needed, migrates legacy data)
+    initializeProjectSystem();
+    
     // Clean URL on mount
     if (action) {
       router.replace('/copyworx/workspace', { scroll: false });

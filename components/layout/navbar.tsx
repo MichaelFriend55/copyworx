@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
  * Navigation links configuration
  */
 const navLinks = [
-  { href: '/', label: 'Home' },
+  { href: '/copyworx', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/pricing', label: 'Pricing' },
 ] as const;
@@ -70,13 +70,13 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link 
-            href="/" 
+            href="/copyworx" 
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-900 shadow-lg">
               <Feather className="h-5 w-5 text-amber-400" />
             </div>
-            <span className="font-display text-xl font-bold text-ink-900">
+            <span className="font-sans text-xl font-bold text-ink-900">
               CopyWorx
             </span>
           </Link>

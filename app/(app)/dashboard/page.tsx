@@ -119,7 +119,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold text-ink-900">
+          <h1 className="font-sans text-3xl font-bold text-ink-900">
             Welcome back, {firstName}! 👋
           </h1>
           <p className="text-ink-600 mt-1">
@@ -150,7 +150,7 @@ export default async function DashboardPage() {
               </div>
             )}
             <div>
-              <h2 className="font-display text-xl font-semibold text-ink-900">
+              <h2 className="font-sans text-xl font-semibold text-ink-900">
                 {user?.firstName} {user?.lastName}
               </h2>
               <p className="text-ink-600">

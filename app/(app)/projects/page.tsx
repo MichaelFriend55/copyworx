@@ -126,7 +126,7 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold text-ink-900">
+          <h1 className="font-sans text-3xl font-bold text-ink-900">
             Projects
           </h1>
           <p className="text-ink-600 mt-1">
@@ -232,7 +232,7 @@ export default function ProjectsPage() {
             <div className="h-16 w-16 rounded-full bg-ink-100 flex items-center justify-center mx-auto mb-4">
               <FolderOpen className="h-8 w-8 text-ink-400" />
             </div>
-            <h3 className="font-display text-lg font-semibold text-ink-900 mb-2">
+            <h3 className="font-sans text-lg font-semibold text-ink-900 mb-2">
               No projects yet
             </h3>
             <p className="text-ink-500 mb-6 max-w-sm mx-auto">

@@ -40,7 +40,7 @@ import {
   RemoveFormatting,
   ChevronDown,
 } from 'lucide-react';
-import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { useActiveDocument, useAIAnalysisMode, useUIActions } from '@/lib/stores/workspaceStore';
 import { cn } from '@/lib/utils';
 
 interface ToolbarProps {
@@ -180,20 +180,18 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
  * Top toolbar component with file menu and formatting controls
  */
 export function Toolbar({ className }: ToolbarProps) {
-  const {
-    activeDocument,
-    aiAnalysisMode,
-    setAIAnalysisMode,
-    toggleRightSidebar,
-  } = useWorkspaceStore();
+  // Optimized selectors
+  const activeDocument = useActiveDocument();
+  const aiAnalysisMode = useAIAnalysisMode();
+  const { setAIAnalysisMode, toggleRightSidebar } = useUIActions();
 
   const [editor, setEditor] = useState<Editor | null>(null);
 
   // Get editor instance from window (set by EditorArea)
   useEffect(() => {
     const interval = setInterval(() => {
-      if (typeof window !== 'undefined' && (window as any).__tiptapEditor) {
-        setEditor((window as any).__tiptapEditor);
+      if (typeof window !== 'undefined' && window.__tiptapEditor) {
+        setEditor(window.__tiptapEditor);
         clearInterval(interval);
       }
     }, 100);
@@ -201,7 +199,7 @@ export function Toolbar({ className }: ToolbarProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleAIAnalysisToggle = () => {
+  const handleAIAnalysisToggle = (): void => {
     if (aiAnalysisMode) {
       setAIAnalysisMode(null);
     } else {
@@ -211,7 +209,7 @@ export function Toolbar({ className }: ToolbarProps) {
   };
 
   // Insert link handler
-  const handleInsertLink = () => {
+  const handleInsertLink = (): void => {
     if (!editor) return;
 
     const url = window.prompt('Enter URL:');

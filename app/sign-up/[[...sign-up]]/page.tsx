@@ -49,7 +49,7 @@ export default function SignUpPage() {
         
         {/* Content */}
         <div className="relative max-w-md">
-          <h2 className="font-display text-4xl font-bold text-ink-900 mb-6">
+          <h2 className="font-sans text-4xl font-bold text-ink-900 mb-6">
             Start creating copy that converts today
           </h2>
           <p className="text-ink-600 leading-relaxed mb-8">
@@ -88,7 +88,7 @@ export default function SignUpPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink-900 shadow-lg">
               <Feather className="h-5 w-5 text-amber-400" />
             </div>
-            <span className="font-display text-2xl font-bold text-ink-900">
+            <span className="font-sans text-2xl font-bold text-ink-900">
               CopyWorx
             </span>
           </div>
@@ -99,7 +99,7 @@ export default function SignUpPage() {
               elements: {
                 rootBox: 'w-full',
                 card: 'shadow-none p-0 w-full',
-                headerTitle: 'font-display text-2xl font-bold text-ink-900',
+                headerTitle: 'font-sans text-2xl font-bold text-ink-900',
                 headerSubtitle: 'text-ink-600',
                 socialButtonsBlockButton: 
                   'border border-border bg-white hover:bg-ink-50 text-ink-700 transition-colors',

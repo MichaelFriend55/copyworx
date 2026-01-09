@@ -27,7 +27,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { useDocumentActions } from '@/lib/stores/workspaceStore';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 
 interface ActionButtonProps {
@@ -80,7 +80,7 @@ function ActionButton({ icon, label, description, onClick }: ActionButtonProps) 
  */
 export function SplashPage() {
   const router = useRouter();
-  const { createDocument } = useWorkspaceStore();
+  const { createDocument } = useDocumentActions();
   
   // Templates modal state
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
@@ -124,7 +124,7 @@ export function SplashPage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-5xl sm:text-6xl font-display font-bold text-apple-text-dark mb-4">
+          <h1 className="text-5xl sm:text-6xl font-sans font-bold text-apple-text-dark mb-4">
             CopyWorx™ Studio
           </h1>
 

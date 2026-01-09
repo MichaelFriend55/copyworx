@@ -87,7 +87,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl mx-auto text-center">
             <Badge variant="secondary" className="mb-6">About Us</Badge>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-ink-900 mb-6">
+            <h1 className="font-sans text-4xl md:text-5xl lg:text-6xl font-bold text-ink-900 mb-6">
               Empowering writers to create their best work
             </h1>
             <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
@@ -106,7 +106,7 @@ export default function AboutPage() {
             <div className="relative">
               <div className="aspect-square rounded-2xl bg-gradient-to-br from-amber-100 via-amber-50 to-ink-50 flex items-center justify-center">
                 <div className="w-3/4 h-3/4 rounded-xl bg-white shadow-2xl flex items-center justify-center">
-                  <span className="font-display text-6xl text-ink-200">✍️</span>
+                  <span className="font-sans text-6xl text-ink-200">✍️</span>
                 </div>
               </div>
               {/* Decorative element */}
@@ -116,7 +116,7 @@ export default function AboutPage() {
             {/* Content */}
             <div>
               <Badge variant="amber" className="mb-4">Our Story</Badge>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-ink-900 mb-6">
+              <h2 className="font-sans text-3xl md:text-4xl font-bold text-ink-900 mb-6">
                 Built by copywriters, for copywriters
               </h2>
               <div className="space-y-4 text-ink-600 leading-relaxed">
@@ -147,7 +147,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="font-display text-4xl md:text-5xl font-bold text-amber-400 mb-2">
+                <div className="font-sans text-4xl md:text-5xl font-bold text-amber-400 mb-2">
                   {stat.value}
                 </div>
                 <div className="text-ink-400 text-sm">
@@ -165,7 +165,7 @@ export default function AboutPage() {
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-16">
             <Badge variant="secondary" className="mb-4">Our Values</Badge>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-ink-900 mb-6">
+            <h2 className="font-sans text-3xl md:text-4xl font-bold text-ink-900 mb-6">
               What we stand for
             </h2>
             <p className="text-lg text-ink-600">
@@ -184,7 +184,7 @@ export default function AboutPage() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink-100 text-ink-700 mb-4">
                     <value.icon className="h-6 w-6" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold text-ink-900 mb-2">
+                  <h3 className="font-sans text-xl font-semibold text-ink-900 mb-2">
                     {value.title}
                   </h3>
                   <p className="text-ink-600 leading-relaxed">

@@ -7,7 +7,25 @@
  * - Tool categories
  * - AI analysis modes
  * - Workspace state
+ * - Project types
  */
+
+// Re-export project types
+export type { Project, Persona, ProjectDocument } from './project';
+export { isProject } from './project';
+
+// Re-export brand types
+export type { BrandVoice, BrandAlignmentResult, BrandAlignmentRequest, BrandAlignmentResponse } from './brand';
+
+// Re-export template types
+export type { 
+  Template as TemplateDefinition,
+  TemplateCategory,
+  TemplateField,
+  TemplateFormData,
+  TemplateGenerationRequest,
+  TemplateGenerationResponse
+} from './template';
 
 /**
  * Represents a copywriting document in the workspace
@@ -77,7 +95,8 @@ export type WorkspaceAction =
   | 'open';       // Open .cwx file
 
 /**
- * Template for copywriting content
+ * @deprecated Use TemplateDefinition from './template' instead
+ * Legacy Template interface maintained for backwards compatibility
  */
 export interface Template {
   /** Template unique identifier */
@@ -97,26 +116,6 @@ export interface Template {
   
   /** Example/placeholder content */
   example?: string;
-}
-
-/**
- * Brand voice configuration
- */
-export interface BrandVoice {
-  /** Voice identifier */
-  id: string;
-  
-  /** Brand name */
-  name: string;
-  
-  /** Tone descriptors */
-  tone: string[];
-  
-  /** Voice guidelines */
-  guidelines: string;
-  
-  /** Example phrases */
-  examples: string[];
 }
 
 /**

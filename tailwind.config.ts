@@ -111,9 +111,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-crimson)', 'Georgia', 'serif'],
-        mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
@@ -145,7 +144,9 @@ const config: Config = {
           to: { opacity: '1', transform: 'translateX(0)' },
         },
         shimmer: {
-          '100%': { transform: 'translateX(100%)' },
+          '0%': { opacity: '0.5', transform: 'scale(1)' },
+          '50%': { opacity: '1', transform: 'scale(1.1)' },
+          '100%': { opacity: '0.5', transform: 'scale(1)' },
         },
         pulse: {
           '0%, 100%': { opacity: '1' },
@@ -158,7 +159,7 @@ const config: Config = {
         'fade-in': 'fade-in 0.5s ease-out forwards',
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
         'slide-in-right': 'slide-in-right 0.4s ease-out forwards',
-        shimmer: 'shimmer 2s infinite',
+        shimmer: 'shimmer 2s ease-in-out infinite',
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       backgroundImage: {

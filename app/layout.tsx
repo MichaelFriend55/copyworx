@@ -4,33 +4,25 @@
  * 
  * Provides:
  * - Clerk authentication provider
- * - Global font loading (Inter + Crimson Pro)
+ * - Global font loading (Inter)
  * - Metadata configuration
  * - Global styles wrapper
  */
 
 import type { Metadata } from 'next';
-import { Inter, Crimson_Pro } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
 /**
- * Inter - Clean sans-serif font for body text
+ * Inter - Clean sans-serif font for all text throughout the application
+ * Provides consistent, professional typography across the entire UI
  */
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
-});
-
-/**
- * Crimson Pro - Elegant serif font for display text
- * Used for headings to create a premium writing-tool aesthetic
- */
-const crimsonPro = Crimson_Pro({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-crimson',
+  weight: ['400', '500', '600', '700'],
 });
 
 /**
@@ -95,7 +87,7 @@ export default function RootLayout({
           formButtonPrimary: 
             'bg-amber-500 hover:bg-amber-400 text-ink-900 shadow-lg',
           card: 'shadow-xl border border-border/50',
-          headerTitle: 'font-display text-ink-900',
+          headerTitle: 'font-sans font-semibold text-ink-900',
           headerSubtitle: 'text-ink-600',
           socialButtonsBlockButton: 
             'border border-border hover:bg-ink-50 transition-colors',
@@ -107,10 +99,10 @@ export default function RootLayout({
     >
       <html 
         lang="en" 
-        className={`${inter.variable} ${crimsonPro.variable}`}
+        className={inter.variable}
         suppressHydrationWarning
       >
-        <body className="min-h-screen bg-background font-sans antialiased">
+        <body className={`${inter.className} min-h-screen bg-background antialiased`}>
           {children}
         </body>
       </html>

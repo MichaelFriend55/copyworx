@@ -119,7 +119,7 @@ export default function TemplatesPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="font-display text-3xl font-bold text-ink-900">
+        <h1 className="font-sans text-3xl font-bold text-ink-900">
           Templates
         </h1>
         <p className="text-ink-600 mt-1">

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { validateTextLength, validateNotEmpty, logError } from '@/lib/utils/error-handling';
 
 // ============================================================================
 // Type Definitions
@@ -16,7 +17,7 @@ import Anthropic from '@anthropic-ai/sdk';
 /**
  * Supported tone types for copy rewriting
  */
-type ToneType = 'professional' | 'casual' | 'urgent' | 'friendly';
+type ToneType = 'professional' | 'casual' | 'urgent' | 'friendly' | 'techy' | 'playful';
 
 /**
  * Request body structure
@@ -47,13 +48,48 @@ interface ErrorResponse {
 // Constants
 // ============================================================================
 
-const VALID_TONES: ToneType[] = ['professional', 'casual', 'urgent', 'friendly'];
+const VALID_TONES: ToneType[] = ['professional', 'casual', 'urgent', 'friendly', 'techy', 'playful'];
 
 /**
  * System prompt that establishes Claude's role and expertise
  * This tells Claude to act as an expert copywriter with decades of experience
  */
-const SYSTEM_PROMPT = `You are an expert copywriter with 40 years of experience. Your job is to rewrite copy to match a specific tone while preserving the core message and improving clarity.
+const SYSTEM_PROMPT = `You are an expert copywriter with 40 years of experience. Your job is to rewrite copy to match a specific tone while preserving the core message, structure, and formatting.
+
+CRITICAL OUTPUT FORMAT:
+You MUST output valid HTML that preserves the original structure while changing the tone.
+Use ONLY these tags:
+- <h2> or <h3> for headings and subject lines
+- <p> for paragraphs
+- <ul> and <li> for bullet lists
+- <strong> for bold emphasis
+- <em> for italic emphasis
+- <br> for line breaks within paragraphs (use sparingly)
+
+HTML RULES:
+1. Preserve the original document structure (headings stay headings, bullets stay bullets)
+2. Change ONLY the tone/voice/word choice, NOT the structure
+3. If input has bullets, output must have bullets
+4. If input has headings, output must have headings
+5. Output ONLY HTML, no markdown, no preamble
+6. Do NOT add blank lines between tags - write consecutively: <p>Text</p><p>Next</p>
+7. Keep emojis if appropriate for the tone (especially Playful and Casual)
+8. Preserve bold/italic on key phrases where appropriate
+
+Example - changing Professional to Playful while preserving structure:
+INPUT (plain or HTML):
+Subject: New Product Launch
+We are excited to announce our new product.
+• Advanced features
+• Competitive pricing
+
+OUTPUT (HTML):
+<h3>Subject: 🎉 Get Ready to Fall in Love with Our New Product!</h3>
+<p>Guess what? We just dropped something amazing that's about to make your day!</p>
+<ul>
+<li>Features so cool they'll make you do a happy dance</li>
+<li>Prices that won't make your wallet cry</li>
+</ul>
 
 When rewriting:
 - Maintain the original meaning and key points
@@ -63,7 +99,7 @@ When rewriting:
 - Remove redundancies and awkward phrasing
 - Do NOT add new information or claims not in the original
 
-Return ONLY the rewritten text, no explanations or preambles.`;
+Return ONLY the HTML content, no explanations or preambles.`;
 
 /**
  * Generates a user prompt with the text to rewrite and target tone
@@ -74,16 +110,36 @@ function buildUserPrompt(text: string, tone: ToneType): string {
     casual: 'Casual tone: conversational, friendly, relaxed, approachable',
     urgent: 'Urgent tone: time-sensitive, compelling, action-oriented, creates FOMO',
     friendly: 'Friendly tone: warm, personable, welcoming, builds rapport',
+    techy: `Technical, precise tone. Use:
+- Technical terminology where appropriate
+- Specific metrics and data points
+- Clear, accurate language
+- Demonstrate expertise and precision
+- Focus on capabilities and specifications
+- Use industry-standard terms
+- Maintain clarity while being technical
+
+Avoid: Jargon for jargon's sake, overly complex explanations, condescension`,
+    playful: `Playful, fun tone. Use:
+- Energetic, upbeat language
+- Playful expressions and word choices
+- Light humor where appropriate
+- Conversational and engaging style
+- Creative analogies or metaphors
+- Enthusiasm without being annoying
+- Keep it professional enough for the context
+
+Avoid: Forced humor, being overly silly, losing the core message`,
   };
 
-  return `Rewrite the following copy in a ${tone} tone.
+  return `Rewrite the following copy in a ${tone} tone while preserving its structure.
 
 TARGET TONE: ${toneDescriptions[tone]}
 
 ORIGINAL COPY:
 ${text}
 
-REWRITTEN COPY:`;
+REWRITTEN COPY (HTML only):`;
 }
 
 // ============================================================================
@@ -98,7 +154,7 @@ REWRITTEN COPY:`;
  * @param request - Next.js request object containing text and tone
  * @returns JSON response with rewritten text or error
  */
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ToneShiftResponse | ErrorResponse>> {
   try {// DEBUG: Check if API key is loaded
     console.log('🔍 Environment check:', {
       hasKey: !!process.env.ANTHROPIC_API_KEY,
@@ -157,12 +213,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for empty text
-    if (text.trim().length === 0) {
+    // Validate text is not empty
+    try {
+      validateNotEmpty(text, 'Text');
+    } catch (error) {
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'Empty text provided',
-          details: 'Please provide non-empty text to rewrite'
+          details: error instanceof Error ? error.message : 'Please provide non-empty text to rewrite'
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate text length (max 10,000 characters)
+    try {
+      validateTextLength(text, 'Text');
+    } catch (error) {
+      return NextResponse.json<ErrorResponse>(
+        { 
+          error: 'Text too long',
+          details: error instanceof Error ? error.message : 'Text exceeds maximum length'
         },
         { status: 400 }
       );
@@ -204,19 +275,24 @@ export async function POST(request: NextRequest) {
     // Build the user prompt with the text and target tone
     const userPrompt = buildUserPrompt(text, tone as ToneType);
 
-    // Call Claude's Messages API
+    // Call Claude's Messages API with timeout
     // This sends the request to Claude and waits for the full response
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514', // Latest Claude Sonnet model
-      max_tokens: 4000, // Maximum length of response
-      system: SYSTEM_PROMPT, // System prompt defining Claude's role
-      messages: [
-        {
-          role: 'user',
-          content: userPrompt, // The actual rewriting request
-        },
-      ],
-    });
+    const message = await Promise.race([
+      anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514', // Latest Claude Sonnet model
+        max_tokens: 4000, // Maximum length of response
+        system: SYSTEM_PROMPT, // System prompt defining Claude's role
+        messages: [
+          {
+            role: 'user',
+            content: userPrompt, // The actual rewriting request
+          },
+        ],
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000)
+      ),
+    ]);
 
     // ------------------------------------------------------------------------
     // 4. Extract and process the response
@@ -267,7 +343,18 @@ export async function POST(request: NextRequest) {
     // Error Handling
     // ------------------------------------------------------------------------
     
-    console.error('❌ Tone shift API error:', error);
+    logError(error, 'Tone shift API');
+
+    // Handle timeout errors
+    if (error instanceof Error && error.message.includes('timed out')) {
+      return NextResponse.json<ErrorResponse>(
+        { 
+          error: 'Request timeout',
+          details: 'The request took too long to complete. Please try again with shorter text or check your connection.'
+        },
+        { status: 408 }
+      );
+    }
 
     // Handle Anthropic-specific errors
     if (error instanceof Anthropic.APIError) {
@@ -276,10 +363,21 @@ export async function POST(request: NextRequest) {
         message: error.message,
       });
 
+      // Provide user-friendly messages for common Claude errors
+      let userMessage = 'AI service error. Please try again.';
+      
+      if (error.status === 429) {
+        userMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+      } else if (error.status === 401 || error.status === 403) {
+        userMessage = 'Authentication error. Please contact support.';
+      } else if (error.status === 500 || error.status === 503) {
+        userMessage = 'AI service temporarily unavailable. Please try again in a moment.';
+      }
+
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI service error',
-          details: `Claude API error: ${error.message}`
+          details: userMessage
         },
         { status: error.status || 500 }
       );
@@ -289,7 +387,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json<ErrorResponse>(
       { 
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'An unexpected error occurred'
+        details: error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'
       },
       { status: 500 }
     );

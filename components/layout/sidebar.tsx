@@ -87,7 +87,7 @@ export function Sidebar() {
             <Feather className="h-4 w-4 text-ink-900" />
           </div>
           {!isCollapsed && (
-            <span className="font-display text-lg font-bold text-white">
+            <span className="font-sans text-lg font-bold text-white">
               CopyWorx
             </span>
           )}

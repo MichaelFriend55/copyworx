@@ -128,7 +128,7 @@ export default function PricingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl mx-auto text-center">
             <Badge variant="amber" className="mb-6">Pricing</Badge>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-ink-900 mb-6">
+            <h1 className="font-sans text-4xl md:text-5xl lg:text-6xl font-bold text-ink-900 mb-6">
               Simple, transparent pricing
             </h1>
             <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
@@ -161,14 +161,14 @@ export default function PricingPage() {
                 )}
                 
                 <CardHeader className="pb-4">
-                  <CardTitle className="font-display text-2xl">{tier.name}</CardTitle>
+                  <CardTitle className="font-sans text-2xl">{tier.name}</CardTitle>
                   <CardDescription>{tier.description}</CardDescription>
                 </CardHeader>
                 
                 <CardContent className="flex-1">
                   {/* Price */}
                   <div className="mb-6">
-                    <span className="font-display text-5xl font-bold text-ink-900">
+                    <span className="font-sans text-5xl font-bold text-ink-900">
                       {tier.price}
                     </span>
                     <span className="text-ink-500 ml-2">
@@ -222,7 +222,7 @@ export default function PricingPage() {
             <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-400">
               Enterprise
             </Badge>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="font-sans text-3xl md:text-4xl font-bold mb-4">
               Need more? Let's talk.
             </h2>
             <p className="text-ink-300 mb-8 max-w-2xl mx-auto">
@@ -243,7 +243,7 @@ export default function PricingPage() {
             {/* Section Header */}
             <div className="text-center mb-12">
               <Badge variant="secondary" className="mb-4">FAQ</Badge>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-ink-900 mb-4">
+              <h2 className="font-sans text-3xl md:text-4xl font-bold text-ink-900 mb-4">
                 Frequently asked questions
               </h2>
               <p className="text-ink-600">

@@ -112,7 +112,7 @@ export default function HomePage() {
               </div>
               
               {/* Headline */}
-              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-ink-900 leading-[1.1] tracking-tight animate-fade-in opacity-0 animation-delay-100">
+              <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-ink-900 leading-[1.1] tracking-tight animate-fade-in opacity-0 animation-delay-100">
                 Write copy that
                 <span className="relative">
                   <span className="relative z-10 text-gradient-amber"> converts</span>
@@ -167,7 +167,7 @@ export default function HomePage() {
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-16">
             <Badge variant="secondary" className="mb-4">Features</Badge>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-ink-900 mb-6">
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-bold text-ink-900 mb-6">
               Everything you need to write better copy
             </h2>
             <p className="text-lg text-ink-600">
@@ -188,7 +188,7 @@ export default function HomePage() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 mb-4">
                     <feature.icon className="h-6 w-6" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold text-ink-900 mb-2">
+                  <h3 className="font-sans text-xl font-semibold text-ink-900 mb-2">
                     {feature.title}
                   </h3>
                   <p className="text-ink-600 leading-relaxed">
@@ -212,7 +212,7 @@ export default function HomePage() {
             <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-400">
               Testimonials
             </Badge>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
               Loved by copywriters worldwide
             </h2>
             <p className="text-lg text-ink-300">
@@ -253,7 +253,7 @@ export default function HomePage() {
       <section className="py-24 md:py-32 bg-gradient-to-br from-amber-50 via-white to-ink-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-ink-900 mb-6">
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-bold text-ink-900 mb-6">
               Ready to write copy that converts?
             </h2>
             <p className="text-lg text-ink-600 mb-10 max-w-2xl mx-auto">

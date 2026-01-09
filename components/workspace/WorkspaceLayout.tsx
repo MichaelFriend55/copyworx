@@ -28,7 +28,7 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
 import { Toolbar } from './Toolbar';
-import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { useLeftSidebarOpen, useRightSidebarOpen, useUIActions } from '@/lib/stores/workspaceStore';
 import { cn } from '@/lib/utils';
 
 interface WorkspaceLayoutProps {
@@ -54,12 +54,10 @@ export function WorkspaceLayout({
   children,
   className,
 }: WorkspaceLayoutProps) {
-  const {
-    leftSidebarOpen,
-    rightSidebarOpen,
-    toggleLeftSidebar,
-    toggleRightSidebar,
-  } = useWorkspaceStore();
+  // Optimized selectors
+  const leftSidebarOpen = useLeftSidebarOpen();
+  const rightSidebarOpen = useRightSidebarOpen();
+  const { toggleLeftSidebar, toggleRightSidebar } = useUIActions();
 
   return (
     <div className={cn('h-screen w-screen flex flex-col overflow-hidden', className)}>

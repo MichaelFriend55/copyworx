@@ -22,6 +22,7 @@ import Link from '@tiptap/extension-link';
 import Typography from '@tiptap/extension-typography';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useAutoSave } from '@/lib/hooks/useAutoSave';
+import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
 
 interface EditorAreaProps {
@@ -36,6 +37,7 @@ interface EditorAreaProps {
 export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
   const activeDocument = useWorkspaceStore((state) => state.activeDocument);
   const updateDocumentTitle = useWorkspaceStore((state) => state.updateDocumentTitle);
+  const setSelectedText = useWorkspaceStore((state) => state.setSelectedText);
 
   // Initialize TipTap editor
   const editor = useEditor({
@@ -100,16 +102,49 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
   // Enable auto-save
   useAutoSave(editor);
 
+  // Track text selection changes and update store
+  useEffect(() => {
+    if (!editor) return;
+
+    // Handler for selection updates
+    const handleSelectionUpdate = (): void => {
+      const selection = getEditorSelection(editor);
+      
+      if (selection) {
+        // User has text selected
+        setSelectedText(selection.text, selection.range);
+      } else {
+        // No selection (cursor only or empty selection)
+        setSelectedText(null, null);
+      }
+    };
+
+    // Listen to selection updates
+    editor.on('selectionUpdate', handleSelectionUpdate);
+    
+    // Also track when content changes (in case selection becomes invalid)
+    editor.on('update', handleSelectionUpdate);
+
+    // Initial check
+    handleSelectionUpdate();
+
+    // Cleanup
+    return () => {
+      editor.off('selectionUpdate', handleSelectionUpdate);
+      editor.off('update', handleSelectionUpdate);
+    };
+  }, [editor, setSelectedText]);
+
   // Export editor instance for toolbar
   useEffect(() => {
     if (editor && typeof window !== 'undefined') {
-      (window as any).__tiptapEditor = editor;
+      window.__tiptapEditor = editor;
       console.log('🔗 Editor instance exported to window');
     }
   }, [editor]);
 
   // Handle title change
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     updateDocumentTitle(e.target.value);
   };
 
@@ -155,7 +190,7 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
                 value={activeDocument.title}
                 onChange={handleTitleChange}
                 className={cn(
-                  'w-full text-3xl font-display font-semibold',
+                  'w-full text-3xl font-sans font-semibold',
                   'text-black',
                   'border-none outline-none',
                   'bg-transparent',
@@ -249,34 +284,60 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
           height: 0;
         }
 
+        /* CONTROLLED PARAGRAPH SPACING - Professional email/document spacing */
+        .tiptap-editor p {
+          margin-top: 0;
+          margin-bottom: 0.75rem;
+        }
+
+        .tiptap-editor p:first-child {
+          margin-top: 0;
+        }
+
+        .tiptap-editor p:last-child {
+          margin-bottom: 0;
+        }
+
         .tiptap-editor h1 {
           font-size: 2em;
           font-weight: 700;
-          margin-top: 1em;
-          margin-bottom: 0.5em;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
           line-height: 1.2;
+        }
+
+        .tiptap-editor h1:first-child {
+          margin-top: 0;
         }
 
         .tiptap-editor h2 {
           font-size: 1.5em;
           font-weight: 600;
-          margin-top: 1em;
-          margin-bottom: 0.5em;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
           line-height: 1.3;
+        }
+
+        .tiptap-editor h2:first-child {
+          margin-top: 0;
         }
 
         .tiptap-editor h3 {
           font-size: 1.25em;
           font-weight: 600;
-          margin-top: 1em;
-          margin-bottom: 0.5em;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
           line-height: 1.4;
+        }
+
+        .tiptap-editor h3:first-child {
+          margin-top: 0;
         }
 
         .tiptap-editor ul,
         .tiptap-editor ol {
-          padding-left: 1.5em;
-          margin: 0.5em 0;
+          padding-left: 1.5rem;
+          margin: 0.75rem 0;
         }
 
         .tiptap-editor ul {
@@ -288,7 +349,7 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
         }
 
         .tiptap-editor li {
-          margin: 0.25em 0;
+          margin-bottom: 0.25rem;
         }
 
         .tiptap-editor strong {
@@ -325,6 +386,8 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
           border-left: 3px solid #d2d2d7;
           padding-left: 1em;
           margin-left: 0;
+          margin-top: 0.75rem;
+          margin-bottom: 0.75rem;
           font-style: italic;
           color: #6e6e73;
         }

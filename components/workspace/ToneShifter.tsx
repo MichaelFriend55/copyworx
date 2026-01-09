@@ -3,7 +3,7 @@
  * @description AI-powered tone shifting component for rewriting copy
  * 
  * Features:
- * - Four tone options: Professional, Casual, Urgent, Friendly
+ * - Six tone options: Professional, Casual, Urgent, Friendly, Techy, Playful
  * - Real-time loading states
  * - Result preview with insert/copy options
  * - Apple-style design aesthetic
@@ -23,13 +23,27 @@ import {
   Smile, 
   Zap, 
   Heart, 
-  Loader2, 
   Check, 
   X,
   Copy,
-  FileText
+  FileText,
+  Sparkles,
+  Terminal,
+  PartyPopper
 } from 'lucide-react';
-import { useWorkspaceStore, type ToneType } from '@/lib/stores/workspaceStore';
+import { 
+  useSelectedText,
+  useSelectionRange,
+  useSelectedTone,
+  useToneShiftResult,
+  useToneShiftLoading,
+  useToneShiftError,
+  useToneShiftActions,
+  type ToneType 
+} from '@/lib/stores/workspaceStore';
+import { insertTextAtSelection } from '@/lib/editor-utils';
+import { formatGeneratedContent } from '@/lib/utils/content-formatting';
+import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
 
@@ -79,48 +93,78 @@ const TONE_OPTIONS: {
     description: 'Warm and approachable',
     color: 'pink',
   },
+  {
+    value: 'techy',
+    label: 'Techy',
+    icon: Terminal,
+    description: 'Technical, precise, expertise-driven',
+    color: 'purple',
+  },
+  {
+    value: 'playful',
+    label: 'Playful',
+    icon: PartyPopper,
+    description: 'Fun, energetic, lighthearted',
+    color: 'orange',
+  },
 ];
 
 /**
  * ToneShifter component - AI-powered copy rewriting tool
  */
 export function ToneShifter({ editor, className }: ToneShifterProps) {
-  const {
-    selectedTone,
-    toneShiftResult,
-    toneShiftLoading,
-    toneShiftError,
-    setSelectedTone,
-    runToneShift,
-    clearToneShiftResult,
-    insertToneShiftResult,
-  } = useWorkspaceStore();
+  // Optimized selectors - only re-render when these specific values change
+  const selectedText = useSelectedText();
+  const selectionRange = useSelectionRange();
+  const selectedTone = useSelectedTone();
+  const toneShiftResult = useToneShiftResult();
+  const toneShiftLoading = useToneShiftLoading();
+  const toneShiftError = useToneShiftError();
+  const { runToneShift, clearToneShiftResult, insertToneShiftResult, setSelectedTone } = useToneShiftActions();
 
-  // Check if editor has content
-  const hasContent = editor?.getText().trim().length ?? 0 > 0;
-  const canShift = hasContent && selectedTone && !toneShiftLoading;
+  // Check if user has text selected
+  const hasSelection = selectedText && selectedText.trim().length > 0;
+  const canShift = hasSelection && selectedTone && !toneShiftLoading;
 
   /**
    * Handle tone selection
    */
-  const handleToneSelect = (tone: ToneType) => {
+  const handleToneSelect = (tone: ToneType): void => {
     setSelectedTone(tone === selectedTone ? null : tone);
   };
 
   /**
    * Handle tone shift action
    */
-  const handleShiftTone = async () => {
-    if (!editor || !selectedTone || !hasContent) return;
+  const handleShiftTone = async (): Promise<void> => {
+    if (!selectedTone || !selectedText) return;
     
-    const text = editor.getHTML();
-    await runToneShift(text, selectedTone);
+    await runToneShift(selectedText, selectedTone);
   };
 
   /**
-   * Handle insert result into editor
+   * Handle replace selection with result
    */
-  const handleInsertResult = () => {
+  const handleReplaceSelection = (): void => {
+    if (!editor || !toneShiftResult || !selectionRange) return;
+    
+    // Format the HTML result (sanitize and remove excess whitespace)
+    const formattedHTML = formatGeneratedContent(toneShiftResult, false);
+    
+    // Use editor utils to replace the selection with formatted HTML
+    const success = insertTextAtSelection(editor, formattedHTML, { isHTML: true });
+    
+    if (success) {
+      // Clear the result after replacing
+      clearToneShiftResult();
+      console.log('✅ Tone shifted content inserted with formatting preserved');
+    }
+  };
+
+  /**
+   * Handle insert result into editor (replaces entire document)
+   */
+  const handleInsertResult = (): void => {
     if (!editor) return;
     insertToneShiftResult(editor);
   };
@@ -128,13 +172,13 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
   /**
    * Handle copy result to clipboard
    */
-  const handleCopyResult = async () => {
+  const handleCopyResult = async (): Promise<void> => {
     if (!toneShiftResult) return;
     
     try {
+      // Copy the HTML to clipboard (user can paste into editor or other tools)
       await navigator.clipboard.writeText(toneShiftResult);
-      // TODO: Show toast notification
-      console.log('✅ Copied to clipboard');
+      console.log('✅ Copied HTML to clipboard');
     } catch (error) {
       console.error('❌ Failed to copy:', error);
     }
@@ -154,6 +198,28 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
           Rewrite your copy in a different tone
         </p>
       </div>
+
+      {/* Selected Text Preview */}
+      {hasSelection ? (
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-medium text-apple-text-dark uppercase tracking-wide flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-apple-blue" />
+            Selected Text ({selectedText?.length || 0} characters)
+          </label>
+          <div className="bg-apple-gray-bg border border-apple-gray-light rounded-lg p-3 max-h-32 overflow-y-auto custom-scrollbar">
+            <p className="text-sm text-apple-text-dark whitespace-pre-wrap">
+              {selectedText}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0" />
+          <p className="text-xs text-blue-700">
+            Highlight text in the editor to shift tone
+          </p>
+        </div>
+      )}
 
       {/* Tone Selection Buttons */}
       <div className="flex flex-col gap-3">
@@ -206,26 +272,24 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
           'font-medium text-sm',
           'transition-all duration-200',
           'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          canShift
-            ? 'bg-apple-blue text-white hover:bg-blue-600 shadow-sm hover:shadow'
-            : 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
+          // Keep blue background during loading
+          'bg-apple-blue text-white hover:bg-blue-600 shadow-sm hover:shadow',
+          'disabled:bg-apple-blue disabled:text-white disabled:cursor-wait',
+          // Gray background only when truly disabled (not just loading)
+          !hasSelection && !toneShiftLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
         )}
       >
         {toneShiftLoading ? (
-          <span className="flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Rewriting...
-          </span>
+          <AIWorxButtonLoader />
         ) : (
           'Shift Tone'
         )}
       </button>
 
       {/* Helper Text */}
-      {!hasContent && (
+      {!hasSelection && (
         <p className="text-xs text-apple-text-light text-center">
-          Start writing in the editor to use Tone Shifter
+          Select text in the editor to use Tone Shifter
         </p>
       )}
 
@@ -269,7 +333,7 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
           {/* Action Buttons */}
           <div className="flex gap-2">
             <button
-              onClick={handleInsertResult}
+              onClick={handleReplaceSelection}
               className={cn(
                 'flex-1 py-2 px-3 rounded-lg',
                 'bg-green-600 text-white text-sm font-medium',
@@ -277,9 +341,11 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
                 'focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2',
                 'flex items-center justify-center gap-2'
               )}
+              disabled={!selectionRange}
+              title="Replace selected text with rewritten version"
             >
               <Check className="w-4 h-4" />
-              Insert
+              Replace Selection
             </button>
             <button
               onClick={handleCopyResult}
