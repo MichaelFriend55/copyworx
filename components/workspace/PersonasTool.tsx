@@ -53,7 +53,11 @@ type ViewMode = 'list' | 'create' | 'edit';
 export function PersonasTool({ editor, className }: PersonasToolProps) {
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
-  const activeProject = projects.find((p) => p.id === activeProjectId);
+  // Memoize the find operation to avoid creating new references on every render
+  const activeProject = React.useMemo(
+    () => projects.find((p) => p.id === activeProjectId),
+    [projects, activeProjectId]
+  );
 
   // State
   const [viewMode, setViewMode] = useState<ViewMode>('list');

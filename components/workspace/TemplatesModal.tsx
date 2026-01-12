@@ -222,7 +222,7 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredTemplates.map((template) => {
                     // Get icon component dynamically from Lucide
-                    const TemplateIcon = (LucideIcons as Record<string, LucideIcon>)[template.icon] || FileText;
+                    const TemplateIcon = (LucideIcons as unknown as Record<string, LucideIcon>)[template.icon] || FileText;
 
                     return (
                       <div

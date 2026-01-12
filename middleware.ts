@@ -35,6 +35,7 @@ export default authMiddleware({
     '/sign-in(.*)',
     '/sign-up(.*)',
     '/api(.*)',
+    '/copyworx(.*)', // CopyWorx workspace - temporarily public for testing
   ],
   
   // Routes that are always accessible (static files, etc.)

@@ -32,6 +32,7 @@ import {
   Folder
 } from 'lucide-react';
 import { 
+  useWorkspaceStore,
   useProjects, 
   useActiveProjectId, 
   useSelectedText,
@@ -73,10 +74,14 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
   const { runBrandAlignment, clearBrandAlignmentResult } = useBrandAlignmentActions();
   const { updateProject } = useProjectActions();
   
-  // Get active project
+  // Get active project - use projects array and ID separately to control re-renders
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
-  const activeProject = projects.find((p) => p.id === activeProjectId);
+  // Memoize the find operation to avoid creating new references
+  const activeProject = React.useMemo(
+    () => projects.find((p) => p.id === activeProjectId),
+    [projects, activeProjectId]
+  );
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('setup');
@@ -94,8 +99,13 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // Load brand voice from active project
+  // IMPORTANT: Only use activeProjectId in dependency array to prevent cascading re-renders
   useEffect(() => {
-    if (!activeProject) {
+    // Get fresh project data inside the effect
+    const currentProjects = useWorkspaceStore.getState().projects;
+    const currentProject = currentProjects.find((p) => p.id === activeProjectId);
+    
+    if (!currentProject) {
       // No active project - clear form
       setBrandName('');
       setBrandTone('');
@@ -108,7 +118,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
     }
 
     // Load brand voice from project
-    const brandVoice = activeProject.brandVoice;
+    const brandVoice = currentProject.brandVoice;
     
     if (brandVoice) {
       // Populate form with project's brand voice
@@ -119,7 +129,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
       setBrandValues(brandVoice.brandValues.join('\n'));
       setMissionStatement(brandVoice.missionStatement);
       
-      console.log('✅ Loaded brand voice from project:', activeProject.name);
+      console.log('✅ Loaded brand voice from project:', currentProject.name);
     } else {
       // No brand voice in project - clear form
       setBrandName('');
@@ -129,9 +139,9 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
       setBrandValues('');
       setMissionStatement('');
       
-      console.log('ℹ️ No brand voice set for project:', activeProject.name);
+      console.log('ℹ️ No brand voice set for project:', currentProject.name);
     }
-  }, [activeProject, activeProjectId]);
+  }, [activeProjectId]); // Only depend on primitive ID, not derived objects
 
   /**
    * Handle save brand voice

@@ -12,8 +12,10 @@
 
 'use client';
 
+import React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 import type { Document, ToolCategory, AIAnalysisMode } from '@/lib/types';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
@@ -1032,9 +1034,32 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         activeToolId: state.activeToolId, // Updated: persist tool ID
         aiAnalysisMode: state.aiAnalysisMode,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Called when rehydration is complete
+        if (state) {
+          console.log('💾 Store rehydrated from localStorage', {
+            hasDocument: !!state.activeDocument,
+            activeProjectId: state.activeProjectId,
+          });
+        }
+      },
     }
   )
 );
+
+/**
+ * Hook to check if we're on the client side and ready for client-only operations
+ * This ensures we don't run localStorage operations during SSR
+ */
+export function useIsClient(): boolean {
+  const [isClient, setIsClient] = React.useState(false);
+  
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  return isClient;
+}
 
 /**
  * Selector hooks for optimized re-renders
@@ -1100,69 +1125,89 @@ export const useSelectedTemplateId = () => useWorkspaceStore((state) => state.se
 export const useIsGeneratingTemplate = () => useWorkspaceStore((state) => state.isGeneratingTemplate);
 
 /**
- * Action selector hooks (for stable references to prevent re-renders)
+ * Action selector hooks (using shallow equality for stable references to prevent re-renders)
+ * 
+ * IMPORTANT: These hooks use shallow equality to prevent infinite render loops.
+ * Without shallow comparison, returning a new object on every render triggers re-renders.
  */
-export const useToneShiftActions = () => useWorkspaceStore((state) => ({
-  runToneShift: state.runToneShift,
-  clearToneShiftResult: state.clearToneShiftResult,
-  insertToneShiftResult: state.insertToneShiftResult,
-  setSelectedTone: state.setSelectedTone,
-}));
+export const useToneShiftActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    runToneShift: state.runToneShift,
+    clearToneShiftResult: state.clearToneShiftResult,
+    insertToneShiftResult: state.insertToneShiftResult,
+    setSelectedTone: state.setSelectedTone,
+  }))
+);
 
-export const useExpandActions = () => useWorkspaceStore((state) => ({
-  runExpand: state.runExpand,
-  clearExpandResult: state.clearExpandResult,
-  insertExpandResult: state.insertExpandResult,
-}));
+export const useExpandActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    runExpand: state.runExpand,
+    clearExpandResult: state.clearExpandResult,
+    insertExpandResult: state.insertExpandResult,
+  }))
+);
 
-export const useShortenActions = () => useWorkspaceStore((state) => ({
-  runShorten: state.runShorten,
-  clearShortenResult: state.clearShortenResult,
-  insertShortenResult: state.insertShortenResult,
-}));
+export const useShortenActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    runShorten: state.runShorten,
+    clearShortenResult: state.clearShortenResult,
+    insertShortenResult: state.insertShortenResult,
+  }))
+);
 
-export const useRewriteChannelActions = () => useWorkspaceStore((state) => ({
-  runRewriteChannel: state.runRewriteChannel,
-  clearRewriteChannelResult: state.clearRewriteChannelResult,
-  insertRewriteChannelResult: state.insertRewriteChannelResult,
-}));
+export const useRewriteChannelActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    runRewriteChannel: state.runRewriteChannel,
+    clearRewriteChannelResult: state.clearRewriteChannelResult,
+    insertRewriteChannelResult: state.insertRewriteChannelResult,
+  }))
+);
 
-export const useBrandAlignmentActions = () => useWorkspaceStore((state) => ({
-  runBrandAlignment: state.runBrandAlignment,
-  clearBrandAlignmentResult: state.clearBrandAlignmentResult,
-}));
+export const useBrandAlignmentActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    runBrandAlignment: state.runBrandAlignment,
+    clearBrandAlignmentResult: state.clearBrandAlignmentResult,
+  }))
+);
 
-export const useProjectActions = () => useWorkspaceStore((state) => ({
-  setActiveProjectId: state.setActiveProjectId,
-  addProject: state.addProject,
-  updateProject: state.updateProject,
-  deleteProject: state.deleteProject,
-  refreshProjects: state.refreshProjects,
-}));
+export const useProjectActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    setActiveProjectId: state.setActiveProjectId,
+    addProject: state.addProject,
+    updateProject: state.updateProject,
+    deleteProject: state.deleteProject,
+    refreshProjects: state.refreshProjects,
+  }))
+);
 
-export const useDocumentActions = () => useWorkspaceStore((state) => ({
-  createDocument: state.createDocument,
-  updateDocumentTitle: state.updateDocumentTitle,
-  setSelectedText: state.setSelectedText,
-  setSelectionRange: state.setSelectionRange,
-}));
+export const useDocumentActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    createDocument: state.createDocument,
+    updateDocumentTitle: state.updateDocumentTitle,
+    setSelectedText: state.setSelectedText,
+  }))
+);
 
-export const useUIActions = () => useWorkspaceStore((state) => ({
-  toggleLeftSidebar: state.toggleLeftSidebar,
-  toggleRightSidebar: state.toggleRightSidebar,
-  setLeftSidebarOpen: state.setLeftSidebarOpen,
-  setRightSidebarOpen: state.setRightSidebarOpen,
-  setActiveToolId: state.setActiveToolId,
-  setActiveTool: state.setActiveTool,
-  setAIAnalysisMode: state.setAIAnalysisMode,
-}));
+export const useUIActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    toggleLeftSidebar: state.toggleLeftSidebar,
+    toggleRightSidebar: state.toggleRightSidebar,
+    setLeftSidebarOpen: state.setLeftSidebarOpen,
+    setRightSidebarOpen: state.setRightSidebarOpen,
+    setActiveTool: state.setActiveTool,
+    clearActiveTool: state.clearActiveTool,
+    setAIAnalysisMode: state.setAIAnalysisMode,
+  }))
+);
 
-export const useTemplateActions = () => useWorkspaceStore((state) => ({
-  setSelectedTemplateId: state.setSelectedTemplateId,
-  setIsGeneratingTemplate: state.setIsGeneratingTemplate,
-  clearToneShiftResult: state.clearToneShiftResult,
-  clearExpandResult: state.clearExpandResult,
-  clearShortenResult: state.clearShortenResult,
-  clearRewriteChannelResult: state.clearRewriteChannelResult,
-  clearBrandAlignmentResult: state.clearBrandAlignmentResult,
-}));
+export const useTemplateActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    setSelectedTemplateId: state.setSelectedTemplateId,
+    setIsGeneratingTemplate: state.setIsGeneratingTemplate,
+    clearToneShiftResult: state.clearToneShiftResult,
+    clearExpandResult: state.clearExpandResult,
+    clearShortenResult: state.clearShortenResult,
+    clearRewriteChannelResult: state.clearRewriteChannelResult,
+    clearBrandAlignmentResult: state.clearBrandAlignmentResult,
+  }))
+);

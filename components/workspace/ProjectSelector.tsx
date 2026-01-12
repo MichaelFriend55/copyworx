@@ -55,8 +55,11 @@ export function ProjectSelector({ className }: ProjectSelectorProps) {
   // Refs
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Get active project
-  const activeProject = projects.find((p) => p.id === activeProjectId);
+  // Get active project - memoize to avoid new references on every render
+  const activeProject = React.useMemo(
+    () => projects.find((p) => p.id === activeProjectId),
+    [projects, activeProjectId]
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {

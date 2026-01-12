@@ -4,6 +4,9 @@
  * 
  * Provides debounced auto-save functionality that saves directly to Zustand store.
  * The store's persist middleware then saves to localStorage automatically.
+ * 
+ * IMPORTANT: Uses getState() to avoid infinite render loops from function references
+ * in useEffect dependencies.
  */
 
 'use client';
@@ -19,7 +22,6 @@ import type { Editor } from '@tiptap/react';
  * @param delay - Debounce delay in milliseconds (default: 500ms)
  */
 export function useAutoSave(editor: Editor | null, delay: number = 500) {
-  const updateDocumentContent = useWorkspaceStore((state) => state.updateDocumentContent);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -37,7 +39,8 @@ export function useAutoSave(editor: Editor | null, delay: number = 500) {
       // Set new timeout for debounced save
       timeoutRef.current = setTimeout(() => {
         const html = editor.getHTML();
-        updateDocumentContent(html);
+        // Use getState() to get the latest function without causing re-renders
+        useWorkspaceStore.getState().updateDocumentContent(html);
         console.log('✅ Auto-save triggered');
       }, delay);
     };
@@ -54,5 +57,5 @@ export function useAutoSave(editor: Editor | null, delay: number = 500) {
       }
       console.log('🔌 Auto-save listener detached');
     };
-  }, [editor, updateDocumentContent, delay]);
+  }, [editor, delay]); // Only depend on editor and delay - no store functions
 }

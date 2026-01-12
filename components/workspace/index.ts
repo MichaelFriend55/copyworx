@@ -18,6 +18,8 @@ export { BrandVoiceTool } from './BrandVoiceTool';
 export { PersonasTool } from './PersonasTool';
 export { PersonaCard } from './PersonaCard';
 export { PersonaForm } from './PersonaForm';
+export { LeftSidebarContent } from './LeftSidebarContent';
+export { RightSidebarContent } from './RightSidebarContent';
 
 
 

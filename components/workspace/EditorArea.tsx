@@ -11,7 +11,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -36,8 +36,19 @@ interface EditorAreaProps {
  */
 export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
   const activeDocument = useWorkspaceStore((state) => state.activeDocument);
-  const updateDocumentTitle = useWorkspaceStore((state) => state.updateDocumentTitle);
-  const setSelectedText = useWorkspaceStore((state) => state.setSelectedText);
+  
+  // Use refs for store functions to avoid re-render loops in useEffect dependencies
+  // These functions are stable in Zustand but selecting them creates new references
+  const updateDocumentTitleRef = useRef(useWorkspaceStore.getState().updateDocumentTitle);
+  const setSelectedTextRef = useRef(useWorkspaceStore.getState().setSelectedText);
+  
+  // Keep refs updated (but don't trigger re-renders)
+  useEffect(() => {
+    return useWorkspaceStore.subscribe((state) => {
+      updateDocumentTitleRef.current = state.updateDocumentTitle;
+      setSelectedTextRef.current = state.setSelectedText;
+    });
+  }, []);
 
   // Initialize TipTap editor
   const editor = useEditor({
@@ -106,16 +117,16 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
   useEffect(() => {
     if (!editor) return;
 
-    // Handler for selection updates
+    // Handler for selection updates - uses ref to avoid dependency issues
     const handleSelectionUpdate = (): void => {
       const selection = getEditorSelection(editor);
       
       if (selection) {
         // User has text selected
-        setSelectedText(selection.text, selection.range);
+        setSelectedTextRef.current(selection.text, selection.range);
       } else {
         // No selection (cursor only or empty selection)
-        setSelectedText(null, null);
+        setSelectedTextRef.current(null, null);
       }
     };
 
@@ -133,7 +144,7 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
       editor.off('selectionUpdate', handleSelectionUpdate);
       editor.off('update', handleSelectionUpdate);
     };
-  }, [editor, setSelectedText]);
+  }, [editor]); // Only depend on editor - refs are stable
 
   // Export editor instance for toolbar
   useEffect(() => {
@@ -143,10 +154,10 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
     }
   }, [editor]);
 
-  // Handle title change
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    updateDocumentTitle(e.target.value);
-  };
+  // Handle title change - uses ref to avoid stale closure
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
+    updateDocumentTitleRef.current(e.target.value);
+  }, []);
 
   // Get word and character count
   const wordCount = editor?.storage.characterCount.words() || 0;

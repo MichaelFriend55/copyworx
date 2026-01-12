@@ -355,8 +355,8 @@ REMEMBER: Output ONLY HTML. No markdown, no preamble, no explanation. Just the H
         metadata: {
           textLength: generatedCopy.length,
           templateUsed: template.name,
-          brandVoiceApplied: applyBrandVoice && !!brandVoice,
-          personaUsed: !!persona,
+          brandVoiceApplied: Boolean(applyBrandVoice && brandVoice),
+          personaUsed: Boolean(persona),
         },
       },
       { status: 200 }
