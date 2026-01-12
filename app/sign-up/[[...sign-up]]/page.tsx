@@ -118,7 +118,7 @@ export default function SignUpPage() {
                 alert: 'border-red-200 bg-red-50 text-red-800',
               },
             }}
-            redirectUrl="/dashboard"
+            forceRedirectUrl="/dashboard"
             signInUrl="/sign-in"
           />
           

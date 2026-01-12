@@ -66,6 +66,8 @@ export const metadata: Metadata = {
 /**
  * Root layout component
  * Wraps all pages with ClerkProvider and global styles
+ * 
+ * Note: In Clerk 5.x, ClerkProvider must be inside the <body> tag
  */
 export default function RootLayout({
   children,
@@ -73,39 +75,39 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      appearance={{
-        variables: {
-          colorPrimary: '#F59E0B',
-          colorTextOnPrimaryBackground: '#1e2433',
-          colorBackground: '#ffffff',
-          colorInputBackground: '#ffffff',
-          colorInputText: '#1e2433',
-          borderRadius: '0.625rem',
-        },
-        elements: {
-          formButtonPrimary: 
-            'bg-amber-500 hover:bg-amber-400 text-ink-900 shadow-lg',
-          card: 'shadow-xl border border-border/50',
-          headerTitle: 'font-sans font-semibold text-ink-900',
-          headerSubtitle: 'text-ink-600',
-          socialButtonsBlockButton: 
-            'border border-border hover:bg-ink-50 transition-colors',
-          formFieldInput: 
-            'border-border focus:ring-amber-500 focus:border-amber-500',
-          footerActionLink: 'text-amber-600 hover:text-amber-700',
-        },
-      }}
+    <html 
+      lang="en" 
+      className={inter.variable}
+      suppressHydrationWarning
     >
-      <html 
-        lang="en" 
-        className={inter.variable}
-        suppressHydrationWarning
-      >
-        <body className={`${inter.className} min-h-screen bg-background antialiased`}>
+      <body className={`${inter.className} min-h-screen bg-background antialiased`}>
+        <ClerkProvider
+          appearance={{
+            variables: {
+              colorPrimary: '#F59E0B',
+              colorTextOnPrimaryBackground: '#1e2433',
+              colorBackground: '#ffffff',
+              colorInputBackground: '#ffffff',
+              colorInputText: '#1e2433',
+              borderRadius: '0.625rem',
+            },
+            elements: {
+              formButtonPrimary: 
+                'bg-amber-500 hover:bg-amber-400 text-ink-900 shadow-lg',
+              card: 'shadow-xl border border-border/50',
+              headerTitle: 'font-sans font-semibold text-ink-900',
+              headerSubtitle: 'text-ink-600',
+              socialButtonsBlockButton: 
+                'border border-border hover:bg-ink-50 transition-colors',
+              formFieldInput: 
+                'border-border focus:ring-amber-500 focus:border-amber-500',
+              footerActionLink: 'text-amber-600 hover:text-amber-700',
+            },
+          }}
+        >
           {children}
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

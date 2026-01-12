@@ -11,7 +11,7 @@
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { currentUser } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
 import { 
   FileText, 
   FolderOpen, 

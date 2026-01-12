@@ -9,7 +9,7 @@
  */
 
 import { UserButton } from '@clerk/nextjs';
-import { currentUser } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
