@@ -116,7 +116,8 @@ export function Sidebar({
           isOpen ? 'opacity-100' : 'opacity-0'
         )}
       >
-        <div className="h-full overflow-y-auto custom-scrollbar p-6">
+        {/* py-6 px-2 - minimal breathing room from edges */}
+        <div className="h-full overflow-y-auto custom-scrollbar py-6 px-2">
           {children}
         </div>
       </div>

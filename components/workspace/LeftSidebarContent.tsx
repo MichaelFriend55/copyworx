@@ -129,7 +129,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const isProjectsExpanded = expandedSections.has('projects');
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 px-4">
       {/* Templates Modal */}
       <TemplatesModal
         isOpen={templatesModalOpen}
@@ -195,9 +195,10 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           )}
         </button>
 
-        {/* Documents Content */}
+        {/* Documents Content - negative margin to cancel parent padding, allowing full-width buttons */}
+        {/* Scrollable document list with proper height constraints */}
         {expandedSections.has('documents') && (
-          <div className="max-h-[300px] overflow-hidden">
+          <div className="max-h-[400px] overflow-y-auto overflow-x-hidden -mx-4">
             <DocumentList 
               onDocumentClick={(doc) => {
                 console.log('📄 Document selected:', doc.title);

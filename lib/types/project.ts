@@ -12,6 +12,41 @@
 import type { BrandVoice } from './brand';
 
 /**
+ * Folder interface - Organizational container for documents
+ * 
+ * Folder Hierarchy:
+ * - Top-level folders: parentFolderId is undefined/null (sits at project root)
+ * - Nested folders: parentFolderId points to another folder (subfolder)
+ * 
+ * Example structure:
+ * Project: EFI
+ * ├── folders: [
+ * │     { id: "f1", name: "Website Copy", parentFolderId: null },
+ * │     { id: "f2", name: "Email Campaigns", parentFolderId: null },
+ * │     { id: "f3", name: "Q1 Launch", parentFolderId: "f2" }  ← nested under Email
+ * │   ]
+ */
+export interface Folder {
+  /** Unique identifier (UUID format) */
+  id: string;
+  
+  /** Folder name (e.g., "Website Copy") */
+  name: string;
+  
+  /** Project ID this folder belongs to */
+  projectId: string;
+  
+  /** Parent folder ID for nested folders (undefined/null for top-level) */
+  parentFolderId?: string;
+  
+  /** ISO date string when folder was created */
+  createdAt: string;
+  
+  /** ISO date string when folder was last updated */
+  updatedAt: string;
+}
+
+/**
  * Project interface - Top-level organizational unit
  */
 export interface Project {
@@ -26,6 +61,9 @@ export interface Project {
   
   /** Array of personas (target audience profiles) */
   personas: Persona[];
+  
+  /** Array of folders for document organization */
+  folders: Folder[];
   
   /** Array of documents (copywriting content) */
   documents: ProjectDocument[];
@@ -136,6 +174,24 @@ export interface ProjectDocument {
 }
 
 /**
+ * Type guard to check if a value is a valid Folder
+ */
+export function isFolder(value: unknown): value is Folder {
+  if (!value || typeof value !== 'object') return false;
+  
+  const obj = value as Record<string, unknown>;
+  
+  return (
+    typeof obj.id === 'string' &&
+    typeof obj.name === 'string' &&
+    typeof obj.projectId === 'string' &&
+    (obj.parentFolderId === undefined || obj.parentFolderId === null || typeof obj.parentFolderId === 'string') &&
+    typeof obj.createdAt === 'string' &&
+    typeof obj.updatedAt === 'string'
+  );
+}
+
+/**
  * Type guard to check if a value is a valid Project
  */
 export function isProject(value: unknown): value is Project {
@@ -148,6 +204,7 @@ export function isProject(value: unknown): value is Project {
     typeof obj.name === 'string' &&
     (obj.brandVoice === null || typeof obj.brandVoice === 'object') &&
     Array.isArray(obj.personas) &&
+    Array.isArray(obj.folders) &&
     Array.isArray(obj.documents) &&
     typeof obj.createdAt === 'string' &&
     typeof obj.updatedAt === 'string'
