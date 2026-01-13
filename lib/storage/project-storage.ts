@@ -40,13 +40,22 @@ function generateId(): string {
 }
 
 /**
- * Safely parse JSON from localStorage
+ * Safely parse JSON from localStorage with array validation
+ * CRITICAL: Validates that parsed data is actually an array
  */
 function safeParseJSON<T>(json: string | null, fallback: T): T {
   if (!json) return fallback;
   
   try {
-    return JSON.parse(json) as T;
+    const parsed = JSON.parse(json);
+    
+    // CRITICAL FIX: Validate that parsed data is an array if fallback is an array
+    if (Array.isArray(fallback) && !Array.isArray(parsed)) {
+      console.warn('⚠️ localStorage data is not an array, resetting to empty array');
+      return fallback;
+    }
+    
+    return parsed as T;
   } catch (error) {
     console.error('❌ Failed to parse JSON from localStorage:', error);
     return fallback;
@@ -84,6 +93,7 @@ function safeSetItem(key: string, value: string): boolean {
 
 /**
  * Get all projects from localStorage
+ * CRITICAL: Always returns an array, even if localStorage is corrupted
  */
 export function getAllProjects(): Project[] {
   if (typeof window === 'undefined') return [];
@@ -92,10 +102,23 @@ export function getAllProjects(): Project[] {
     const stored = localStorage.getItem(PROJECTS_KEY);
     const projects = safeParseJSON<Project[]>(stored, []);
     
+    // EXTRA SAFETY: Double-check it's an array
+    if (!Array.isArray(projects)) {
+      console.error('❌ Projects data corrupted, resetting to empty array');
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify([]));
+      return [];
+    }
+    
     console.log(`📂 Loaded ${projects.length} project(s) from storage`);
     return projects;
   } catch (error) {
     console.error('❌ Failed to get projects:', error);
+    // Reset corrupted data
+    try {
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify([]));
+    } catch (e) {
+      // Ignore if we can't even write
+    }
     return [];
   }
 }
