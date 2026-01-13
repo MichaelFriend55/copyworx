@@ -1,22 +1,28 @@
 /**
  * @file components/workspace/DocumentList.tsx
- * @description Document list component with version control display
+ * @description Context-aware document list with version control and individual document renaming
  * 
- * Displays documents grouped by baseTitle, showing version history.
- * Supports creating new documents, deleting, and loading into editor.
+ * Features:
+ * - Dynamic header showing active project name
+ * - Full document titles (baseTitle + version)
+ * - Collapsible version groups (shows latest by default)
+ * - Individual document rename (creates new document family)
+ * - Hover-to-reveal actions
+ * - Selected document highlighting
  */
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ProjectDocument } from '@/lib/types/project';
 import { useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import {
   getAllDocuments,
   createDocument,
   deleteDocument,
+  renameDocument,
 } from '@/lib/storage/document-storage';
-import { FileText, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileText, Plus, Trash2, ChevronRight, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -35,23 +41,19 @@ interface DocumentListProps {
 
 /**
  * Groups documents by baseTitle and sorts versions within each group
- * 
- * @param docs - Array of documents to group
- * @returns Map with baseTitle as key and sorted versions as value
  */
 function groupDocumentsByBaseTitle(
   docs: ProjectDocument[]
 ): Map<string, ProjectDocument[]> {
   const grouped = new Map<string, ProjectDocument[]>();
   
-  // Group by baseTitle
   for (const doc of docs) {
     const existing = grouped.get(doc.baseTitle) || [];
     existing.push(doc);
     grouped.set(doc.baseTitle, existing);
   }
   
-  // Sort versions within each group (ascending by version number)
+  // Sort versions ascending (latest at end)
   for (const [baseTitle, versions] of grouped) {
     versions.sort((a, b) => a.version - b.version);
     grouped.set(baseTitle, versions);
@@ -61,41 +63,195 @@ function groupDocumentsByBaseTitle(
 }
 
 // ============================================================================
-// Component
+// DocumentRow Component (with inline rename)
 // ============================================================================
 
-/**
- * DocumentList component
- * 
- * Displays documents grouped by baseTitle with version badges.
- * Supports create, delete, and click-to-load functionality.
- */
+interface DocumentRowProps {
+  doc: ProjectDocument;
+  isLatest: boolean;
+  isSelected: boolean;
+  isEditing: boolean;
+  editValue: string;
+  onSelect: (doc: ProjectDocument) => void;
+  onDelete: (doc: ProjectDocument) => void;
+  onStartRename: (doc: ProjectDocument) => void;
+  onEditValueChange: (value: string) => void;
+  onSaveRename: () => void;
+  onCancelRename: () => void;
+}
+
+function DocumentRow({
+  doc,
+  isLatest,
+  isSelected,
+  isEditing,
+  editValue,
+  onSelect,
+  onDelete,
+  onStartRename,
+  onEditValueChange,
+  onSaveRename,
+  onCancelRename,
+}: DocumentRowProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Focus input when entering edit mode
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onSaveRename();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancelRename();
+    }
+  };
+  
+  return (
+    <div
+      className={cn(
+        'group flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer',
+        'transition-colors duration-100',
+        isSelected
+          ? 'bg-primary/10 text-primary'
+          : 'hover:bg-accent/60'
+      )}
+      onClick={() => !isEditing && onSelect(doc)}
+    >
+      {/* File icon */}
+      <FileText className={cn(
+        'h-3 w-3 flex-shrink-0',
+        isSelected ? 'text-primary' : 'text-muted-foreground'
+      )} />
+      
+      {/* Title - editable or display */}
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => onEditValueChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={onSaveRename}
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            'flex-1 text-xs bg-background min-w-0',
+            'border border-primary rounded px-1 py-0.5',
+            'focus:outline-none focus:ring-1 focus:ring-primary'
+          )}
+          placeholder="Enter new name..."
+        />
+      ) : (
+        <span
+          className={cn(
+            'flex-1 truncate text-xs',
+            isSelected && 'font-medium',
+            isLatest && 'text-foreground',
+            !isLatest && 'text-muted-foreground'
+          )}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            onStartRename(doc);
+          }}
+          title={doc.title}
+        >
+          {doc.title}
+        </span>
+      )}
+      
+      {/* Latest badge - only for latest version in multi-version groups */}
+      {!isEditing && isLatest && (
+        <span className="flex-shrink-0 text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
+          latest
+        </span>
+      )}
+      
+      {/* Rename button - visible on hover */}
+      {!isEditing && (
+        <button
+          className={cn(
+            'flex-shrink-0 p-0.5 rounded',
+            'opacity-0 group-hover:opacity-100',
+            'hover:bg-accent',
+            'transition-opacity duration-100'
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onStartRename(doc);
+          }}
+          title="Rename (creates new document)"
+        >
+          <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+        </button>
+      )}
+      
+      {/* Delete button - visible on hover */}
+      {!isEditing && (
+        <button
+          className={cn(
+            'flex-shrink-0 p-0.5 rounded',
+            'opacity-0 group-hover:opacity-100',
+            'hover:bg-destructive/10 hover:text-destructive',
+            'transition-opacity duration-100'
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(doc);
+          }}
+          title="Delete"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
 export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
   
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
-  const [groupedDocs, setGroupedDocs] = useState<Map<string, ProjectDocument[]>>(
-    new Map()
-  );
+  const [groupedDocs, setGroupedDocs] = useState<Map<string, ProjectDocument[]>>(new Map());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   
-  // ---------------------------------------------------------------------------
-  // Store Hooks
-  // ---------------------------------------------------------------------------
+  // Individual document editing state
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  
+  const [isLoading, setIsLoading] = useState(false);
   
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
   
   // ---------------------------------------------------------------------------
+  // Derived State - Dynamic Labels
+  // ---------------------------------------------------------------------------
+  
+  // Get active project for dynamic button text
+  const activeProject = projects.find(p => p.id === activeProjectId);
+  
+  // Dynamic button text - shows "New {Project} Doc"
+  const newDocButtonText = activeProject
+    ? `New ${activeProject.name} Doc`
+    : 'New Doc';
+  
+  // ---------------------------------------------------------------------------
   // Data Loading
   // ---------------------------------------------------------------------------
   
-  /**
-   * Load documents from storage and group them
-   */
   const loadDocuments = useCallback(() => {
     if (!activeProjectId) {
       setDocuments([]);
@@ -106,18 +262,7 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     try {
       const docs = getAllDocuments(activeProjectId);
       setDocuments(docs);
-      
-      // Group documents by baseTitle
-      const grouped = groupDocumentsByBaseTitle(docs);
-      setGroupedDocs(grouped);
-      
-      // Auto-expand all groups initially
-      setExpandedGroups(new Set(grouped.keys()));
-      
-      console.log('📄 Documents loaded:', {
-        count: docs.length,
-        groups: grouped.size,
-      });
+      setGroupedDocs(groupDocumentsByBaseTitle(docs));
     } catch (error) {
       console.error('❌ Failed to load documents:', error);
       setDocuments([]);
@@ -125,120 +270,15 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     }
   }, [activeProjectId]);
   
-  // Load documents on mount and when activeProjectId changes
   useEffect(() => {
     loadDocuments();
   }, [loadDocuments]);
   
   // ---------------------------------------------------------------------------
-  // Event Handlers
+  // Handlers
   // ---------------------------------------------------------------------------
   
-  /**
-   * Handle creating a new document
-   */
-  const handleCreateDocument = useCallback(() => {
-    if (!activeProjectId) {
-      console.warn('⚠️ No active project to create document in');
-      return;
-    }
-    
-    // Prompt for document title
-    const title = window.prompt('Enter document title:');
-    
-    if (!title || title.trim().length === 0) {
-      console.log('📝 Document creation cancelled');
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      
-      const newDoc = createDocument(activeProjectId, title.trim());
-      
-      console.log('✅ Document created:', {
-        id: newDoc.id,
-        title: newDoc.title,
-      });
-      
-      // Reload document list
-      loadDocuments();
-      
-      // Optionally load the new document in the editor
-      onDocumentClick(newDoc);
-      
-    } catch (error) {
-      console.error('❌ Failed to create document:', error);
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : 'Failed to create document. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeProjectId, loadDocuments, onDocumentClick]);
-  
-  /**
-   * Handle deleting a document
-   */
-  const handleDeleteDocument = useCallback(
-    (docId: string, docTitle: string) => {
-      if (!activeProjectId) {
-        console.warn('⚠️ No active project');
-        return;
-      }
-      
-      // Confirm deletion
-      const confirmed = window.confirm(
-        `Are you sure you want to delete "${docTitle}"?\n\nThis action cannot be undone.`
-      );
-      
-      if (!confirmed) {
-        console.log('🚫 Document deletion cancelled');
-        return;
-      }
-      
-      try {
-        deleteDocument(activeProjectId, docId);
-        
-        console.log('🗑️ Document deleted:', {
-          id: docId,
-          title: docTitle,
-        });
-        
-        // Reload document list
-        loadDocuments();
-        
-      } catch (error) {
-        console.error('❌ Failed to delete document:', error);
-        window.alert(
-          error instanceof Error
-            ? error.message
-            : 'Failed to delete document. Please try again.'
-        );
-      }
-    },
-    [activeProjectId, loadDocuments]
-  );
-  
-  /**
-   * Handle clicking on a document
-   */
-  const handleDocumentClick = useCallback(
-    (doc: ProjectDocument) => {
-      console.log('📄 Document clicked:', {
-        id: doc.id,
-        title: doc.title,
-      });
-      onDocumentClick(doc);
-    },
-    [onDocumentClick]
-  );
-  
-  /**
-   * Toggle group expansion
-   */
+  /** Toggle version group expansion */
   const toggleGroup = useCallback((baseTitle: string) => {
     setExpandedGroups((prev) => {
       const next = new Set(prev);
@@ -251,128 +291,259 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     });
   }, []);
   
+  /** Start inline rename for a specific document */
+  const startRename = useCallback((doc: ProjectDocument) => {
+    setEditingDocId(doc.id);
+    setEditValue(doc.baseTitle);
+  }, []);
+  
+  /** 
+   * Save rename - renames individual document to a new family
+   * The document becomes v1 of a NEW baseTitle, breaking away from original group
+   */
+  const saveRename = useCallback(() => {
+    if (!editingDocId || !activeProjectId || !editValue.trim()) {
+      setEditingDocId(null);
+      setEditValue('');
+      return;
+    }
+    
+    // Find the document being edited
+    const doc = documents.find(d => d.id === editingDocId);
+    if (!doc) {
+      setEditingDocId(null);
+      setEditValue('');
+      return;
+    }
+    
+    const newTitle = editValue.trim();
+    
+    // If title unchanged, just cancel
+    if (newTitle === doc.baseTitle) {
+      setEditingDocId(null);
+      setEditValue('');
+      return;
+    }
+    
+    try {
+      // Rename document to new family (becomes v1 of new baseTitle)
+      const renamedDoc = renameDocument(activeProjectId, doc.id, newTitle);
+      
+      console.log('✅ Renamed document:', {
+        id: renamedDoc.id,
+        oldTitle: doc.title,
+        newTitle: renamedDoc.title,
+      });
+      
+      loadDocuments();
+      
+      // Update selection to the renamed document
+      setSelectedDocId(renamedDoc.id);
+      onDocumentClick(renamedDoc);
+      
+    } catch (error) {
+      console.error('❌ Failed to rename document:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to rename document');
+    } finally {
+      setEditingDocId(null);
+      setEditValue('');
+    }
+  }, [editingDocId, editValue, activeProjectId, documents, loadDocuments, onDocumentClick]);
+  
+  /** Cancel rename */
+  const cancelRename = useCallback(() => {
+    setEditingDocId(null);
+    setEditValue('');
+  }, []);
+  
+  /** Create new document */
+  const handleCreateDocument = useCallback(() => {
+    if (!activeProjectId) return;
+    
+    const defaultName = activeProject ? `${activeProject.name} Doc` : 'New Document';
+    const title = window.prompt('Document title:', defaultName);
+    if (!title?.trim()) return;
+    
+    try {
+      setIsLoading(true);
+      const newDoc = createDocument(activeProjectId, title.trim());
+      loadDocuments();
+      onDocumentClick(newDoc);
+      setSelectedDocId(newDoc.id);
+    } catch (error) {
+      console.error('❌ Failed to create document:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to create document');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeProjectId, activeProject, loadDocuments, onDocumentClick]);
+  
+  /** Delete a document */
+  const handleDelete = useCallback((doc: ProjectDocument) => {
+    if (!activeProjectId) return;
+    
+    // Get version count for this baseTitle
+    const versions = groupedDocs.get(doc.baseTitle) || [];
+    const versionInfo = versions.length > 1 
+      ? `\n\nNote: This will only delete "${doc.title}". ${versions.length - 1} other version(s) will remain.`
+      : '';
+    
+    const confirmed = window.confirm(
+      `Delete "${doc.title}"?${versionInfo}\n\nThis cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      deleteDocument(activeProjectId, doc.id);
+      loadDocuments();
+      if (selectedDocId === doc.id) {
+        setSelectedDocId(null);
+      }
+    } catch (error) {
+      console.error('❌ Failed to delete document:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to delete document');
+    }
+  }, [activeProjectId, groupedDocs, loadDocuments, selectedDocId]);
+  
+  /** Select and load document */
+  const handleSelect = useCallback((doc: ProjectDocument) => {
+    setSelectedDocId(doc.id);
+    onDocumentClick(doc);
+  }, [onDocumentClick]);
+  
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
   
   return (
     <div className="flex flex-col h-full">
-      {/* Header with New Document button */}
-      <div className="p-4 border-b border-border">
+      {/* Header with New Doc button only (section title is in collapsible header) */}
+      <div className="px-2 py-1.5 border-b border-border">
         <Button
+          variant="ghost"
+          size="sm"
           onClick={handleCreateDocument}
           disabled={!activeProjectId || isLoading}
-          className="w-full"
-          size="sm"
+          className="h-7 px-2 text-xs w-full justify-start"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          New Document
+          <Plus className="h-3 w-3 mr-1.5" />
+          {newDocButtonText}
         </Button>
       </div>
 
-      {/* Document List */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Show message if no active project */}
+      {/* Document list */}
+      <div className="flex-1 overflow-y-auto py-1 px-1">
+        {/* No project selected */}
         {!activeProjectId && (
-          <div className="text-center text-muted-foreground py-8">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No active project selected</p>
-            <p className="text-sm mt-1">Select a project to view documents</p>
+          <div className="text-center text-muted-foreground py-6">
+            <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+            <p className="text-xs">No project selected</p>
           </div>
         )}
 
-        {/* Group documents by baseTitle */}
+        {/* Document groups */}
         {activeProjectId && Array.from(groupedDocs.entries()).map(([baseTitle, versions]) => {
           const isExpanded = expandedGroups.has(baseTitle);
+          const latestVersion = versions[versions.length - 1];
           const hasMultipleVersions = versions.length > 1;
           
           return (
-            <div key={baseTitle} className="mb-3">
-              {/* Base title header (clickable to expand/collapse if multiple versions) */}
-              <div
-                className={cn(
-                  'flex items-center gap-2 p-2 rounded-md',
-                  hasMultipleVersions && 'cursor-pointer hover:bg-accent/50'
-                )}
-                onClick={() => hasMultipleVersions && toggleGroup(baseTitle)}
-              >
-                {/* Expand/collapse icon for groups with multiple versions */}
-                {hasMultipleVersions ? (
-                  isExpanded ? (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  )
-                ) : (
-                  <div className="w-4" /> // Spacer for alignment
-                )}
-                
-                <span className="font-medium text-sm flex-1 truncate">
-                  {baseTitle}
-                </span>
-                
-                {/* Version count badge */}
-                {hasMultipleVersions && (
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+            <div key={baseTitle} className="mb-1">
+              {/* Group header - only show for multi-version groups */}
+              {hasMultipleVersions && (
+                <div
+                  className={cn(
+                    'flex items-center gap-1 px-1.5 py-1 rounded',
+                    'hover:bg-accent/40 cursor-pointer',
+                    'transition-colors duration-100'
+                  )}
+                  onClick={() => toggleGroup(baseTitle)}
+                >
+                  {/* Expand/collapse chevron */}
+                  <ChevronRight className={cn(
+                    'h-3 w-3 text-muted-foreground transition-transform duration-150',
+                    isExpanded && 'rotate-90'
+                  )} />
+                  
+                  {/* Group title */}
+                  <span className="flex-1 text-xs font-medium truncate">
+                    {baseTitle}
+                  </span>
+                  
+                  {/* Version count */}
+                  <span className="text-[10px] text-muted-foreground mr-1">
                     {versions.length} versions
                   </span>
-                )}
-              </div>
-              
-              {/* Version list */}
-              {(isExpanded || !hasMultipleVersions) && (
-                <div className={cn('space-y-1', hasMultipleVersions && 'ml-6')}>
-                  {versions.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className={cn(
-                        'flex items-center gap-2 p-2 rounded-md',
-                        'hover:bg-accent cursor-pointer',
-                        'transition-colors duration-150'
-                      )}
-                    >
-                      {/* File icon */}
-                      <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      
-                      {/* Document title with version badge */}
-                      <div
-                        className="flex-1 flex items-center gap-2 min-w-0"
-                        onClick={() => handleDocumentClick(doc)}
-                      >
-                        <span className="truncate text-sm">
-                          {hasMultipleVersions ? `Version ${doc.version}` : doc.title}
-                        </span>
-                        <span className="flex-shrink-0 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
-                          v{doc.version}
-                        </span>
-                      </div>
-                      
-                      {/* Delete button */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:opacity-100 hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteDocument(doc.id, doc.title);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
                 </div>
               )}
+
+              {/* Document rows */}
+              <div className={cn(hasMultipleVersions && 'ml-3')}>
+                {hasMultipleVersions ? (
+                  isExpanded ? (
+                    // Show all versions when expanded
+                    versions.map((doc) => (
+                      <DocumentRow
+                        key={doc.id}
+                        doc={doc}
+                        isLatest={doc.id === latestVersion.id}
+                        isSelected={doc.id === selectedDocId}
+                        isEditing={editingDocId === doc.id}
+                        editValue={editValue}
+                        onSelect={handleSelect}
+                        onDelete={handleDelete}
+                        onStartRename={startRename}
+                        onEditValueChange={setEditValue}
+                        onSaveRename={saveRename}
+                        onCancelRename={cancelRename}
+                      />
+                    ))
+                  ) : (
+                    // Show only latest when collapsed
+                    <DocumentRow
+                      doc={latestVersion}
+                      isLatest={false}
+                      isSelected={latestVersion.id === selectedDocId}
+                      isEditing={editingDocId === latestVersion.id}
+                      editValue={editValue}
+                      onSelect={handleSelect}
+                      onDelete={handleDelete}
+                      onStartRename={startRename}
+                      onEditValueChange={setEditValue}
+                      onSaveRename={saveRename}
+                      onCancelRename={cancelRename}
+                    />
+                  )
+                ) : (
+                  // Single version document - show directly without group header
+                  <DocumentRow
+                    doc={latestVersion}
+                    isLatest={false}
+                    isSelected={latestVersion.id === selectedDocId}
+                    isEditing={editingDocId === latestVersion.id}
+                    editValue={editValue}
+                    onSelect={handleSelect}
+                    onDelete={handleDelete}
+                    onStartRename={startRename}
+                    onEditValueChange={setEditValue}
+                    onSaveRename={saveRename}
+                    onCancelRename={cancelRename}
+                  />
+                )}
+              </div>
             </div>
           );
         })}
 
         {/* Empty state */}
         {documents.length === 0 && activeProjectId && (
-          <div className="text-center text-muted-foreground py-8">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No documents yet</p>
-            <p className="text-sm mt-1">Create your first document!</p>
+          <div className="text-center text-muted-foreground py-6">
+            <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+            <p className="text-xs">No documents yet</p>
+            <p className="text-[10px] mt-0.5 opacity-70">
+              Click "{newDocButtonText}" to create one
+            </p>
           </div>
         )}
       </div>

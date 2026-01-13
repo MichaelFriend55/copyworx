@@ -444,6 +444,85 @@ export function deleteDocument(projectId: string, docId: string): void {
   });
 }
 
+/**
+ * Rename a document to a new document family
+ * 
+ * This creates a NEW document family by:
+ * - Changing the document's baseTitle to the new name
+ * - Resetting the version to 1
+ * - Clearing the parentVersionId (breaks link to original versions)
+ * - Updating the title to "{newBaseTitle} v1"
+ * 
+ * The original version group remains unchanged (other versions stay).
+ * 
+ * @param projectId - ID of the project
+ * @param docId - ID of the document to rename
+ * @param newBaseTitle - New base title for the document
+ * @returns The updated document
+ * @throws Error if project or document not found, or validation fails
+ */
+export function renameDocument(
+  projectId: string,
+  docId: string,
+  newBaseTitle: string
+): ProjectDocument {
+  if (typeof window === 'undefined') {
+    throw new Error('Cannot rename document in non-browser environment');
+  }
+  
+  // Validate new title
+  if (!newBaseTitle || newBaseTitle.trim().length === 0) {
+    throw new Error('Document title cannot be empty');
+  }
+  
+  const sanitizedTitle = newBaseTitle.trim().replace(/[<>]/g, '');
+  
+  if (sanitizedTitle.length > 200) {
+    throw new Error('Document title cannot exceed 200 characters');
+  }
+  
+  // Get project
+  const project = getProject(projectId);
+  if (!project) {
+    throw new Error(`Project not found: ${projectId}`);
+  }
+  
+  // Find document index
+  const docIndex = project.documents.findIndex(doc => doc.id === docId);
+  if (docIndex === -1) {
+    throw new Error(`Document not found: ${docId}`);
+  }
+  
+  const existingDoc = project.documents[docIndex];
+  const now = new Date().toISOString();
+  
+  // Create renamed document - new family, version 1
+  const renamedDoc: ProjectDocument = {
+    ...existingDoc,
+    baseTitle: sanitizedTitle,
+    title: `${sanitizedTitle} v1`,
+    version: 1,
+    parentVersionId: undefined, // Break link to original version group
+    modifiedAt: now,
+  };
+  
+  // Update the documents array
+  const updatedDocuments = [...project.documents];
+  updatedDocuments[docIndex] = renamedDoc;
+  
+  // Update project (persists to localStorage)
+  updateProject(projectId, { documents: updatedDocuments });
+  
+  console.log('✅ Document renamed to new family:', {
+    id: renamedDoc.id,
+    oldBaseTitle: existingDoc.baseTitle,
+    newBaseTitle: sanitizedTitle,
+    newTitle: renamedDoc.title,
+  });
+  
+  return renamedDoc;
+}
+
 // ============================================================================
 // Utility Functions
 // ============================================================================

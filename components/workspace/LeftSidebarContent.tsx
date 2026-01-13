@@ -22,7 +22,7 @@ import { Sparkles, ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { ProjectSelector } from '@/components/workspace/ProjectSelector';
 import DocumentList from '@/components/workspace/DocumentList';
-import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
@@ -42,6 +42,14 @@ interface LeftSidebarContentProps {
  */
 export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps) {
   const activeToolId = useWorkspaceStore((state) => state.activeToolId);
+  const activeProjectId = useActiveProjectId();
+  const projects = useProjects();
+  
+  // Get active project for dynamic section title
+  const activeProject = projects.find(p => p.id === activeProjectId);
+  const documentsSectionTitle = activeProject 
+    ? `${activeProject.name} Documents`
+    : 'Documents';
   
   // Track which sections are expanded (Projects, Documents, and Optimizer start expanded)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -162,7 +170,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
         )}
       </div>
 
-      {/* DOCUMENTS SECTION */}
+      {/* DOCUMENTS SECTION - Dynamic title based on active project */}
       <div className="space-y-1">
         {/* Section Header - Collapsible */}
         <button
@@ -177,7 +185,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-apple-text-dark" />
             <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
-              Documents
+              {documentsSectionTitle}
             </span>
           </div>
           {expandedSections.has('documents') ? (
