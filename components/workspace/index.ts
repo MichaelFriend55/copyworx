@@ -5,6 +5,7 @@
 
 export { Sidebar } from './Sidebar';
 export { EditorArea } from './EditorArea';
+export type { EditorAreaHandle } from './EditorArea';
 export { Toolbar } from './Toolbar';
 export { WorkspaceLayout } from './WorkspaceLayout';
 export { ToneShifter } from './ToneShifter';
@@ -20,6 +21,7 @@ export { PersonaCard } from './PersonaCard';
 export { PersonaForm } from './PersonaForm';
 export { LeftSidebarContent } from './LeftSidebarContent';
 export { RightSidebarContent } from './RightSidebarContent';
+export { default as DocumentList } from './DocumentList';
 
 
 

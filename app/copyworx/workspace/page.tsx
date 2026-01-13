@@ -1,22 +1,26 @@
 /**
  * @file app/copyworx/workspace/page.tsx
- * @description Main workspace page - FULLY REBUILT AND WORKING
+ * @description Main workspace page with document version control
  * 
- * Root cause of previous crashes: Zustand v5 requires useShallow wrapper
- * instead of shallow as second argument to selectors.
+ * Features:
+ * - Document list with version grouping
+ * - Editor with save/save-as-new-version
+ * - Project switching
+ * - AI tools
  */
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { WorkspaceLayout } from '@/components/workspace/WorkspaceLayout';
-import { EditorArea } from '@/components/workspace/EditorArea';
+import { EditorArea, type EditorAreaHandle } from '@/components/workspace/EditorArea';
 import { LeftSidebarContent } from '@/components/workspace/LeftSidebarContent';
 import { RightSidebarContent } from '@/components/workspace/RightSidebarContent';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { initializeProjectSystem } from '@/lib/utils/project-utils';
 import type { Editor } from '@tiptap/react';
+import type { ProjectDocument } from '@/lib/types/project';
 
 /**
  * Loading spinner component
@@ -44,6 +48,9 @@ export default function WorkspacePage() {
   
   // Editor instance state
   const [editor, setEditor] = useState<Editor | null>(null);
+  
+  // Ref for EditorArea to call loadDocument
+  const editorRef = useRef<EditorAreaHandle>(null);
   
   // Prevent double initialization in StrictMode
   const initRef = useRef(false);
@@ -84,6 +91,24 @@ export default function WorkspacePage() {
     setEditor(editorInstance);
   }, []);
   
+  /**
+   * Handle document click from DocumentList
+   * Loads the selected document into the editor
+   */
+  const handleDocumentClick = useCallback((doc: ProjectDocument) => {
+    console.log('📄 Document clicked in workspace:', {
+      id: doc.id,
+      title: doc.title,
+      version: doc.version,
+    });
+    
+    if (editorRef.current) {
+      editorRef.current.loadDocument(doc);
+    } else {
+      console.warn('⚠️ Editor ref not ready, cannot load document');
+    }
+  }, []);
+  
   // Show loading during SSR/hydration
   if (!mounted) {
     return <LoadingSpinner />;
@@ -91,10 +116,10 @@ export default function WorkspacePage() {
   
   return (
     <WorkspaceLayout
-      leftSidebar={<LeftSidebarContent />}
+      leftSidebar={<LeftSidebarContent onDocumentClick={handleDocumentClick} />}
       rightSidebar={<RightSidebarContent editor={editor} />}
     >
-      <EditorArea onEditorReady={handleEditorReady} />
+      <EditorArea ref={editorRef} onEditorReady={handleEditorReady} />
     </WorkspaceLayout>
   );
 }

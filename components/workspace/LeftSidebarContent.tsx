@@ -1,6 +1,6 @@
 /**
  * @file components/workspace/LeftSidebarContent.tsx
- * @description Left sidebar content with tool selector and collapsible sections
+ * @description Left sidebar content with document list, tool selector, and collapsible sections
  * 
  * IMPORTANT: This component is extracted to its own file to prevent
  * infinite re-render loops. Defining components inline inside parent
@@ -9,6 +9,7 @@
  * 
  * Features:
  * - Project selector section
+ * - Document list with version control
  * - AI@Worx Templates modal trigger
  * - Collapsible tool sections
  * - Active tool highlighting
@@ -17,24 +18,34 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Sparkles, ChevronRight, ChevronDown } from 'lucide-react';
+import { Sparkles, ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { ProjectSelector } from '@/components/workspace/ProjectSelector';
+import DocumentList from '@/components/workspace/DocumentList';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { cn } from '@/lib/utils';
+import type { ProjectDocument } from '@/lib/types/project';
+
+/**
+ * Props for LeftSidebarContent
+ */
+interface LeftSidebarContentProps {
+  /** Callback when a document is clicked in the DocumentList */
+  onDocumentClick?: (doc: ProjectDocument) => void;
+}
 
 /**
  * Left sidebar content - Tool selector with collapsible sections
  * 
  * Extracted to prevent infinite re-render loops when defined inline.
  */
-export function LeftSidebarContent() {
+export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps) {
   const activeToolId = useWorkspaceStore((state) => state.activeToolId);
   
-  // Track which sections are expanded (Projects and Optimizer start expanded)
+  // Track which sections are expanded (Projects, Documents, and Optimizer start expanded)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['projects', 'optimizer'])
+    new Set(['projects', 'documents', 'optimizer'])
   );
 
   // Templates modal state
@@ -147,13 +158,44 @@ export function LeftSidebarContent() {
           <div className="ml-6 py-3 space-y-3">
             {/* Project Selector */}
             <ProjectSelector />
-            
-            {/* Future: Documents & Folders */}
-            <div className="pt-2">
-              <p className="text-xs text-gray-500 italic">
-                Documents & Folders coming soon
-              </p>
-            </div>
+          </div>
+        )}
+      </div>
+
+      {/* DOCUMENTS SECTION */}
+      <div className="space-y-1">
+        {/* Section Header - Collapsible */}
+        <button
+          onClick={() => toggleSection('documents')}
+          className={cn(
+            'w-full flex items-center justify-between p-2 rounded-lg',
+            'hover:bg-apple-gray-bg transition-colors duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+          )}
+          aria-expanded={expandedSections.has('documents')}
+        >
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-apple-text-dark" />
+            <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
+              Documents
+            </span>
+          </div>
+          {expandedSections.has('documents') ? (
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          )}
+        </button>
+
+        {/* Documents Content */}
+        {expandedSections.has('documents') && (
+          <div className="max-h-[300px] overflow-hidden">
+            <DocumentList 
+              onDocumentClick={(doc) => {
+                console.log('📄 Document selected:', doc.title);
+                onDocumentClick?.(doc);
+              }}
+            />
           </div>
         )}
       </div>

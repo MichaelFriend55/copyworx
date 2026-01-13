@@ -74,15 +74,41 @@ export interface Persona {
 }
 
 /**
- * Project Document interface - Copywriting content
- * (Extends base Document with project-specific fields)
+ * Project Document interface - Copywriting content with version control
+ * 
+ * Version Control Model:
+ * - baseTitle: Root name without version (e.g., "EFI Homepage Hero")
+ * - title: Computed as "{baseTitle} v{version}" (e.g., "EFI Homepage Hero v2")
+ * - version: Sequential number (1, 2, 3, etc.)
+ * - parentVersionId: Links to the original version this was created from
+ * 
+ * This enables:
+ * 1. Tracking document versions (v1, v2, v3)
+ * 2. Creating new versions while preserving originals
+ * 3. Linking versions together via parentVersionId
+ * 4. Grouping versions in the UI by baseTitle
  */
 export interface ProjectDocument {
-  /** Unique identifier */
+  /** Unique identifier (UUID format) */
   id: string;
   
-  /** Document title */
+  /** Project this document belongs to */
+  projectId: string;
+  
+  /** Base title without version number (e.g., "EFI Homepage Hero") */
+  baseTitle: string;
+  
+  /** Full document title, computed as "{baseTitle} v{version}" */
   title: string;
+  
+  /** Version number (1, 2, 3, etc.) */
+  version: number;
+  
+  /** ID of the parent version this was created from (optional) */
+  parentVersionId?: string;
+  
+  /** Folder ID for future folder organization support (optional) */
+  folderId?: string;
   
   /** Document content (HTML from TipTap editor) */
   content: string;

@@ -1,17 +1,18 @@
 /**
  * @file components/workspace/EditorArea.tsx
- * @description TipTap rich text editor - REBUILT FOR PROPER PERSISTENCE
+ * @description TipTap rich text editor with version control
  * 
  * Features:
  * - TipTap editor with full formatting
  * - Automatic content persistence
  * - Real-time word/character count
+ * - Version control (save vs save-as-new-version)
  * - Apple-style aesthetic
  */
 
 'use client';
 
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -20,10 +21,14 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Typography from '@tiptap/extension-typography';
-import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
 import { useAutoSave } from '@/lib/hooks/useAutoSave';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
+import { createDocumentVersion, updateDocument } from '@/lib/storage/document-storage';
+import type { ProjectDocument } from '@/lib/types/project';
+import { Button } from '@/components/ui/button';
+import { Save, Copy, FileText } from 'lucide-react';
 
 interface EditorAreaProps {
   className?: string;
@@ -32,10 +37,32 @@ interface EditorAreaProps {
 }
 
 /**
- * Main editor area with TipTap rich text editor
+ * Ref handle for EditorArea - exposes loadDocument method
  */
-export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
+export interface EditorAreaHandle {
+  loadDocument: (doc: ProjectDocument) => void;
+}
+
+/**
+ * Main editor area with TipTap rich text editor and version control
+ */
+export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
+  function EditorArea({ className, onEditorReady }, ref) {
   const activeDocument = useWorkspaceStore((state) => state.activeDocument);
+  const activeProjectId = useActiveProjectId();
+  
+  // ---------------------------------------------------------------------------
+  // Version Control State
+  // ---------------------------------------------------------------------------
+  
+  /** Currently loaded ProjectDocument with version info */
+  const [currentDocument, setCurrentDocument] = useState<ProjectDocument | null>(null);
+  
+  /** Save operation loading state */
+  const [isSaving, setIsSaving] = useState(false);
+  
+  /** Save operation status message */
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
   
   // Use refs for store functions to avoid re-render loops in useEffect dependencies
   // These functions are stable in Zustand but selecting them creates new references
@@ -154,6 +181,133 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
     }
   }, [editor]);
 
+  // ---------------------------------------------------------------------------
+  // Version Control Handlers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Load a ProjectDocument into the editor
+   * Called from DocumentList's onDocumentClick
+   */
+  const handleLoadDocument = useCallback((doc: ProjectDocument) => {
+    if (!editor) {
+      console.warn('⚠️ Editor not ready');
+      return;
+    }
+    
+    // Set the current document with version info
+    setCurrentDocument(doc);
+    
+    // Load content into editor
+    editor.commands.setContent(doc.content || '');
+    
+    // Clear any previous save status
+    setSaveStatus(null);
+    
+    console.log('📄 Document loaded:', {
+      id: doc.id,
+      title: doc.title,
+      version: doc.version,
+      baseTitle: doc.baseTitle,
+    });
+  }, [editor]);
+
+  /**
+   * Save current content to the existing document version
+   * Updates content without creating a new version
+   */
+  const handleSave = useCallback(async () => {
+    if (!editor || !currentDocument || !activeProjectId) {
+      console.warn('⚠️ Cannot save: missing editor, document, or project');
+      return;
+    }
+    
+    try {
+      setIsSaving(true);
+      setSaveStatus(null);
+      
+      const content = editor.getHTML();
+      
+      // Update the existing document
+      updateDocument(activeProjectId, currentDocument.id, {
+        content,
+        title: currentDocument.title, // Keep existing title
+      });
+      
+      // Update local state with new modifiedAt
+      setCurrentDocument((prev) => prev ? {
+        ...prev,
+        content,
+        modifiedAt: new Date().toISOString(),
+      } : null);
+      
+      setSaveStatus('Saved');
+      console.log('✅ Document saved:', {
+        id: currentDocument.id,
+        version: currentDocument.version,
+      });
+      
+      // Clear status after 2 seconds
+      setTimeout(() => setSaveStatus(null), 2000);
+      
+    } catch (error) {
+      console.error('❌ Failed to save document:', error);
+      setSaveStatus('Save failed');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editor, currentDocument, activeProjectId]);
+
+  /**
+   * Save current content as a new version
+   * Creates a new document version, preserving the original
+   */
+  const handleSaveAsNewVersion = useCallback(async () => {
+    if (!editor || !currentDocument || !activeProjectId) {
+      console.warn('⚠️ Cannot save as new version: missing editor, document, or project');
+      return;
+    }
+    
+    try {
+      setIsSaving(true);
+      setSaveStatus(null);
+      
+      const content = editor.getHTML();
+      
+      // Create new version from current document
+      const newVersion = createDocumentVersion(
+        activeProjectId,
+        currentDocument.id,
+        content
+      );
+      
+      // Update to the new version
+      setCurrentDocument(newVersion);
+      
+      setSaveStatus(`Created v${newVersion.version}`);
+      console.log('✅ New version created:', {
+        id: newVersion.id,
+        title: newVersion.title,
+        version: newVersion.version,
+        parentVersionId: newVersion.parentVersionId,
+      });
+      
+      // Clear status after 3 seconds
+      setTimeout(() => setSaveStatus(null), 3000);
+      
+    } catch (error) {
+      console.error('❌ Failed to create new version:', error);
+      setSaveStatus('Version creation failed');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editor, currentDocument, activeProjectId]);
+
+  // Expose loadDocument via ref for parent components
+  useImperativeHandle(ref, () => ({
+    loadDocument: handleLoadDocument,
+  }), [handleLoadDocument]);
+
   // Handle title change - uses ref to avoid stale closure
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     updateDocumentTitleRef.current(e.target.value);
@@ -188,8 +342,62 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
         }}
       >
-        {activeDocument ? (
+        {(activeDocument || currentDocument) ? (
           <>
+            {/* Version Control Header */}
+            {currentDocument && (
+              <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+                {/* Document info with version badge */}
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-gray-400" />
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-700 truncate max-w-[300px]">
+                      {currentDocument.baseTitle}
+                    </span>
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded font-medium">
+                      v{currentDocument.version}
+                    </span>
+                  </div>
+                  {/* Save status indicator */}
+                  {saveStatus && (
+                    <span className={cn(
+                      'text-xs px-2 py-1 rounded',
+                      saveStatus.includes('failed') 
+                        ? 'bg-destructive/10 text-destructive' 
+                        : 'bg-green-100 text-green-700'
+                    )}>
+                      {saveStatus}
+                    </span>
+                  )}
+                </div>
+
+                {/* Save buttons */}
+                <div className="flex items-center gap-2">
+                  {/* Regular Save button */}
+                  <Button 
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </Button>
+
+                  {/* Save as new version button */}
+                  <Button 
+                    onClick={handleSaveAsNewVersion}
+                    disabled={isSaving}
+                    size="sm"
+                    variant="default"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Save as v{currentDocument.version + 1}
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             {/* Document header */}
             <div
               className="px-16 pt-10 pb-6 border-b border-gray-200"
@@ -198,7 +406,7 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
               {/* Title input */}
               <input
                 type="text"
-                value={activeDocument.title}
+                value={currentDocument?.title || activeDocument?.title || 'Untitled'}
                 onChange={handleTitleChange}
                 className={cn(
                   'w-full text-3xl font-sans font-semibold',
@@ -210,6 +418,7 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
                 )}
                 placeholder="Untitled Document"
                 aria-label="Document title"
+                readOnly={!!currentDocument} // Read-only when using version control
               />
 
               {/* Document metadata */}
@@ -220,8 +429,16 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
                 <span>•</span>
                 <span>
                   Last edited{' '}
-                  {new Date(activeDocument.modifiedAt).toLocaleDateString()}
+                  {new Date(currentDocument?.modifiedAt || activeDocument?.modifiedAt || new Date()).toLocaleDateString()}
                 </span>
+                {currentDocument?.parentVersionId && (
+                  <>
+                    <span>•</span>
+                    <span className="text-gray-400">
+                      Branched from earlier version
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -421,4 +638,4 @@ export function EditorArea({ className, onEditorReady }: EditorAreaProps) {
       `}</style>
     </div>
   );
-}
+});
