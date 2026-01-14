@@ -285,8 +285,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const projects = getAllProjects();
         const activeProjectId = getActiveProjectId();
         
-        set({ projects, activeProjectId });
-        console.log('🔄 Projects refreshed:', projects.length);
+        // SAFETY: Ensure projects is always an array (defensive coding)
+        const safeProjects = Array.isArray(projects) ? projects : [];
+        
+        set({ projects: safeProjects, activeProjectId });
+        console.log('🔄 Projects refreshed:', safeProjects.length);
       },
 
       // Document actions
@@ -1114,8 +1117,11 @@ export const useSelectionRange = () => useWorkspaceStore((state) => state.select
 
 /**
  * Project selector hooks
+ * SAFETY: useProjects ensures we always return an array to prevent ".find is not a function" errors
  */
-export const useProjects = () => useWorkspaceStore((state) => state.projects);
+export const useProjects = () => useWorkspaceStore((state) => 
+  Array.isArray(state.projects) ? state.projects : []
+);
 export const useActiveProjectId = () => useWorkspaceStore((state) => state.activeProjectId);
 
 /**

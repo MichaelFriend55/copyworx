@@ -94,6 +94,7 @@ function safeSetItem(key: string, value: string): boolean {
 /**
  * Get all projects from localStorage
  * CRITICAL: Always returns an array, even if localStorage is corrupted
+ * CRITICAL: Ensures each project has proper array fields to prevent ".find is not a function" errors
  */
 export function getAllProjects(): Project[] {
   if (typeof window === 'undefined') return [];
@@ -109,8 +110,17 @@ export function getAllProjects(): Project[] {
       return [];
     }
     
-    console.log(`📂 Loaded ${projects.length} project(s) from storage`);
-    return projects;
+    // CRITICAL FIX: Ensure each project has required array fields
+    // This prevents ".find is not a function" errors from legacy/corrupted data
+    const sanitizedProjects = projects.map((project) => ({
+      ...project,
+      personas: Array.isArray(project.personas) ? project.personas : [],
+      folders: Array.isArray(project.folders) ? project.folders : [],
+      documents: Array.isArray(project.documents) ? project.documents : [],
+    }));
+    
+    console.log(`📂 Loaded ${sanitizedProjects.length} project(s) from storage`);
+    return sanitizedProjects;
   } catch (error) {
     console.error('❌ Failed to get projects:', error);
     // Reset corrupted data
