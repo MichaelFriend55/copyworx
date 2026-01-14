@@ -158,14 +158,14 @@ export interface SectionConfig {
 export const SECTIONS: SectionConfig[] = [
   {
     id: 'optimizer',
-    name: 'My Copy Optimizer',
+    name: 'Copy Optimizer',
     icon: Wand2,
     description: 'Improve and refine your copy',
     defaultExpanded: true,
   },
   {
     id: 'brand',
-    name: 'My Brand & Audience',
+    name: 'Brand & Audience',
     icon: Users,
     description: 'Brand voice and target personas',
     defaultExpanded: false,

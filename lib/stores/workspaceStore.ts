@@ -18,7 +18,7 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import type { Document, ToolCategory, AIAnalysisMode } from '@/lib/types';
 import type { Editor } from '@tiptap/react';
-import type { Project } from '@/lib/types/project';
+import type { Project, Snippet } from '@/lib/types/project';
 import type { BrandVoice, BrandAlignmentResult } from '@/lib/types/brand';
 import {
   getAllProjects,
@@ -167,6 +167,14 @@ interface WorkspaceState {
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   refreshProjects: () => void;
+  
+  // Snippet actions
+  createSnippet: (name: string, content: string, description?: string) => Snippet | null;
+  updateSnippet: (snippetId: string, updates: Partial<Pick<Snippet, 'name' | 'description' | 'content'>>) => void;
+  deleteSnippet: (snippetId: string) => void;
+  duplicateSnippet: (snippetId: string) => Snippet | null;
+  getSnippetsForActiveProject: () => Snippet[];
+  searchSnippets: (query: string) => Snippet[];
   
   // Document actions
   createDocument: (title: string) => void;
@@ -389,6 +397,218 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         
         set({ projects: safeProjects, activeProjectId });
         console.log('🔄 Projects refreshed:', safeProjects.length);
+      },
+
+      // Snippet actions
+      createSnippet: (name: string, content: string, description?: string): Snippet | null => {
+        const { projects, activeProjectId, updateProject } = get();
+        
+        if (!activeProjectId) {
+          console.error('❌ Cannot create snippet: No active project');
+          return null;
+        }
+        
+        // Validate name
+        const trimmedName = name.trim();
+        if (!trimmedName || trimmedName.length > 100) {
+          console.error('❌ Snippet name is required and must be under 100 characters');
+          return null;
+        }
+        
+        // Validate content
+        if (!content || content.length > 10000) {
+          console.error('❌ Snippet content is required and must be under 10,000 characters');
+          return null;
+        }
+        
+        // Validate description
+        if (description && description.length > 200) {
+          console.error('❌ Snippet description must be under 200 characters');
+          return null;
+        }
+        
+        const project = projects.find((p) => p.id === activeProjectId);
+        if (!project) {
+          console.error('❌ Active project not found:', activeProjectId);
+          return null;
+        }
+        
+        // Check snippet limit
+        const currentSnippets = project.snippets || [];
+        if (currentSnippets.length >= 100) {
+          console.error('❌ Snippet limit reached (100 per project)');
+          return null;
+        }
+        
+        const now = new Date().toISOString();
+        const newSnippet: Snippet = {
+          id: crypto.randomUUID(),
+          projectId: activeProjectId,
+          name: trimmedName,
+          description: description?.trim() || undefined,
+          content,
+          createdAt: now,
+          updatedAt: now,
+        };
+        
+        // Update project with new snippet
+        const updatedSnippets = [...currentSnippets, newSnippet];
+        updateProject(activeProjectId, { snippets: updatedSnippets });
+        
+        console.log('✅ Snippet created:', newSnippet.name);
+        return newSnippet;
+      },
+      
+      updateSnippet: (snippetId: string, updates: Partial<Pick<Snippet, 'name' | 'description' | 'content'>>) => {
+        const { projects, activeProjectId, updateProject } = get();
+        
+        if (!activeProjectId) {
+          console.error('❌ Cannot update snippet: No active project');
+          return;
+        }
+        
+        const project = projects.find((p) => p.id === activeProjectId);
+        if (!project) {
+          console.error('❌ Active project not found:', activeProjectId);
+          return;
+        }
+        
+        const snippets = project.snippets || [];
+        const snippetIndex = snippets.findIndex((s) => s.id === snippetId);
+        
+        if (snippetIndex === -1) {
+          console.error('❌ Snippet not found:', snippetId);
+          return;
+        }
+        
+        // Validate updates
+        if (updates.name !== undefined) {
+          const trimmedName = updates.name.trim();
+          if (!trimmedName || trimmedName.length > 100) {
+            console.error('❌ Snippet name is required and must be under 100 characters');
+            return;
+          }
+          updates.name = trimmedName;
+        }
+        
+        if (updates.content !== undefined && updates.content.length > 10000) {
+          console.error('❌ Snippet content must be under 10,000 characters');
+          return;
+        }
+        
+        if (updates.description !== undefined && updates.description.length > 200) {
+          console.error('❌ Snippet description must be under 200 characters');
+          return;
+        }
+        
+        // Update snippet
+        const updatedSnippets = [...snippets];
+        updatedSnippets[snippetIndex] = {
+          ...updatedSnippets[snippetIndex],
+          ...updates,
+          updatedAt: new Date().toISOString(),
+        };
+        
+        updateProject(activeProjectId, { snippets: updatedSnippets });
+        console.log('✅ Snippet updated:', snippetId);
+      },
+      
+      deleteSnippet: (snippetId: string) => {
+        const { projects, activeProjectId, updateProject } = get();
+        
+        if (!activeProjectId) {
+          console.error('❌ Cannot delete snippet: No active project');
+          return;
+        }
+        
+        const project = projects.find((p) => p.id === activeProjectId);
+        if (!project) {
+          console.error('❌ Active project not found:', activeProjectId);
+          return;
+        }
+        
+        const snippets = project.snippets || [];
+        const filteredSnippets = snippets.filter((s) => s.id !== snippetId);
+        
+        if (filteredSnippets.length === snippets.length) {
+          console.error('❌ Snippet not found:', snippetId);
+          return;
+        }
+        
+        updateProject(activeProjectId, { snippets: filteredSnippets });
+        console.log('🗑️ Snippet deleted:', snippetId);
+      },
+      
+      duplicateSnippet: (snippetId: string): Snippet | null => {
+        const { projects, activeProjectId, updateProject } = get();
+        
+        if (!activeProjectId) {
+          console.error('❌ Cannot duplicate snippet: No active project');
+          return null;
+        }
+        
+        const project = projects.find((p) => p.id === activeProjectId);
+        if (!project) {
+          console.error('❌ Active project not found:', activeProjectId);
+          return null;
+        }
+        
+        const snippets = project.snippets || [];
+        const originalSnippet = snippets.find((s) => s.id === snippetId);
+        
+        if (!originalSnippet) {
+          console.error('❌ Snippet not found:', snippetId);
+          return null;
+        }
+        
+        // Check snippet limit
+        if (snippets.length >= 100) {
+          console.error('❌ Snippet limit reached (100 per project)');
+          return null;
+        }
+        
+        const now = new Date().toISOString();
+        const duplicatedSnippet: Snippet = {
+          id: crypto.randomUUID(),
+          projectId: activeProjectId,
+          name: `${originalSnippet.name} (copy)`,
+          description: originalSnippet.description,
+          content: originalSnippet.content,
+          createdAt: now,
+          updatedAt: now,
+        };
+        
+        const updatedSnippets = [...snippets, duplicatedSnippet];
+        updateProject(activeProjectId, { snippets: updatedSnippets });
+        
+        console.log('✅ Snippet duplicated:', duplicatedSnippet.name);
+        return duplicatedSnippet;
+      },
+      
+      getSnippetsForActiveProject: (): Snippet[] => {
+        const { projects, activeProjectId } = get();
+        
+        if (!activeProjectId) return [];
+        
+        const project = projects.find((p) => p.id === activeProjectId);
+        return project?.snippets || [];
+      },
+      
+      searchSnippets: (query: string): Snippet[] => {
+        const { getSnippetsForActiveProject } = get();
+        const snippets = getSnippetsForActiveProject();
+        
+        if (!query.trim()) return snippets;
+        
+        const lowerQuery = query.toLowerCase().trim();
+        
+        return snippets.filter((snippet) => {
+          const nameMatch = snippet.name.toLowerCase().includes(lowerQuery);
+          const descriptionMatch = snippet.description?.toLowerCase().includes(lowerQuery) || false;
+          const contentMatch = snippet.content.toLowerCase().substring(0, 100).includes(lowerQuery);
+          
+          return nameMatch || descriptionMatch || contentMatch;
+        });
       },
 
       // Document actions

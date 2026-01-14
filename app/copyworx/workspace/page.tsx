@@ -17,10 +17,11 @@ import { WorkspaceLayout } from '@/components/workspace/WorkspaceLayout';
 import { EditorArea, type EditorAreaHandle } from '@/components/workspace/EditorArea';
 import { LeftSidebarContent } from '@/components/workspace/LeftSidebarContent';
 import { RightSidebarContent } from '@/components/workspace/RightSidebarContent';
+import { EditorContextMenu, SaveSnippetModal } from '@/components/workspace/snippets';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { initializeProjectSystem } from '@/lib/utils/project-utils';
 import type { Editor } from '@tiptap/react';
-import type { ProjectDocument } from '@/lib/types/project';
+import type { ProjectDocument, Snippet } from '@/lib/types/project';
 
 /**
  * Loading spinner component
@@ -54,6 +55,15 @@ export default function WorkspacePage() {
   
   // Prevent double initialization in StrictMode
   const initRef = useRef(false);
+  
+  // Context menu state
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  
+  // Save as Snippet modal state
+  const [saveSnippetModalOpen, setSaveSnippetModalOpen] = useState(false);
+  const [snippetSelectionHtml, setSnippetSelectionHtml] = useState('');
+  const [snippetSelectionText, setSnippetSelectionText] = useState('');
   
   // Wait for client-side mounting
   useEffect(() => {
@@ -109,17 +119,144 @@ export default function WorkspacePage() {
     }
   }, []);
   
+  /**
+   * Handle snippet insertion from SnippetsList
+   * Inserts the snippet content at the current cursor position
+   */
+  const handleInsertSnippet = useCallback((snippet: Snippet) => {
+    if (!editor) {
+      console.warn('⚠️ Editor not ready, cannot insert snippet');
+      return;
+    }
+    
+    console.log('📎 Inserting snippet:', snippet.name);
+    
+    // Insert the snippet content at the current cursor position
+    // Using insertContent preserves the HTML formatting
+    editor.chain().focus().insertContent(snippet.content).run();
+    
+    console.log('✅ Snippet inserted successfully');
+  }, [editor]);
+  
+  /**
+   * Handle right-click context menu
+   */
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    // Only show custom context menu if we have an editor
+    if (!editor) return;
+    
+    e.preventDefault();
+    
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    setContextMenuVisible(true);
+  }, [editor]);
+  
+  /**
+   * Close context menu
+   */
+  const closeContextMenu = useCallback(() => {
+    setContextMenuVisible(false);
+  }, []);
+  
+  /**
+   * Handle "Save as Snippet" from context menu
+   */
+  const handleSaveAsSnippet = useCallback((html: string, text: string) => {
+    setSnippetSelectionHtml(html);
+    setSnippetSelectionText(text);
+    setSaveSnippetModalOpen(true);
+  }, []);
+  
+  /**
+   * Close Save Snippet modal
+   */
+  const closeSaveSnippetModal = useCallback(() => {
+    setSaveSnippetModalOpen(false);
+    setSnippetSelectionHtml('');
+    setSnippetSelectionText('');
+  }, []);
+  
+  /**
+   * Handle snippet saved - refresh projects to ensure UI updates
+   */
+  const handleSnippetSaved = useCallback(() => {
+    const store = useWorkspaceStore.getState();
+    store.refreshProjects();
+    console.log('✅ Snippets list refreshed after saving from selection');
+  }, []);
+  
+  // Get current selection from editor for context menu
+  const getSelectionInfo = useCallback(() => {
+    if (!editor) return { hasSelection: false, text: '', html: '' };
+    
+    const { from, to } = editor.state.selection;
+    const hasSelection = from !== to;
+    
+    if (!hasSelection) return { hasSelection: false, text: '', html: '' };
+    
+    const text = editor.state.doc.textBetween(from, to, ' ');
+    
+    // Get HTML of selection
+    const slice = editor.state.doc.slice(from, to);
+    const tempDiv = document.createElement('div');
+    const fragment = slice.content;
+    
+    // Convert ProseMirror fragment to HTML
+    // Using the editor's schema to serialize
+    const serializer = editor.view.dom.ownerDocument.createElement('div');
+    const tempEditor = document.createElement('div');
+    tempEditor.innerHTML = editor.getHTML();
+    
+    // For simplicity, we'll use the selected text wrapped in a paragraph
+    // A more sophisticated approach would serialize the exact selection
+    const html = `<p>${text}</p>`;
+    
+    return { hasSelection, text, html };
+  }, [editor]);
+  
   // Show loading during SSR/hydration
   if (!mounted) {
     return <LoadingSpinner />;
   }
   
+  // Get selection info for context menu
+  const selectionInfo = getSelectionInfo();
+  
   return (
-    <WorkspaceLayout
-      leftSidebar={<LeftSidebarContent onDocumentClick={handleDocumentClick} />}
-      rightSidebar={<RightSidebarContent editor={editor} />}
-    >
-      <EditorArea ref={editorRef} onEditorReady={handleEditorReady} />
-    </WorkspaceLayout>
+    <>
+      <WorkspaceLayout
+        leftSidebar={
+          <LeftSidebarContent 
+            onDocumentClick={handleDocumentClick}
+            onInsertSnippet={handleInsertSnippet}
+          />
+        }
+        rightSidebar={<RightSidebarContent editor={editor} />}
+      >
+        <div onContextMenu={handleContextMenu} className="h-full">
+          <EditorArea ref={editorRef} onEditorReady={handleEditorReady} />
+        </div>
+      </WorkspaceLayout>
+      
+      {/* Editor Context Menu */}
+      <EditorContextMenu
+        isVisible={contextMenuVisible}
+        position={contextMenuPosition}
+        hasSelection={selectionInfo.hasSelection}
+        selectedText={selectionInfo.text}
+        selectedHtml={selectionInfo.html}
+        onClose={closeContextMenu}
+        onSaveAsSnippet={handleSaveAsSnippet}
+      />
+      
+      {/* Save as Snippet Modal */}
+      <SaveSnippetModal
+        isOpen={saveSnippetModalOpen}
+        onClose={closeSaveSnippetModal}
+        selectedContent={snippetSelectionHtml}
+        selectedText={snippetSelectionText}
+        onSaved={handleSnippetSaved}
+      />
+    </>
   );
 }

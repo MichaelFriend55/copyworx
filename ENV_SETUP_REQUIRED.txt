@@ -1,0 +1,24 @@
+════════════════════════════════════════════════════════════════
+  ⚠️  ACTION REQUIRED: Add to .env.local
+════════════════════════════════════════════════════════════════
+
+Open your .env.local file and add this line:
+
+APPROVED_USER_EMAILS=michaelfriend55@gmail.com
+
+Then restart your dev server:
+npm run dev
+
+════════════════════════════════════════════════════════════════
+
+✅ IMPROVEMENTS:
+- Email comparison is now case-insensitive
+- Debug logs show auth status in terminal
+- Multiple email sources checked from Clerk
+
+That's it! You'll now have full access while other users see a waitlist.
+
+🐛 Having issues? Check terminal logs (look for 🔐 emoji)
+
+For more info, see: QUICK_START_WAITLIST.md
+For debugging help, see: DEBUGGING_WAITLIST.md

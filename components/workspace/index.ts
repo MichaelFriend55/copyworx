@@ -23,5 +23,14 @@ export { LeftSidebarContent } from './LeftSidebarContent';
 export { RightSidebarContent } from './RightSidebarContent';
 export { default as DocumentList } from './DocumentList';
 
+// Snippets components
+export { 
+  SnippetsList, 
+  CreateSnippetModal, 
+  SaveSnippetModal, 
+  EditSnippetModal,
+  EditorContextMenu 
+} from './snippets';
+
 
 

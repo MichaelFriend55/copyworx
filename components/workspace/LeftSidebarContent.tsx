@@ -26,10 +26,15 @@ import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { ProjectSelector } from '@/components/workspace/ProjectSelector';
 import DocumentList from '@/components/workspace/DocumentList';
 import { DocumentInsights } from '@/components/workspace/DocumentInsights';
+import { 
+  SnippetsList, 
+  CreateSnippetModal, 
+  EditSnippetModal 
+} from '@/components/workspace/snippets';
 import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { cn } from '@/lib/utils';
-import type { ProjectDocument } from '@/lib/types/project';
+import type { ProjectDocument, Snippet } from '@/lib/types/project';
 
 /**
  * Props for LeftSidebarContent
@@ -37,6 +42,8 @@ import type { ProjectDocument } from '@/lib/types/project';
 interface LeftSidebarContentProps {
   /** Callback when a document is clicked in the DocumentList */
   onDocumentClick?: (doc: ProjectDocument) => void;
+  /** Callback when a snippet should be inserted into the editor */
+  onInsertSnippet?: (snippet: Snippet) => void;
 }
 
 /**
@@ -44,7 +51,7 @@ interface LeftSidebarContentProps {
  * 
  * Extracted to prevent infinite re-render loops when defined inline.
  */
-export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps) {
+export function LeftSidebarContent({ onDocumentClick, onInsertSnippet }: LeftSidebarContentProps) {
   const activeToolId = useWorkspaceStore((state) => state.activeToolId);
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
@@ -62,6 +69,11 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
 
   // Templates modal state
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
+  
+  // Snippets modal state
+  const [createSnippetModalOpen, setCreateSnippetModalOpen] = useState(false);
+  const [editSnippetModalOpen, setEditSnippetModalOpen] = useState(false);
+  const [snippetToEdit, setSnippetToEdit] = useState<Snippet | null>(null);
   
   // NOTE: Project initialization is now handled in the parent WorkspacePage
   // This prevents duplicate refreshProjects() calls that could cause issues
@@ -130,6 +142,65 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
     setTemplatesModalOpen(false);
   }, []);
 
+  /**
+   * Open create snippet modal
+   */
+  const openCreateSnippetModal = useCallback(() => {
+    setCreateSnippetModalOpen(true);
+  }, []);
+
+  /**
+   * Close create snippet modal
+   */
+  const closeCreateSnippetModal = useCallback(() => {
+    setCreateSnippetModalOpen(false);
+  }, []);
+
+  /**
+   * Handle snippet created - refresh projects to ensure UI updates
+   */
+  const handleSnippetCreated = useCallback(() => {
+    const store = useWorkspaceStore.getState();
+    store.refreshProjects();
+    console.log('✅ Snippets list refreshed after creation');
+  }, []);
+
+  /**
+   * Open edit snippet modal
+   */
+  const handleEditSnippet = useCallback((snippet: Snippet) => {
+    setSnippetToEdit(snippet);
+    setEditSnippetModalOpen(true);
+  }, []);
+
+  /**
+   * Close edit snippet modal
+   */
+  const closeEditSnippetModal = useCallback(() => {
+    setEditSnippetModalOpen(false);
+    setSnippetToEdit(null);
+  }, []);
+
+  /**
+   * Handle snippet updated - refresh projects to ensure UI updates
+   */
+  const handleSnippetUpdated = useCallback(() => {
+    const store = useWorkspaceStore.getState();
+    store.refreshProjects();
+    console.log('✅ Snippets list refreshed after update');
+  }, []);
+
+  /**
+   * Handle snippet insertion
+   */
+  const handleInsertSnippet = useCallback((snippet: Snippet) => {
+    if (onInsertSnippet) {
+      onInsertSnippet(snippet);
+    } else {
+      console.log('📎 Snippet clicked (no handler):', snippet.name);
+    }
+  }, [onInsertSnippet]);
+
   const isProjectsExpanded = expandedSections.has('projects');
 
   return (
@@ -138,6 +209,19 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       <TemplatesModal
         isOpen={templatesModalOpen}
         onClose={closeTemplatesModal}
+      />
+      
+      {/* Snippets Modals */}
+      <CreateSnippetModal
+        isOpen={createSnippetModalOpen}
+        onClose={closeCreateSnippetModal}
+        onCreated={handleSnippetCreated}
+      />
+      <EditSnippetModal
+        isOpen={editSnippetModalOpen}
+        onClose={closeEditSnippetModal}
+        snippet={snippetToEdit}
+        onUpdated={handleSnippetUpdated}
       />
       
       {/* MY PROJECTS SECTION */}
@@ -211,6 +295,13 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
             />
           </div>
         )}
+        
+        {/* Snippets Section - Always at the end of documents section */}
+        <SnippetsList
+          onCreateSnippet={openCreateSnippetModal}
+          onEditSnippet={handleEditSnippet}
+          onInsertSnippet={handleInsertSnippet}
+        />
       </div>
 
       {/* Divider */}

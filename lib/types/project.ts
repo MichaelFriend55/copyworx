@@ -47,6 +47,39 @@ export interface Folder {
 }
 
 /**
+ * Snippet interface - Reusable copy at project level
+ * 
+ * Snippets are project-level assets that can be reused across
+ * multiple documents within a project. Examples include:
+ * - Brand taglines
+ * - Boilerplate text
+ * - Legal disclaimers
+ * - Call-to-action phrases
+ */
+export interface Snippet {
+  /** Unique identifier (UUID format) */
+  id: string;
+  
+  /** Project this snippet belongs to */
+  projectId: string;
+  
+  /** Snippet name - primary identifier (required, max 100 chars) */
+  name: string;
+  
+  /** Optional description/tag for categorization (max 200 chars) */
+  description?: string;
+  
+  /** HTML content from TipTap editor (max 10,000 chars) */
+  content: string;
+  
+  /** ISO date string when created */
+  createdAt: string;
+  
+  /** ISO date string when last updated */
+  updatedAt: string;
+}
+
+/**
  * Project interface - Top-level organizational unit
  */
 export interface Project {
@@ -67,6 +100,9 @@ export interface Project {
   
   /** Array of documents (copywriting content) */
   documents: ProjectDocument[];
+  
+  /** Array of reusable snippets */
+  snippets: Snippet[];
   
   /** ISO date string when project was created */
   createdAt: string;
@@ -206,6 +242,26 @@ export function isProject(value: unknown): value is Project {
     Array.isArray(obj.personas) &&
     Array.isArray(obj.folders) &&
     Array.isArray(obj.documents) &&
+    // snippets is optional for backwards compatibility
+    (obj.snippets === undefined || Array.isArray(obj.snippets)) &&
+    typeof obj.createdAt === 'string' &&
+    typeof obj.updatedAt === 'string'
+  );
+}
+
+/**
+ * Type guard to check if a value is a valid Snippet
+ */
+export function isSnippet(value: unknown): value is Snippet {
+  if (!value || typeof value !== 'object') return false;
+  
+  const obj = value as Record<string, unknown>;
+  
+  return (
+    typeof obj.id === 'string' &&
+    typeof obj.projectId === 'string' &&
+    typeof obj.name === 'string' &&
+    typeof obj.content === 'string' &&
     typeof obj.createdAt === 'string' &&
     typeof obj.updatedAt === 'string'
   );

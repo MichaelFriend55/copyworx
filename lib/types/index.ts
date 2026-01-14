@@ -11,8 +11,8 @@
  */
 
 // Re-export project types
-export type { Project, Persona, ProjectDocument } from './project';
-export { isProject } from './project';
+export type { Project, Persona, ProjectDocument, Snippet } from './project';
+export { isProject, isSnippet } from './project';
 
 // Re-export brand types
 export type { BrandVoice, BrandAlignmentResult, BrandAlignmentRequest, BrandAlignmentResponse } from './brand';
