@@ -411,19 +411,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       // Editor selection actions
+      // NOTE: Console logs removed to prevent performance issues during text selection
       setSelectedText: (text: string | null, range: { from: number; to: number } | null) => {
+        console.log('🔍 SELECTION DEBUG:', { 
+          hasText: !!text, 
+          textLength: text?.length,
+          preview: text?.substring(0, 50)
+        });
         set({ 
           selectedText: text, 
           selectionRange: range 
         });
-        
-        if (text && text.length > 0) {
-          console.log('📝 Text selected:', {
-            length: text.length,
-            range,
-            preview: text.substring(0, 50) + (text.length > 50 ? '...' : '')
-          });
-        }
       },
 
       clearSelection: () => {
@@ -431,7 +429,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           selectedText: null, 
           selectionRange: null 
         });
-        console.log('🧹 Selection cleared');
       },
 
       // Tone Shifter actions

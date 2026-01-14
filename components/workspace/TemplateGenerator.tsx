@@ -6,7 +6,7 @@
  * - Renders dynamic form based on template definition
  * - Brand voice integration toggle
  * - Persona selection dropdown
- * - Form validation
+ * - Form validation (including "Other" custom fields)
  * - Loading states during generation
  * - Inserts generated copy into editor
  */
@@ -26,7 +26,7 @@ import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getProjectPersonas } from '@/lib/storage/persona-storage';
 import { formatGeneratedContent } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
-import { TemplateFormField } from './TemplateFormField';
+import { TemplateFormField, OTHER_OPTION_VALUE } from './TemplateFormField';
 import type { Editor } from '@tiptap/react';
 import type { Template, TemplateFormData } from '@/lib/types/template';
 import type { Project, Persona } from '@/lib/types/project';
@@ -46,6 +46,11 @@ interface TemplateGeneratorProps {
   /** Callback when user cancels */
   onCancel: () => void;
 }
+
+/**
+ * Get the suffix used for storing custom "Other" values
+ */
+const getOtherFieldId = (fieldId: string): string => `${fieldId}_other`;
 
 /**
  * TemplateGenerator Component
@@ -82,6 +87,10 @@ export function TemplateGenerator({
     const initialData: TemplateFormData = {};
     template.fields.forEach((field) => {
       initialData[field.id] = '';
+      // Also initialize the _other field for select fields that have "Other" option
+      if (field.type === 'select' && field.options?.includes(OTHER_OPTION_VALUE)) {
+        initialData[getOtherFieldId(field.id)] = '';
+      }
     });
     setFormData(initialData);
   }, [template]);
@@ -95,6 +104,7 @@ export function TemplateGenerator({
     
     template.fields.forEach((field) => {
       const value = formData[field.id] || '';
+      const otherValue = formData[getOtherFieldId(field.id)] || '';
       
       // Check required fields
       if (field.required && value.trim().length === 0) {
@@ -110,10 +120,50 @@ export function TemplateGenerator({
       if (field.type === 'select' && field.required && !value) {
         newErrors[field.id] = 'Please select an option';
       }
+      
+      // Check "Other" custom value when "Other (specify)" is selected
+      if (
+        field.type === 'select' &&
+        value === OTHER_OPTION_VALUE &&
+        field.options?.includes(OTHER_OPTION_VALUE)
+      ) {
+        if (field.required && otherValue.trim().length === 0) {
+          newErrors[getOtherFieldId(field.id)] = 'Please specify your custom option';
+        }
+        if (otherValue.length > 100) {
+          newErrors[getOtherFieldId(field.id)] = 'Custom option must be 100 characters or less';
+        }
+      }
     });
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+  
+  /**
+   * Resolve form data, replacing "Other (specify)" with actual custom values
+   * This is what gets sent to the AI
+   */
+  const resolveFormData = (): TemplateFormData => {
+    const resolved: TemplateFormData = {};
+    
+    template.fields.forEach((field) => {
+      const value = formData[field.id] || '';
+      const otherValue = formData[getOtherFieldId(field.id)] || '';
+      
+      // If "Other (specify)" is selected, use the custom value instead
+      if (
+        field.type === 'select' &&
+        value === OTHER_OPTION_VALUE &&
+        otherValue.trim().length > 0
+      ) {
+        resolved[field.id] = otherValue.trim();
+      } else {
+        resolved[field.id] = value;
+      }
+    });
+    
+    return resolved;
   };
   
   /**
@@ -133,7 +183,26 @@ export function TemplateGenerator({
       delete newErrors[fieldId];
       return newErrors;
     });
-  }, []); // No dependencies needed - uses only setState
+  }, []);
+  
+  /**
+   * Handle "Other" custom value change
+   */
+  const handleOtherChange = useCallback((fieldId: string, value: string): void => {
+    const otherFieldId = getOtherFieldId(fieldId);
+    setFormData((prev) => ({
+      ...prev,
+      [otherFieldId]: value,
+    }));
+    
+    // Clear error for this "Other" field when typing
+    setErrors((prev) => {
+      if (!prev[otherFieldId]) return prev;
+      const newErrors = { ...prev };
+      delete newErrors[otherFieldId];
+      return newErrors;
+    });
+  }, []);
   
   /**
    * Handle form submission
@@ -162,10 +231,13 @@ export function TemplateGenerator({
         ? personas.find((p) => p.id === selectedPersonaId)
         : null;
       
+      // Resolve form data (replace "Other" with custom values)
+      const resolvedFormData = resolveFormData();
+      
       // Build request body
       const requestBody = {
         templateId: template.id,
-        formData,
+        formData: resolvedFormData,
         applyBrandVoice: applyBrandVoice && hasBrandVoice,
         brandVoice: applyBrandVoice && activeProject?.brandVoice ? activeProject.brandVoice : undefined,
         personaId: selectedPersonaId || undefined,
@@ -176,6 +248,7 @@ export function TemplateGenerator({
         templateId: template.id,
         applyBrandVoice,
         personaId: selectedPersonaId,
+        resolvedFormData,
       });
       
       // Call API
@@ -252,6 +325,9 @@ export function TemplateGenerator({
         const initialData: TemplateFormData = {};
         template.fields.forEach((field) => {
           initialData[field.id] = '';
+          if (field.type === 'select' && field.options?.includes(OTHER_OPTION_VALUE)) {
+            initialData[getOtherFieldId(field.id)] = '';
+          }
         });
         setFormData(initialData);
       }, 2000);
@@ -408,7 +484,10 @@ export function TemplateGenerator({
               field={field}
               value={formData[field.id] || ''}
               onChange={(value) => handleFieldChange(field.id, value)}
+              otherValue={formData[getOtherFieldId(field.id)] || ''}
+              onOtherChange={(value) => handleOtherChange(field.id, value)}
               error={errors[field.id]}
+              otherError={errors[getOtherFieldId(field.id)]}
               disabled={isGenerating}
             />
           ))}

@@ -1,11 +1,11 @@
 /**
  * @file components/workspace/Toolbar.tsx
- * @description Top toolbar with file menu, formatting controls, and AI toggle
+ * @description Top toolbar with file menu, formatting controls, and settings
  * 
  * Features:
  * - Left: File operations (Home, Save, Undo, Redo)
  * - Center: Rich text formatting controls
- * - Right: AI@Worx™ Analysis button
+ * - Right: Settings button
  * - Apple-style aesthetic with smooth interactions
  * - Keyboard shortcut tooltips
  * 
@@ -25,7 +25,6 @@ import {
   FolderOpen,
   Undo,
   Redo,
-  Sparkles,
   FileText,
   Settings,
   Bold,
@@ -40,7 +39,7 @@ import {
   RemoveFormatting,
   ChevronDown,
 } from 'lucide-react';
-import { useActiveDocument, useAIAnalysisMode, useUIActions } from '@/lib/stores/workspaceStore';
+import { useActiveDocument, useUIActions } from '@/lib/stores/workspaceStore';
 import { cn } from '@/lib/utils';
 
 interface ToolbarProps {
@@ -182,8 +181,7 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
 export function Toolbar({ className }: ToolbarProps) {
   // Optimized selectors
   const activeDocument = useActiveDocument();
-  const aiAnalysisMode = useAIAnalysisMode();
-  const { setAIAnalysisMode, toggleRightSidebar } = useUIActions();
+  const { toggleRightSidebar } = useUIActions();
 
   const [editor, setEditor] = useState<Editor | null>(null);
 
@@ -199,14 +197,6 @@ export function Toolbar({ className }: ToolbarProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleAIAnalysisToggle = (): void => {
-    if (aiAnalysisMode) {
-      setAIAnalysisMode(null);
-    } else {
-      setAIAnalysisMode('emotional');
-    }
-    toggleRightSidebar();
-  };
 
   // Insert link handler
   const handleInsertLink = (): void => {
@@ -420,28 +410,8 @@ export function Toolbar({ className }: ToolbarProps) {
         )}
       </div>
 
-      {/* Right section - AI Analysis & Settings */}
+      {/* Right section - Settings */}
       <div className="flex items-center gap-2">
-        <button
-          onClick={handleAIAnalysisToggle}
-          className={cn(
-            'px-4 py-2 rounded-lg',
-            'text-sm font-medium',
-            'flex items-center gap-2',
-            'transition-all duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-            aiAnalysisMode
-              ? 'bg-apple-blue text-white shadow-md'
-              : 'bg-apple-blue/10 text-apple-blue hover:bg-apple-blue/20'
-          )}
-          title="Toggle AI Analysis"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="hidden sm:inline">AI@Worx™</span>
-        </button>
-
-        <div className="w-px h-6 bg-gray-200 mx-1" />
-
         <button
           className={cn(
             'p-2 rounded-lg',

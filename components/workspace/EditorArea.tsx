@@ -141,20 +141,33 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   useAutoSave(editor);
 
   // Track text selection changes and update store
+  // PERFORMANCE: Uses debouncing to prevent flooding during drag selection
   useEffect(() => {
     if (!editor) return;
 
-    // Handler for selection updates - uses ref to avoid dependency issues
+    // Debounce timeout ref
+    let debounceTimer: NodeJS.Timeout | null = null;
+    
+    // Handler for selection updates - DEBOUNCED to prevent UI freezing
     const handleSelectionUpdate = (): void => {
-      const selection = getEditorSelection(editor);
-      
-      if (selection) {
-        // User has text selected
-        setSelectedTextRef.current(selection.text, selection.range);
-      } else {
-        // No selection (cursor only or empty selection)
-        setSelectedTextRef.current(null, null);
+      // Clear any pending debounce
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
       }
+      
+      // Debounce: wait 150ms after last selection change before updating store
+      // This prevents hundreds of updates during drag selection
+      debounceTimer = setTimeout(() => {
+        const selection = getEditorSelection(editor);
+        
+        if (selection) {
+          // User has text selected
+          setSelectedTextRef.current(selection.text, selection.range);
+        } else {
+          // No selection (cursor only or empty selection)
+          setSelectedTextRef.current(null, null);
+        }
+      }, 150);
     };
 
     // Listen to selection updates
@@ -163,11 +176,17 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     // Also track when content changes (in case selection becomes invalid)
     editor.on('update', handleSelectionUpdate);
 
-    // Initial check
-    handleSelectionUpdate();
+    // Initial check (immediate, no debounce needed)
+    const selection = getEditorSelection(editor);
+    if (selection) {
+      setSelectedTextRef.current(selection.text, selection.range);
+    }
 
     // Cleanup
     return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
       editor.off('selectionUpdate', handleSelectionUpdate);
       editor.off('update', handleSelectionUpdate);
     };
