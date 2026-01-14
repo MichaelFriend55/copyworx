@@ -11,8 +11,11 @@
  * - Project selector section
  * - Document list with version control
  * - AI@Worx Templates modal trigger
- * - Collapsible tool sections
+ * - Collapsible tool sections (My Copy Optimizer, My Brand & Audience)
  * - Active tool highlighting
+ * - AI@Worx™ Live document insights panel at bottom
+ * 
+ * Note: The "My Insights" section has been replaced by the AI@Worx™ Live panel
  */
 
 'use client';
@@ -22,6 +25,7 @@ import { Sparkles, ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { ProjectSelector } from '@/components/workspace/ProjectSelector';
 import DocumentList from '@/components/workspace/DocumentList';
+import { DocumentInsights } from '@/components/workspace/DocumentInsights';
 import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { cn } from '@/lib/utils';
@@ -241,8 +245,8 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       {/* Divider */}
       <div className="border-t border-gray-200 my-2" />
 
-      {/* EXISTING TOOL SECTIONS */}
-      {SECTIONS.map((section) => {
+      {/* EXISTING TOOL SECTIONS - Exclude 'insights' section (replaced by AI@Worx™ Live) */}
+      {SECTIONS.filter(section => section.id !== 'insights').map((section) => {
         const tools = getToolsBySection(section.id);
         const isExpanded = expandedSections.has(section.id);
         const SectionIcon = section.icon;
@@ -325,6 +329,9 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           </div>
         );
       })}
+
+      {/* AI@Worx™ Live - Document Insights Panel */}
+      <DocumentInsights />
     </div>
   );
 }

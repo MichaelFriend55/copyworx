@@ -417,35 +417,31 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
               </div>
             )}
             
-            {/* Document header */}
+            {/* Document header - OPTIMIZED COMPACT VERSION */}
             <div
-              className="px-16 pt-10 pb-6 border-b border-gray-200"
-              style={{ paddingTop: '40px' }}
+              className="px-16 py-3 border-b border-gray-200 flex items-center justify-between"
             >
-              {/* Title input */}
+              {/* Title input - on the left */}
               <input
                 type="text"
                 value={currentDocument?.title || activeDocument?.title || 'Untitled'}
                 onChange={handleTitleChange}
                 className={cn(
-                  'w-full text-3xl font-sans font-semibold',
+                  'flex-1 text-xl font-sans font-semibold',
                   'text-black',
                   'border-none outline-none',
                   'bg-transparent',
                   'placeholder-gray-400',
-                  'focus:ring-0'
+                  'focus:ring-0',
+                  'mr-4'
                 )}
                 placeholder="Untitled Document"
                 aria-label="Document title"
                 readOnly={!!currentDocument} // Read-only when using version control
               />
 
-              {/* Document metadata */}
-              <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
-                <span>{wordCount} words</span>
-                <span>•</span>
-                <span>{characterCount} characters</span>
-                <span>•</span>
+              {/* Last edited - on the right */}
+              <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
                 <span>
                   Last edited{' '}
                   {new Date(currentDocument?.modifiedAt || activeDocument?.modifiedAt || new Date()).toLocaleDateString()}
@@ -454,7 +450,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                   <>
                     <span>•</span>
                     <span className="text-gray-400">
-                      Branched from earlier version
+                      Branched
                     </span>
                   </>
                 )}
@@ -479,13 +475,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                   'focus-within:outline-none'
                 )}
               />
-            </div>
-
-            {/* Word count footer */}
-            <div className="px-16 pb-8 flex justify-end">
-              <div className="text-sm text-gray-500">
-                {wordCount} words • {characterCount} characters
-              </div>
             </div>
           </>
         ) : (
