@@ -79,8 +79,17 @@ function getOtherPlaceholder(label: string): string {
   if (labelLower.includes('publication')) {
     return 'e.g., Industry Newsletter';
   }
+  if (labelLower.includes('campaign')) {
+    return 'e.g., Post-webinar nurture sequence';
+  }
+  if (labelLower.includes('email goal')) {
+    return 'e.g., Re-engage dormant subscribers';
+  }
   if (labelLower.includes('goal')) {
     return 'e.g., Event Promotion';
+  }
+  if (labelLower.includes('urgency')) {
+    return 'e.g., End of quarter deadline';
   }
   
   return 'Specify your custom option';

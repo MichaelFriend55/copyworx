@@ -69,7 +69,8 @@ export const SALES_EMAIL_TEMPLATE: Template = {
         'Exclusive Access',
         'Price Increase Coming',
         'Seasonal/Event-Based',
-        'No Urgency'
+        'No Urgency',
+        'Other (specify)'
       ]
     },
     {
@@ -235,7 +236,8 @@ export const EMAIL_SEQUENCE_KICKOFF_TEMPLATE: Template = {
         'Lead Magnet Follow-up',
         'Product Launch',
         'Course/Training',
-        'Newsletter'
+        'Newsletter',
+        'Other (specify)'
       ]
     },
     {
@@ -294,7 +296,8 @@ export const EMAIL_SEQUENCE_KICKOFF_TEMPLATE: Template = {
         'Educate',
         'Drive Action',
         'Set Expectations',
-        'Deliver Value'
+        'Deliver Value',
+        'Other (specify)'
       ]
     },
     {
