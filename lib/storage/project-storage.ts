@@ -163,6 +163,7 @@ export function createProject(name: string): Project {
     name: sanitizedName,
     brandVoice: null,
     personas: [],
+    folders: [],
     documents: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

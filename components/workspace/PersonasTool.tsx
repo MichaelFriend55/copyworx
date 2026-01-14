@@ -237,9 +237,9 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
               Create New Persona
             </button>
 
-            {/* Personas Grid */}
+            {/* Personas List */}
             {personas.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-3">
                 {personas.map((persona) => (
                   <PersonaCard
                     key={persona.id}

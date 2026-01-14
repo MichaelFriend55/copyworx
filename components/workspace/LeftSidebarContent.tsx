@@ -48,8 +48,8 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   // Get active project for dynamic section title
   const activeProject = projects.find(p => p.id === activeProjectId);
   const documentsSectionTitle = activeProject 
-    ? `${activeProject.name} Documents`
-    : 'Documents';
+    ? `${activeProject.name} Projects`
+    : 'Projects';
   
   // Track which sections are expanded (Projects, Documents, and Optimizer start expanded)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -163,7 +163,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
 
         {/* Projects Content */}
         {isProjectsExpanded && (
-          <div className="ml-6 py-3 space-y-3">
+          <div className="py-3 space-y-3">
             {/* Project Selector */}
             <ProjectSelector />
           </div>

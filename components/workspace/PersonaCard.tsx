@@ -63,11 +63,12 @@ export const PersonaCard = React.memo(function PersonaCard({
         'hover:border-purple-300 hover:shadow-md',
         'transition-all duration-200',
         'overflow-hidden',
+        'flex flex-row', // Horizontal layout
         className
       )}
     >
-      {/* Photo Section */}
-      <div className="relative h-48 bg-gradient-to-br from-purple-50 to-blue-50 overflow-hidden">
+      {/* Photo Section - Left Side */}
+      <div className="relative w-24 h-24 flex-shrink-0 bg-gradient-to-br from-purple-50 to-blue-50 overflow-hidden">
         {persona.photoUrl ? (
           <img
             src={persona.photoUrl}
@@ -76,55 +77,55 @@ export const PersonaCard = React.memo(function PersonaCard({
           />
         ) : (
           <div className="flex items-center justify-center h-full">
-            <User className="w-24 h-24 text-purple-300" strokeWidth={1.5} />
+            <User className="w-12 h-12 text-purple-300" strokeWidth={1.5} />
           </div>
         )}
-        
-        {/* Action Buttons (show on hover) */}
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="p-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-purple-50 transition-colors shadow-sm"
-            title="Edit persona"
-            aria-label="Edit persona"
-          >
-            <Edit2 className="w-4 h-4 text-purple-600" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="p-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-red-50 transition-colors shadow-sm"
-            title="Delete persona"
-            aria-label="Delete persona"
-          >
-            <Trash2 className="w-4 h-4 text-red-600" />
-          </button>
-        </div>
       </div>
 
-      {/* Content Section */}
-      <div className="p-4 space-y-2">
-        {/* Name */}
-        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+      {/* Content Section - Right Side */}
+      <div className="flex-1 p-3 space-y-1.5 min-w-0">
+        {/* Name - Full visible, no truncation */}
+        <h3 className="text-base font-semibold text-gray-900 leading-tight">
           {persona.name}
         </h3>
 
         {/* Demographics Preview */}
         {persona.demographics && (
-          <p className="text-sm text-gray-600 line-clamp-2">
+          <p className="text-xs text-gray-600 line-clamp-2">
             {demographicsPreview}
           </p>
         )}
 
         {/* Metadata */}
-        <div className="pt-2 text-xs text-gray-400">
+        <div className="text-[10px] text-gray-400">
           Created {new Date(persona.createdAt).toLocaleDateString()}
         </div>
+      </div>
+
+      {/* Action Buttons (show on hover) - Top Right */}
+      <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="p-1.5 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-purple-50 transition-colors shadow-sm"
+          title="Edit persona"
+          aria-label="Edit persona"
+        >
+          <Edit2 className="w-3.5 h-3.5 text-purple-600" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1.5 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-red-50 transition-colors shadow-sm"
+          title="Delete persona"
+          aria-label="Delete persona"
+        >
+          <Trash2 className="w-3.5 h-3.5 text-red-600" />
+        </button>
       </div>
 
       {/* Hover Overlay for Click to Edit */}
