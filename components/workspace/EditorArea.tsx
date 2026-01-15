@@ -217,17 +217,45 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     // Set the current document with version info
     setCurrentDocument(doc);
     
-    // Load content into editor
+    // CRITICAL FIX: Update Zustand store BEFORE loading content
+    // This ensures auto-save uses the correct document ID when setContent triggers it
+    const zustandDoc = {
+      id: doc.id, // Use the REAL document ID from project storage
+      title: doc.title,
+      content: doc.content,
+      createdAt: new Date(doc.createdAt),
+      modifiedAt: new Date(doc.modifiedAt),
+      metadata: {
+        wordCount: doc.metadata.wordCount,
+        charCount: doc.metadata.charCount,
+        tags: doc.metadata.tags || [],
+      },
+    };
+    
+    // Update Zustand store to match the loaded document
+    console.log('🔧 About to sync activeDocument', { 
+      currentActiveDocId: useWorkspaceStore.getState().activeDocument?.id,
+      newDocId: zustandDoc.id 
+    });
+    
+    useWorkspaceStore.setState({ activeDocument: zustandDoc });
+    
+    console.log('✅ setState completed', { 
+      activeDocId: useWorkspaceStore.getState().activeDocument?.id 
+    });
+    
+    // NOW load content into editor (this may trigger auto-save with correct ID)
     editor.commands.setContent(doc.content || '');
     
     // Clear any previous save status
     setSaveStatus(null);
     
-    console.log('📄 Document loaded:', {
+    console.log('📄 Document loaded and synced:', {
       id: doc.id,
       title: doc.title,
       version: doc.version,
       baseTitle: doc.baseTitle,
+      syncedToZustand: true,
     });
   }, [editor]);
 

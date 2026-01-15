@@ -27,6 +27,9 @@ import {
   updateProject as updateStorageProject,
   deleteProject as deleteStorageProject,
 } from '@/lib/storage/project-storage';
+import {
+  updateDocument as updateStorageDocument,
+} from '@/lib/storage/document-storage';
 import { 
   fetchWithTimeout, 
   retryWithBackoff, 
@@ -634,7 +637,16 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       updateDocumentContent: (content: string) => {
-        const { activeDocument } = get();
+        // DIAGNOSTIC: Log at start of function
+        console.log('🔧 updateDocumentContent called', { 
+          documentId: get().activeDocument?.id,
+          projectId: get().activeProjectId,
+          contentLength: content?.length,
+          getStateActiveDocId: get().activeDocument?.id,
+          thisActiveDocId: this?.activeDocument?.id
+        });
+
+        const { activeDocument, activeProjectId } = get();
         if (!activeDocument) {
           console.warn('⚠️ No active document to update');
           return;
@@ -654,13 +666,50 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           },
         };
         
+        // Update Zustand store (in-memory)
         set({ activeDocument: updated });
-        console.log('💾 Content saved to store:', {
+        console.log('💾 Content saved to Zustand store:', {
           id: updated.id,
           contentLength: content.length,
           wordCount,
           preview: content.substring(0, 50) + '...',
         });
+
+        // CRITICAL FIX: Also persist to project storage layer (localStorage)
+        // This ensures content survives page refresh
+        if (activeProjectId && activeDocument.id) {
+          try {
+            // DIAGNOSTIC: Log before calling updateStorageDocument
+            console.log('💾 About to call updateStorageDocument', { 
+              projectId: activeProjectId, 
+              documentId: activeDocument.id, 
+              hasContent: !!content,
+              contentLength: content.length,
+            });
+
+            updateStorageDocument(activeProjectId, activeDocument.id, { 
+              content 
+            });
+
+            // DIAGNOSTIC: Log after successful call
+            console.log('✅ updateStorageDocument completed successfully');
+
+            console.log('💾 Content persisted to project storage:', {
+              projectId: activeProjectId,
+              documentId: activeDocument.id,
+            });
+          } catch (error) {
+            // DIAGNOSTIC: Enhanced error logging
+            console.error('❌ updateStorageDocument failed:', error);
+            console.error('❌ Failed to persist content to project storage:', error);
+            logError(error, 'Document content persistence');
+          }
+        } else {
+          console.warn('⚠️ Cannot persist to project storage: missing projectId or documentId', {
+            hasProjectId: !!activeProjectId,
+            hasDocumentId: !!activeDocument.id,
+          });
+        }
       },
 
       updateDocumentTitle: (title: string) => {
