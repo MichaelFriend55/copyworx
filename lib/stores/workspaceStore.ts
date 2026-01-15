@@ -110,6 +110,11 @@ export interface DocumentInsightsState {
 }
 
 /**
+ * Auto-save status type
+ */
+export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+/**
  * Workspace state interface
  */
 interface WorkspaceState {
@@ -119,6 +124,7 @@ interface WorkspaceState {
   
   // Document state
   activeDocument: Document | null;
+  autoSaveStatus: AutoSaveStatus; // Auto-save status indicator
   
   // UI state
   leftSidebarOpen: boolean;
@@ -250,6 +256,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       
       // Initial state
       activeDocument: null,
+      autoSaveStatus: 'idle' as AutoSaveStatus,
       leftSidebarOpen: true,
       rightSidebarOpen: true,
       activeToolId: null, // Updated: now using tool ID
@@ -637,6 +644,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       updateDocumentContent: (content: string) => {
+        // Set status to saving immediately
+        set({ autoSaveStatus: 'saving' });
+        
         // DIAGNOSTIC: Log at start of function
         console.log('🔧 updateDocumentContent called', { 
           documentId: get().activeDocument?.id,
@@ -649,6 +659,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const { activeDocument, activeProjectId } = get();
         if (!activeDocument) {
           console.warn('⚠️ No active document to update');
+          set({ autoSaveStatus: 'error' });
+          
+          // Reset to idle after 2 seconds
+          setTimeout(() => {
+            set({ autoSaveStatus: 'idle' });
+          }, 2000);
           return;
         }
 
@@ -698,17 +714,42 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               projectId: activeProjectId,
               documentId: activeDocument.id,
             });
+            
+            // Set status to saved on success
+            set({ autoSaveStatus: 'saved' });
+            
+            // Reset to idle after 2 seconds
+            setTimeout(() => {
+              set({ autoSaveStatus: 'idle' });
+            }, 2000);
+            
           } catch (error) {
             // DIAGNOSTIC: Enhanced error logging
             console.error('❌ updateStorageDocument failed:', error);
             console.error('❌ Failed to persist content to project storage:', error);
             logError(error, 'Document content persistence');
+            
+            // Set status to error on failure
+            set({ autoSaveStatus: 'error' });
+            
+            // Reset to idle after 2 seconds
+            setTimeout(() => {
+              set({ autoSaveStatus: 'idle' });
+            }, 2000);
           }
         } else {
           console.warn('⚠️ Cannot persist to project storage: missing projectId or documentId', {
             hasProjectId: !!activeProjectId,
             hasDocumentId: !!activeDocument.id,
           });
+          
+          // Set status to error if can't persist
+          set({ autoSaveStatus: 'error' });
+          
+          // Reset to idle after 2 seconds
+          setTimeout(() => {
+            set({ autoSaveStatus: 'idle' });
+          }, 2000);
         }
       },
 
@@ -1598,6 +1639,7 @@ export function useIsClient(): boolean {
  * Selector hooks for optimized re-renders
  */
 export const useActiveDocument = () => useWorkspaceStore((state) => state.activeDocument);
+export const useAutoSaveStatus = () => useWorkspaceStore((state) => state.autoSaveStatus);
 export const useLeftSidebarOpen = () => useWorkspaceStore((state) => state.leftSidebarOpen);
 export const useRightSidebarOpen = () => useWorkspaceStore((state) => state.rightSidebarOpen);
 export const useActiveToolId = () => useWorkspaceStore((state) => state.activeToolId); // Updated: renamed hook

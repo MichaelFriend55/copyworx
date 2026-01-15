@@ -21,14 +21,14 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Typography from '@tiptap/extension-typography';
-import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId, useAutoSaveStatus } from '@/lib/stores/workspaceStore';
 import { useAutoSave } from '@/lib/hooks/useAutoSave';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
 import { createDocumentVersion, updateDocument } from '@/lib/storage/document-storage';
 import type { ProjectDocument } from '@/lib/types/project';
 import { Button } from '@/components/ui/button';
-import { Save, Copy, FileText } from 'lucide-react';
+import { Save, Copy, FileText, Check } from 'lucide-react';
 
 interface EditorAreaProps {
   className?: string;
@@ -50,6 +50,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   function EditorArea({ className, onEditorReady }, ref) {
   const activeDocument = useWorkspaceStore((state) => state.activeDocument);
   const activeProjectId = useActiveProjectId();
+  const autoSaveStatus = useAutoSaveStatus();
   
   // ---------------------------------------------------------------------------
   // Version Control State
@@ -449,24 +450,54 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
             <div
               className="px-16 py-3 border-b border-gray-200 flex items-center justify-between"
             >
-              {/* Title input - on the left */}
-              <input
-                type="text"
-                value={currentDocument?.title || activeDocument?.title || 'Untitled'}
-                onChange={handleTitleChange}
-                className={cn(
-                  'flex-1 text-xl font-sans font-semibold',
-                  'text-black',
-                  'border-none outline-none',
-                  'bg-transparent',
-                  'placeholder-gray-400',
-                  'focus:ring-0',
-                  'mr-4'
+              {/* Title input with auto-save status - on the left */}
+              <div className="flex-1 flex items-center gap-3 mr-4">
+                <input
+                  type="text"
+                  value={currentDocument?.title || activeDocument?.title || 'Untitled'}
+                  onChange={handleTitleChange}
+                  className={cn(
+                    'flex-1 text-xl font-sans font-semibold',
+                    'text-black',
+                    'border-none outline-none',
+                    'bg-transparent',
+                    'placeholder-gray-400',
+                    'focus:ring-0'
+                  )}
+                  placeholder="Untitled Document"
+                  aria-label="Document title"
+                  readOnly={!!currentDocument} // Read-only when using version control
+                />
+                
+                {/* Auto-save status indicator */}
+                {autoSaveStatus !== 'idle' && (
+                  <div
+                    className={cn(
+                      'flex items-center gap-1.5 text-xs font-medium whitespace-nowrap',
+                      'transition-opacity duration-300',
+                      autoSaveStatus === 'saving' && 'text-gray-500',
+                      autoSaveStatus === 'saved' && 'text-green-600',
+                      autoSaveStatus === 'error' && 'text-red-600'
+                    )}
+                  >
+                    {autoSaveStatus === 'saving' && (
+                      <>
+                        <span className="inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    )}
+                    {autoSaveStatus === 'saved' && (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Saved</span>
+                      </>
+                    )}
+                    {autoSaveStatus === 'error' && (
+                      <span>Failed to save</span>
+                    )}
+                  </div>
                 )}
-                placeholder="Untitled Document"
-                aria-label="Document title"
-                readOnly={!!currentDocument} // Read-only when using version control
-              />
+              </div>
 
               {/* Last edited - on the right */}
               <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
