@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getProjectPersonas } from '@/lib/storage/persona-storage';
+import { updateDocument as updateDocumentInStorage } from '@/lib/storage/document-storage';
 import { formatGeneratedContent } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import { TemplateFormField, OTHER_OPTION_VALUE } from './TemplateFormField';
@@ -307,9 +308,12 @@ export function TemplateGenerator({
         .insertContent(formattedContent)
         .run();
       
-      // Update document in store with formatted content
-      const { updateDocumentContent } = useWorkspaceStore.getState();
-      updateDocumentContent(formattedContent);
+      // Save to localStorage directly
+      const { activeProjectId, activeDocumentId } = useWorkspaceStore.getState();
+      if (activeProjectId && activeDocumentId) {
+        updateDocumentInStorage(activeProjectId, activeDocumentId, { content: formattedContent });
+        console.log('💾 Template content saved to localStorage');
+      }
       
       console.log('✅ Template generation successful');
       

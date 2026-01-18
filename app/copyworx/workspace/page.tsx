@@ -74,16 +74,9 @@ export default function WorkspacePage() {
     const store = useWorkspaceStore.getState();
     store.refreshProjects();
     
-    // Create document if needed
-    setTimeout(() => {
-      const currentDoc = useWorkspaceStore.getState().activeDocument;
-      if (action === 'new' || !currentDoc) {
-        useWorkspaceStore.getState().createDocument('Untitled Document');
-        console.log('🆕 Created new document');
-      } else {
-        console.log('📄 Using existing document');
-      }
-    }, 50);
+    // Note: Documents are created via DocumentList, not automatically here
+    // The activeDocumentId will be restored from Zustand persistence if it exists
+    console.log('✅ Workspace initialized');
   }, [mounted, action]);
   
   // Handle editor ready

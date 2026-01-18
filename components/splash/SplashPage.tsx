@@ -27,7 +27,8 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useDocumentActions } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
+import { createDocument } from '@/lib/storage/document-storage';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 
 interface ActionButtonProps {
@@ -80,14 +81,32 @@ function ActionButton({ icon, label, description, onClick }: ActionButtonProps) 
  */
 export function SplashPage() {
   const router = useRouter();
-  const { createDocument } = useDocumentActions();
+  const activeProjectId = useActiveProjectId();
   
   // Templates modal state
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
 
   const handleNewDocument = () => {
-    createDocument('Untitled Document');
-    router.push('/copyworx/workspace?action=new');
+    if (!activeProjectId) {
+      console.warn('⚠️ No active project, going to workspace anyway');
+      router.push('/copyworx/workspace?action=new');
+      return;
+    }
+    
+    try {
+      // Create document in localStorage via document-storage
+      const newDoc = createDocument(activeProjectId, 'Untitled Document');
+      
+      // Set active document ID in Zustand
+      useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
+      
+      console.log('✅ Created new document:', newDoc.id);
+      router.push('/copyworx/workspace?action=new');
+    } catch (error) {
+      console.error('❌ Failed to create document:', error);
+      // Still navigate to workspace
+      router.push('/copyworx/workspace?action=new');
+    }
   };
 
   const handleAITemplate = () => {

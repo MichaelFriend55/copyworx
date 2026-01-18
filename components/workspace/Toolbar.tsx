@@ -39,7 +39,7 @@ import {
   RemoveFormatting,
   ChevronDown,
 } from 'lucide-react';
-import { useActiveDocument, useUIActions } from '@/lib/stores/workspaceStore';
+import { useActiveDocumentId, useUIActions } from '@/lib/stores/workspaceStore';
 import { cn } from '@/lib/utils';
 
 interface ToolbarProps {
@@ -180,8 +180,11 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
  */
 export function Toolbar({ className }: ToolbarProps) {
   // Optimized selectors
-  const activeDocument = useActiveDocument();
+  const activeDocumentId = useActiveDocumentId();
   const { toggleRightSidebar } = useUIActions();
+  
+  // Check if we have an active document
+  const hasActiveDocument = !!activeDocumentId;
 
   const [editor, setEditor] = useState<Editor | null>(null);
 
@@ -253,14 +256,14 @@ export function Toolbar({ className }: ToolbarProps) {
           className={cn(
             'px-3 py-2 rounded-lg',
             'text-sm font-medium',
-            activeDocument
+            hasActiveDocument
               ? 'text-apple-text-dark hover:bg-apple-gray-bg'
               : 'text-gray-400 cursor-not-allowed',
             'transition-colors duration-150',
             'flex items-center gap-2',
             'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
           )}
-          disabled={!activeDocument}
+          disabled={!hasActiveDocument}
           title="Save (⌘S)"
         >
           <Save className="w-4 h-4" />
@@ -300,7 +303,7 @@ export function Toolbar({ className }: ToolbarProps) {
 
       {/* Center section - Formatting controls */}
       <div className="flex-1 flex items-center justify-center gap-1">
-        {activeDocument && editor ? (
+        {hasActiveDocument && editor ? (
           <>
             {/* Text style dropdown */}
             <TextStyleDropdown editor={editor} />
@@ -403,9 +406,7 @@ export function Toolbar({ className }: ToolbarProps) {
         ) : (
           <div className="text-sm text-gray-400 flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            <span>
-              {activeDocument?.title || 'CopyWorx™ Studio'}
-            </span>
+            <span>CopyWorx™ Studio</span>
           </div>
         )}
       </div>

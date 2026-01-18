@@ -1,13 +1,18 @@
 /**
  * @file lib/stores/workspaceStore.ts
- * @description Zustand store for managing workspace state - REBUILT FOR PROPER PERSISTENCE
+ * @description Zustand store for managing workspace UI state
+ * 
+ * ARCHITECTURE (Simplified):
+ * - Zustand tracks UI state ONLY (sidebar visibility, active IDs, tool results)
+ * - Document CONTENT is stored in localStorage via document-storage.ts
+ * - No document content caching in Zustand = no sync issues
  * 
  * Manages:
- * - Active document with automatic persistence
+ * - Active document ID (not content!)
+ * - Active project ID
  * - Sidebar visibility
  * - Tool and AI analysis state
- * - Document CRUD operations with debugging
- * - Tone Shifter functionality
+ * - Tone Shifter, Expand, Shorten, Rewrite functionality
  */
 
 'use client';
@@ -16,7 +21,7 @@ import React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import type { Document, ToolCategory, AIAnalysisMode } from '@/lib/types';
+import type { ToolCategory, AIAnalysisMode } from '@/lib/types';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
 import type { BrandVoice, BrandAlignmentResult } from '@/lib/types/brand';
@@ -108,24 +113,27 @@ export interface DocumentInsightsState {
 
 /**
  * Workspace state interface
+ * 
+ * IMPORTANT: No document content storage here!
+ * Document content lives in localStorage via document-storage.ts
  */
 interface WorkspaceState {
   // Project state
   projects: Project[];
   activeProjectId: string | null;
   
-  // Document state
-  activeDocument: Document | null;
+  // Document state - ONLY the ID, not content!
+  activeDocumentId: string | null;
   
   // UI state
   leftSidebarOpen: boolean;
   rightSidebarOpen: boolean;
-  activeToolId: string | null; // New: tracks which tool is active in right sidebar
+  activeToolId: string | null;
   aiAnalysisMode: AIAnalysisMode;
   
   // Editor selection state
-  selectedText: string | null; // The actual selected text content
-  selectionRange: { from: number; to: number } | null; // Position in editor
+  selectedText: string | null;
+  selectionRange: { from: number; to: number } | null;
   
   // Tone Shifter state
   toneShiftResult: string | null;
@@ -168,20 +176,16 @@ interface WorkspaceState {
   deleteProject: (id: string) => void;
   refreshProjects: () => void;
   
-  // Document actions
-  createDocument: (title: string) => void;
-  updateDocumentContent: (content: string) => void;
-  updateDocumentTitle: (title: string) => void;
-  loadDocument: (id: string) => void;
-  clearActiveDocument: () => void;
+  // Document actions - SIMPLIFIED
+  setActiveDocumentId: (id: string | null) => void;
   
   // UI actions
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
   setLeftSidebarOpen: (open: boolean) => void;
   setRightSidebarOpen: (open: boolean) => void;
-  setActiveTool: (toolId: string | null) => void; // Updated: now accepts tool ID string
-  clearActiveTool: () => void; // New: clear active tool
+  setActiveTool: (toolId: string | null) => void;
+  clearActiveTool: () => void;
   setAIAnalysisMode: (mode: AIAnalysisMode) => void;
   
   // Editor selection actions
@@ -237,11 +241,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       projects: [],
       activeProjectId: null,
       
-      // Initial state
-      activeDocument: null,
+      // Initial document state - ONLY ID
+      activeDocumentId: null,
+      
+      // Initial UI state
       leftSidebarOpen: true,
       rightSidebarOpen: true,
-      activeToolId: null, // Updated: now using tool ID
+      activeToolId: null,
       aiAnalysisMode: null,
       
       // Editor selection initial state
@@ -307,7 +313,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       setActiveProjectId: (id: string) => {
-        set({ activeProjectId: id });
+        set({ activeProjectId: id, activeDocumentId: null }); // Clear doc when switching projects
         setStorageActiveProjectId(id);
         console.log('✅ Active project set:', id);
         
@@ -349,7 +355,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         updatedProjects[index] = {
           ...updatedProjects[index],
           ...updates,
-          id: updatedProjects[index].id, // Prevent ID change
+          id: updatedProjects[index].id,
           updatedAt: new Date().toISOString(),
         };
         
@@ -360,20 +366,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       deleteProject: (id: string) => {
         const { projects } = get();
         
-        // Prevent deletion of last project
         if (projects.length <= 1) {
           console.error('❌ Cannot delete last project');
           return;
         }
         
         try {
-          // Delete from storage
           deleteStorageProject(id);
-          
-          // Remove from state
           const updatedProjects = projects.filter((p) => p.id !== id);
           set({ projects: updatedProjects });
-          
           console.log('🗑️ Project deleted:', id);
         } catch (error) {
           console.error('❌ Failed to delete project:', error);
@@ -383,88 +384,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       refreshProjects: () => {
         const projects = getAllProjects();
         const activeProjectId = getActiveProjectId();
-        
-        // SAFETY: Ensure projects is always an array (defensive coding)
         const safeProjects = Array.isArray(projects) ? projects : [];
-        
         set({ projects: safeProjects, activeProjectId });
         console.log('🔄 Projects refreshed:', safeProjects.length);
       },
 
-      // Document actions
-      createDocument: (title: string) => {
-        const newDoc: Document = {
-          id: crypto.randomUUID(),
-          title: title || 'Untitled Document',
-          content: '',
-          createdAt: new Date(),
-          modifiedAt: new Date(),
-          metadata: {
-            wordCount: 0,
-            charCount: 0,
-            tags: [],
-          },
-        };
-        
-        set({ activeDocument: newDoc });
-        console.log('✅ Document created:', {
-          id: newDoc.id,
-          title: newDoc.title,
-        });
-      },
-
-      updateDocumentContent: (content: string) => {
-        const { activeDocument } = get();
-        if (!activeDocument) {
-          console.warn('⚠️ No active document to update');
-          return;
-        }
-
-        // Calculate word count
-        const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-        
-        const updated: Document = {
-          ...activeDocument,
-          content,
-          modifiedAt: new Date(),
-          metadata: {
-            ...activeDocument.metadata,
-            wordCount,
-            charCount: content.length,
-          },
-        };
-        
-        set({ activeDocument: updated });
-        console.log('💾 Content saved to store:', {
-          id: updated.id,
-          contentLength: content.length,
-          wordCount,
-          preview: content.substring(0, 50) + '...',
-        });
-      },
-
-      updateDocumentTitle: (title: string) => {
-        const { activeDocument } = get();
-        if (!activeDocument) return;
-
-        const updated: Document = {
-          ...activeDocument,
-          title,
-          modifiedAt: new Date(),
-        };
-        
-        set({ activeDocument: updated });
-        console.log('📝 Title updated:', title);
-      },
-
-      loadDocument: (id: string) => {
-        console.log('📂 Loading document:', id);
-        // Future: Load from documents array or API
-      },
-
-      clearActiveDocument: () => {
-        set({ activeDocument: null });
-        console.log('🗑️ Active document cleared');
+      // Document actions - SIMPLIFIED
+      setActiveDocumentId: (id: string | null) => {
+        set({ activeDocumentId: id });
+        console.log('📄 Active document ID set:', id);
       },
 
       // UI actions
@@ -486,9 +414,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       setActiveTool: (toolId: string | null) => {
         set({ activeToolId: toolId });
-        console.log('🔧 Active tool set:', toolId, '| Right sidebar open:', get().rightSidebarOpen);
+        console.log('🔧 Active tool set:', toolId);
         
-        // Auto-open right sidebar when a tool is activated
         if (toolId !== null && !get().rightSidebarOpen) {
           set({ rightSidebarOpen: true });
           console.log('📂 Auto-opened right sidebar');
@@ -503,20 +430,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setAIAnalysisMode: (mode: AIAnalysisMode) => {
         set({ aiAnalysisMode: mode });
         
-        // Auto-open right sidebar when analysis mode is activated
         if (mode !== null && !get().rightSidebarOpen) {
           set({ rightSidebarOpen: true });
         }
       },
 
       // Editor selection actions
-      // NOTE: Console logs removed to prevent performance issues during text selection
       setSelectedText: (text: string | null, range: { from: number; to: number } | null) => {
-        console.log('🔍 SELECTION DEBUG:', { 
-          hasText: !!text, 
-          textLength: text?.length,
-          preview: text?.substring(0, 50)
-        });
         set({ 
           selectedText: text, 
           selectionRange: range 
@@ -537,7 +457,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       runToneShift: async (text: string, tone: ToneType) => {
-        // Validate inputs
         try {
           validateNotEmpty(text, 'Text');
           validateTextLength(text, 'Text');
@@ -550,7 +469,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           return;
         }
 
-        // Set loading state
         set({ 
           toneShiftLoading: true, 
           toneShiftError: null,
@@ -559,59 +477,42 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         console.log('🔄 Starting tone shift:', { tone, textLength: text.length });
 
         try {
-          // Call API with retry logic
           const data = await retryWithBackoff(async () => {
             const response = await fetchWithTimeout('/api/tone-shift', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ text, tone }),
             });
 
-            // Handle non-OK responses
             if (!response.ok) {
               const errorData = await response.json().catch(() => ({ 
                 error: 'API request failed',
                 details: `Status: ${response.status}` 
               }));
-              
               throw new Error(errorData.details || errorData.error || 'Failed to rewrite copy');
             }
 
-            // Parse successful response
             const data = await response.json();
-            
             if (!data.rewrittenText) {
               throw new Error('No rewritten text received from API');
             }
-
             return data;
-          }, 2); // Retry up to 2 times
+          }, 2);
 
-          // Update state with result
           set({ 
             toneShiftResult: data.rewrittenText,
             toneShiftLoading: false,
             toneShiftError: null 
           });
           
-          console.log('✅ Tone shift complete:', {
-            originalLength: data.originalLength,
-            newLength: data.newLength,
-            preview: data.rewrittenText.substring(0, 50) + '...'
-          });
+          console.log('✅ Tone shift complete');
 
         } catch (error) {
-          // Handle errors with user-friendly message
-          const errorMessage = formatErrorForUser(error, 'Tone shift');
-          
           set({ 
-            toneShiftError: errorMessage,
+            toneShiftError: formatErrorForUser(error, 'Tone shift'),
             toneShiftLoading: false,
             toneShiftResult: null 
           });
-          
           logError(error, 'Tone shift');
         }
       },
@@ -622,7 +523,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           toneShiftError: null,
           selectedTone: null 
         });
-        console.log('🧹 Tone shift result cleared');
       },
 
       insertToneShiftResult: (editor: Editor) => {
@@ -640,25 +540,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }
 
         try {
-          // Replace all content in the editor with the rewritten copy
           editor.commands.setContent(toneShiftResult);
-          
-          // Update the document content in the store
-          get().updateDocumentContent(toneShiftResult);
-          
           console.log('✅ Tone shift result inserted into editor');
-          
-          // Clear the result after inserting
-          set({ 
-            toneShiftResult: null,
-            toneShiftError: null 
-          });
-          
+          set({ toneShiftResult: null, toneShiftError: null });
         } catch (error) {
-          const errorMessage = error instanceof Error 
-            ? error.message 
-            : 'Failed to insert content';
-          
+          const errorMessage = error instanceof Error ? error.message : 'Failed to insert content';
           set({ toneShiftError: errorMessage });
           console.error('❌ Failed to insert tone shift result:', errorMessage);
         }
@@ -666,7 +552,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       // Expand Tool actions
       runExpand: async (text: string) => {
-        // Validate inputs
         try {
           validateNotEmpty(text, 'Text');
           validateTextLength(text, 'Text');
@@ -679,22 +564,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           return;
         }
 
-        // Set loading state
         set({ 
           expandLoading: true, 
           expandError: null,
           expandResult: null 
         });
-        console.log('🔄 Starting expand:', { textLength: text.length });
 
         try {
-          // Call API with retry logic
           const data = await retryWithBackoff(async () => {
             const response = await fetchWithTimeout('/api/expand', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ text }),
             });
 
@@ -710,21 +590,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             if (!data.expandedText) {
               throw new Error('No expanded text received from API');
             }
-
             return data;
           }, 2);
 
-          // Update state with result
           set({ 
             expandResult: data.expandedText,
             expandLoading: false,
             expandError: null 
-          });
-          
-          console.log('✅ Expand complete:', {
-            originalLength: data.originalLength,
-            newLength: data.newLength,
-            preview: data.expandedText.substring(0, 50) + '...'
           });
 
         } catch (error) {
@@ -738,55 +610,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       clearExpandResult: () => {
-        set({ 
-          expandResult: null,
-          expandError: null 
-        });
-        console.log('🧹 Expand result cleared');
+        set({ expandResult: null, expandError: null });
       },
 
       insertExpandResult: (editor: Editor) => {
         const { expandResult } = get();
         
-        if (!expandResult) {
-          console.warn('⚠️ No expand result to insert');
-          return;
-        }
-
-        if (!editor) {
-          console.error('❌ No editor instance provided');
-          set({ expandError: 'Editor not available' });
-          return;
-        }
+        if (!expandResult || !editor) return;
 
         try {
-          // Replace all content in the editor with the expanded copy
           editor.commands.setContent(expandResult);
-          
-          // Update the document content in the store
-          get().updateDocumentContent(expandResult);
-          
-          console.log('✅ Expand result inserted into editor');
-          
-          // Clear the result after inserting
-          set({ 
-            expandResult: null,
-            expandError: null 
-          });
-          
+          set({ expandResult: null, expandError: null });
         } catch (error) {
-          const errorMessage = error instanceof Error 
-            ? error.message 
-            : 'Failed to insert content';
-          
+          const errorMessage = error instanceof Error ? error.message : 'Failed to insert content';
           set({ expandError: errorMessage });
-          console.error('❌ Failed to insert expand result:', errorMessage);
         }
       },
 
       // Shorten Tool actions
       runShorten: async (text: string) => {
-        // Validate inputs
         try {
           validateNotEmpty(text, 'Text');
           validateTextLength(text, 'Text');
@@ -799,22 +641,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           return;
         }
 
-        // Set loading state
         set({ 
           shortenLoading: true, 
           shortenError: null,
           shortenResult: null 
         });
-        console.log('🔄 Starting shorten:', { textLength: text.length });
 
         try {
-          // Call API with retry logic
           const data = await retryWithBackoff(async () => {
             const response = await fetchWithTimeout('/api/shorten', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ text }),
             });
 
@@ -830,21 +667,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             if (!data.shortenedText) {
               throw new Error('No shortened text received from API');
             }
-
             return data;
           }, 2);
 
-          // Update state with result
           set({ 
             shortenResult: data.shortenedText,
             shortenLoading: false,
             shortenError: null 
-          });
-          
-          console.log('✅ Shorten complete:', {
-            originalLength: data.originalLength,
-            newLength: data.newLength,
-            preview: data.shortenedText.substring(0, 50) + '...'
           });
 
         } catch (error) {
@@ -858,55 +687,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       clearShortenResult: () => {
-        set({ 
-          shortenResult: null,
-          shortenError: null 
-        });
-        console.log('🧹 Shorten result cleared');
+        set({ shortenResult: null, shortenError: null });
       },
 
       insertShortenResult: (editor: Editor) => {
         const { shortenResult } = get();
         
-        if (!shortenResult) {
-          console.warn('⚠️ No shorten result to insert');
-          return;
-        }
-
-        if (!editor) {
-          console.error('❌ No editor instance provided');
-          set({ shortenError: 'Editor not available' });
-          return;
-        }
+        if (!shortenResult || !editor) return;
 
         try {
-          // Replace all content in the editor with the shortened copy
           editor.commands.setContent(shortenResult);
-          
-          // Update the document content in the store
-          get().updateDocumentContent(shortenResult);
-          
-          console.log('✅ Shorten result inserted into editor');
-          
-          // Clear the result after inserting
-          set({ 
-            shortenResult: null,
-            shortenError: null 
-          });
-          
+          set({ shortenResult: null, shortenError: null });
         } catch (error) {
-          const errorMessage = error instanceof Error 
-            ? error.message 
-            : 'Failed to insert content';
-          
+          const errorMessage = error instanceof Error ? error.message : 'Failed to insert content';
           set({ shortenError: errorMessage });
-          console.error('❌ Failed to insert shorten result:', errorMessage);
         }
       },
 
       // Rewrite Channel Tool actions
       runRewriteChannel: async (text: string, channel: string) => {
-        // Validate inputs
         try {
           validateNotEmpty(text, 'Text');
           validateTextLength(text, 'Text');
@@ -920,22 +719,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           return;
         }
 
-        // Set loading state
         set({ 
           rewriteChannelLoading: true, 
           rewriteChannelError: null,
           rewriteChannelResult: null 
         });
-        console.log('🔄 Starting rewrite channel:', { channel, textLength: text.length });
 
         try {
-          // Call API with retry logic
           const data = await retryWithBackoff(async () => {
             const response = await fetchWithTimeout('/api/rewrite-channel', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ text, channel }),
             });
 
@@ -951,22 +745,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             if (!data.rewrittenText) {
               throw new Error('No rewritten text received from API');
             }
-
             return data;
           }, 2);
 
-          // Update state with result
           set({ 
             rewriteChannelResult: data.rewrittenText,
             rewriteChannelLoading: false,
             rewriteChannelError: null 
-          });
-          
-          console.log('✅ Rewrite channel complete:', {
-            channel,
-            originalLength: data.originalLength,
-            newLength: data.newLength,
-            preview: data.rewrittenText.substring(0, 50) + '...'
           });
 
         } catch (error) {
@@ -980,55 +765,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       clearRewriteChannelResult: () => {
-        set({ 
-          rewriteChannelResult: null,
-          rewriteChannelError: null 
-        });
-        console.log('🧹 Rewrite channel result cleared');
+        set({ rewriteChannelResult: null, rewriteChannelError: null });
       },
 
       insertRewriteChannelResult: (editor: Editor) => {
         const { rewriteChannelResult } = get();
         
-        if (!rewriteChannelResult) {
-          console.warn('⚠️ No rewrite channel result to insert');
-          return;
-        }
-
-        if (!editor) {
-          console.error('❌ No editor instance provided');
-          set({ rewriteChannelError: 'Editor not available' });
-          return;
-        }
+        if (!rewriteChannelResult || !editor) return;
 
         try {
-          // Replace all content in the editor with the rewritten copy
           editor.commands.setContent(rewriteChannelResult);
-          
-          // Update the document content in the store
-          get().updateDocumentContent(rewriteChannelResult);
-          
-          console.log('✅ Rewrite channel result inserted into editor');
-          
-          // Clear the result after inserting
-          set({ 
-            rewriteChannelResult: null,
-            rewriteChannelError: null 
-          });
-          
+          set({ rewriteChannelResult: null, rewriteChannelError: null });
         } catch (error) {
-          const errorMessage = error instanceof Error 
-            ? error.message 
-            : 'Failed to insert content';
-          
+          const errorMessage = error instanceof Error ? error.message : 'Failed to insert content';
           set({ rewriteChannelError: errorMessage });
-          console.error('❌ Failed to insert rewrite channel result:', errorMessage);
         }
       },
 
       // Brand Alignment Tool actions
       runBrandAlignment: async (text: string, brandVoice: BrandVoice): Promise<void> => {
-        // Validate inputs
         try {
           validateNotEmpty(text, 'Text');
           validateTextLength(text, 'Text');
@@ -1045,22 +800,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           return;
         }
 
-        // Set loading state
         set({ 
           brandAlignmentLoading: true, 
           brandAlignmentError: null,
           brandAlignmentResult: null 
         });
-        console.log('🔄 Starting brand alignment check:', { textLength: text.length, brand: brandVoice.brandName });
 
         try {
-          // Call API with retry logic
           const data = await retryWithBackoff(async () => {
             const response = await fetchWithTimeout('/api/brand-alignment', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ text, brandVoice }),
             });
 
@@ -1076,21 +826,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             if (!data.result) {
               throw new Error('No result received from API');
             }
-
             return data;
           }, 2);
 
-          // Update state with result
           set({ 
             brandAlignmentResult: data.result,
             brandAlignmentLoading: false,
             brandAlignmentError: null 
-          });
-          
-          console.log('✅ Brand alignment check complete:', {
-            score: data.result.score,
-            matches: data.result.matches.length,
-            violations: data.result.violations.length
           });
 
         } catch (error) {
@@ -1104,22 +846,16 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       clearBrandAlignmentResult: () => {
-        set({ 
-          brandAlignmentResult: null,
-          brandAlignmentError: null 
-        });
-        console.log('🧹 Brand alignment result cleared');
+        set({ brandAlignmentResult: null, brandAlignmentError: null });
       },
       
       // Template Generator actions
       setSelectedTemplateId: (id: string | null) => {
         set({ selectedTemplateId: id });
-        console.log('📝 Selected template ID:', id);
       },
       
       setIsGeneratingTemplate: (isGenerating: boolean) => {
         set({ isGeneratingTemplate: isGenerating });
-        console.log('🔄 Template generation loading:', isGenerating);
       },
       
       // Document Insights actions
@@ -1127,7 +863,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((state) => ({
           documentInsights: { ...state.documentInsights, isActive }
         }));
-        console.log('📊 Document insights active:', isActive);
       },
       
       setDocumentInsightsExpanded: (isExpanded: boolean) => {
@@ -1140,7 +875,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((state) => ({
           documentInsights: { ...state.documentInsights, updateFrequency: frequency }
         }));
-        console.log('📊 Insights update frequency:', frequency);
       },
       
       toggleInsightsMetric: (metric: keyof DocumentInsightsState['enabledMetrics']) => {
@@ -1158,31 +892,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       runAIAnalysis: async (content: string, brandVoice?: BrandVoice | null, persona?: { name: string; demographics: string; psychographics: string; painPoints: string; goals: string } | null) => {
         const { documentInsights } = get();
         
-        // Skip if no AI metrics are enabled
         const { tone, brandVoice: brandVoiceEnabled, persona: personaEnabled } = documentInsights.enabledMetrics;
         if (!tone && !brandVoiceEnabled && !personaEnabled) {
           return;
         }
         
-        // Skip if content hasn't changed (cache check)
         const contentHash = content.substring(0, 100) + content.length;
         if (contentHash === documentInsights.lastAnalyzedContent) {
-          console.log('📊 Skipping AI analysis - content unchanged');
           return;
         }
         
-        // Build metrics array
         const metricsToAnalyze: string[] = [];
         if (tone) metricsToAnalyze.push('tone');
         if (brandVoiceEnabled && brandVoice) metricsToAnalyze.push('brand');
         if (personaEnabled && persona) metricsToAnalyze.push('persona');
         
         if (metricsToAnalyze.length === 0) {
-          console.log('📊 No AI metrics to analyze');
           return;
         }
         
-        // Set loading state
         set((state) => ({
           documentInsights: {
             ...state.documentInsights,
@@ -1190,8 +918,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             aiMetricsError: null,
           }
         }));
-        
-        console.log('📊 Starting AI analysis:', { metrics: metricsToAnalyze });
         
         try {
           const response = await fetchWithTimeout('/api/analyze-document', {
@@ -1212,7 +938,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           
           const data = await response.json();
           
-          // Update metrics
           set((state) => ({
             documentInsights: {
               ...state.documentInsights,
@@ -1227,8 +952,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               lastAnalyzedContent: contentHash,
             }
           }));
-          
-          console.log('📊 AI analysis complete:', data);
           
         } catch (error) {
           const errorMessage = formatErrorForUser(error, 'Document analysis');
@@ -1259,7 +982,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             lastAnalyzedContent: null,
           }
         }));
-        console.log('🧹 AI metrics cleared');
       },
       
       setAIMetrics: (metrics: Partial<AIMetrics>) => {
@@ -1276,21 +998,20 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     }),
     {
       name: 'copyworx-workspace',
-      // Persist only what we need
+      // Persist ONLY UI state - NO document content!
       partialize: (state) => ({
-        activeDocument: state.activeDocument,
-        activeProjectId: state.activeProjectId, // Persist active project
+        activeDocumentId: state.activeDocumentId,
+        activeProjectId: state.activeProjectId,
         leftSidebarOpen: state.leftSidebarOpen,
         rightSidebarOpen: state.rightSidebarOpen,
-        activeToolId: state.activeToolId, // Updated: persist tool ID
+        activeToolId: state.activeToolId,
         aiAnalysisMode: state.aiAnalysisMode,
-        // Persist document insights settings (but not the actual metrics)
         documentInsights: {
           isActive: state.documentInsights.isActive,
           isExpanded: state.documentInsights.isExpanded,
           updateFrequency: state.documentInsights.updateFrequency,
           enabledMetrics: state.documentInsights.enabledMetrics,
-          // Don't persist transient AI metrics
+          // Don't persist transient data
           aiMetrics: { tone: null, brandAlignment: null, personaAlignment: null },
           aiMetricsLoading: false,
           aiMetricsError: null,
@@ -1299,10 +1020,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         },
       }),
       onRehydrateStorage: () => (state) => {
-        // Called when rehydration is complete
         if (state) {
           console.log('💾 Store rehydrated from localStorage', {
-            hasDocument: !!state.activeDocument,
+            activeDocumentId: state.activeDocumentId,
             activeProjectId: state.activeProjectId,
           });
         }
@@ -1312,8 +1032,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 );
 
 /**
- * Hook to check if we're on the client side and ready for client-only operations
- * This ensures we don't run localStorage operations during SSR
+ * Hook to check if we're on the client side
  */
 export function useIsClient(): boolean {
   const [isClient, setIsClient] = React.useState(false);
@@ -1328,10 +1047,10 @@ export function useIsClient(): boolean {
 /**
  * Selector hooks for optimized re-renders
  */
-export const useActiveDocument = () => useWorkspaceStore((state) => state.activeDocument);
+export const useActiveDocumentId = () => useWorkspaceStore((state) => state.activeDocumentId);
 export const useLeftSidebarOpen = () => useWorkspaceStore((state) => state.leftSidebarOpen);
 export const useRightSidebarOpen = () => useWorkspaceStore((state) => state.rightSidebarOpen);
-export const useActiveToolId = () => useWorkspaceStore((state) => state.activeToolId); // Updated: renamed hook
+export const useActiveToolId = () => useWorkspaceStore((state) => state.activeToolId);
 export const useAIAnalysisMode = () => useWorkspaceStore((state) => state.aiAnalysisMode);
 
 /**
@@ -1378,7 +1097,6 @@ export const useSelectionRange = () => useWorkspaceStore((state) => state.select
 
 /**
  * Project selector hooks
- * SAFETY: useProjects ensures we always return an array to prevent ".find is not a function" errors
  */
 export const useProjects = () => useWorkspaceStore((state) => 
   Array.isArray(state.projects) ? state.projects : []
@@ -1392,10 +1110,7 @@ export const useSelectedTemplateId = () => useWorkspaceStore((state) => state.se
 export const useIsGeneratingTemplate = () => useWorkspaceStore((state) => state.isGeneratingTemplate);
 
 /**
- * Action selector hooks (using shallow equality for stable references to prevent re-renders)
- * 
- * IMPORTANT: These hooks use shallow equality to prevent infinite render loops.
- * Without shallow comparison, returning a new object on every render triggers re-renders.
+ * Action selector hooks
  */
 export const useToneShiftActions = () => useWorkspaceStore(
   useShallow((state) => ({
@@ -1449,8 +1164,7 @@ export const useProjectActions = () => useWorkspaceStore(
 
 export const useDocumentActions = () => useWorkspaceStore(
   useShallow((state) => ({
-    createDocument: state.createDocument,
-    updateDocumentTitle: state.updateDocumentTitle,
+    setActiveDocumentId: state.setActiveDocumentId,
     setSelectedText: state.setSelectedText,
   }))
 );
@@ -1502,3 +1216,16 @@ export const useDocumentInsightsActions = () => useWorkspaceStore(
     setAIMetrics: state.setAIMetrics,
   }))
 );
+
+// ============================================================================
+// LEGACY COMPATIBILITY - Keep these for components that haven't been updated
+// ============================================================================
+
+/**
+ * @deprecated Use useActiveDocumentId instead. This is kept for backward compatibility.
+ * Returns null always since we no longer store document content in Zustand.
+ */
+export const useActiveDocument = () => {
+  console.warn('⚠️ useActiveDocument is deprecated. Use useActiveDocumentId and load from localStorage.');
+  return null;
+};

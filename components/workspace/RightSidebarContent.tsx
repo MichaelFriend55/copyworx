@@ -95,10 +95,13 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<{ editor: Editor | nul
 export function RightSidebarContent({ editor }: RightSidebarContentProps) {
   // Use stable selectors for primitives
   const activeToolId = useWorkspaceStore((state) => state.activeToolId);
-  const activeDocument = useWorkspaceStore((state) => state.activeDocument);
+  const activeDocumentId = useWorkspaceStore((state) => state.activeDocumentId);
   const selectedTemplateId = useWorkspaceStore((state) => state.selectedTemplateId);
   const activeProjectId = useWorkspaceStore((state) => state.activeProjectId);
   const projects = useWorkspaceStore((state) => state.projects);
+  
+  // Check if we have an active document
+  const hasActiveDocument = !!activeDocumentId;
   
   // Memoize the active project to prevent new object references on every render
   const activeProject = useMemo((): Project | null => {
@@ -160,7 +163,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
             Choose a tool from the left sidebar to get started
           </p>
         </div>
-      ) : !activeDocument ? (
+      ) : !hasActiveDocument ? (
         // Tool selected but no document open
         <div className="text-center py-16 text-gray-400">
           <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" />

@@ -10,7 +10,7 @@
 
 'use client';
 
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import {
   Sparkles,
   ChevronDown,
@@ -32,9 +32,11 @@ import {
   useDocumentInsights,
   useDocumentInsightsActions,
   useActiveProjectId,
+  useActiveDocumentId,
   useProjects,
   type InsightsUpdateFrequency,
 } from '@/lib/stores/workspaceStore';
+import { getDocument } from '@/lib/storage/document-storage';
 import { analyzeDocument, type DocumentMetrics } from '@/lib/utils/readability';
 import { cn } from '@/lib/utils';
 
@@ -207,9 +209,21 @@ function MetricCheckbox({
  * DocumentInsights - AI@Worx™ Live panel
  */
 export function DocumentInsights() {
-  const activeDocument = useWorkspaceStore((state) => state.activeDocument);
   const activeProjectId = useActiveProjectId();
+  const activeDocumentId = useActiveDocumentId();
   const projects = useProjects();
+  
+  // Load document content from localStorage
+  const [documentContent, setDocumentContent] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (activeProjectId && activeDocumentId) {
+      const doc = getDocument(activeProjectId, activeDocumentId);
+      setDocumentContent(doc?.content || null);
+    } else {
+      setDocumentContent(null);
+    }
+  }, [activeProjectId, activeDocumentId]);
   
   const insights = useDocumentInsights();
   const {
@@ -236,16 +250,16 @@ export function DocumentInsights() {
   
   // Calculate basic metrics from document content
   const documentMetrics = useMemo((): DocumentMetrics | null => {
-    if (!activeDocument?.content) return null;
-    return analyzeDocument(activeDocument.content);
-  }, [activeDocument?.content]);
+    if (!documentContent) return null;
+    return analyzeDocument(documentContent);
+  }, [documentContent]);
   
   /**
    * Trigger AI analysis
    */
   const triggerAIAnalysis = useCallback(() => {
     if (!insights.isActive) return;
-    if (!activeDocument?.content) return;
+    if (!documentContent) return;
     
     // Check if any AI metrics are enabled
     const { tone, brandVoice: brandEnabled, persona: personaEnabled } = insights.enabledMetrics;
@@ -253,7 +267,7 @@ export function DocumentInsights() {
     
     // Run AI analysis
     runAIAnalysis(
-      activeDocument.content,
+      documentContent,
       brandEnabled ? brandVoice : null,
       personaEnabled && activePersona ? {
         name: activePersona.name,
@@ -266,7 +280,7 @@ export function DocumentInsights() {
   }, [
     insights.isActive,
     insights.enabledMetrics,
-    activeDocument?.content,
+    documentContent,
     brandVoice,
     activePersona,
     runAIAnalysis,
@@ -277,9 +291,9 @@ export function DocumentInsights() {
    */
   useEffect(() => {
     if (!insights.isActive) return;
-    if (!activeDocument?.content) return;
+    if (!documentContent) return;
     
-    const content = activeDocument.content;
+    const content = documentContent;
     
     // Skip if content hasn't changed
     if (content === lastContentRef.current) return;
@@ -319,7 +333,7 @@ export function DocumentInsights() {
   }, [
     insights.isActive,
     insights.updateFrequency,
-    activeDocument?.content,
+    documentContent,
     triggerAIAnalysis,
   ]);
   
@@ -574,7 +588,7 @@ export function DocumentInsights() {
               )}
               
               {/* No Content State - COMPACT */}
-              {!activeDocument?.content && (
+              {!documentContent && (
                 <div className="text-center py-2">
                   <p className="text-[10px] text-gray-400">
                     Start writing to see insights

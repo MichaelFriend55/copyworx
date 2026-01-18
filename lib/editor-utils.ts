@@ -121,25 +121,37 @@ export function insertTextAtSelection(
 
   try {
     const { from, to } = editor.state.selection;
+    const hasSelection = from !== to;
     
     console.log('📝 Inserting text at selection:', {
       from,
       to,
+      hasSelection,
       textLength: text.length,
       isHTML,
       selectInserted,
     });
 
-    // Use TipTap commands to insert content
-    editor
-      .chain()
-      .focus()
-      .deleteRange({ from, to }) // Delete current selection
-      .insertContent(text) // Insert new content
-      .run();
+    // Use TipTap commands to replace selection with new content
+    // Using deleteSelection() ensures proper transaction handling and update events
+    if (hasSelection) {
+      editor
+        .chain()
+        .focus()
+        .deleteSelection() // Delete current selection (preferred over deleteRange)
+        .insertContent(text) // Insert new content
+        .run();
+    } else {
+      // No selection - just insert at cursor
+      editor
+        .chain()
+        .focus()
+        .insertContent(text)
+        .run();
+    }
 
     // Optionally select the inserted text
-    if (selectInserted) {
+    if (selectInserted && hasSelection) {
       const newTo = from + text.length;
       editor.commands.setTextSelection({ from, to: newTo });
     }

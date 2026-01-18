@@ -1,61 +1,30 @@
 /**
  * @file lib/hooks/useAutoSave.ts
- * @description Auto-save hook for TipTap editor - REBUILT FOR RELIABILITY
+ * @description Auto-save hook - DEPRECATED
  * 
- * Provides debounced auto-save functionality that saves directly to Zustand store.
- * The store's persist middleware then saves to localStorage automatically.
+ * This hook is no longer used. Auto-save is now handled directly
+ * in EditorArea.tsx which saves to localStorage via document-storage.ts.
  * 
- * IMPORTANT: Uses getState() to avoid infinite render loops from function references
- * in useEffect dependencies.
+ * Kept for backward compatibility - does nothing if called.
  */
 
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { useEffect } from 'react';
 import type { Editor } from '@tiptap/react';
 
 /**
- * Auto-save hook that watches editor changes
+ * Auto-save hook - DEPRECATED
  * 
- * @param editor - TipTap editor instance
- * @param delay - Debounce delay in milliseconds (default: 500ms)
+ * Auto-save is now handled directly in EditorArea.tsx.
+ * This hook is kept for backward compatibility and does nothing.
+ * 
+ * @deprecated Use EditorArea's built-in auto-save instead
+ * @param _editor - TipTap editor instance (unused)
+ * @param _delay - Debounce delay in milliseconds (unused)
  */
-export function useAutoSave(editor: Editor | null, delay: number = 500) {
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
+export function useAutoSave(_editor: Editor | null, _delay: number = 500): void {
   useEffect(() => {
-    if (!editor) {
-      console.log('⏸️ Auto-save: No editor instance');
-      return;
-    }
-
-    const handleUpdate = () => {
-      // Clear previous timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      // Set new timeout for debounced save
-      timeoutRef.current = setTimeout(() => {
-        const html = editor.getHTML();
-        // Use getState() to get the latest function without causing re-renders
-        useWorkspaceStore.getState().updateDocumentContent(html);
-        console.log('✅ Auto-save triggered');
-      }, delay);
-    };
-
-    // Listen to editor updates
-    editor.on('update', handleUpdate);
-    console.log('👂 Auto-save listener attached');
-
-    // Cleanup
-    return () => {
-      editor.off('update', handleUpdate);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      console.log('🔌 Auto-save listener detached');
-    };
-  }, [editor, delay]); // Only depend on editor and delay - no store functions
+    console.log('⚠️ useAutoSave is deprecated. Auto-save is handled by EditorArea.');
+  }, []);
 }

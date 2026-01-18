@@ -1,12 +1,17 @@
 /**
  * @file components/workspace/EditorArea.tsx
- * @description TipTap rich text editor with version control
+ * @description TipTap rich text editor with direct localStorage persistence
+ * 
+ * ARCHITECTURE (Simplified):
+ * - Loads document content directly from localStorage (via document-storage.ts)
+ * - Saves directly to localStorage on every change (debounced 500ms)
+ * - NO Zustand caching of document content
+ * - Zustand only provides activeDocumentId and activeProjectId
  * 
  * Features:
  * - TipTap editor with full formatting
- * - Automatic content persistence
+ * - Automatic content persistence to localStorage
  * - Real-time word/character count
- * - Version control (save vs save-as-new-version)
  * - Apple-style aesthetic
  */
 
@@ -21,14 +26,11 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Typography from '@tiptap/extension-typography';
-import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
-import { useAutoSave } from '@/lib/hooks/useAutoSave';
+import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId } from '@/lib/stores/workspaceStore';
+import { getDocument, updateDocument } from '@/lib/storage/document-storage';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
-import { createDocumentVersion, updateDocument } from '@/lib/storage/document-storage';
 import type { ProjectDocument } from '@/lib/types/project';
-import { Button } from '@/components/ui/button';
-import { Save, Copy, FileText } from 'lucide-react';
 
 interface EditorAreaProps {
   className?: string;
@@ -43,37 +45,42 @@ export interface EditorAreaHandle {
   loadDocument: (doc: ProjectDocument) => void;
 }
 
+/** Debounce delay for auto-save (ms) */
+const AUTO_SAVE_DELAY = 500;
+
 /**
- * Main editor area with TipTap rich text editor and version control
+ * Main editor area with TipTap rich text editor
+ * Document content is loaded/saved directly to localStorage
  */
 export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   function EditorArea({ className, onEditorReady }, ref) {
-  const activeDocument = useWorkspaceStore((state) => state.activeDocument);
+  
+  // Get IDs from Zustand (no content!)
   const activeProjectId = useActiveProjectId();
+  const activeDocumentId = useActiveDocumentId();
   
-  // ---------------------------------------------------------------------------
-  // Version Control State
-  // ---------------------------------------------------------------------------
+  // Get actions via getState to avoid re-render loops
+  const setSelectedTextRef = useRef(useWorkspaceStore.getState().setSelectedText);
+  const setActiveDocumentIdRef = useRef(useWorkspaceStore.getState().setActiveDocumentId);
   
-  /** Currently loaded ProjectDocument with version info */
+  // Local state for document data loaded from localStorage
   const [currentDocument, setCurrentDocument] = useState<ProjectDocument | null>(null);
   
-  /** Save operation loading state */
-  const [isSaving, setIsSaving] = useState(false);
+  // Auto-save status indicator
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
+  const saveStatusTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  /** Save operation status message */
-  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  // Auto-save debounce timer ref
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Use refs for store functions to avoid re-render loops in useEffect dependencies
-  // These functions are stable in Zustand but selecting them creates new references
-  const updateDocumentTitleRef = useRef(useWorkspaceStore.getState().updateDocumentTitle);
-  const setSelectedTextRef = useRef(useWorkspaceStore.getState().setSelectedText);
+  // Track if we're loading content to prevent save during load
+  const isLoadingRef = useRef(false);
   
-  // Keep refs updated (but don't trigger re-renders)
+  // Keep refs updated
   useEffect(() => {
     return useWorkspaceStore.subscribe((state) => {
-      updateDocumentTitleRef.current = state.updateDocumentTitle;
       setSelectedTextRef.current = state.setSelectedText;
+      setActiveDocumentIdRef.current = state.setActiveDocumentId;
     });
   }, []);
 
@@ -102,16 +109,14 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       }),
       Typography,
     ],
-    content: '', // Start empty, will be loaded from store
+    content: '',
     onCreate: ({ editor }) => {
-      // Pass editor instance to parent when created
       onEditorReady?.(editor);
-      console.log('✅ Editor instance passed to parent');
+      console.log('✅ Editor instance created');
     },
     onDestroy: () => {
-      // Clear editor instance from parent when destroyed
       onEditorReady?.(null);
-      console.log('🗑️ Editor instance cleared from parent');
+      console.log('🗑️ Editor instance destroyed');
     },
     editorProps: {
       attributes: {
@@ -120,69 +125,191 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     },
   });
 
-  // Load content when activeDocument changes
-  useEffect(() => {
-    if (editor && activeDocument?.content) {
-      const currentContent = editor.getHTML();
-      const newContent = activeDocument.content;
-      
-      // Only update if content is different
-      if (currentContent !== newContent) {
-        editor.commands.setContent(newContent);
-        console.log('📄 Loaded content from store:', {
-          id: activeDocument.id,
-          contentLength: newContent.length,
-        });
-      }
+  /**
+   * Save document content to localStorage
+   * Called on every editor change (debounced)
+   */
+  const saveToLocalStorage = useCallback((content: string) => {
+    if (!activeProjectId || !currentDocument?.id) {
+      console.warn('⚠️ Cannot save: missing projectId or documentId');
+      setSaveStatus('idle');
+      return;
     }
-  }, [editor, activeDocument?.id]); // Only re-run when document ID changes
+    
+    try {
+      updateDocument(activeProjectId, currentDocument.id, { content });
+      console.log('💾 Document saved to localStorage:', {
+        docId: currentDocument.id,
+        contentLength: content.length,
+      });
+      
+      // Update save status indicator
+      setSaveStatus('saved');
+      
+      // Clear any existing timer
+      if (saveStatusTimerRef.current) {
+        clearTimeout(saveStatusTimerRef.current);
+      }
+      
+      // Return to idle after 2 seconds
+      saveStatusTimerRef.current = setTimeout(() => {
+        setSaveStatus('idle');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('❌ Failed to save document:', error);
+      setSaveStatus('idle');
+    }
+  }, [activeProjectId, currentDocument?.id]);
 
-  // Enable auto-save
-  useAutoSave(editor);
+  /**
+   * Handle editor content changes
+   * Debounces and saves to localStorage
+   */
+  const handleEditorUpdate = useCallback(() => {
+    // Don't save while loading
+    if (isLoadingRef.current) return;
+    
+    if (!editor) return;
+    
+    // Show saving indicator immediately
+    setSaveStatus('saving');
+    
+    // Clear previous timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    
+    // Debounce save
+    autoSaveTimerRef.current = setTimeout(() => {
+      const html = editor.getHTML();
+      saveToLocalStorage(html);
+      
+      // Update local document state with new content
+      setCurrentDocument((prev) => prev ? {
+        ...prev,
+        content: html,
+        modifiedAt: new Date().toISOString(),
+      } : null);
+    }, AUTO_SAVE_DELAY);
+  }, [editor, saveToLocalStorage]);
 
-  // Track text selection changes and update store
-  // PERFORMANCE: Uses debouncing to prevent flooding during drag selection
+  /**
+   * Load document from localStorage and display in editor
+   */
+  const loadDocumentFromStorage = useCallback((docId: string) => {
+    if (!activeProjectId || !editor) {
+      console.warn('⚠️ Cannot load document: missing projectId or editor');
+      return;
+    }
+    
+    isLoadingRef.current = true;
+    
+    try {
+      const doc = getDocument(activeProjectId, docId);
+      
+      if (!doc) {
+        console.warn('⚠️ Document not found:', docId);
+        setCurrentDocument(null);
+        editor.commands.setContent('');
+        isLoadingRef.current = false;
+        return;
+      }
+      
+      // Set local state
+      setCurrentDocument(doc);
+      
+      // Load content into editor
+      editor.commands.setContent(doc.content || '');
+      
+      console.log('📄 Document loaded from localStorage:', {
+        id: doc.id,
+        title: doc.title,
+        contentLength: doc.content?.length || 0,
+      });
+    } catch (error) {
+      console.error('❌ Failed to load document:', error);
+      setCurrentDocument(null);
+      editor.commands.setContent('');
+    } finally {
+      // Use setTimeout to ensure content is set before allowing saves
+      setTimeout(() => {
+        isLoadingRef.current = false;
+      }, 100);
+    }
+  }, [activeProjectId, editor]);
+
+  /**
+   * Load document when activeDocumentId changes
+   * This handles:
+   * - Initial load on page mount
+   * - Switching between documents
+   * - Rehydration after page refresh
+   */
+  useEffect(() => {
+    if (!editor) return;
+    
+    if (activeDocumentId) {
+      loadDocumentFromStorage(activeDocumentId);
+    } else {
+      // No active document - clear editor
+      setCurrentDocument(null);
+      isLoadingRef.current = true;
+      editor.commands.setContent('');
+      setTimeout(() => {
+        isLoadingRef.current = false;
+      }, 100);
+    }
+  }, [editor, activeDocumentId, loadDocumentFromStorage]);
+
+  /**
+   * Listen to editor updates for auto-save
+   */
+  useEffect(() => {
+    if (!editor) return;
+    
+    editor.on('update', handleEditorUpdate);
+    
+    return () => {
+      editor.off('update', handleEditorUpdate);
+      // Clear any pending save
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      // Clear status timer
+      if (saveStatusTimerRef.current) {
+        clearTimeout(saveStatusTimerRef.current);
+      }
+    };
+  }, [editor, handleEditorUpdate]);
+
+  /**
+   * Track text selection changes
+   */
   useEffect(() => {
     if (!editor) return;
 
-    // Debounce timeout ref
     let debounceTimer: NodeJS.Timeout | null = null;
     
-    // Handler for selection updates - DEBOUNCED to prevent UI freezing
     const handleSelectionUpdate = (): void => {
-      // Clear any pending debounce
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
       
-      // Debounce: wait 150ms after last selection change before updating store
-      // This prevents hundreds of updates during drag selection
       debounceTimer = setTimeout(() => {
         const selection = getEditorSelection(editor);
         
         if (selection) {
-          // User has text selected
           setSelectedTextRef.current(selection.text, selection.range);
         } else {
-          // No selection (cursor only or empty selection)
           setSelectedTextRef.current(null, null);
         }
       }, 150);
     };
 
-    // Listen to selection updates
     editor.on('selectionUpdate', handleSelectionUpdate);
-    
-    // Also track when content changes (in case selection becomes invalid)
     editor.on('update', handleSelectionUpdate);
 
-    // Initial check (immediate, no debounce needed)
-    const selection = getEditorSelection(editor);
-    if (selection) {
-      setSelectedTextRef.current(selection.text, selection.range);
-    }
-
-    // Cleanup
     return () => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
@@ -190,23 +317,19 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       editor.off('selectionUpdate', handleSelectionUpdate);
       editor.off('update', handleSelectionUpdate);
     };
-  }, [editor]); // Only depend on editor - refs are stable
+  }, [editor]);
 
-  // Export editor instance for toolbar
+  /**
+   * Export editor instance for toolbar
+   */
   useEffect(() => {
     if (editor && typeof window !== 'undefined') {
       window.__tiptapEditor = editor;
-      console.log('🔗 Editor instance exported to window');
     }
   }, [editor]);
 
-  // ---------------------------------------------------------------------------
-  // Version Control Handlers
-  // ---------------------------------------------------------------------------
-
   /**
-   * Load a ProjectDocument into the editor
-   * Called from DocumentList's onDocumentClick
+   * Handle loading a document from external source (DocumentList click)
    */
   const handleLoadDocument = useCallback((doc: ProjectDocument) => {
     if (!editor) {
@@ -214,127 +337,32 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       return;
     }
     
-    // Set the current document with version info
+    isLoadingRef.current = true;
+    
+    // Update Zustand with new active document ID
+    setActiveDocumentIdRef.current(doc.id);
+    
+    // Set local state
     setCurrentDocument(doc);
     
     // Load content into editor
     editor.commands.setContent(doc.content || '');
     
-    // Clear any previous save status
-    setSaveStatus(null);
-    
-    console.log('📄 Document loaded:', {
+    console.log('📄 Document loaded via click:', {
       id: doc.id,
       title: doc.title,
       version: doc.version,
-      baseTitle: doc.baseTitle,
     });
+    
+    setTimeout(() => {
+      isLoadingRef.current = false;
+    }, 100);
   }, [editor]);
-
-  /**
-   * Save current content to the existing document version
-   * Updates content without creating a new version
-   */
-  const handleSave = useCallback(async () => {
-    if (!editor || !currentDocument || !activeProjectId) {
-      console.warn('⚠️ Cannot save: missing editor, document, or project');
-      return;
-    }
-    
-    try {
-      setIsSaving(true);
-      setSaveStatus(null);
-      
-      const content = editor.getHTML();
-      
-      // Update the existing document
-      updateDocument(activeProjectId, currentDocument.id, {
-        content,
-        title: currentDocument.title, // Keep existing title
-      });
-      
-      // Update local state with new modifiedAt
-      setCurrentDocument((prev) => prev ? {
-        ...prev,
-        content,
-        modifiedAt: new Date().toISOString(),
-      } : null);
-      
-      setSaveStatus('Saved');
-      console.log('✅ Document saved:', {
-        id: currentDocument.id,
-        version: currentDocument.version,
-      });
-      
-      // Clear status after 2 seconds
-      setTimeout(() => setSaveStatus(null), 2000);
-      
-    } catch (error) {
-      console.error('❌ Failed to save document:', error);
-      setSaveStatus('Save failed');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [editor, currentDocument, activeProjectId]);
-
-  /**
-   * Save current content as a new version
-   * Creates a new document version, preserving the original
-   */
-  const handleSaveAsNewVersion = useCallback(async () => {
-    if (!editor || !currentDocument || !activeProjectId) {
-      console.warn('⚠️ Cannot save as new version: missing editor, document, or project');
-      return;
-    }
-    
-    try {
-      setIsSaving(true);
-      setSaveStatus(null);
-      
-      const content = editor.getHTML();
-      
-      // Create new version from current document
-      const newVersion = createDocumentVersion(
-        activeProjectId,
-        currentDocument.id,
-        content
-      );
-      
-      // Update to the new version
-      setCurrentDocument(newVersion);
-      
-      setSaveStatus(`Created v${newVersion.version}`);
-      console.log('✅ New version created:', {
-        id: newVersion.id,
-        title: newVersion.title,
-        version: newVersion.version,
-        parentVersionId: newVersion.parentVersionId,
-      });
-      
-      // Clear status after 3 seconds
-      setTimeout(() => setSaveStatus(null), 3000);
-      
-    } catch (error) {
-      console.error('❌ Failed to create new version:', error);
-      setSaveStatus('Version creation failed');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [editor, currentDocument, activeProjectId]);
 
   // Expose loadDocument via ref for parent components
   useImperativeHandle(ref, () => ({
     loadDocument: handleLoadDocument,
   }), [handleLoadDocument]);
-
-  // Handle title change - uses ref to avoid stale closure
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
-    updateDocumentTitleRef.current(e.target.value);
-  }, []);
-
-  // Get word and character count
-  const wordCount = editor?.storage.characterCount.words() || 0;
-  const characterCount = editor?.storage.characterCount.characters() || 0;
 
   return (
     <div
@@ -361,98 +389,49 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
         }}
       >
-        {(activeDocument || currentDocument) ? (
+        {currentDocument ? (
           <>
-            {/* Version Control Header */}
-            {currentDocument && (
-              <div className="px-6 py-3 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
-                {/* Document info with version badge */}
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-gray-400" />
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-700 truncate max-w-[300px]">
-                      {currentDocument.baseTitle}
-                    </span>
-                    <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded font-medium">
-                      v{currentDocument.version}
-                    </span>
-                  </div>
-                  {/* Save status indicator */}
-                  {saveStatus && (
-                    <span className={cn(
-                      'text-xs px-2 py-1 rounded',
-                      saveStatus.includes('failed') 
-                        ? 'bg-destructive/10 text-destructive' 
-                        : 'bg-green-100 text-green-700'
-                    )}>
-                      {saveStatus}
-                    </span>
-                  )}
-                </div>
-
-                {/* Save buttons */}
-                <div className="flex items-center gap-2">
-                  {/* Regular Save button */}
-                  <Button 
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </Button>
-
-                  {/* Save as new version button */}
-                  <Button 
-                    onClick={handleSaveAsNewVersion}
-                    disabled={isSaving}
-                    size="sm"
-                    variant="default"
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Save as v{currentDocument.version + 1}
-                  </Button>
-                </div>
-              </div>
-            )}
-            
-            {/* Document header - OPTIMIZED COMPACT VERSION */}
+            {/* Document header */}
             <div
               className="px-16 py-3 border-b border-gray-200 flex items-center justify-between"
             >
-              {/* Title input - on the left */}
-              <input
-                type="text"
-                value={currentDocument?.title || activeDocument?.title || 'Untitled'}
-                onChange={handleTitleChange}
-                className={cn(
-                  'flex-1 text-xl font-sans font-semibold',
-                  'text-black',
-                  'border-none outline-none',
-                  'bg-transparent',
-                  'placeholder-gray-400',
-                  'focus:ring-0',
-                  'mr-4'
-                )}
-                placeholder="Untitled Document"
-                aria-label="Document title"
-                readOnly={!!currentDocument} // Read-only when using version control
-              />
+              {/* Title display */}
+              <div className="flex items-center gap-2 flex-1">
+                <span
+                  className={cn(
+                    'text-xl font-sans font-semibold',
+                    'text-black',
+                    'truncate'
+                  )}
+                  title={currentDocument.title}
+                >
+                  {currentDocument.title}
+                </span>
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
+                  v{currentDocument.version}
+                </span>
+              </div>
 
-              {/* Last edited - on the right */}
+              {/* Last edited with auto-save indicator */}
               <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
                 <span>
-                  Last edited{' '}
-                  {new Date(currentDocument?.modifiedAt || activeDocument?.modifiedAt || new Date()).toLocaleDateString()}
+                  Saved{' '}
+                  {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
                 </span>
-                {currentDocument?.parentVersionId && (
-                  <>
-                    <span>•</span>
-                    <span className="text-gray-400">
-                      Branched
-                    </span>
-                  </>
+                {saveStatus === 'saved' && (
+                  <span className="text-green-500 text-xs flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                    Saved
+                  </span>
+                )}
+                {saveStatus === 'saving' && (
+                  <span className="text-yellow-500 text-xs flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                    Saving...
+                  </span>
                 )}
               </div>
             </div>
@@ -484,7 +463,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
               No document open
             </div>
             <p className="text-gray-400 text-sm max-w-md">
-              Create a new document or open an existing one to start writing
+              Create a new document or select one from the left sidebar
             </p>
           </div>
         )}
@@ -520,7 +499,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           height: 0;
         }
 
-        /* CONTROLLED PARAGRAPH SPACING - Professional email/document spacing */
         .tiptap-editor p {
           margin-top: 0;
           margin-bottom: 0.75rem;
