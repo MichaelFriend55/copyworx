@@ -12,6 +12,7 @@
  * - TipTap editor with full formatting
  * - Automatic content persistence to localStorage
  * - Real-time word/character count
+ * - Zoom controls for editor view (50%-200%)
  * - Apple-style aesthetic
  */
 
@@ -36,6 +37,8 @@ import { getDocument, updateDocument } from '@/lib/storage/document-storage';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
+import { ZoomIn, ZoomOut } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 
 interface EditorAreaProps {
   className?: string;
@@ -52,6 +55,12 @@ export interface EditorAreaHandle {
 
 /** Debounce delay for auto-save (ms) */
 const AUTO_SAVE_DELAY = 500;
+
+/** Available zoom levels for the editor (percentages) */
+const ZOOM_LEVELS = [50, 75, 90, 100, 110, 125, 150, 175, 200] as const;
+
+/** Default zoom level */
+const DEFAULT_ZOOM = 100;
 
 /**
  * Main editor area with TipTap rich text editor
@@ -77,6 +86,9 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   
   // Auto-save debounce timer ref
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Zoom level state (view preference, not saved to document)
+  const [zoomLevel, setZoomLevel] = useState<number>(DEFAULT_ZOOM);
   
   // Track if we're loading content to prevent save during load
   const isLoadingRef = useRef(false);
@@ -379,6 +391,68 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     }, 100);
   }, [editor]);
 
+  /**
+   * Zoom in to the next available zoom level
+   */
+  const handleZoomIn = useCallback(() => {
+    setZoomLevel((current) => {
+      const currentIndex = ZOOM_LEVELS.indexOf(current as typeof ZOOM_LEVELS[number]);
+      if (currentIndex === -1) {
+        // Find the next level above current
+        const nextLevel = ZOOM_LEVELS.find((level) => level > current);
+        return nextLevel ?? ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
+      }
+      if (currentIndex < ZOOM_LEVELS.length - 1) {
+        return ZOOM_LEVELS[currentIndex + 1];
+      }
+      return current;
+    });
+  }, []);
+
+  /**
+   * Zoom out to the previous available zoom level
+   */
+  const handleZoomOut = useCallback(() => {
+    setZoomLevel((current) => {
+      const currentIndex = ZOOM_LEVELS.indexOf(current as typeof ZOOM_LEVELS[number]);
+      if (currentIndex === -1) {
+        // Find the previous level below current
+        const prevLevels = ZOOM_LEVELS.filter((level) => level < current);
+        return prevLevels.length > 0 ? prevLevels[prevLevels.length - 1] : ZOOM_LEVELS[0];
+      }
+      if (currentIndex > 0) {
+        return ZOOM_LEVELS[currentIndex - 1];
+      }
+      return current;
+    });
+  }, []);
+
+  /**
+   * Reset zoom to default (100%)
+   */
+  const handleZoomReset = useCallback(() => {
+    setZoomLevel(DEFAULT_ZOOM);
+  }, []);
+
+  /**
+   * Handle slider value change
+   */
+  const handleSliderChange = useCallback((value: number[]) => {
+    if (value[0] !== undefined) {
+      setZoomLevel(value[0]);
+    }
+  }, []);
+
+  /**
+   * Check if zoom in is available (not at max)
+   */
+  const canZoomIn = zoomLevel < ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
+
+  /**
+   * Check if zoom out is available (not at min)
+   */
+  const canZoomOut = zoomLevel > ZOOM_LEVELS[0];
+
   // Expose loadDocument via ref for parent components
   useImperativeHandle(ref, () => ({
     loadDocument: handleLoadDocument,
@@ -432,33 +506,113 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                 </span>
               </div>
 
-              {/* Last edited with auto-save indicator */}
-              <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
-                <span>
-                  Saved{' '}
-                  {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </span>
-                {saveStatus === 'saved' && (
-                  <span className="text-green-500 text-xs flex items-center gap-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Saved
+              {/* Right side: Zoom controls + Save status */}
+              <div className="flex items-center gap-4">
+                {/* Zoom controls */}
+                <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
+                  {/* Zoom out button */}
+                  <button
+                    onClick={handleZoomOut}
+                    disabled={!canZoomOut}
+                    className={cn(
+                      'p-1 rounded transition-colors duration-150',
+                      'hover:bg-gray-100 active:bg-gray-200',
+                      'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset'
+                    )}
+                    title="Zoom out"
+                    aria-label="Zoom out"
+                  >
+                    <ZoomOut className="w-4 h-4 text-gray-600" />
+                  </button>
+
+                  {/* Divider */}
+                  <div className="w-px h-5 bg-gray-200" />
+
+                  {/* Zoom slider */}
+                  <div className="w-[120px] px-1">
+                    <Slider
+                      value={[zoomLevel]}
+                      onValueChange={handleSliderChange}
+                      min={50}
+                      max={200}
+                      step={5}
+                      className="cursor-pointer"
+                      aria-label="Zoom level"
+                    />
+                  </div>
+
+                  {/* Divider */}
+                  <div className="w-px h-5 bg-gray-200" />
+
+                  {/* Zoom percentage display - click to reset */}
+                  <button
+                    onClick={handleZoomReset}
+                    className={cn(
+                      'px-2 py-1 min-w-[52px] text-center',
+                      'text-xs font-medium text-gray-700',
+                      'hover:bg-gray-100 active:bg-gray-200',
+                      'transition-colors duration-150',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset',
+                      zoomLevel !== DEFAULT_ZOOM && 'text-primary'
+                    )}
+                    title="Reset to 100%"
+                    aria-label={`Current zoom: ${zoomLevel}%. Click to reset to 100%`}
+                  >
+                    {zoomLevel}%
+                  </button>
+
+                  {/* Divider */}
+                  <div className="w-px h-5 bg-gray-200" />
+
+                  {/* Zoom in button */}
+                  <button
+                    onClick={handleZoomIn}
+                    disabled={!canZoomIn}
+                    className={cn(
+                      'p-1 rounded transition-colors duration-150',
+                      'hover:bg-gray-100 active:bg-gray-200',
+                      'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset'
+                    )}
+                    title="Zoom in"
+                    aria-label="Zoom in"
+                  >
+                    <ZoomIn className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Vertical divider between zoom and save status */}
+                <div className="w-px h-5 bg-gray-200" />
+
+                {/* Last edited with auto-save indicator */}
+                <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
+                  <span>
+                    Saved{' '}
+                    {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
                   </span>
-                )}
-                {saveStatus === 'saving' && (
-                  <span className="text-yellow-500 text-xs flex items-center gap-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                    Saving...
-                  </span>
-                )}
+                  {saveStatus === 'saved' && (
+                    <span className="text-green-500 text-xs flex items-center gap-1">
+                      <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                      Saved
+                    </span>
+                  )}
+                  {saveStatus === 'saving' && (
+                    <span className="text-yellow-500 text-xs flex items-center gap-1">
+                      <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                      Saving...
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* TipTap editor */}
+            {/* TipTap editor with zoom */}
             <div
-              className="px-16 py-8"
+              className="overflow-auto"
               style={{
                 paddingLeft: '60px',
                 paddingRight: '60px',
@@ -466,14 +620,24 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                 paddingBottom: '40px',
               }}
             >
-              <EditorContent
-                editor={editor}
-                className={cn(
-                  'tiptap-editor',
-                  'text-base leading-relaxed',
-                  'focus-within:outline-none'
-                )}
-              />
+              <div
+                className="editor-zoom-container"
+                style={{
+                  transform: `scale(${zoomLevel / 100})`,
+                  transformOrigin: 'top left',
+                  transition: 'transform 150ms ease-out',
+                  width: `${10000 / zoomLevel}%`,
+                }}
+              >
+                <EditorContent
+                  editor={editor}
+                  className={cn(
+                    'tiptap-editor',
+                    'text-base leading-relaxed',
+                    'focus-within:outline-none'
+                  )}
+                />
+              </div>
             </div>
           </>
         ) : (
@@ -640,6 +804,18 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
 
         .tiptap-editor [data-text-align="justify"] {
           text-align: justify;
+        }
+
+        /* Zoom container styles */
+        .editor-zoom-container {
+          will-change: transform;
+        }
+
+        /* Ensure editor content is crisp at all zoom levels */
+        .editor-zoom-container .ProseMirror {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
         }
       `}</style>
     </div>
