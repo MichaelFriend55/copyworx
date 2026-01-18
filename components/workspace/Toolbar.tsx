@@ -38,6 +38,9 @@ import {
   Link as LinkIcon,
   RemoveFormatting,
   ChevronDown,
+  Paintbrush,
+  Highlighter,
+  X,
 } from 'lucide-react';
 import { useActiveDocumentId, useUIActions } from '@/lib/stores/workspaceStore';
 import { cn } from '@/lib/utils';
@@ -126,6 +129,48 @@ const FONT_SIZES = [
   { label: '36', value: '36px' },
   { label: '48', value: '48px' },
   { label: '72', value: '72px' },
+];
+
+/**
+ * Text color options for the color picker
+ */
+const TEXT_COLORS = [
+  { label: 'Black', value: '#000000' },
+  { label: 'Dark Gray', value: '#4B5563' },
+  { label: 'Gray', value: '#9CA3AF' },
+  { label: 'Red', value: '#EF4444' },
+  { label: 'Orange', value: '#F97316' },
+  { label: 'Amber', value: '#F59E0B' },
+  { label: 'Yellow', value: '#EAB308' },
+  { label: 'Lime', value: '#84CC16' },
+  { label: 'Green', value: '#22C55E' },
+  { label: 'Emerald', value: '#10B981' },
+  { label: 'Teal', value: '#14B8A6' },
+  { label: 'Cyan', value: '#06B6D4' },
+  { label: 'Blue', value: '#3B82F6' },
+  { label: 'Indigo', value: '#6366F1' },
+  { label: 'Violet', value: '#8B5CF6' },
+  { label: 'Purple', value: '#A855F7' },
+  { label: 'Fuchsia', value: '#D946EF' },
+  { label: 'Pink', value: '#EC4899' },
+  { label: 'Rose', value: '#F43F5E' },
+  { label: 'Brown', value: '#92400E' },
+];
+
+/**
+ * Highlight/background color options
+ */
+const HIGHLIGHT_COLORS = [
+  { label: 'Yellow', value: '#FEF08A' },
+  { label: 'Lime', value: '#D9F99D' },
+  { label: 'Green', value: '#BBF7D0' },
+  { label: 'Cyan', value: '#A5F3FC' },
+  { label: 'Blue', value: '#BFDBFE' },
+  { label: 'Purple', value: '#DDD6FE' },
+  { label: 'Pink', value: '#FBCFE8' },
+  { label: 'Rose', value: '#FECDD3' },
+  { label: 'Orange', value: '#FED7AA' },
+  { label: 'Gray', value: '#E5E7EB' },
 ];
 
 /**
@@ -270,6 +315,218 @@ function FontSizeDropdown({ editor }: { editor: Editor | null }) {
                 {size.label}
               </button>
             ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Text color picker dropdown component
+ */
+function TextColorDropdown({ editor }: { editor: Editor | null }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!editor) return null;
+
+  // Get current text color from editor attributes
+  const currentColor = editor.getAttributes('textStyle').color || '#000000';
+
+  const handleSetColor = (color: string) => {
+    if (color === '#000000') {
+      // Black is default, unset to use default
+      editor.chain().focus().unsetColor().run();
+    } else {
+      editor.chain().focus().setColor(color).run();
+    }
+    setIsOpen(false);
+    // Use setTimeout to ensure dropdown closes before clearing selection
+    setTimeout(() => {
+      editor.commands.blur();
+    }, 50);
+  };
+
+  const handleRemoveColor = () => {
+    editor.chain().focus().unsetColor().run();
+    setIsOpen(false);
+    setTimeout(() => {
+      editor.commands.blur();
+    }, 50);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          'w-8 h-8 rounded-md',
+          'flex items-center justify-center',
+          'hover:bg-apple-gray-bg',
+          'transition-colors duration-150',
+          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+          'relative'
+        )}
+        title="Text Color"
+      >
+        <Paintbrush className="w-4 h-4 text-apple-text-dark" />
+        {/* Color indicator bar */}
+        <div
+          className="absolute bottom-1 left-1.5 right-1.5 h-0.5 rounded-full"
+          style={{ backgroundColor: currentColor }}
+        />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Color palette dropdown */}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-[180px]">
+            <div className="text-xs text-gray-500 mb-2 px-1">Text Color</div>
+            
+            {/* Color grid */}
+            <div className="grid grid-cols-5 gap-1 mb-2">
+              {TEXT_COLORS.map((color) => (
+                <button
+                  key={color.value}
+                  onClick={() => handleSetColor(color.value)}
+                  className={cn(
+                    'w-7 h-7 rounded-md',
+                    'transition-all duration-150',
+                    'hover:scale-110',
+                    'focus:outline-none focus:ring-2 focus:ring-apple-blue',
+                    currentColor === color.value && 'ring-2 ring-apple-blue ring-offset-1'
+                  )}
+                  style={{ backgroundColor: color.value }}
+                  title={color.label}
+                />
+              ))}
+            </div>
+
+            {/* Remove color button */}
+            <button
+              onClick={handleRemoveColor}
+              className={cn(
+                'w-full px-2 py-1.5 rounded-md',
+                'text-xs text-apple-text-dark',
+                'hover:bg-apple-gray-bg',
+                'transition-colors duration-150',
+                'flex items-center justify-center gap-1'
+              )}
+            >
+              <X className="w-3 h-3" />
+              <span>Remove Color</span>
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Highlight/background color picker dropdown component
+ */
+function HighlightColorDropdown({ editor }: { editor: Editor | null }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!editor) return null;
+
+  // Get current highlight color from editor
+  const highlightAttrs = editor.getAttributes('highlight');
+  const currentHighlight = highlightAttrs?.color || null;
+
+  const handleSetHighlight = (color: string) => {
+    editor.chain().focus().setHighlight({ color }).run();
+    setIsOpen(false);
+    // Use setTimeout to ensure dropdown closes before clearing selection
+    setTimeout(() => {
+      editor.commands.blur();
+    }, 50);
+  };
+
+  const handleRemoveHighlight = () => {
+    editor.chain().focus().unsetHighlight().run();
+    setIsOpen(false);
+    setTimeout(() => {
+      editor.commands.blur();
+    }, 50);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          'w-8 h-8 rounded-md',
+          'flex items-center justify-center',
+          'hover:bg-apple-gray-bg',
+          'transition-colors duration-150',
+          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+          'relative'
+        )}
+        title="Highlight Color"
+      >
+        <Highlighter className="w-4 h-4 text-apple-text-dark" />
+        {/* Highlight indicator bar */}
+        {currentHighlight && (
+          <div
+            className="absolute bottom-1 left-1.5 right-1.5 h-0.5 rounded-full"
+            style={{ backgroundColor: currentHighlight }}
+          />
+        )}
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Highlight palette dropdown */}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-[180px]">
+            <div className="text-xs text-gray-500 mb-2 px-1">Highlight Color</div>
+            
+            {/* Color grid */}
+            <div className="grid grid-cols-5 gap-1 mb-2">
+              {HIGHLIGHT_COLORS.map((color) => (
+                <button
+                  key={color.value}
+                  onClick={() => handleSetHighlight(color.value)}
+                  className={cn(
+                    'w-7 h-7 rounded-md border border-gray-200',
+                    'transition-all duration-150',
+                    'hover:scale-110',
+                    'focus:outline-none focus:ring-2 focus:ring-apple-blue',
+                    currentHighlight === color.value && 'ring-2 ring-apple-blue ring-offset-1'
+                  )}
+                  style={{ backgroundColor: color.value }}
+                  title={color.label}
+                />
+              ))}
+            </div>
+
+            {/* Remove highlight button */}
+            <button
+              onClick={handleRemoveHighlight}
+              className={cn(
+                'w-full px-2 py-1.5 rounded-md',
+                'text-xs text-apple-text-dark',
+                'hover:bg-apple-gray-bg',
+                'transition-colors duration-150',
+                'flex items-center justify-center gap-1'
+              )}
+            >
+              <X className="w-3 h-3" />
+              <span>Remove Highlight</span>
+            </button>
           </div>
         </>
       )}
@@ -503,6 +760,14 @@ export function Toolbar({ className }: ToolbarProps) {
 
             {/* Text style dropdown */}
             <TextStyleDropdown editor={editor} />
+
+            <div className="w-px h-6 bg-gray-200 mx-2" />
+
+            {/* Text Color */}
+            <TextColorDropdown editor={editor} />
+
+            {/* Highlight Color */}
+            <HighlightColorDropdown editor={editor} />
 
             <div className="w-px h-6 bg-gray-200 mx-2" />
 

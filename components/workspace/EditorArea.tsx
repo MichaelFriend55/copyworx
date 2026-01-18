@@ -28,6 +28,8 @@ import Link from '@tiptap/extension-link';
 import Typography from '@tiptap/extension-typography';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { FontFamily } from '@tiptap/extension-font-family';
+import { Color } from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
 import { FontSize } from '@/lib/tiptap/font-size';
 import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId } from '@/lib/stores/workspaceStore';
 import { getDocument, updateDocument } from '@/lib/storage/document-storage';
@@ -118,6 +120,13 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       }),
       FontSize.configure({
         sizes: ['8px', '10px', '11px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px', '72px'],
+      }),
+      // Color extensions
+      Color.configure({
+        types: ['textStyle'],
+      }),
+      Highlight.configure({
+        multicolor: true,
       }),
     ],
     content: '',
