@@ -248,10 +248,10 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
                 title={tone.description}
               >
                 <Icon className={cn('w-5 h-5', isSelected ? 'text-white' : 'text-apple-blue')} />
-                <div className="flex flex-col items-start gap-0.5">
-                  <span className="text-sm font-medium">{tone.label}</span>
+                <div className="flex flex-col items-start gap-0.5 w-full">
+                  <span className="text-sm font-medium text-left">{tone.label}</span>
                   <span className={cn(
-                    'text-xs',
+                    'text-xs text-left',
                     isSelected ? 'text-blue-100' : 'text-apple-text-light'
                   )}>
                     {tone.description}

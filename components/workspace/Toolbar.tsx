@@ -88,6 +88,196 @@ function FormatButton({
 }
 
 /**
+ * Font family options - web-safe fonts plus modern fonts
+ */
+const FONT_FAMILIES = [
+  { label: 'Default', value: '' },
+  // Web-safe fonts
+  { label: 'Arial', value: 'Arial' },
+  { label: 'Helvetica', value: 'Helvetica' },
+  { label: 'Georgia', value: 'Georgia' },
+  { label: 'Times New Roman', value: 'Times New Roman' },
+  { label: 'Courier New', value: 'Courier New' },
+  { label: 'Verdana', value: 'Verdana' },
+  { label: 'Trebuchet MS', value: 'Trebuchet MS' },
+  // Modern fonts (require Google Fonts or system availability)
+  { label: 'Inter', value: 'Inter' },
+  { label: 'Roboto', value: 'Roboto' },
+  { label: 'Open Sans', value: 'Open Sans' },
+  { label: 'Lato', value: 'Lato' },
+  { label: 'Montserrat', value: 'Montserrat' },
+];
+
+/**
+ * Font size options
+ */
+const FONT_SIZES = [
+  { label: '8', value: '8px' },
+  { label: '10', value: '10px' },
+  { label: '11', value: '11px' },
+  { label: '12', value: '12px' },
+  { label: '14', value: '14px' },
+  { label: '16', value: '16px' },
+  { label: '18', value: '18px' },
+  { label: '20', value: '20px' },
+  { label: '24', value: '24px' },
+  { label: '28', value: '28px' },
+  { label: '32', value: '32px' },
+  { label: '36', value: '36px' },
+  { label: '48', value: '48px' },
+  { label: '72', value: '72px' },
+];
+
+/**
+ * Font family dropdown component
+ */
+function FontFamilyDropdown({ editor }: { editor: Editor | null }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!editor) return null;
+
+  // Get current font family from editor attributes
+  const currentFontFamily = editor.getAttributes('textStyle').fontFamily || '';
+  const currentLabel = FONT_FAMILIES.find(f => f.value === currentFontFamily)?.label || 'Font';
+
+  const handleSetFont = (fontFamily: string) => {
+    if (fontFamily === '') {
+      // Unset font family to use default
+      editor.chain().focus().unsetFontFamily().run();
+    } else {
+      editor.chain().focus().setFontFamily(fontFamily).run();
+    }
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          'px-2 h-8 rounded-md',
+          'flex items-center gap-1',
+          'text-sm text-apple-text-dark',
+          'hover:bg-apple-gray-bg',
+          'transition-colors duration-150',
+          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+          'min-w-[120px] max-w-[150px]'
+        )}
+        title="Font Family"
+      >
+        <span className="truncate flex-1 text-left">{currentLabel}</span>
+        <ChevronDown className="w-3 h-3 flex-shrink-0" />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Dropdown menu */}
+          <div className="absolute top-full left-0 mt-1 z-20 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px] max-h-[300px] overflow-y-auto">
+            {FONT_FAMILIES.map((font) => (
+              <button
+                key={font.label}
+                onClick={() => handleSetFont(font.value)}
+                className={cn(
+                  'w-full px-4 py-2 text-left text-sm',
+                  'hover:bg-apple-gray-bg',
+                  'transition-colors duration-150',
+                  currentFontFamily === font.value
+                    ? 'bg-apple-blue/10 text-apple-blue font-medium'
+                    : 'text-apple-text-dark'
+                )}
+                style={{ fontFamily: font.value || 'inherit' }}
+              >
+                {font.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Font size dropdown component
+ */
+function FontSizeDropdown({ editor }: { editor: Editor | null }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!editor) return null;
+
+  // Get current font size from editor attributes
+  const currentFontSize = editor.getAttributes('textStyle').fontSize || '';
+  const currentLabel = FONT_SIZES.find(s => s.value === currentFontSize)?.label || '16';
+
+  const handleSetSize = (size: string) => {
+    if (size === '16px') {
+      // 16px is the default, so unset to use default
+      editor.chain().focus().unsetFontSize().run();
+    } else {
+      editor.chain().focus().setFontSize(size).run();
+    }
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          'px-2 h-8 rounded-md',
+          'flex items-center gap-1',
+          'text-sm text-apple-text-dark',
+          'hover:bg-apple-gray-bg',
+          'transition-colors duration-150',
+          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+          'min-w-[60px] max-w-[80px]'
+        )}
+        title="Font Size"
+      >
+        <span className="truncate flex-1 text-left">{currentLabel}</span>
+        <ChevronDown className="w-3 h-3 flex-shrink-0" />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Dropdown menu */}
+          <div className="absolute top-full left-0 mt-1 z-20 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[80px] max-h-[300px] overflow-y-auto">
+            {FONT_SIZES.map((size) => (
+              <button
+                key={size.value}
+                onClick={() => handleSetSize(size.value)}
+                className={cn(
+                  'w-full px-4 py-2 text-left text-sm',
+                  'hover:bg-apple-gray-bg',
+                  'transition-colors duration-150',
+                  currentFontSize === size.value
+                    ? 'bg-apple-blue/10 text-apple-blue font-medium'
+                    : 'text-apple-text-dark'
+                )}
+              >
+                {size.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
  * Text style dropdown component
  */
 function TextStyleDropdown({ editor }: { editor: Editor | null }) {
@@ -305,6 +495,12 @@ export function Toolbar({ className }: ToolbarProps) {
       <div className="flex-1 flex items-center justify-center gap-1">
         {hasActiveDocument && editor ? (
           <>
+            {/* Font controls - placed at LEFT */}
+            <FontFamilyDropdown editor={editor} />
+            <FontSizeDropdown editor={editor} />
+
+            <div className="w-px h-6 bg-gray-200 mx-2" />
+
             {/* Text style dropdown */}
             <TextStyleDropdown editor={editor} />
 
