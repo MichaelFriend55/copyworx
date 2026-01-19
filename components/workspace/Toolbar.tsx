@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { useActiveDocumentId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
 import { ViewModeSelector } from './ViewModeSelector';
+import { SaveAsSnippetButton } from './SaveAsSnippetButton';
 import { cn } from '@/lib/utils';
 
 interface ToolbarProps {
@@ -876,6 +877,11 @@ export function Toolbar({ className }: ToolbarProps) {
                 editor.chain().focus().clearNodes().unsetAllMarks().run()
               }
             />
+
+            <div className="w-px h-6 bg-gray-200 mx-2" />
+
+            {/* Save as Snippet */}
+            <SaveAsSnippetButton variant="toolbar" />
           </>
         ) : (
           <div className="text-sm text-gray-400 flex items-center gap-2">

@@ -33,6 +33,7 @@ import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import { FontSize } from '@/lib/tiptap/font-size';
 import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId, useViewMode } from '@/lib/stores/workspaceStore';
+import { useSnippetStore } from '@/lib/stores/snippetStore';
 import { getDocument, updateDocument } from '@/lib/storage/document-storage';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
@@ -380,6 +381,19 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     if (editor && typeof window !== 'undefined') {
       window.__tiptapEditor = editor;
     }
+  }, [editor]);
+  
+  /**
+   * Register editor with snippet store for snippet insertion
+   */
+  useEffect(() => {
+    // Set editor reference in snippet store when editor is ready
+    useSnippetStore.getState().setEditorRef(editor);
+    
+    return () => {
+      // Clear reference when component unmounts
+      useSnippetStore.getState().setEditorRef(null);
+    };
   }, [editor]);
 
   /**

@@ -60,10 +60,8 @@ export function WorkspaceLayout({
   const viewMode = useViewMode();
   const { toggleLeftSidebar, toggleRightSidebar } = useUIActions();
 
-  // In Focus Mode, hide both sidebars regardless of their state
+  // In Focus Mode, force close both sidebars but keep them in DOM
   const isFocusMode = viewMode === 'focus';
-  const showLeftSidebar = !isFocusMode && leftSidebarOpen;
-  const showRightSidebar = !isFocusMode && rightSidebarOpen;
 
   return (
     <div className={cn('h-screen w-screen flex flex-col overflow-hidden', className)}>
@@ -72,11 +70,11 @@ export function WorkspaceLayout({
 
       {/* Main workspace area */}
       <div className="flex-1 flex overflow-hidden transition-all duration-300">
-        {/* Left sidebar - hidden in Focus Mode */}
-        {leftSidebar && showLeftSidebar && (
+        {/* Left sidebar - always rendered but collapsed in Focus Mode */}
+        {leftSidebar && (
           <Sidebar
             side="left"
-            isOpen={leftSidebarOpen}
+            isOpen={leftSidebarOpen && !isFocusMode}
             onToggle={toggleLeftSidebar}
           >
             {leftSidebar}
@@ -93,11 +91,11 @@ export function WorkspaceLayout({
           {children}
         </main>
 
-        {/* Right sidebar - hidden in Focus Mode */}
-        {rightSidebar && showRightSidebar && (
+        {/* Right sidebar - always rendered but collapsed in Focus Mode */}
+        {rightSidebar && (
           <Sidebar
             side="right"
-            isOpen={rightSidebarOpen}
+            isOpen={rightSidebarOpen && !isFocusMode}
             onToggle={toggleRightSidebar}
           >
             {rightSidebar}

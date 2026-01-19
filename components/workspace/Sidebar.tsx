@@ -62,27 +62,12 @@ export function Sidebar({
   const sidebarWidth = width || defaultWidth;
 
   return (
-    <aside
-      className={cn(
-        'relative h-full bg-white border-apple-gray-light',
-        'transition-all duration-300 ease-in-out',
-        'shadow-sm',
-        side === 'left' ? 'border-r' : 'border-l',
-        className
-      )}
-      style={{
-        width: isOpen ? `${sidebarWidth}px` : '0px',
-        minWidth: isOpen ? `${sidebarWidth}px` : '0px',
-        maxWidth: isOpen ? `${sidebarWidth}px` : '0px',
-      }}
-      aria-label={`${side} sidebar`}
-      aria-expanded={isOpen}
-    >
-      {/* Toggle button */}
+    <div className="relative h-full">
+      {/* Toggle button - always visible outside sidebar */}
       <button
         onClick={onToggle}
         className={cn(
-          'absolute top-4 z-10',
+          'absolute top-4 z-20',
           'w-6 h-6 rounded-full',
           'bg-white border border-apple-gray-light',
           'flex items-center justify-center',
@@ -90,7 +75,9 @@ export function Sidebar({
           'transition-all duration-200',
           'shadow-sm hover:shadow',
           'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-          side === 'left' ? '-right-3' : '-left-3'
+          side === 'left' 
+            ? (isOpen ? 'left-[277px]' : 'left-0')
+            : (isOpen ? 'right-[317px]' : 'right-0')
         )}
         aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${side} sidebar`}
         title={`${isOpen ? 'Collapse' : 'Expand'} ${side} sidebar`}
@@ -108,20 +95,38 @@ export function Sidebar({
         )}
       </button>
 
-      {/* Sidebar content with overflow handling */}
-      <div
+      {/* Sidebar */}
+      <aside
         className={cn(
-          'h-full overflow-hidden',
-          'transition-opacity duration-300',
-          isOpen ? 'opacity-100' : 'opacity-0'
+          'relative h-full bg-white border-apple-gray-light',
+          'transition-all duration-300 ease-in-out',
+          'shadow-sm',
+          side === 'left' ? 'border-r' : 'border-l',
+          className
         )}
+        style={{
+          width: isOpen ? `${sidebarWidth}px` : '0px',
+          minWidth: isOpen ? `${sidebarWidth}px` : '0px',
+          maxWidth: isOpen ? `${sidebarWidth}px` : '0px',
+        }}
+        aria-label={`${side} sidebar`}
+        aria-expanded={isOpen}
       >
-        {/* py-6 px-2 - minimal breathing room from edges */}
-        <div className="h-full overflow-y-auto custom-scrollbar py-6 px-2">
-          {children}
+        {/* Sidebar content with overflow handling */}
+        <div
+          className={cn(
+            'h-full overflow-hidden',
+            'transition-opacity duration-300',
+            isOpen ? 'opacity-100' : 'opacity-0'
+          )}
+        >
+          {/* py-6 px-2 - minimal breathing room from edges */}
+          <div className="h-full overflow-y-auto custom-scrollbar py-6 px-2">
+            {children}
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </div>
   );
 }
 

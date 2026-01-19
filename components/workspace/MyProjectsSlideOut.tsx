@@ -41,6 +41,7 @@ import {
   MoreHorizontal,
   Check,
   X,
+  Scissors,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
@@ -69,6 +70,10 @@ import {
 } from '@/lib/storage/folder-storage';
 import { createProject } from '@/lib/storage/project-storage';
 import type { Project, ProjectDocument, Folder } from '@/lib/types/project';
+import type { Snippet } from '@/lib/types/snippet';
+import { SnippetSection } from './SnippetSection';
+import { SnippetModals } from './SnippetModals';
+import { useSnippetActions, useSnippetStore } from '@/lib/stores/snippetStore';
 
 // ============================================================================
 // Constants
@@ -391,7 +396,7 @@ function FolderRow({
 }
 
 /**
- * Project section with documents and folders
+ * Project section with documents, folders, and snippets
  */
 interface ProjectSectionProps {
   project: Project;
@@ -403,6 +408,9 @@ interface ProjectSectionProps {
   onSelect: () => void;
   onDocumentSelect: (doc: ProjectDocument) => void;
   onRefresh: () => void;
+  onSnippetClick?: (snippet: Snippet) => void;
+  onAddSnippet?: (projectId: string) => void;
+  onEditSnippet?: (snippet: Snippet) => void;
 }
 
 function ProjectSection({
@@ -415,6 +423,9 @@ function ProjectSection({
   onSelect,
   onDocumentSelect,
   onRefresh,
+  onSnippetClick,
+  onAddSnippet,
+  onEditSnippet,
 }: ProjectSectionProps) {
   // Local state
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -682,6 +693,16 @@ function ProjectSection({
             />
           ))}
           
+          {/* Snippets section */}
+          <SnippetSection
+            projectId={project.id}
+            isExpanded={isExpanded}
+            searchQuery={searchQuery}
+            onSnippetClick={onSnippetClick}
+            onAddSnippet={onAddSnippet}
+            onEditSnippet={onEditSnippet}
+          />
+          
           {/* Empty state */}
           {rootFolders.length === 0 && rootDocs.length === 0 && (
             <div className="text-sm text-gray-500 text-center py-4">
@@ -713,6 +734,14 @@ export function MyProjectsSlideOut({
   const { setActiveProjectId } = useProjectActions();
   const { setActiveDocumentId } = useDocumentActions();
   const { closeSlideOut } = useSlideOutActions();
+  
+  // Snippet store actions
+  const {
+    loadSnippets,
+    insertSnippet,
+    openAddModal,
+    openEditModal,
+  } = useSnippetActions();
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
@@ -838,6 +867,30 @@ export function MyProjectsSlideOut({
   const handleRefresh = useCallback(() => {
     setRefreshKey(k => k + 1);
   }, []);
+  
+  // Snippet handlers
+  const handleSnippetClick = useCallback((snippet: Snippet) => {
+    // Load snippets for the snippet's project if needed
+    if (snippet.projectId !== activeProjectId) {
+      loadSnippets(snippet.projectId);
+    }
+    // Insert snippet at cursor
+    insertSnippet(snippet);
+    // Optionally close the panel
+    // onClose();
+  }, [activeProjectId, loadSnippets, insertSnippet]);
+  
+  const handleAddSnippet = useCallback((projectId: string) => {
+    // Load snippets for the specific project where "Add" was clicked
+    loadSnippets(projectId);
+    openAddModal();
+  }, [loadSnippets, openAddModal]);
+  
+  const handleEditSnippet = useCallback((snippet: Snippet) => {
+    // Ensure snippets are loaded for the snippet's project
+    loadSnippets(snippet.projectId);
+    openEditModal(snippet);
+  }, [loadSnippets, openEditModal]);
 
   // Panel footer
   const panelFooter = (
@@ -866,6 +919,7 @@ export function MyProjectsSlideOut({
   );
 
   return (
+    <>
     <SlideOutPanel
       isOpen={isOpen}
       onClose={onClose}
@@ -912,6 +966,9 @@ export function MyProjectsSlideOut({
               onSelect={() => handleProjectSelect(project.id)}
               onDocumentSelect={handleDocumentSelect}
               onRefresh={handleRefresh}
+              onSnippetClick={handleSnippetClick}
+              onAddSnippet={handleAddSnippet}
+              onEditSnippet={handleEditSnippet}
             />
           ))}
           
@@ -928,6 +985,10 @@ export function MyProjectsSlideOut({
         </div>
       </div>
     </SlideOutPanel>
+    
+    {/* Snippet modals */}
+    <SnippetModals />
+  </>
   );
 }
 

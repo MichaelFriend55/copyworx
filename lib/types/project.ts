@@ -10,6 +10,7 @@
  */
 
 import type { BrandVoice } from './brand';
+import type { Snippet } from './snippet';
 
 /**
  * Folder interface - Organizational container for documents
@@ -67,6 +68,9 @@ export interface Project {
   
   /** Array of documents (copywriting content) */
   documents: ProjectDocument[];
+  
+  /** Array of reusable copy snippets */
+  snippets: Snippet[];
   
   /** ISO date string when project was created */
   createdAt: string;
@@ -206,6 +210,8 @@ export function isProject(value: unknown): value is Project {
     Array.isArray(obj.personas) &&
     Array.isArray(obj.folders) &&
     Array.isArray(obj.documents) &&
+    // snippets is optional for backward compatibility
+    (obj.snippets === undefined || Array.isArray(obj.snippets)) &&
     typeof obj.createdAt === 'string' &&
     typeof obj.updatedAt === 'string'
   );

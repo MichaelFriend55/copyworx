@@ -300,7 +300,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
               </div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+          <PanelLeftOpen className="w-4 h-4 text-gray-400" />
         </button>
       </div>
 

@@ -117,6 +117,7 @@ export function getAllProjects(): Project[] {
       personas: Array.isArray(project.personas) ? project.personas : [],
       folders: Array.isArray(project.folders) ? project.folders : [],
       documents: Array.isArray(project.documents) ? project.documents : [],
+      snippets: Array.isArray(project.snippets) ? project.snippets : [],
     }));
     
     console.log(`📂 Loaded ${sanitizedProjects.length} project(s) from storage`);
@@ -175,6 +176,7 @@ export function createProject(name: string): Project {
     personas: [],
     folders: [],
     documents: [],
+    snippets: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
