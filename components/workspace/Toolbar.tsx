@@ -1,11 +1,11 @@
 /**
  * @file components/workspace/Toolbar.tsx
- * @description Top toolbar with file menu, formatting controls, and settings
+ * @description Top toolbar with file menu, formatting controls, and view modes
  * 
  * Features:
  * - Left: File operations (Home, Save, Undo, Redo)
  * - Center: Rich text formatting controls
- * - Right: Settings button
+ * - Right: View mode selector
  * - Apple-style aesthetic with smooth interactions
  * - Keyboard shortcut tooltips
  * 
@@ -17,7 +17,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import type { Editor } from '@tiptap/react';
 import {
@@ -26,7 +26,6 @@ import {
   Undo,
   Redo,
   FileText,
-  Settings,
   Bold,
   Italic,
   Underline as UnderlineIcon,
@@ -41,6 +40,10 @@ import {
   Paintbrush,
   Highlighter,
   X,
+  FileDown,
+  FileUp,
+  Printer,
+  ChevronRight,
 } from 'lucide-react';
 import { useActiveDocumentId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
 import { ViewModeSelector } from './ViewModeSelector';
@@ -625,6 +628,237 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
 }
 
 /**
+ * Document menu dropdown component
+ */
+function DocumentMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [showImportSubmenu, setShowImportSubmenu] = useState(false);
+  const [showExportSubmenu, setShowExportSubmenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle import file selection
+  const handleImportClick = (fileType: string) => {
+    console.log('Import triggered for file type:', fileType);
+    // TODO: Implement import functionality
+    setIsOpen(false);
+    setShowImportSubmenu(false);
+  };
+
+  // Handle export
+  const handleExportClick = (fileType: string) => {
+    console.log('Export triggered for file type:', fileType);
+    // TODO: Implement export functionality
+    setIsOpen(false);
+    setShowExportSubmenu(false);
+  };
+
+  // Handle print
+  const handlePrintClick = () => {
+    console.log('Print triggered');
+    window.print();
+    setIsOpen(false);
+  };
+
+  // Close submenus when main menu closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowImportSubmenu(false);
+      setShowExportSubmenu(false);
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          'px-3 py-2 rounded-lg',
+          'flex items-center gap-2',
+          'text-sm font-medium text-apple-text-dark',
+          'hover:bg-apple-gray-bg',
+          'transition-colors duration-150',
+          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+        )}
+        title="Document Menu"
+      >
+        <FileText className="w-4 h-4" />
+        <span className="hidden sm:inline">Document</span>
+        <ChevronDown className="w-3 h-3" />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Dropdown menu */}
+          <div className="absolute top-full left-0 mt-1 z-20 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[220px]">
+            {/* Import Document */}
+            <div className="relative">
+              <button
+                onClick={() => setShowImportSubmenu(!showImportSubmenu)}
+                onMouseEnter={() => setShowImportSubmenu(true)}
+                className={cn(
+                  'w-full px-4 py-2 text-left text-sm',
+                  'hover:bg-apple-gray-bg',
+                  'transition-colors duration-150',
+                  'text-apple-text-dark',
+                  'flex items-center justify-between'
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <FileUp className="w-4 h-4" />
+                  Import Document
+                </span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+
+              {/* Import Submenu */}
+              {showImportSubmenu && (
+                <div className="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px]">
+                  <button
+                    onClick={() => handleImportClick('docx')}
+                    className={cn(
+                      'w-full px-4 py-2 text-left text-sm',
+                      'hover:bg-apple-gray-bg',
+                      'transition-colors duration-150',
+                      'text-apple-text-dark'
+                    )}
+                  >
+                    Word Document (.docx)
+                  </button>
+                  <button
+                    onClick={() => handleImportClick('txt')}
+                    className={cn(
+                      'w-full px-4 py-2 text-left text-sm',
+                      'hover:bg-apple-gray-bg',
+                      'transition-colors duration-150',
+                      'text-apple-text-dark'
+                    )}
+                  >
+                    Plain Text (.txt)
+                  </button>
+                  <button
+                    onClick={() => handleImportClick('md')}
+                    className={cn(
+                      'w-full px-4 py-2 text-left text-sm',
+                      'hover:bg-apple-gray-bg',
+                      'transition-colors duration-150',
+                      'text-apple-text-dark'
+                    )}
+                  >
+                    Markdown (.md)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Export Document */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportSubmenu(!showExportSubmenu)}
+                onMouseEnter={() => setShowExportSubmenu(true)}
+                className={cn(
+                  'w-full px-4 py-2 text-left text-sm',
+                  'hover:bg-apple-gray-bg',
+                  'transition-colors duration-150',
+                  'text-apple-text-dark',
+                  'flex items-center justify-between'
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <FileDown className="w-4 h-4" />
+                  Export Document
+                </span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+
+              {/* Export Submenu */}
+              {showExportSubmenu && (
+                <div className="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px]">
+                  <button
+                    onClick={() => handleExportClick('docx')}
+                    className={cn(
+                      'w-full px-4 py-2 text-left text-sm',
+                      'hover:bg-apple-gray-bg',
+                      'transition-colors duration-150',
+                      'text-apple-text-dark'
+                    )}
+                  >
+                    Word Document (.docx)
+                  </button>
+                  <button
+                    onClick={() => handleExportClick('txt')}
+                    className={cn(
+                      'w-full px-4 py-2 text-left text-sm',
+                      'hover:bg-apple-gray-bg',
+                      'transition-colors duration-150',
+                      'text-apple-text-dark'
+                    )}
+                  >
+                    Plain Text (.txt)
+                  </button>
+                  <button
+                    onClick={() => handleExportClick('md')}
+                    className={cn(
+                      'w-full px-4 py-2 text-left text-sm',
+                      'hover:bg-apple-gray-bg',
+                      'transition-colors duration-150',
+                      'text-apple-text-dark'
+                    )}
+                  >
+                    Markdown (.md)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="my-1 border-t border-gray-200" />
+
+            {/* Print */}
+            <button
+              onClick={handlePrintClick}
+              className={cn(
+                'w-full px-4 py-2 text-left text-sm',
+                'hover:bg-apple-gray-bg',
+                'transition-colors duration-150',
+                'text-apple-text-dark',
+                'flex items-center justify-between'
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <Printer className="w-4 h-4" />
+                Print
+              </span>
+              <span className="text-xs text-gray-400">⌘P</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Hidden file input for importing */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".docx,.txt,.md"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            console.log('File selected:', file.name);
+            // TODO: Process imported file
+          }
+        }}
+      />
+    </div>
+  );
+}
+
+/**
  * Top toolbar component with file menu and formatting controls
  */
 export function Toolbar({ className }: ToolbarProps) {
@@ -727,6 +961,10 @@ export function Toolbar({ className }: ToolbarProps) {
           <Save className="w-4 h-4" />
           <span className="hidden sm:inline">Save</span>
         </button>
+
+        <DocumentMenu />
+
+        <div className="w-px h-6 bg-gray-200 mx-1" />
 
         <button
           onClick={() => editor?.chain().focus().undo().run()}
@@ -891,7 +1129,7 @@ export function Toolbar({ className }: ToolbarProps) {
         )}
       </div>
 
-      {/* Right section - View Mode & Settings */}
+      {/* Right section - View Mode */}
       <div className={cn(
         'flex items-center gap-3 transition-all duration-300',
         isFocusMode && 'mx-auto'
@@ -902,25 +1140,6 @@ export function Toolbar({ className }: ToolbarProps) {
           onViewModeChange={setViewMode}
           disabled={!hasActiveDocument}
         />
-
-        {/* Settings button - Hidden in Focus Mode */}
-        {!isFocusMode && (
-          <>
-            <div className="w-px h-6 bg-gray-200" />
-
-            <button
-              className={cn(
-                'p-2 rounded-lg',
-                'text-apple-text-dark hover:bg-apple-gray-bg',
-                'transition-colors duration-150',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
-              )}
-              title="Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-          </>
-        )}
       </div>
     </header>
   );
