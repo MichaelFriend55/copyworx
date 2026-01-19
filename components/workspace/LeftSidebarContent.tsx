@@ -10,11 +10,12 @@
  * Features:
  * - Project selector section with slide-out panel trigger
  * - Document list with version control
- * - AI@Worx Templates modal trigger
+ * - AI@Worx Templates slide-out browser
  * - Collapsible tool sections (My Copy Optimizer, My Brand & Audience)
  * - Active tool highlighting
  * - AI@Worx™ Live document insights panel at bottom
  * - My Projects slide-out for full project navigation
+ * - Templates slide-out for browsing and selecting templates
  * 
  * Note: The "My Insights" section has been replaced by the AI@Worx™ Live panel
  */
@@ -23,11 +24,11 @@
 
 import React, { useState, useCallback } from 'react';
 import { Sparkles, ChevronRight, ChevronDown, FileText, PanelLeftOpen } from 'lucide-react';
-import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { ProjectSelector } from '@/components/workspace/ProjectSelector';
 import DocumentList from '@/components/workspace/DocumentList';
 import { DocumentInsights } from '@/components/workspace/DocumentInsights';
 import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
+import { TemplatesSlideOut, TEMPLATES_PANEL_ID } from '@/components/workspace/TemplatesSlideOut';
 import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
@@ -54,6 +55,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   
   // Slide-out state
   const isProjectsSlideOutOpen = useIsSlideOutOpen(MY_PROJECTS_PANEL_ID);
+  const isTemplatesSlideOutOpen = useIsSlideOutOpen(TEMPLATES_PANEL_ID);
   const { openSlideOut, closeSlideOut } = useSlideOutActions();
   
   // Get active project for dynamic section title
@@ -66,9 +68,6 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['projects', 'documents', 'optimizer'])
   );
-
-  // Templates modal state
-  const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
   
   // NOTE: Project initialization is now handled in the parent WorkspacePage
   // This prevents duplicate refreshProjects() calls that could cause issues
@@ -84,7 +83,21 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
    * Close the My Projects slide-out panel
    */
   const closeProjectsSlideOut = useCallback(() => {
-    closeSlideOut();
+    closeSlideOut(MY_PROJECTS_PANEL_ID);
+  }, [closeSlideOut]);
+  
+  /**
+   * Open the Templates slide-out panel
+   */
+  const openTemplatesSlideOut = useCallback(() => {
+    openSlideOut(TEMPLATES_PANEL_ID);
+  }, [openSlideOut]);
+  
+  /**
+   * Close the Templates slide-out panel
+   */
+  const closeTemplatesSlideOut = useCallback(() => {
+    closeSlideOut(TEMPLATES_PANEL_ID);
   }, [closeSlideOut]);
   
   /**
@@ -144,36 +157,21 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
     });
   }, []);
 
-  /**
-   * Open templates modal
-   */
-  const openTemplatesModal = useCallback(() => {
-    console.log('🎨 Opening Templates Modal');
-    setTemplatesModalOpen(true);
-  }, []);
-
-  /**
-   * Close templates modal
-   */
-  const closeTemplatesModal = useCallback(() => {
-    setTemplatesModalOpen(false);
-  }, []);
-
   const isProjectsExpanded = expandedSections.has('projects');
 
   return (
     <div className="space-y-1 px-4">
-      {/* Templates Modal */}
-      <TemplatesModal
-        isOpen={templatesModalOpen}
-        onClose={closeTemplatesModal}
-      />
-      
       {/* My Projects Slide-Out Panel */}
       <MyProjectsSlideOut
         isOpen={isProjectsSlideOutOpen}
         onClose={closeProjectsSlideOut}
         onDocumentClick={handleSlideOutDocumentClick}
+      />
+      
+      {/* Templates Slide-Out Panel */}
+      <TemplatesSlideOut
+        isOpen={isTemplatesSlideOutOpen}
+        onClose={closeTemplatesSlideOut}
       />
       
       {/* MY PROJECTS SECTION */}
@@ -273,7 +271,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       {/* AI@WORX TEMPLATES SECTION */}
       <div className="mb-2">
         <button
-          onClick={openTemplatesModal}
+          onClick={openTemplatesSlideOut}
           className={cn(
             'w-full flex items-center justify-between px-3 py-3 rounded-lg',
             'hover:bg-apple-gray-bg transition-all duration-200',
@@ -288,7 +286,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                 AI@Worx™ Templates
               </div>
               <div className="text-xs text-gray-500">
-                Create from templates
+                Browse templates
               </div>
             </div>
           </div>

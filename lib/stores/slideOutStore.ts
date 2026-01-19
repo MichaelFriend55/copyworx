@@ -32,20 +32,21 @@ import { useShallow } from 'zustand/react/shallow';
  * Slide-out panel state interface
  */
 interface SlideOutState {
-  /** ID of the currently open slide-out panel, null if none open */
-  activeSlideOutId: string | null;
+  /** Set of IDs for currently open slide-out panels */
+  openSlideOutIds: Set<string>;
   
   /**
    * Open a slide-out panel by ID
-   * Automatically closes any currently open panel
+   * Multiple panels can be open simultaneously
    * @param id - Unique identifier for the panel
    */
   openSlideOut: (id: string) => void;
   
   /**
-   * Close the currently open slide-out panel
+   * Close a specific slide-out panel by ID
+   * @param id - Unique identifier for the panel to close (optional - closes all if omitted)
    */
-  closeSlideOut: () => void;
+  closeSlideOut: (id?: string) => void;
   
   /**
    * Toggle a slide-out panel
@@ -60,49 +61,86 @@ interface SlideOutState {
    * @returns true if the panel is open
    */
   isSlideOutOpen: (id: string) => boolean;
+  
+  /**
+   * Close all open slide-out panels
+   */
+  closeAllSlideOuts: () => void;
 }
 
 /**
  * Zustand store for slide-out panel state
  * 
  * Not persisted - panels should always start closed on page load
+ * Supports multiple panels open simultaneously (e.g., templates browser + template form)
  */
 export const useSlideOutStore = create<SlideOutState>()((set, get) => ({
-  activeSlideOutId: null,
+  openSlideOutIds: new Set<string>(),
   
   openSlideOut: (id: string) => {
-    set({ activeSlideOutId: id });
-    console.log('📂 Slide-out opened:', id);
+    const { openSlideOutIds } = get();
+    if (!openSlideOutIds.has(id)) {
+      const newSet = new Set(openSlideOutIds);
+      newSet.add(id);
+      set({ openSlideOutIds: newSet });
+      console.log('📂 Slide-out opened:', id);
+    }
   },
   
-  closeSlideOut: () => {
-    const currentId = get().activeSlideOutId;
-    if (currentId) {
-      set({ activeSlideOutId: null });
-      console.log('📁 Slide-out closed:', currentId);
+  closeSlideOut: (id?: string) => {
+    const { openSlideOutIds } = get();
+    if (id) {
+      // Close specific panel
+      if (openSlideOutIds.has(id)) {
+        const newSet = new Set(openSlideOutIds);
+        newSet.delete(id);
+        set({ openSlideOutIds: newSet });
+        console.log('📁 Slide-out closed:', id);
+      }
+    } else {
+      // Close all panels
+      if (openSlideOutIds.size > 0) {
+        set({ openSlideOutIds: new Set() });
+        console.log('📁 All slide-outs closed');
+      }
     }
   },
   
   toggleSlideOut: (id: string) => {
-    const { activeSlideOutId } = get();
-    if (activeSlideOutId === id) {
-      set({ activeSlideOutId: null });
+    const { openSlideOutIds } = get();
+    const newSet = new Set(openSlideOutIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
       console.log('📁 Slide-out toggled closed:', id);
     } else {
-      set({ activeSlideOutId: id });
+      newSet.add(id);
       console.log('📂 Slide-out toggled open:', id);
     }
+    set({ openSlideOutIds: newSet });
   },
   
   isSlideOutOpen: (id: string) => {
-    return get().activeSlideOutId === id;
+    return get().openSlideOutIds.has(id);
+  },
+  
+  closeAllSlideOuts: () => {
+    const { openSlideOutIds } = get();
+    if (openSlideOutIds.size > 0) {
+      set({ openSlideOutIds: new Set() });
+      console.log('📁 All slide-outs closed');
+    }
   },
 }));
 
 /**
  * Selector hooks for optimized re-renders
  */
-export const useActiveSlideOutId = () => useSlideOutStore((state) => state.activeSlideOutId);
+
+/**
+ * Hook to get all open slide-out IDs
+ * @returns Set of currently open panel IDs
+ */
+export const useOpenSlideOutIds = () => useSlideOutStore((state) => state.openSlideOutIds);
 
 /**
  * Hook to get slide-out actions with stable references
@@ -113,6 +151,7 @@ export const useSlideOutActions = () => useSlideOutStore(
     openSlideOut: state.openSlideOut,
     closeSlideOut: state.closeSlideOut,
     toggleSlideOut: state.toggleSlideOut,
+    closeAllSlideOuts: state.closeAllSlideOuts,
   }))
 );
 
@@ -122,5 +161,5 @@ export const useSlideOutActions = () => useSlideOutStore(
  * @returns true if the panel is currently open
  */
 export const useIsSlideOutOpen = (id: string) => {
-  return useSlideOutStore((state) => state.activeSlideOutId === id);
+  return useSlideOutStore((state) => state.openSlideOutIds.has(id));
 };

@@ -1,0 +1,438 @@
+/**
+ * @file components/workspace/TemplatesSlideOut.tsx
+ * @description AI@Worx Templates slide-out panel - Browse templates from left sidebar
+ * 
+ * Features:
+ * - 450px wide left slide-out panel
+ * - Search templates by name/description
+ * - Collapsible category sections
+ * - Template cards with name, description, icon
+ * - Clicking a template opens the template form in right slide-out
+ * - Can have both browser (left) and form (right) open simultaneously
+ */
+
+'use client';
+
+import React, { useState, useMemo, useCallback } from 'react';
+import {
+  Search,
+  ChevronDown,
+  ChevronRight,
+  Mail,
+  Megaphone,
+  Target,
+  MessageSquare,
+  FileEdit,
+  Globe,
+  Clock,
+  Sparkles,
+} from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { ALL_TEMPLATES } from '@/lib/data/templates';
+import type { Template, TemplateCategory } from '@/lib/types/template';
+import { useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
+
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+
+/** Unique ID for the templates slide-out panel */
+export const TEMPLATES_PANEL_ID = 'templates-browser';
+
+/**
+ * Category grouping configuration
+ * Maps user-facing category names to template categories
+ */
+const CATEGORY_GROUPS = [
+  {
+    id: 'marketing-sales',
+    name: 'Marketing & Sales',
+    icon: Megaphone,
+    categories: ['advertising' as TemplateCategory],
+  },
+  {
+    id: 'website-digital',
+    name: 'Website & Digital',
+    icon: Globe,
+    categories: ['website' as TemplateCategory, 'landing-page' as TemplateCategory],
+  },
+  {
+    id: 'creative-editorial',
+    name: 'Creative & Editorial',
+    icon: FileEdit,
+    categories: ['collateral' as TemplateCategory],
+  },
+  {
+    id: 'social-media',
+    name: 'Social Media',
+    icon: MessageSquare,
+    categories: ['social' as TemplateCategory],
+  },
+  {
+    id: 'email-marketing',
+    name: 'Email Marketing',
+    icon: Mail,
+    categories: ['email' as TemplateCategory],
+  },
+];
+
+/**
+ * Icon mapping from template icon names to Lucide icons
+ */
+const ICON_MAP: Record<string, LucideIcon> = {
+  DollarSign: LucideIcons.DollarSign,
+  Target,
+  Mail,
+  Megaphone,
+  MessageSquare,
+  FileText: LucideIcons.FileText,
+  FileEdit,
+  Globe,
+};
+
+/**
+ * Difficulty badge colors
+ */
+const DIFFICULTY_COLORS: Record<Template['complexity'], string> = {
+  Beginner: 'bg-green-100 text-green-700 border-green-200',
+  Intermediate: 'bg-blue-100 text-blue-700 border-blue-200',
+  Advanced: 'bg-purple-100 text-purple-700 border-purple-200',
+};
+
+// ═══════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════
+
+interface TemplatesSlideOutProps {
+  /** Whether the slide-out is open */
+  isOpen: boolean;
+  
+  /** Callback when slide-out should close */
+  onClose: () => void;
+}
+
+interface TemplateCategoryGroupProps {
+  /** Category group configuration */
+  group: typeof CATEGORY_GROUPS[number];
+  
+  /** Templates in this group */
+  templates: Template[];
+  
+  /** Whether section is expanded */
+  isExpanded: boolean;
+  
+  /** Callback to toggle expansion */
+  onToggle: () => void;
+  
+  /** Callback when template is selected */
+  onSelectTemplate: (template: Template) => void;
+  
+  /** Currently selected template ID */
+  selectedTemplateId: string | null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Template Card Component
+ */
+function TemplateCard({
+  template,
+  isSelected,
+  onSelect,
+}: {
+  template: Template;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const IconComponent = ICON_MAP[template.icon] || Sparkles;
+
+  return (
+    <button
+      onClick={onSelect}
+      className={cn(
+        'w-full text-left p-4 rounded-lg border transition-all duration-200',
+        'hover:shadow-md hover:border-apple-blue/50',
+        'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+        'group',
+        isSelected
+          ? 'bg-apple-blue/5 border-apple-blue shadow-sm'
+          : 'bg-white border-gray-200 hover:bg-gray-50'
+      )}
+    >
+      <div className="flex items-start gap-3">
+        {/* Icon */}
+        <div
+          className={cn(
+            'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center',
+            'transition-colors duration-200',
+            isSelected
+              ? 'bg-apple-blue text-white'
+              : 'bg-gray-100 text-gray-600 group-hover:bg-apple-blue group-hover:text-white'
+          )}
+        >
+          <IconComponent className="w-5 h-5" />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h4
+              className={cn(
+                'font-semibold text-sm',
+                isSelected ? 'text-apple-blue' : 'text-gray-900'
+              )}
+            >
+              {template.name}
+            </h4>
+            <span
+              className={cn(
+                'flex-shrink-0 px-2 py-0.5 text-[10px] font-medium rounded-full border',
+                DIFFICULTY_COLORS[template.complexity]
+              )}
+            >
+              {template.complexity}
+            </span>
+          </div>
+
+          <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+            {template.description}
+          </p>
+
+          <div className="flex items-center gap-1 text-[11px] text-gray-500">
+            <Clock className="w-3 h-3" />
+            <span>{template.estimatedTime}</span>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/**
+ * Template Category Group Component
+ */
+function TemplateCategoryGroup({
+  group,
+  templates,
+  isExpanded,
+  onToggle,
+  onSelectTemplate,
+  selectedTemplateId,
+}: TemplateCategoryGroupProps) {
+  const GroupIcon = group.icon;
+
+  if (templates.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      {/* Section Header */}
+      <button
+        onClick={onToggle}
+        className={cn(
+          'w-full flex items-center justify-between p-2 rounded-lg',
+          'hover:bg-gray-100 transition-colors duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <GroupIcon className="w-4 h-4 text-apple-blue" />
+          <span className="font-semibold text-sm text-gray-900">
+            {group.name}
+          </span>
+          <span className="text-xs text-gray-500">
+            ({templates.length})
+          </span>
+        </div>
+        {isExpanded ? (
+          <ChevronDown className="w-4 h-4 text-gray-400" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        )}
+      </button>
+
+      {/* Templates List */}
+      {isExpanded && (
+        <div className="space-y-2 pl-6">
+          {templates.map((template) => (
+            <TemplateCard
+              key={template.id}
+              template={template}
+              isSelected={selectedTemplateId === template.id}
+              onSelect={() => onSelectTemplate(template)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════
+
+export function TemplatesSlideOut({
+  isOpen,
+  onClose,
+}: TemplatesSlideOutProps) {
+  // Store actions
+  const { setRightSidebarOpen, setActiveTool } = useUIActions();
+  const { 
+    setSelectedTemplateId, 
+    setIsGeneratingTemplate,
+    clearToneShiftResult,
+    clearExpandResult,
+    clearShortenResult,
+    clearRewriteChannelResult,
+    clearBrandAlignmentResult,
+  } = useTemplateActions();
+
+  // Local state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(['marketing-sales', 'website-digital', 'email-marketing']) // Start with popular categories expanded
+  );
+  const [selectedTemplateId, setLocalSelectedTemplateId] = useState<string | null>(null);
+
+  // Filter templates by search query
+  const filteredTemplates = useMemo(() => {
+    if (!searchQuery.trim()) return ALL_TEMPLATES;
+    
+    const query = searchQuery.toLowerCase();
+    return ALL_TEMPLATES.filter(
+      (template) =>
+        template.name.toLowerCase().includes(query) ||
+        template.description.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+
+  // Group templates by category
+  const groupedTemplates = useMemo(() => {
+    return CATEGORY_GROUPS.map((group) => ({
+      group,
+      templates: filteredTemplates.filter((template) =>
+        group.categories.includes(template.category)
+      ),
+    }));
+  }, [filteredTemplates]);
+
+  // Toggle category expansion
+  const toggleGroup = useCallback((groupId: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Handle template selection
+  const handleSelectTemplate = useCallback(
+    (template: Template) => {
+      console.log('🎨 Selected template:', template.id, template.name);
+      
+      // Set local selected state for visual feedback
+      setLocalSelectedTemplateId(template.id);
+      
+      // Clear all other tool states first
+      console.log('🧹 Clearing all tool states before opening template');
+      clearToneShiftResult();
+      clearExpandResult();
+      clearShortenResult();
+      clearRewriteChannelResult();
+      clearBrandAlignmentResult();
+      setIsGeneratingTemplate(false);
+      
+      // Set selected template ID in store
+      setSelectedTemplateId(template.id);
+      
+      // Clear active tool (template generator is special - not a tool in the sidebar)
+      setActiveTool(null);
+      
+      // Open right sidebar to show template form
+      setRightSidebarOpen(true);
+      
+      // NOTE: Do NOT close the templates browser - allow both panels to be open
+      console.log('✅ Template form opening in right sidebar, keeping browser open');
+    },
+    [
+      setSelectedTemplateId,
+      setIsGeneratingTemplate,
+      setActiveTool,
+      setRightSidebarOpen,
+      clearToneShiftResult,
+      clearExpandResult,
+      clearShortenResult,
+      clearRewriteChannelResult,
+      clearBrandAlignmentResult,
+    ]
+  );
+
+  return (
+    <SlideOutPanel
+      isOpen={isOpen}
+      onClose={onClose}
+      side="left"
+      title="AI@Worx™ Templates"
+      subtitle={`${ALL_TEMPLATES.length} professional templates`}
+    >
+      <div className="space-y-4">
+        {/* Search bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search templates..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Info message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-xs text-blue-700">
+            <strong>Tip:</strong> Select a template to open the form in the right panel.
+            Both panels can be open at the same time!
+          </p>
+        </div>
+
+        {/* Category groups */}
+        <div className="space-y-3">
+          {groupedTemplates.map(({ group, templates }) => (
+            <TemplateCategoryGroup
+              key={group.id}
+              group={group}
+              templates={templates}
+              isExpanded={expandedGroups.has(group.id)}
+              onToggle={() => toggleGroup(group.id)}
+              onSelectTemplate={handleSelectTemplate}
+              selectedTemplateId={selectedTemplateId}
+            />
+          ))}
+
+          {/* Empty state */}
+          {filteredTemplates.length === 0 && (
+            <div className="text-center py-8">
+              <Sparkles className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500">No templates found</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Try a different search term
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </SlideOutPanel>
+  );
+}
