@@ -9,4 +9,5 @@ export { Badge, badgeVariants, type BadgeProps } from './badge';
 export { Input, type InputProps } from './input';
 export { AutoExpandTextarea } from './AutoExpandTextarea';
 export { AIWorxLoader, AIWorxButtonLoader } from './AIWorxLoader';
+export { SlideOutPanel, type SlideOutPanelProps } from './SlideOutPanel';
 
