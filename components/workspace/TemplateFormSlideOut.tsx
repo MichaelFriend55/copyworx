@@ -188,14 +188,12 @@ export function TemplateFormSlideOut({
     
     // Brand voice instructions
     if (applyBrandVoice && activeProject?.brandVoice) {
-      const { brandName, industry, tone, values, audience } = activeProject.brandVoice;
+      const { brandName, brandTone, brandValues } = activeProject.brandVoice;
       const brandInstructions = `
 BRAND VOICE GUIDELINES:
 - Brand: ${brandName}
-- Industry: ${industry}
-- Tone: ${tone}
-- Core Values: ${values}
-- Target Audience: ${audience}
+- Tone: ${brandTone}
+- Core Values: ${brandValues.join(', ')}
 
 Apply this brand voice throughout the copy. Maintain consistency with the brand's tone and values.
 `;
@@ -212,10 +210,10 @@ Apply this brand voice throughout the copy. Maintain consistency with the brand'
 PERSONA TARGET:
 Write specifically for this persona:
 - Name: ${persona.name}
-- Role: ${persona.role}
+- Demographics: ${persona.demographics}
 - Goals: ${persona.goals}
 - Pain Points: ${persona.painPoints}
-- Motivations: ${persona.motivations}
+- Psychographics: ${persona.psychographics}
 
 Tailor the copy to resonate with this specific persona's needs and characteristics.
 `;
