@@ -696,10 +696,71 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
     }
   }, [isOpen]);
 
-  // Handle import file selection
-  const handleImportClick = (fileType: string) => {
-    // TODO: Implement import functionality
+  // Handle import file selection - trigger file input
+  const handleImportClick = (fileType: 'txt' | 'md' | 'docx') => {
+    // Store the file type so we can validate it when file is selected
+    fileInputRef.current?.setAttribute('data-import-type', fileType);
+    
+    // Set accept attribute based on file type
+    if (fileInputRef.current) {
+      switch (fileType) {
+        case 'txt':
+          fileInputRef.current.accept = '.txt,text/plain';
+          break;
+        case 'md':
+          fileInputRef.current.accept = '.md,text/markdown';
+          break;
+        case 'docx':
+          fileInputRef.current.accept = '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          break;
+      }
+    }
+    
+    // Trigger file input
+    fileInputRef.current?.click();
     closeMenu();
+  };
+
+  // Handle file import after file is selected
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !editor) {
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      setExportMessage(null);
+
+      // Import the file dynamically
+      const { importDocument } = await import('@/lib/utils/document-import');
+      
+      const result = await importDocument(editor, file);
+      
+      if (result.success) {
+        setExportMessage({ 
+          type: 'success', 
+          text: `Imported ${file.name}` 
+        });
+        console.log('✅ Import successful:', file.name);
+      } else {
+        setExportMessage({ 
+          type: 'error', 
+          text: result.error || 'Import failed' 
+        });
+        console.error('❌ Import failed:', result.error);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Import failed';
+      setExportMessage({ type: 'error', text: errorMessage });
+      console.error('❌ Import error:', error);
+    } finally {
+      setIsExporting(false);
+      // Reset file input so the same file can be imported again
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
   };
 
   // Handle export with proper async handling
@@ -924,24 +985,18 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
         type="file"
         accept=".docx,.txt,.md"
         className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            console.log('File selected:', file.name);
-            // TODO: Process imported file
-          }
-        }}
+        onChange={handleFileImport}
       />
 
-      {/* Export Loading Indicator */}
+      {/* Import/Export Loading Indicator */}
       {isExporting && (
         <div className="fixed top-20 right-6 z-50 flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200">
           <div className="w-4 h-4 border-2 border-apple-blue border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-apple-text-dark">Exporting...</span>
+          <span className="text-sm text-apple-text-dark">Processing...</span>
         </div>
       )}
 
-      {/* Export Message Toast */}
+      {/* Import/Export Message Toast */}
       {exportMessage && (
         <div 
           className={cn(
