@@ -71,7 +71,7 @@ export default function WorkspacePage() {
   
   // Get selected template and active project
   const selectedTemplate = useMemo(() => {
-    return selectedTemplateId ? getTemplateById(selectedTemplateId) : null;
+    return selectedTemplateId ? getTemplateById(selectedTemplateId) ?? null : null;
   }, [selectedTemplateId]);
   
   const activeProject = useMemo((): Project | null => {
