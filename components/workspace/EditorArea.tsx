@@ -39,6 +39,8 @@ import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { usePageCalculations, PAGE_CONFIG } from '@/lib/hooks/usePageCalculations';
+import { PageModeWrapper } from './PageModeWrapper';
 
 interface EditorAreaProps {
   className?: string;
@@ -78,8 +80,12 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   const setSelectedTextRef = useRef(useWorkspaceStore.getState().setSelectedText);
   const setActiveDocumentIdRef = useRef(useWorkspaceStore.getState().setActiveDocumentId);
   
-  // Check if we're in Focus Mode
+  // Check view mode flags
   const isFocusMode = viewMode === 'focus';
+  const isPageMode = viewMode === 'page';
+  
+  // Ref for page calculations content container
+  const pageContentRef = useRef<HTMLDivElement>(null);
   
   // Local state for document data loaded from localStorage
   const [currentDocument, setCurrentDocument] = useState<ProjectDocument | null>(null);
@@ -93,6 +99,18 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   
   // Zoom level state (view preference, not saved to document)
   const [zoomLevel, setZoomLevel] = useState<number>(DEFAULT_ZOOM);
+  
+  // Page calculations for Page Mode (must be after zoomLevel is defined)
+  const {
+    pageCount,
+    currentPage,
+    contentHeight: pageContentHeight,
+    isReady: pageCalcsReady,
+  } = usePageCalculations({
+    contentRef: pageContentRef,
+    enabled: isPageMode,
+    zoomLevel,
+  });
   
   // Track if we're loading content to prevent save during load
   const isLoadingRef = useRef(false);
@@ -466,30 +484,171 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     <div
       className={cn(
         'relative h-full w-full',
-        'flex items-start justify-center',
         'overflow-y-auto custom-scrollbar',
         'transition-all duration-300',
         isFocusMode 
           ? 'bg-white py-8 px-4' // Focus Mode: clean white background, minimal padding
-          : 'bg-apple-editor-bg py-12 px-8', // Normal: gray bg, more padding
+          : 'bg-apple-editor-bg py-12 px-8', // Page & Scrolling: same gray bg, same padding
+        !isPageMode && 'flex items-start justify-center', // Center content except in Page Mode
         className
       )}
     >
-      {/* Paper container */}
-      <div
-        className={cn(
-          'w-full',
-          'bg-white',
-          'relative',
-          'transition-all duration-300',
-          isFocusMode 
-            ? 'max-w-[750px] shadow-none min-h-screen' // Focus Mode: comfortable reading width, no shadow
-            : 'max-w-[850px] rounded-sm min-h-[11in]', // Normal: standard width, rounded corners
-        )}
-        style={{
-          boxShadow: isFocusMode ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.08)',
-        }}
-      >
+      {/* Page Mode uses PageModeWrapper, Scrolling/Focus use Paper Container */}
+      {isPageMode && currentDocument ? (
+        <PageModeWrapper
+          pageCount={pageCount}
+          currentPage={currentPage}
+          contentHeight={pageContentHeight}
+          zoomLevel={zoomLevel}
+          isReady={pageCalcsReady}
+        >
+          {/* Page Mode Document Header - Same as Scrolling Mode */}
+          <div className="px-16 py-3 border-b border-gray-200 flex items-center justify-between mb-4 bg-white">
+            {/* Title display */}
+            <div className="flex items-center gap-2 flex-1">
+              <span className="text-xl font-sans font-semibold text-black truncate">
+                {currentDocument.title}
+              </span>
+              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
+                v{currentDocument.version}
+              </span>
+            </div>
+
+            {/* Right side: Zoom controls + Save status */}
+            <div className="flex items-center gap-4">
+              {/* Zoom controls */}
+              <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
+                {/* Zoom out button */}
+                <button
+                  onClick={handleZoomOut}
+                  disabled={!canZoomOut}
+                  className={cn(
+                    'p-1 rounded transition-colors duration-150',
+                    'hover:bg-gray-100 active:bg-gray-200',
+                    'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
+                    'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset'
+                  )}
+                  title="Zoom out"
+                  aria-label="Zoom out"
+                >
+                  <ZoomOut className="w-4 h-4 text-gray-600" />
+                </button>
+
+                {/* Divider */}
+                <div className="w-px h-5 bg-gray-200" />
+
+                {/* Zoom slider */}
+                <div className="w-[120px] px-1">
+                  <Slider
+                    value={[zoomLevel]}
+                    onValueChange={handleSliderChange}
+                    min={50}
+                    max={200}
+                    step={5}
+                    className="cursor-pointer"
+                    aria-label="Zoom level"
+                  />
+                </div>
+
+                {/* Divider */}
+                <div className="w-px h-5 bg-gray-200" />
+
+                {/* Zoom percentage display - click to reset */}
+                <button
+                  onClick={handleZoomReset}
+                  className={cn(
+                    'px-2 py-1 min-w-[52px] text-center',
+                    'text-xs font-medium text-gray-700',
+                    'hover:bg-gray-100 active:bg-gray-200',
+                    'transition-colors duration-150',
+                    'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset',
+                    zoomLevel !== DEFAULT_ZOOM && 'text-primary'
+                  )}
+                  title="Reset to 100%"
+                  aria-label={`Current zoom: ${zoomLevel}%. Click to reset to 100%`}
+                >
+                  {zoomLevel}%
+                </button>
+
+                {/* Divider */}
+                <div className="w-px h-5 bg-gray-200" />
+
+                {/* Zoom in button */}
+                <button
+                  onClick={handleZoomIn}
+                  disabled={!canZoomIn}
+                  className={cn(
+                    'p-1 rounded transition-colors duration-150',
+                    'hover:bg-gray-100 active:bg-gray-200',
+                    'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
+                    'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset'
+                  )}
+                  title="Zoom in"
+                  aria-label="Zoom in"
+                >
+                  <ZoomIn className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Vertical divider between zoom and save status */}
+              <div className="w-px h-5 bg-gray-200" />
+
+              {/* Last edited with auto-save indicator */}
+              <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
+                <span>
+                  Saved{' '}
+                  {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
+                {saveStatus === 'saved' && (
+                  <span className="text-green-500 text-xs flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                    Saved
+                  </span>
+                )}
+                {saveStatus === 'saving' && (
+                  <span className="text-yellow-500 text-xs flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                    Saving...
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Page Mode Editor Content */}
+          <div 
+            ref={pageContentRef}
+            className="px-16 pt-8 pb-8"
+          >
+            <EditorContent
+              editor={editor}
+              className={cn(
+                'tiptap-editor',
+                'text-base leading-relaxed',
+                'focus-within:outline-none'
+              )}
+            />
+          </div>
+        </PageModeWrapper>
+      ) : (
+        /* Scrolling / Focus Mode Paper Container */
+        <div
+          className={cn(
+            'w-full',
+            'bg-white',
+            'relative',
+            'transition-all duration-300',
+            isFocusMode 
+              ? 'max-w-[750px] shadow-none min-h-screen' // Focus Mode: comfortable reading width, no shadow
+              : 'max-w-[850px] rounded-sm min-h-[11in]', // Scrolling: standard width, rounded corners
+          )}
+          style={{
+            boxShadow: isFocusMode ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.08)',
+          }}
+        >
         {currentDocument ? (
           <>
             {/* Document header */}
@@ -677,7 +836,8 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
             boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.03)',
           }}
         />
-      </div>
+        </div>
+      )}
 
       {/* TipTap styles */}
       <style jsx global>{`
@@ -834,6 +994,67 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
           text-rendering: optimizeLegibility;
+        }
+
+        /* Page Mode specific styles */
+        .page-mode-container {
+          position: relative;
+        }
+
+        .page-mode-container .page-background {
+          transition: box-shadow 0.2s ease;
+        }
+
+        .page-mode-container .page-break-indicator {
+          opacity: 0.6;
+          transition: opacity 0.2s ease;
+        }
+
+        .page-mode-container:hover .page-break-indicator {
+          opacity: 1;
+        }
+
+        .page-mode-container .page-number {
+          transition: opacity 0.2s ease;
+        }
+
+        .page-mode-container .page-content {
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Page count badge animation */
+        .page-count-badge {
+          animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Custom scrollbar for page mode */
+        .page-mode-container::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .page-mode-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .page-mode-container::-webkit-scrollbar-thumb {
+          background-color: rgba(0, 0, 0, 0.2);
+          border-radius: 4px;
+        }
+
+        .page-mode-container::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(0, 0, 0, 0.3);
         }
       `}</style>
     </div>

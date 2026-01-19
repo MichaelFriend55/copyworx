@@ -23,6 +23,7 @@ export { LeftSidebarContent } from './LeftSidebarContent';
 export { RightSidebarContent } from './RightSidebarContent';
 export { default as DocumentList } from './DocumentList';
 export { ViewModeSelector } from './ViewModeSelector';
+export { PageModeWrapper } from './PageModeWrapper';
 
 
 
