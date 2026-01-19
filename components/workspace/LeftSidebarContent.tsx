@@ -8,12 +8,13 @@
  * every render, triggering unmount/remount cycles.
  * 
  * Features:
- * - Project selector section
+ * - Project selector section with slide-out panel trigger
  * - Document list with version control
  * - AI@Worx Templates modal trigger
  * - Collapsible tool sections (My Copy Optimizer, My Brand & Audience)
  * - Active tool highlighting
  * - AI@Worx™ Live document insights panel at bottom
+ * - My Projects slide-out for full project navigation
  * 
  * Note: The "My Insights" section has been replaced by the AI@Worx™ Live panel
  */
@@ -21,12 +22,14 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Sparkles, ChevronRight, ChevronDown, FileText } from 'lucide-react';
+import { Sparkles, ChevronRight, ChevronDown, FileText, PanelLeftOpen } from 'lucide-react';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { ProjectSelector } from '@/components/workspace/ProjectSelector';
 import DocumentList from '@/components/workspace/DocumentList';
 import { DocumentInsights } from '@/components/workspace/DocumentInsights';
+import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
 import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
+import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
@@ -49,6 +52,10 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
   
+  // Slide-out state
+  const isProjectsSlideOutOpen = useIsSlideOutOpen(MY_PROJECTS_PANEL_ID);
+  const { openSlideOut, closeSlideOut } = useSlideOutActions();
+  
   // Get active project for dynamic section title
   const activeProject = projects.find(p => p.id === activeProjectId);
   const documentsSectionTitle = activeProject 
@@ -65,6 +72,28 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   
   // NOTE: Project initialization is now handled in the parent WorkspacePage
   // This prevents duplicate refreshProjects() calls that could cause issues
+  
+  /**
+   * Open the My Projects slide-out panel
+   */
+  const openProjectsSlideOut = useCallback(() => {
+    openSlideOut(MY_PROJECTS_PANEL_ID);
+  }, [openSlideOut]);
+  
+  /**
+   * Close the My Projects slide-out panel
+   */
+  const closeProjectsSlideOut = useCallback(() => {
+    closeSlideOut();
+  }, [closeSlideOut]);
+  
+  /**
+   * Handle document click from slide-out panel
+   */
+  const handleSlideOutDocumentClick = useCallback((doc: ProjectDocument) => {
+    console.log('📄 Document selected from slide-out:', doc.title);
+    onDocumentClick?.(doc);
+  }, [onDocumentClick]);
 
   /**
    * Clear all tool states before switching tools
@@ -140,32 +169,57 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
         onClose={closeTemplatesModal}
       />
       
+      {/* My Projects Slide-Out Panel */}
+      <MyProjectsSlideOut
+        isOpen={isProjectsSlideOutOpen}
+        onClose={closeProjectsSlideOut}
+        onDocumentClick={handleSlideOutDocumentClick}
+      />
+      
       {/* MY PROJECTS SECTION */}
       <div className="space-y-1">
-        {/* Section Header - Collapsible */}
-        <button
-          onClick={() => toggleSection('projects')}
-          className={cn(
-            'w-full flex items-center justify-between p-2 rounded-lg',
-            'hover:bg-apple-gray-bg transition-colors duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
-          )}
-          aria-expanded={isProjectsExpanded}
-        >
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-apple-text-dark" />
-            <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
-              My Projects
-            </span>
-          </div>
-          {isProjectsExpanded ? (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          )}
-        </button>
+        {/* Section Header - Click to expand slide-out OR toggle collapse */}
+        <div className="flex items-center gap-1">
+          {/* Main header button - toggles local collapse */}
+          <button
+            onClick={() => toggleSection('projects')}
+            className={cn(
+              'flex-1 flex items-center justify-between p-2 rounded-lg',
+              'hover:bg-apple-gray-bg transition-colors duration-200',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+            )}
+            aria-expanded={isProjectsExpanded}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-apple-text-dark" />
+              <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
+                My Projects
+              </span>
+            </div>
+            {isProjectsExpanded ? (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+          
+          {/* Expand to slide-out button */}
+          <button
+            onClick={openProjectsSlideOut}
+            className={cn(
+              'p-2 rounded-lg',
+              'text-gray-400 hover:text-apple-blue hover:bg-apple-gray-bg',
+              'transition-colors duration-200',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+            )}
+            title="Expand project navigator"
+            aria-label="Open full project navigator"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        </div>
 
-        {/* Projects Content */}
+        {/* Projects Content - Collapsed View */}
         {isProjectsExpanded && (
           <div className="py-3 space-y-3">
             {/* Project Selector */}

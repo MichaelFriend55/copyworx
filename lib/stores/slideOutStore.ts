@@ -26,6 +26,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 
 /**
  * Slide-out panel state interface
@@ -102,11 +103,18 @@ export const useSlideOutStore = create<SlideOutState>()((set, get) => ({
  * Selector hooks for optimized re-renders
  */
 export const useActiveSlideOutId = () => useSlideOutStore((state) => state.activeSlideOutId);
-export const useSlideOutActions = () => useSlideOutStore((state) => ({
-  openSlideOut: state.openSlideOut,
-  closeSlideOut: state.closeSlideOut,
-  toggleSlideOut: state.toggleSlideOut,
-}));
+
+/**
+ * Hook to get slide-out actions with stable references
+ * Uses useShallow to prevent unnecessary re-renders
+ */
+export const useSlideOutActions = () => useSlideOutStore(
+  useShallow((state) => ({
+    openSlideOut: state.openSlideOut,
+    closeSlideOut: state.closeSlideOut,
+    toggleSlideOut: state.toggleSlideOut,
+  }))
+);
 
 /**
  * Hook to check if a specific slide-out is open
