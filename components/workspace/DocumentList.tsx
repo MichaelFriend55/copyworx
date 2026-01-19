@@ -679,7 +679,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
       const docs = getAllDocuments(activeProjectId);
       setDocuments(docs);
       setGroupedDocs(groupDocumentsByBaseTitle(docs));
-      console.log(`📄 Loaded ${docs.length} document(s)`);
     } catch (error) {
       console.error('❌ Failed to load documents:', error);
       setDocuments([]);
@@ -697,7 +696,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     try {
       const projectFolders = getAllFolders(activeProjectId);
       setFolders(projectFolders);
-      console.log(`📁 Loaded ${projectFolders.length} folder(s)`);
     } catch (error) {
       console.error('❌ Failed to load folders:', error);
       setFolders([]);
@@ -749,7 +747,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     try {
       createFolder(activeProjectId, name.trim(), currentFolderId || undefined);
       refreshAll();
-      console.log('✅ Folder created:', name);
     } catch (error) {
       console.error('❌ Failed to create folder:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to create folder');
@@ -769,7 +766,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     try {
       deleteFolder(activeProjectId, folder.id);
       refreshAll();
-      console.log('✅ Folder deleted:', folder.name);
     } catch (error) {
       console.error('❌ Failed to delete folder:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to delete folder');
@@ -793,7 +789,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     try {
       updateFolder(activeProjectId, folderId, { name: editingFolderName.trim() });
       refreshAll();
-      console.log('✅ Folder renamed');
     } catch (error) {
       console.error('❌ Failed to rename folder:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to rename folder');
@@ -822,7 +817,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
         try {
           moveFolder(activeProjectId, folderId, null);
           refreshAll();
-          console.log('✅ Folder moved to root');
         } catch (error) {
           window.alert(error instanceof Error ? error.message : 'Failed to move folder');
         }
@@ -851,7 +845,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
       }
       
       refreshAll();
-      console.log('✅ Folder moved');
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'Failed to move folder');
       console.error('❌ Failed to move folder:', error);
@@ -880,12 +873,8 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
    * FIX: Sets renamingId and renameValue to show input field
    */
   const startRename = useCallback((doc: ProjectDocument) => {
-    console.log('🔄 startRename called with:', doc.id, doc.title);
-    console.log('🔄 Setting renamingId to:', doc.id);
-    console.log('🔄 Setting renameValue to:', doc.title);
     setRenamingId(doc.id);
     setRenameValue(doc.title); // Use full title, not baseTitle
-    console.log('✅ Rename state set');
   }, []);
   
   /** 
@@ -901,170 +890,87 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
    * 6. Refresh UI
    */
   const saveRename = useCallback((providedNewTitle?: string) => {
-    console.log('💾 ========== saveRename START ==========');
-    console.log('💾 Input values:', { 
-      renamingId, 
-      providedNewTitle,
-      renameValue,
-      renameValueTrimmed: renameValue?.trim(),
-      activeProjectId,
-      documentsCount: documents.length
-    });
-    
     // Use provided title if available, otherwise fall back to state
     const titleToUse = providedNewTitle?.trim() || renameValue.trim();
-    console.log('💾 Title to use:', titleToUse);
     
     // Validation checks
     if (!renamingId || !activeProjectId) {
-      console.warn('⚠️ saveRename: Missing renamingId or activeProjectId');
-      console.log('💾 ========== saveRename END (validation failed) ==========');
       setRenamingId(null);
       setRenameValue('');
       return;
     }
     
     if (!titleToUse) {
-      console.warn('⚠️ saveRename: Empty title, cancelling');
-      console.log('💾 ========== saveRename END (empty title) ==========');
       setRenamingId(null);
       setRenameValue('');
       return;
     }
     
     // Find the document being renamed
-    console.log('🔍 Searching for document in memory:', renamingId);
     const doc = documents.find(d => d.id === renamingId);
     if (!doc) {
-      console.warn('⚠️ saveRename: Document not found:', renamingId);
-      console.log('💾 ========== saveRename END (doc not found) ==========');
       setRenamingId(null);
       setRenameValue('');
       return;
     }
-    console.log('✅ Found document:', { id: doc.id, currentTitle: doc.title });
     
     const newTitle = titleToUse;
-    console.log('📝 New title (final):', newTitle);
     
     // If title unchanged, just cancel
     if (newTitle === doc.title) {
-      console.log('ℹ️ Title unchanged, cancelling rename');
-      console.log('💾 ========== saveRename END (unchanged) ==========');
       setRenamingId(null);
       setRenameValue('');
       return;
     }
     
-    console.log('📝 Proceeding with rename:', {
-      id: doc.id,
-      oldTitle: doc.title,
-      newTitle,
-    });
-    
     try {
-      // FIX: Use correct localStorage key and structure
       const PROJECTS_KEY = 'copyworx_projects';
-      console.log('📖 About to read from localStorage, key:', PROJECTS_KEY);
-      
       const rawData = localStorage.getItem(PROJECTS_KEY);
-      console.log('📖 localStorage raw data exists?', !!rawData);
-      console.log('📖 localStorage data length:', rawData?.length || 0);
       
       if (!rawData) {
         throw new Error('No localStorage data found');
       }
       
-      // Parse projects array
-      console.log('🔄 Parsing localStorage JSON...');
       const projects = JSON.parse(rawData);
-      console.log('✅ Parsed successfully, is array?', Array.isArray(projects));
-      console.log('✅ Projects count:', Array.isArray(projects) ? projects.length : 'N/A');
       
       if (!Array.isArray(projects)) {
         throw new Error('Invalid localStorage structure - projects is not an array');
       }
       
-      // Find the project
-      console.log('🔍 Searching for project:', activeProjectId);
       const projectIndex = projects.findIndex((p: Project) => p.id === activeProjectId);
-      console.log('🔍 Project index:', projectIndex);
       
       if (projectIndex === -1) {
         throw new Error(`Project not found: ${activeProjectId}`);
       }
       
       const project = projects[projectIndex];
-      console.log('✅ Found project:', { 
-        id: project.id, 
-        name: project.name,
-        documentsCount: project.documents?.length || 0 
-      });
       
-      // Ensure documents array exists
       if (!Array.isArray(project.documents)) {
         throw new Error('Project documents is not an array');
       }
       
-      // Find the document in the project's documents array
-      console.log('🔍 Searching for document in project.documents:', renamingId);
       const docIndex = project.documents.findIndex((d: ProjectDocument) => d.id === renamingId);
-      console.log('🔍 Document index in project:', docIndex);
       
       if (docIndex === -1) {
         throw new Error(`Document ${renamingId} not found in project`);
       }
       
-      console.log('✅ Found document in project.documents:', {
-        index: docIndex,
-        currentTitle: project.documents[docIndex].title
-      });
-      
       // Update the document title and modifiedAt
-      console.log('✏️ Updating document title and timestamp...');
-      const oldTitle = project.documents[docIndex].title;
       project.documents[docIndex].title = newTitle;
       project.documents[docIndex].modifiedAt = new Date().toISOString();
       
-      console.log('✏️ Document updated in memory:', {
-        oldTitle,
-        newTitle: project.documents[docIndex].title,
-        modifiedAt: project.documents[docIndex].modifiedAt,
-      });
-      
       // Write back to localStorage
-      console.log('💾 About to write to localStorage...');
-      const jsonString = JSON.stringify(projects);
-      console.log('💾 JSON string length:', jsonString.length);
-      
-      localStorage.setItem(PROJECTS_KEY, jsonString);
-      console.log('✅ Written to localStorage successfully');
-      
-      // Verify write
-      const verifyData = localStorage.getItem(PROJECTS_KEY);
-      const verifyParsed = JSON.parse(verifyData || '[]');
-      const verifyProject = verifyParsed.find((p: Project) => p.id === activeProjectId);
-      const verifyDoc = verifyProject?.documents.find((d: ProjectDocument) => d.id === renamingId);
-      console.log('🔍 VERIFICATION - Title in localStorage:', verifyDoc?.title);
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
       
       // Clear rename state
-      console.log('🧹 Clearing rename state...');
       setRenamingId(null);
       setRenameValue('');
-      console.log('✅ Rename state cleared');
       
       // Refresh the document list to show new title
-      console.log('🔄 About to call refreshAll()...');
       refreshAll();
-      console.log('✅ refreshAll() called');
-      
-      console.log('💾 ========== saveRename END (SUCCESS) ==========');
       
     } catch (error) {
-      console.error('❌ ========== saveRename ERROR ==========');
-      console.error('❌ Error details:', error);
-      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'N/A');
-      console.log('💾 ========== saveRename END (ERROR) ==========');
+      console.error('Failed to rename document:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to rename document');
       setRenamingId(null);
       setRenameValue('');
@@ -1076,7 +982,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
    * FIX: Updated to use renamingId/renameValue
    */
   const cancelRename = useCallback(() => {
-    console.log('❌ Cancelling rename');
     setRenamingId(null);
     setRenameValue('');
   }, []);
@@ -1101,7 +1006,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
       refreshAll();
       onDocumentClick(newDoc);
       setSelectedDocId(newDoc.id);
-      console.log('✅ Document created:', title.trim());
     } catch (error) {
       console.error('❌ Failed to create document:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to create document');
@@ -1132,7 +1036,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
       if (selectedDocId === doc.id) {
         setSelectedDocId(null);
       }
-      console.log('✅ Document deleted:', doc.title);
     } catch (error) {
       console.error('❌ Failed to delete document:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to delete document');
@@ -1226,7 +1129,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     const [type, id] = idString.split(':');
     setDragActiveId(id);
     setDragActiveType(type as 'folder' | 'document');
-    console.log('🎯 Drag started:', type, id);
   }, []);
   
   /** Handle drag end - perform the move operation */
@@ -1244,7 +1146,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     const [activeType, activeId] = activeIdString.split(':');
     const [overType, overId] = overIdString.split(':');
     
-    console.log('📍 Drag ended:', { activeType, activeId, overType, overId });
     
     try {
       if (activeType === 'document') {
@@ -1252,22 +1153,18 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
         if (overType === 'folder') {
           // Drop document into folder
           updateDocument(activeProjectId, activeId, { folderId: overId });
-          console.log('✅ Document moved to folder');
         } else if (overType === 'root') {
           // Drop document to root
           updateDocument(activeProjectId, activeId, { folderId: undefined });
-          console.log('✅ Document moved to root');
         }
       } else if (activeType === 'folder') {
         // Dragging a folder
         if (overType === 'folder' && overId !== activeId) {
           // Drop folder into another folder (nest it)
           moveFolder(activeProjectId, activeId, overId);
-          console.log('✅ Folder moved into folder');
         } else if (overType === 'root') {
           // Drop folder to root
           moveFolder(activeProjectId, activeId, null);
-          console.log('✅ Folder moved to root');
         }
       }
       

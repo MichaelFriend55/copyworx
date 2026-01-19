@@ -120,7 +120,6 @@ export function getAllProjects(): Project[] {
       snippets: Array.isArray(project.snippets) ? project.snippets : [],
     }));
     
-    console.log(`📂 Loaded ${sanitizedProjects.length} project(s) from storage`);
     return sanitizedProjects;
   } catch (error) {
     console.error('❌ Failed to get projects:', error);
@@ -190,11 +189,6 @@ export function createProject(name: string): Project {
   // Save to localStorage (may throw error if quota exceeded)
   saveProjects(projects);
   
-  console.log('✅ Project created:', {
-    id: newProject.id,
-    name: newProject.name,
-  });
-  
   return newProject;
 }
 
@@ -250,10 +244,6 @@ export function updateProject(id: string, updates: Partial<Project>): void {
   // Save to localStorage (may throw error if quota exceeded)
   saveProjects(projects);
   
-  console.log('✅ Project updated:', {
-    id: projects[index].id,
-    name: projects[index].name,
-  });
 }
 
 /**
@@ -285,18 +275,10 @@ export function deleteProject(id: string): void {
   // Save to localStorage
   const saved = saveProjects(projects);
   
-  if (saved) {
-    console.log('🗑️ Project deleted:', {
-      id: deletedProject.id,
-      name: deletedProject.name,
-    });
-  }
-  
   // If deleted project was active, switch to first available project
   const activeId = getActiveProjectId();
   if (activeId === id && projects.length > 0) {
     setActiveProjectId(projects[0].id);
-    console.log('🔄 Switched to project:', projects[0].name);
   }
 }
 

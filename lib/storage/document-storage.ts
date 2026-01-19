@@ -143,12 +143,6 @@ export function createDocument(
   // Update project (persists to localStorage)
   updateProject(projectId, { documents: updatedDocuments });
   
-  console.log('✅ Document created:', {
-    id: newDocument.id,
-    title: newDocument.title,
-    projectId,
-  });
-  
   return newDocument;
 }
 
@@ -220,14 +214,6 @@ export function createDocumentVersion(
   // Update project (persists to localStorage)
   updateProject(projectId, { documents: updatedDocuments });
   
-  console.log('✅ Document version created:', {
-    id: newDocument.id,
-    title: newDocument.title,
-    version: newVersion,
-    parentVersionId: sourceDocument.id,
-    projectId,
-  });
-  
   return newDocument;
 }
 
@@ -256,8 +242,6 @@ export function getAllDocuments(projectId: string): ProjectDocument[] {
       const dateB = new Date(b.modifiedAt).getTime();
       return dateB - dateA;
     });
-    
-    console.log(`📄 Loaded ${sorted.length} document(s) for project ${projectId}`);
     
     return sorted;
   } catch (error) {
@@ -397,12 +381,6 @@ export function updateDocument(
   // Update project (persists to localStorage)
   updateProject(projectId, { documents: updatedDocuments });
   
-  console.log('✅ Document updated:', {
-    id: updatedDoc.id,
-    title: updatedDoc.title,
-    projectId,
-    contentChanged,
-  });
 }
 
 /**
@@ -437,11 +415,6 @@ export function deleteDocument(projectId: string, docId: string): void {
   // Update project (persists to localStorage)
   updateProject(projectId, { documents: updatedDocuments });
   
-  console.log('🗑️ Document deleted:', {
-    id: deletedDoc.id,
-    title: deletedDoc.title,
-    projectId,
-  });
 }
 
 /**

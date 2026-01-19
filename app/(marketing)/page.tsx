@@ -231,7 +231,7 @@ export default function HomePage() {
               >
                 <CardContent className="p-6">
                   <p className="text-ink-200 leading-relaxed mb-6 italic">
-                    "{testimonial.quote}"
+                    &quot;{testimonial.quote}&quot;
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600" />

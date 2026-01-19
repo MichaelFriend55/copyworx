@@ -123,7 +123,7 @@ export default async function DashboardPage() {
             Welcome back, {firstName}! 👋
           </h1>
           <p className="text-ink-600 mt-1">
-            Here's what's happening with your copywriting projects.
+            Here&apos;s what&apos;s happening with your copywriting projects.
           </p>
         </div>
         <Button variant="amber" asChild>

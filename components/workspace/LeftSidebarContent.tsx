@@ -70,16 +70,13 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
    * Open the My Projects slide-out panel
    */
   const openProjectsSlideOut = useCallback(() => {
-    console.log('🔵 Opening My Projects slide-out, panel ID:', MY_PROJECTS_PANEL_ID);
     openSlideOut(MY_PROJECTS_PANEL_ID);
-    console.log('🔵 openSlideOut called');
   }, [openSlideOut]);
   
   /**
    * Close the My Projects slide-out panel
    */
   const closeProjectsSlideOut = useCallback(() => {
-    console.log('🔴 Closing My Projects slide-out');
     closeSlideOut(MY_PROJECTS_PANEL_ID);
   }, [closeSlideOut]);
   
@@ -101,7 +98,6 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
    * Handle document click from slide-out panel
    */
   const handleSlideOutDocumentClick = useCallback((doc: ProjectDocument) => {
-    console.log('📄 Document selected from slide-out:', doc.title);
     onDocumentClick?.(doc);
   }, [onDocumentClick]);
 
@@ -134,20 +130,17 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
     
     // Special handling for brand-voice and personas - open slide-outs instead
     if (toolId === 'brand-voice') {
-      console.log('🎨 Opening Brand Voice slide-out');
       openSlideOut(BRAND_VOICE_PANEL_ID);
       return;
     }
     
     if (toolId === 'personas') {
-      console.log('👥 Opening Personas slide-out');
       openSlideOut(PERSONAS_PANEL_ID);
       return;
     }
     
     // Only clear if switching to a different tool
     if (currentToolId !== toolId) {
-      console.log('🧹 Clearing all tool states before switching to:', toolId);
       clearAllToolStates();
     }
     useWorkspaceStore.getState().setActiveTool(toolId);
@@ -192,7 +185,6 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           {/* Main header button - opens slide-out */}
           <button
             onClick={() => {
-              console.log('🖱️ MY PROJECTS header clicked');
               openProjectsSlideOut();
             }}
             className={cn(
@@ -215,7 +207,6 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           <button
             onClick={(e) => {
               e.stopPropagation();
-              console.log('🖱️ Local toggle clicked, isExpanded:', isProjectsExpanded);
               toggleSection('projects');
             }}
             className={cn(
@@ -243,7 +234,6 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                 <button
                   key={project.id}
                   onClick={() => {
-                    console.log('📁 Project clicked from collapsed view:', project.name);
                     openProjectsSlideOut();
                   }}
                   className={cn(

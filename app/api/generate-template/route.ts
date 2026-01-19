@@ -177,15 +177,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
       );
     }
 
-    console.log('📝 Template generation request:', {
-      templateId: template.id,
-      templateName: template.name,
-      applyBrandVoice,
-      hasBrandVoice: !!brandVoice,
-      hasPersona: !!persona,
-      formDataKeys: Object.keys(formData),
-    });
-
     // Validate required fields are filled
     const missingFields = template.fields
       .filter((field) => field.required && !formData[field.id]?.trim())
@@ -232,11 +223,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
       applyBrandVoice && brandVoice ? brandVoice : undefined,
       persona || undefined
     );
-
-    console.log('🔍 Generated prompt preview:', {
-      length: prompt.length,
-      preview: prompt.substring(0, 200) + '...',
-    });
 
     // ------------------------------------------------------------------------
     // 5. Call Claude API to generate copy
@@ -336,13 +322,6 @@ REMEMBER: Output ONLY HTML. No markdown, no preamble, no explanation. Just the H
         { status: 500 }
       );
     }
-
-    console.log('✅ Template generation successful:', {
-      templateId: template.id,
-      templateName: template.name,
-      copyLength: generatedCopy.length,
-      preview: generatedCopy.substring(0, 100) + '...',
-    });
 
     // ------------------------------------------------------------------------
     // 7. Return the generated copy

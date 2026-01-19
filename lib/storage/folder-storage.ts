@@ -184,12 +184,6 @@ export function createFolder(
   // Save via updateProject
   updateProject(projectId, { folders: updatedFolders });
   
-  console.log('📁 Folder created:', {
-    id: newFolder.id,
-    name: newFolder.name,
-    parentFolderId: newFolder.parentFolderId || 'root',
-  });
-  
   return newFolder;
 }
 
@@ -210,8 +204,6 @@ export function getAllFolders(projectId: string): Folder[] {
   
   // Handle legacy projects without folders array
   const folders = project.folders || [];
-  
-  console.log(`📂 Loaded ${folders.length} folder(s) for project ${projectId}`);
   
   return sortFoldersByName(folders);
 }
@@ -324,10 +316,6 @@ export function updateFolder(
   // Save via updateProject
   updateProject(projectId, { folders: updatedFolders });
   
-  console.log('📁 Folder updated:', {
-    id: updatedFolder.id,
-    name: updatedFolder.name,
-  });
 }
 
 /**
@@ -386,10 +374,6 @@ export function deleteFolder(projectId: string, folderId: string): void {
   // Save via updateProject
   updateProject(projectId, { folders: updatedFolders });
   
-  console.log('🗑️ Folder deleted:', {
-    id: folderToDelete.id,
-    name: folderToDelete.name,
-  });
 }
 
 /**
@@ -456,12 +440,6 @@ export function moveFolder(
   
   // Save via updateProject
   updateProject(projectId, { folders: updatedFolders });
-  
-  console.log('📁 Folder moved:', {
-    id: updatedFolder.id,
-    name: updatedFolder.name,
-    newParentId: newParentFolderId || 'root',
-  });
 }
 
 /**

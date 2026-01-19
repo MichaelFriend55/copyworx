@@ -79,14 +79,10 @@ export const useSlideOutStore = create<SlideOutState>()((set, get) => ({
   
   openSlideOut: (id: string) => {
     const { openSlideOutIds } = get();
-    console.log('📂 openSlideOut called with id:', id, 'current set:', Array.from(openSlideOutIds));
     if (!openSlideOutIds.has(id)) {
       const newSet = new Set(openSlideOutIds);
       newSet.add(id);
       set({ openSlideOutIds: newSet });
-      console.log('📂 Slide-out opened:', id, 'new set:', Array.from(newSet));
-    } else {
-      console.log('⚠️ Slide-out already open:', id);
     }
   },
   
@@ -98,13 +94,11 @@ export const useSlideOutStore = create<SlideOutState>()((set, get) => ({
         const newSet = new Set(openSlideOutIds);
         newSet.delete(id);
         set({ openSlideOutIds: newSet });
-        console.log('📁 Slide-out closed:', id);
       }
     } else {
       // Close all panels
       if (openSlideOutIds.size > 0) {
         set({ openSlideOutIds: new Set() });
-        console.log('📁 All slide-outs closed');
       }
     }
   },
@@ -114,10 +108,8 @@ export const useSlideOutStore = create<SlideOutState>()((set, get) => ({
     const newSet = new Set(openSlideOutIds);
     if (newSet.has(id)) {
       newSet.delete(id);
-      console.log('📁 Slide-out toggled closed:', id);
     } else {
       newSet.add(id);
-      console.log('📂 Slide-out toggled open:', id);
     }
     set({ openSlideOutIds: newSet });
   },
@@ -130,7 +122,6 @@ export const useSlideOutStore = create<SlideOutState>()((set, get) => ({
     const { openSlideOutIds } = get();
     if (openSlideOutIds.size > 0) {
       set({ openSlideOutIds: new Set() });
-      console.log('📁 All slide-outs closed');
     }
   },
 }));

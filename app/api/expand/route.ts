@@ -111,12 +111,6 @@ EXPANDED HTML:`;
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ExpandResponse | ErrorResponse>> {
   try {
-    // DEBUG: Check if API key is loaded
-    console.log('🔍 Environment check:', {
-      hasKey: !!process.env.ANTHROPIC_API_KEY,
-      firstChars: process.env.ANTHROPIC_API_KEY?.substring(0, 15) || 'MISSING'
-    });
-    
     // ------------------------------------------------------------------------
     // 1. Parse and validate request body
     // ------------------------------------------------------------------------

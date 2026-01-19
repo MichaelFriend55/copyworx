@@ -112,12 +112,6 @@ SHORTENED HTML:`;
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ShortenResponse | ErrorResponse>> {
   try {
-    // DEBUG: Check if API key is loaded
-    console.log('🔍 Environment check:', {
-      hasKey: !!process.env.ANTHROPIC_API_KEY,
-      firstChars: process.env.ANTHROPIC_API_KEY?.substring(0, 15) || 'MISSING'
-    });
-    
     // ------------------------------------------------------------------------
     // 1. Parse and validate request body
     // ------------------------------------------------------------------------
@@ -190,11 +184,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ShortenRe
     // 3. Call Claude API to shorten the text
     // ------------------------------------------------------------------------
     
-    console.log('📝 Shorten request:', {
-      originalLength: text.length,
-      preview: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-    });
-
     // Build the user prompt with the text to shorten
     const userPrompt = buildUserPrompt(text);
 
@@ -239,13 +228,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ShortenRe
     // Calculate text lengths for comparison
     const originalLength = text.length;
     const newLength = shortenedText.length;
-
-    console.log('✅ Shorten successful:', {
-      originalLength,
-      newLength,
-      reductionPercent: ((originalLength - newLength) / originalLength * 100).toFixed(1) + '%',
-      preview: shortenedText.substring(0, 100) + (shortenedText.length > 100 ? '...' : ''),
-    });
 
     // ------------------------------------------------------------------------
     // 5. Return the shortened text

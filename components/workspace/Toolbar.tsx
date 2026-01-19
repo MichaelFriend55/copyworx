@@ -698,7 +698,6 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
 
   // Handle import file selection
   const handleImportClick = (fileType: string) => {
-    console.log('Import triggered for file type:', fileType);
     // TODO: Implement import functionality
     closeMenu();
   };
@@ -724,7 +723,6 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
           type: 'success', 
           text: `Exported as ${result.filename}` 
         });
-        console.log('✅ Export successful:', result.filename);
       } else {
         setExportMessage({ 
           type: 'error', 
@@ -743,7 +741,6 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
 
   // Handle print
   const handlePrintClick = () => {
-    console.log('Print triggered');
     window.print();
     closeMenu();
   };

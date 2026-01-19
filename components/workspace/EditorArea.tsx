@@ -167,11 +167,9 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     content: '',
     onCreate: ({ editor }) => {
       onEditorReady?.(editor);
-      console.log('✅ Editor instance created');
     },
     onDestroy: () => {
       onEditorReady?.(null);
-      console.log('🗑️ Editor instance destroyed');
     },
     editorProps: {
       attributes: {
@@ -193,10 +191,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     
     try {
       updateDocument(activeProjectId, currentDocument.id, { content });
-      console.log('💾 Document saved to localStorage:', {
-        docId: currentDocument.id,
-        contentLength: content.length,
-      });
       
       // Update save status indicator
       setSaveStatus('saved');
@@ -276,12 +270,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       
       // Load content into editor
       editor.commands.setContent(doc.content || '');
-      
-      console.log('📄 Document loaded from localStorage:', {
-        id: doc.id,
-        title: doc.title,
-        contentLength: doc.content?.length || 0,
-      });
     } catch (error) {
       console.error('❌ Failed to load document:', error);
       setCurrentDocument(null);

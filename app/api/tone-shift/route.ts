@@ -155,12 +155,7 @@ REWRITTEN COPY (HTML only):`;
  * @returns JSON response with rewritten text or error
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ToneShiftResponse | ErrorResponse>> {
-  try {// DEBUG: Check if API key is loaded
-    console.log('🔍 Environment check:', {
-      hasKey: !!process.env.ANTHROPIC_API_KEY,
-      firstChars: process.env.ANTHROPIC_API_KEY?.substring(0, 15) || 'MISSING'
-    });
-    
+  try {
     // ------------------------------------------------------------------------
     // 1. Parse and validate request body
     // ------------------------------------------------------------------------
@@ -266,12 +261,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ToneShift
     // 3. Call Claude API to rewrite the text
     // ------------------------------------------------------------------------
     
-    console.log('📝 Tone shift request:', {
-      originalLength: text.length,
-      tone: tone,
-      preview: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-    });
-
     // Build the user prompt with the text and target tone
     const userPrompt = buildUserPrompt(text, tone as ToneType);
 
@@ -317,13 +306,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ToneShift
     // Calculate text lengths for comparison
     const originalLength = text.length;
     const newLength = rewrittenText.length;
-
-    console.log('✅ Tone shift successful:', {
-      originalLength,
-      newLength,
-      changePercent: ((newLength - originalLength) / originalLength * 100).toFixed(1) + '%',
-      preview: rewrittenText.substring(0, 100) + (rewrittenText.length > 100 ? '...' : ''),
-    });
 
     // ------------------------------------------------------------------------
     // 5. Return the rewritten text

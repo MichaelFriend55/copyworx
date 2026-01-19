@@ -223,7 +223,7 @@ export default function PricingPage() {
               Enterprise
             </Badge>
             <h2 className="font-sans text-3xl md:text-4xl font-bold mb-4">
-              Need more? Let's talk.
+              Need more? Let&apos;s talk.
             </h2>
             <p className="text-ink-300 mb-8 max-w-2xl mx-auto">
               For larger teams with custom requirements, we offer tailored solutions 
@@ -247,7 +247,7 @@ export default function PricingPage() {
                 Frequently asked questions
               </h2>
               <p className="text-ink-600">
-                Can't find what you're looking for?{' '}
+                Can&apos;t find what you&apos;re looking for?{' '}
                 <Link href="mailto:support@copyworx.app" className="text-amber-600 hover:underline">
                   Contact our support team
                 </Link>

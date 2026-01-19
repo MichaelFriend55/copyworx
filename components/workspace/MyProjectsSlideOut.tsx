@@ -724,9 +724,6 @@ export function MyProjectsSlideOut({
   onClose,
   onDocumentClick,
 }: MyProjectsSlideOutProps) {
-  // Debug: Log when component receives isOpen prop
-  console.log('🟢 MyProjectsSlideOut rendered, isOpen:', isOpen);
-  
   // Store state
   const projects = useProjects();
   const activeProjectId = useActiveProjectId();
@@ -751,15 +748,9 @@ export function MyProjectsSlideOut({
   // Track previous isOpen to detect open transitions
   const wasOpenRef = React.useRef(false);
 
-  // Track isOpen changes
-  useEffect(() => {
-    console.log('🔄 MyProjectsSlideOut isOpen changed to:', isOpen);
-  }, [isOpen]);
-
   // Auto-expand active project on open
   useEffect(() => {
     if (isOpen && activeProjectId) {
-      console.log('📂 Auto-expanding active project:', activeProjectId);
       setExpandedProjects(prev => new Set([...prev, activeProjectId]));
     }
   }, [isOpen, activeProjectId]);
@@ -768,8 +759,6 @@ export function MyProjectsSlideOut({
   useEffect(() => {
     // Only refresh when transitioning from closed to open
     if (isOpen && !wasOpenRef.current) {
-      console.log('🔄 Refreshing projects on panel open');
-      // Use getState() to avoid dependency issues
       useWorkspaceStore.getState().refreshProjects();
     }
     wasOpenRef.current = isOpen;

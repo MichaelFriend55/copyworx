@@ -312,13 +312,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       // Project actions
       setProjects: (projects: Project[]) => {
         set({ projects });
-        console.log('📂 Projects set:', projects.length);
       },
 
       setActiveProjectId: (id: string) => {
         set({ activeProjectId: id, activeDocumentId: null }); // Clear doc when switching projects
         setStorageActiveProjectId(id);
-        console.log('✅ Active project set:', id);
         
         // Clear tool results when switching projects
         set({
@@ -338,7 +336,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       addProject: (project: Project) => {
         const { projects } = get();
         set({ projects: [...projects, project] });
-        console.log('➕ Project added:', project.name);
       },
 
       updateProject: (id: string, updates: Partial<Project>) => {
@@ -363,7 +360,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         };
         
         set({ projects: updatedProjects });
-        console.log('✅ Project updated:', id);
       },
 
       deleteProject: (id: string) => {
@@ -378,7 +374,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           deleteStorageProject(id);
           const updatedProjects = projects.filter((p) => p.id !== id);
           set({ projects: updatedProjects });
-          console.log('🗑️ Project deleted:', id);
         } catch (error) {
           console.error('❌ Failed to delete project:', error);
         }
@@ -389,13 +384,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const activeProjectId = getActiveProjectId();
         const safeProjects = Array.isArray(projects) ? projects : [];
         set({ projects: safeProjects, activeProjectId });
-        console.log('🔄 Projects refreshed:', safeProjects.length);
       },
 
       // Document actions - SIMPLIFIED
       setActiveDocumentId: (id: string | null) => {
         set({ activeDocumentId: id });
-        console.log('📄 Active document ID set:', id);
       },
 
       // UI actions
@@ -417,17 +410,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       setActiveTool: (toolId: string | null) => {
         set({ activeToolId: toolId });
-        console.log('🔧 Active tool set:', toolId);
         
         if (toolId !== null && !get().rightSidebarOpen) {
           set({ rightSidebarOpen: true });
-          console.log('📂 Auto-opened right sidebar');
         }
       },
 
       clearActiveTool: () => {
         set({ activeToolId: null });
-        console.log('🧹 Active tool cleared');
       },
 
       setAIAnalysisMode: (mode: AIAnalysisMode) => {
@@ -440,7 +430,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       setViewMode: (mode: ViewMode) => {
         set({ viewMode: mode });
-        console.log('👁️ View mode changed:', mode);
       },
 
       // Editor selection actions
@@ -482,8 +471,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           toneShiftError: null,
           toneShiftResult: null 
         });
-        console.log('🔄 Starting tone shift:', { tone, textLength: text.length });
-
         try {
           const data = await retryWithBackoff(async () => {
             const response = await fetchWithTimeout('/api/tone-shift', {
@@ -512,8 +499,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             toneShiftLoading: false,
             toneShiftError: null 
           });
-          
-          console.log('✅ Tone shift complete');
 
         } catch (error) {
           set({ 
@@ -549,7 +534,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         try {
           editor.commands.setContent(toneShiftResult);
-          console.log('✅ Tone shift result inserted into editor');
           set({ toneShiftResult: null, toneShiftError: null });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to insert content';
