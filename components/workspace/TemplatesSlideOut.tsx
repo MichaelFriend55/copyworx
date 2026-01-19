@@ -35,6 +35,8 @@ import { cn } from '@/lib/utils';
 import { ALL_TEMPLATES } from '@/lib/data/templates';
 import type { Template, TemplateCategory } from '@/lib/types/template';
 import { useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
+import { useSlideOutActions as useGlobalSlideOutActions } from '@/lib/stores/slideOutStore';
+import { TEMPLATE_FORM_PANEL_ID } from './TemplateFormSlideOut';
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -283,7 +285,7 @@ export function TemplatesSlideOut({
   onClose,
 }: TemplatesSlideOutProps) {
   // Store actions
-  const { setRightSidebarOpen, setActiveTool } = useUIActions();
+  const { setActiveTool } = useUIActions();
   const { 
     setSelectedTemplateId, 
     setIsGeneratingTemplate,
@@ -293,6 +295,7 @@ export function TemplatesSlideOut({
     clearRewriteChannelResult,
     clearBrandAlignmentResult,
   } = useTemplateActions();
+  const { openSlideOut } = useGlobalSlideOutActions();
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
@@ -359,17 +362,17 @@ export function TemplatesSlideOut({
       // Clear active tool (template generator is special - not a tool in the sidebar)
       setActiveTool(null);
       
-      // Open right sidebar to show template form
-      setRightSidebarOpen(true);
+      // Open template form slide-out from right
+      openSlideOut(TEMPLATE_FORM_PANEL_ID);
       
       // NOTE: Do NOT close the templates browser - allow both panels to be open
-      console.log('✅ Template form opening in right sidebar, keeping browser open');
+      console.log('✅ Template form slide-out opening from right, keeping browser open');
     },
     [
       setSelectedTemplateId,
       setIsGeneratingTemplate,
       setActiveTool,
-      setRightSidebarOpen,
+      openSlideOut,
       clearToneShiftResult,
       clearExpandResult,
       clearShortenResult,

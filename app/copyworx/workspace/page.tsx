@@ -11,16 +11,19 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { WorkspaceLayout } from '@/components/workspace/WorkspaceLayout';
 import { EditorArea, type EditorAreaHandle } from '@/components/workspace/EditorArea';
 import { LeftSidebarContent } from '@/components/workspace/LeftSidebarContent';
 import { RightSidebarContent } from '@/components/workspace/RightSidebarContent';
+import { TemplateFormSlideOut, TEMPLATE_FORM_PANEL_ID } from '@/components/workspace/TemplateFormSlideOut';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
+import { getTemplateById } from '@/lib/data/templates';
 import { initializeProjectSystem } from '@/lib/utils/project-utils';
 import type { Editor } from '@tiptap/react';
-import type { ProjectDocument } from '@/lib/types/project';
+import type { ProjectDocument, Project } from '@/lib/types/project';
 
 /**
  * Loading spinner component
@@ -54,6 +57,23 @@ export default function WorkspacePage() {
   
   // Prevent double initialization in StrictMode
   const initRef = useRef(false);
+  
+  // Template form slide-out state
+  const isTemplateFormOpen = useIsSlideOutOpen(TEMPLATE_FORM_PANEL_ID);
+  const { closeSlideOut } = useSlideOutActions();
+  const selectedTemplateId = useWorkspaceStore((state) => state.selectedTemplateId);
+  const activeProjectId = useWorkspaceStore((state) => state.activeProjectId);
+  const projects = useWorkspaceStore((state) => state.projects);
+  
+  // Get selected template and active project
+  const selectedTemplate = useMemo(() => {
+    return selectedTemplateId ? getTemplateById(selectedTemplateId) : null;
+  }, [selectedTemplateId]);
+  
+  const activeProject = useMemo((): Project | null => {
+    if (!activeProjectId) return null;
+    return projects.find((p) => p.id === activeProjectId) || null;
+  }, [activeProjectId, projects]);
   
   // Wait for client-side mounting
   useEffect(() => {
@@ -102,17 +122,35 @@ export default function WorkspacePage() {
     }
   }, []);
   
+  /**
+   * Handle closing template form slide-out
+   */
+  const handleCloseTemplateForm = useCallback(() => {
+    closeSlideOut(TEMPLATE_FORM_PANEL_ID);
+  }, [closeSlideOut]);
+  
   // Show loading during SSR/hydration
   if (!mounted) {
     return <LoadingSpinner />;
   }
   
   return (
-    <WorkspaceLayout
-      leftSidebar={<LeftSidebarContent onDocumentClick={handleDocumentClick} />}
-      rightSidebar={<RightSidebarContent editor={editor} />}
-    >
-      <EditorArea ref={editorRef} onEditorReady={handleEditorReady} />
-    </WorkspaceLayout>
+    <>
+      <WorkspaceLayout
+        leftSidebar={<LeftSidebarContent onDocumentClick={handleDocumentClick} />}
+        rightSidebar={<RightSidebarContent editor={editor} />}
+      >
+        <EditorArea ref={editorRef} onEditorReady={handleEditorReady} />
+      </WorkspaceLayout>
+      
+      {/* Template Form Slide-Out - Opens from right when template selected */}
+      <TemplateFormSlideOut
+        isOpen={isTemplateFormOpen}
+        onClose={handleCloseTemplateForm}
+        template={selectedTemplate}
+        editor={editor}
+        activeProject={activeProject}
+      />
+    </>
   );
 }
