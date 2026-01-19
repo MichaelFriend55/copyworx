@@ -245,7 +245,7 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
    * Handle template generation
    */
   const handleGenerate = useCallback(async () => {
-    if (!template || !editor || !activeDocumentId) return;
+    if (!template || !editor || !activeDocumentId || !activeProject) return;
     
     // Validate form
     if (!validateForm()) {
@@ -292,7 +292,7 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
       
       // Update document in storage
       try {
-        updateDocumentInStorage(activeDocumentId, {
+        updateDocumentInStorage(activeProject.id, activeDocumentId, {
           content: formattedContent,
         });
         console.log('💾 Document saved with generated content');
@@ -476,7 +476,7 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
               <option value="">No specific persona</option>
               {personas.map((persona) => (
                 <option key={persona.id} value={persona.id}>
-                  {persona.name} - {persona.role}
+                  {persona.name}
                 </option>
               ))}
             </select>
