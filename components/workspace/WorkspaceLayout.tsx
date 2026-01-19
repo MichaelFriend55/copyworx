@@ -28,7 +28,7 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
 import { Toolbar } from './Toolbar';
-import { useLeftSidebarOpen, useRightSidebarOpen, useUIActions } from '@/lib/stores/workspaceStore';
+import { useLeftSidebarOpen, useRightSidebarOpen, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
 import { cn } from '@/lib/utils';
 
 interface WorkspaceLayoutProps {
@@ -57,7 +57,13 @@ export function WorkspaceLayout({
   // Optimized selectors
   const leftSidebarOpen = useLeftSidebarOpen();
   const rightSidebarOpen = useRightSidebarOpen();
+  const viewMode = useViewMode();
   const { toggleLeftSidebar, toggleRightSidebar } = useUIActions();
+
+  // In Focus Mode, hide both sidebars regardless of their state
+  const isFocusMode = viewMode === 'focus';
+  const showLeftSidebar = !isFocusMode && leftSidebarOpen;
+  const showRightSidebar = !isFocusMode && rightSidebarOpen;
 
   return (
     <div className={cn('h-screen w-screen flex flex-col overflow-hidden', className)}>
@@ -65,9 +71,9 @@ export function WorkspaceLayout({
       <Toolbar />
 
       {/* Main workspace area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left sidebar */}
-        {leftSidebar && (
+      <div className="flex-1 flex overflow-hidden transition-all duration-300">
+        {/* Left sidebar - hidden in Focus Mode */}
+        {leftSidebar && showLeftSidebar && (
           <Sidebar
             side="left"
             isOpen={leftSidebarOpen}
@@ -78,12 +84,17 @@ export function WorkspaceLayout({
         )}
 
         {/* Center editor area */}
-        <main className="flex-1 h-full overflow-hidden">
+        <main 
+          className={cn(
+            'flex-1 h-full overflow-hidden transition-all duration-300',
+            isFocusMode && 'mx-auto w-full'
+          )}
+        >
           {children}
         </main>
 
-        {/* Right sidebar */}
-        {rightSidebar && (
+        {/* Right sidebar - hidden in Focus Mode */}
+        {rightSidebar && showRightSidebar && (
           <Sidebar
             side="right"
             isOpen={rightSidebarOpen}

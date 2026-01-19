@@ -634,6 +634,9 @@ export function Toolbar({ className }: ToolbarProps) {
   
   // Check if we have an active document
   const hasActiveDocument = !!activeDocumentId;
+  
+  // Check if we're in Focus Mode
+  const isFocusMode = viewMode === 'focus';
 
   const [editor, setEditor] = useState<Editor | null>(null);
 
@@ -668,11 +671,13 @@ export function Toolbar({ className }: ToolbarProps) {
   return (
     <header
       className={cn(
-        'w-full h-16 bg-white',
+        'w-full bg-white',
         'flex items-center justify-between',
         'px-6 gap-8',
         'sticky top-0 z-50',
         'border-b border-gray-200',
+        'transition-all duration-300',
+        isFocusMode ? 'h-12' : 'h-16',
         className
       )}
       style={{
@@ -680,8 +685,11 @@ export function Toolbar({ className }: ToolbarProps) {
         backgroundColor: 'rgba(255, 255, 255, 0.98)',
       }}
     >
-      {/* Left section - File operations */}
-      <div className="flex items-center gap-2">
+      {/* Left section - File operations (hidden in Focus Mode) */}
+      <div className={cn(
+        'flex items-center gap-2 transition-all duration-300',
+        isFocusMode && 'opacity-0 w-0 overflow-hidden'
+      )}>
         <Link href="/copyworx">
           <button
             className={cn(
@@ -750,9 +758,12 @@ export function Toolbar({ className }: ToolbarProps) {
         </button>
       </div>
 
-      {/* Center section - Formatting controls */}
-      <div className="flex-1 flex items-center justify-center gap-1">
-        {hasActiveDocument && editor ? (
+      {/* Center section - Formatting controls (hidden in Focus Mode) */}
+      <div className={cn(
+        'flex-1 flex items-center justify-center gap-1 transition-all duration-300',
+        isFocusMode && 'opacity-0 w-0 overflow-hidden'
+      )}>
+        {hasActiveDocument && editor && !isFocusMode ? (
           <>
             {/* Font controls - placed at LEFT */}
             <FontFamilyDropdown editor={editor} />
@@ -875,27 +886,35 @@ export function Toolbar({ className }: ToolbarProps) {
       </div>
 
       {/* Right section - View Mode & Settings */}
-      <div className="flex items-center gap-3">
-        {/* View Mode Selector */}
+      <div className={cn(
+        'flex items-center gap-3 transition-all duration-300',
+        isFocusMode && 'mx-auto'
+      )}>
+        {/* View Mode Selector - Always visible */}
         <ViewModeSelector
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           disabled={!hasActiveDocument}
         />
 
-        <div className="w-px h-6 bg-gray-200" />
+        {/* Settings button - Hidden in Focus Mode */}
+        {!isFocusMode && (
+          <>
+            <div className="w-px h-6 bg-gray-200" />
 
-        <button
-          className={cn(
-            'p-2 rounded-lg',
-            'text-apple-text-dark hover:bg-apple-gray-bg',
-            'transition-colors duration-150',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
-          )}
-          title="Settings"
-        >
-          <Settings className="w-4 h-4" />
-        </button>
+            <button
+              className={cn(
+                'p-2 rounded-lg',
+                'text-apple-text-dark hover:bg-apple-gray-bg',
+                'transition-colors duration-150',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+              )}
+              title="Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          </>
+        )}
       </div>
     </header>
   );

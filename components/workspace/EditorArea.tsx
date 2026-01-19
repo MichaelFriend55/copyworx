@@ -32,7 +32,7 @@ import { FontFamily } from '@tiptap/extension-font-family';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import { FontSize } from '@/lib/tiptap/font-size';
-import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId, useViewMode } from '@/lib/stores/workspaceStore';
 import { getDocument, updateDocument } from '@/lib/storage/document-storage';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
@@ -72,10 +72,14 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   // Get IDs from Zustand (no content!)
   const activeProjectId = useActiveProjectId();
   const activeDocumentId = useActiveDocumentId();
+  const viewMode = useViewMode();
   
   // Get actions via getState to avoid re-render loops
   const setSelectedTextRef = useRef(useWorkspaceStore.getState().setSelectedText);
   const setActiveDocumentIdRef = useRef(useWorkspaceStore.getState().setActiveDocumentId);
+  
+  // Check if we're in Focus Mode
+  const isFocusMode = viewMode === 'focus';
   
   // Local state for document data loaded from localStorage
   const [currentDocument, setCurrentDocument] = useState<ProjectDocument | null>(null);
@@ -462,35 +466,46 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     <div
       className={cn(
         'relative h-full w-full',
-        'bg-apple-editor-bg',
         'flex items-start justify-center',
         'overflow-y-auto custom-scrollbar',
-        'py-12 px-8',
+        'transition-all duration-300',
+        isFocusMode 
+          ? 'bg-white py-8 px-4' // Focus Mode: clean white background, minimal padding
+          : 'bg-apple-editor-bg py-12 px-8', // Normal: gray bg, more padding
         className
       )}
     >
       {/* Paper container */}
       <div
         className={cn(
-          'w-full max-w-[850px]',
+          'w-full',
           'bg-white',
-          'rounded-sm',
-          'min-h-[11in]',
           'relative',
-          'transition-all duration-300'
+          'transition-all duration-300',
+          isFocusMode 
+            ? 'max-w-[750px] shadow-none min-h-screen' // Focus Mode: comfortable reading width, no shadow
+            : 'max-w-[850px] rounded-sm min-h-[11in]', // Normal: standard width, rounded corners
         )}
         style={{
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          boxShadow: isFocusMode ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.08)',
         }}
       >
         {currentDocument ? (
           <>
             {/* Document header */}
             <div
-              className="px-16 py-3 border-b border-gray-200 flex items-center justify-between"
+              className={cn(
+                'flex items-center justify-between transition-all duration-300',
+                isFocusMode 
+                  ? 'px-8 py-2 border-b border-transparent' // Focus Mode: minimal header
+                  : 'px-16 py-3 border-b border-gray-200' // Normal: standard header
+              )}
             >
               {/* Title display */}
-              <div className="flex items-center gap-2 flex-1">
+              <div className={cn(
+                'flex items-center gap-2 flex-1',
+                isFocusMode && 'opacity-0' // Hide title in Focus Mode for cleaner look
+              )}>
                 <span
                   className={cn(
                     'text-xl font-sans font-semibold',
@@ -506,8 +521,11 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                 </span>
               </div>
 
-              {/* Right side: Zoom controls + Save status */}
-              <div className="flex items-center gap-4">
+              {/* Right side: Zoom controls + Save status (hidden in Focus Mode) */}
+              <div className={cn(
+                'flex items-center gap-4 transition-all duration-300',
+                isFocusMode && 'opacity-0 w-0 overflow-hidden'
+              )}>
                 {/* Zoom controls */}
                 <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
                   {/* Zoom out button */}
@@ -612,12 +630,12 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
 
             {/* TipTap editor with zoom */}
             <div
-              className="overflow-auto"
+              className="overflow-auto transition-all duration-300"
               style={{
-                paddingLeft: '60px',
-                paddingRight: '60px',
-                paddingTop: '40px',
-                paddingBottom: '40px',
+                paddingLeft: isFocusMode ? '40px' : '60px',
+                paddingRight: isFocusMode ? '40px' : '60px',
+                paddingTop: isFocusMode ? '60px' : '40px', // More top padding in Focus Mode
+                paddingBottom: isFocusMode ? '120px' : '40px', // More bottom padding in Focus Mode
               }}
             >
               <div
