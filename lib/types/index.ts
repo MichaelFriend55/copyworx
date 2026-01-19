@@ -157,3 +157,11 @@ export interface EditorContent {
  */
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
+/**
+ * Editor view mode options
+ * - page: Traditional page layout with fixed width, mimicking printed document
+ * - scrolling: Continuous scroll mode with full-width content
+ * - focus: Distraction-free mode that highlights current paragraph
+ */
+export type ViewMode = 'page' | 'scrolling' | 'focus';
+

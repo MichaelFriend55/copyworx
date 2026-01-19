@@ -21,7 +21,7 @@ import React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import type { ToolCategory, AIAnalysisMode } from '@/lib/types';
+import type { ToolCategory, AIAnalysisMode, ViewMode } from '@/lib/types';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
 import type { BrandVoice, BrandAlignmentResult } from '@/lib/types/brand';
@@ -130,6 +130,7 @@ interface WorkspaceState {
   rightSidebarOpen: boolean;
   activeToolId: string | null;
   aiAnalysisMode: AIAnalysisMode;
+  viewMode: ViewMode;
   
   // Editor selection state
   selectedText: string | null;
@@ -187,6 +188,7 @@ interface WorkspaceState {
   setActiveTool: (toolId: string | null) => void;
   clearActiveTool: () => void;
   setAIAnalysisMode: (mode: AIAnalysisMode) => void;
+  setViewMode: (mode: ViewMode) => void;
   
   // Editor selection actions
   setSelectedText: (text: string | null, range: { from: number; to: number } | null) => void;
@@ -249,6 +251,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       rightSidebarOpen: true,
       activeToolId: null,
       aiAnalysisMode: null,
+      viewMode: 'scrolling' as ViewMode,
       
       // Editor selection initial state
       selectedText: null,
@@ -433,6 +436,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         if (mode !== null && !get().rightSidebarOpen) {
           set({ rightSidebarOpen: true });
         }
+      },
+
+      setViewMode: (mode: ViewMode) => {
+        set({ viewMode: mode });
+        console.log('👁️ View mode changed:', mode);
       },
 
       // Editor selection actions
@@ -1006,6 +1014,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         rightSidebarOpen: state.rightSidebarOpen,
         activeToolId: state.activeToolId,
         aiAnalysisMode: state.aiAnalysisMode,
+        viewMode: state.viewMode,
         documentInsights: {
           isActive: state.documentInsights.isActive,
           isExpanded: state.documentInsights.isExpanded,
@@ -1052,6 +1061,8 @@ export const useLeftSidebarOpen = () => useWorkspaceStore((state) => state.leftS
 export const useRightSidebarOpen = () => useWorkspaceStore((state) => state.rightSidebarOpen);
 export const useActiveToolId = () => useWorkspaceStore((state) => state.activeToolId);
 export const useAIAnalysisMode = () => useWorkspaceStore((state) => state.aiAnalysisMode);
+export const useViewMode = () => useWorkspaceStore((state) => state.viewMode);
+export const useSetViewMode = () => useWorkspaceStore((state) => state.setViewMode);
 
 /**
  * Tone Shifter selector hooks
@@ -1178,6 +1189,7 @@ export const useUIActions = () => useWorkspaceStore(
     setActiveTool: state.setActiveTool,
     clearActiveTool: state.clearActiveTool,
     setAIAnalysisMode: state.setAIAnalysisMode,
+    setViewMode: state.setViewMode,
   }))
 );
 

@@ -42,7 +42,8 @@ import {
   Highlighter,
   X,
 } from 'lucide-react';
-import { useActiveDocumentId, useUIActions } from '@/lib/stores/workspaceStore';
+import { useActiveDocumentId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
+import { ViewModeSelector } from './ViewModeSelector';
 import { cn } from '@/lib/utils';
 
 interface ToolbarProps {
@@ -628,7 +629,8 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
 export function Toolbar({ className }: ToolbarProps) {
   // Optimized selectors
   const activeDocumentId = useActiveDocumentId();
-  const { toggleRightSidebar } = useUIActions();
+  const { toggleRightSidebar, setViewMode } = useUIActions();
+  const viewMode = useViewMode();
   
   // Check if we have an active document
   const hasActiveDocument = !!activeDocumentId;
@@ -872,8 +874,17 @@ export function Toolbar({ className }: ToolbarProps) {
         )}
       </div>
 
-      {/* Right section - Settings */}
-      <div className="flex items-center gap-2">
+      {/* Right section - View Mode & Settings */}
+      <div className="flex items-center gap-3">
+        {/* View Mode Selector */}
+        <ViewModeSelector
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          disabled={!hasActiveDocument}
+        />
+
+        <div className="w-px h-6 bg-gray-200" />
+
         <button
           className={cn(
             'p-2 rounded-lg',
