@@ -23,12 +23,12 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Sparkles, ChevronRight, ChevronDown, FileText, PanelLeftOpen } from 'lucide-react';
-import { ProjectSelector } from '@/components/workspace/ProjectSelector';
-import DocumentList from '@/components/workspace/DocumentList';
+import { Sparkles, ChevronRight, ChevronDown, PanelLeftOpen, Folder as FolderIcon } from 'lucide-react';
 import { DocumentInsights } from '@/components/workspace/DocumentInsights';
 import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
 import { TemplatesSlideOut, TEMPLATES_PANEL_ID } from '@/components/workspace/TemplatesSlideOut';
+import { BRAND_VOICE_PANEL_ID } from '@/components/workspace/BrandVoiceSlideOut';
+import { PERSONAS_PANEL_ID } from '@/components/workspace/PersonasSlideOut';
 import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
@@ -58,15 +58,9 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const isTemplatesSlideOutOpen = useIsSlideOutOpen(TEMPLATES_PANEL_ID);
   const { openSlideOut, closeSlideOut } = useSlideOutActions();
   
-  // Get active project for dynamic section title
-  const activeProject = projects.find(p => p.id === activeProjectId);
-  const documentsSectionTitle = activeProject 
-    ? `${activeProject.name} Projects`
-    : 'Projects';
-  
-  // Track which sections are expanded (Projects, Documents, and Optimizer start expanded)
+  // Track which sections are expanded (Projects and Optimizer start expanded)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['projects', 'documents', 'optimizer'])
+    new Set(['projects', 'optimizer'])
   );
   
   // NOTE: Project initialization is now handled in the parent WorkspacePage
@@ -76,13 +70,16 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
    * Open the My Projects slide-out panel
    */
   const openProjectsSlideOut = useCallback(() => {
+    console.log('🔵 Opening My Projects slide-out, panel ID:', MY_PROJECTS_PANEL_ID);
     openSlideOut(MY_PROJECTS_PANEL_ID);
+    console.log('🔵 openSlideOut called');
   }, [openSlideOut]);
   
   /**
    * Close the My Projects slide-out panel
    */
   const closeProjectsSlideOut = useCallback(() => {
+    console.log('🔴 Closing My Projects slide-out');
     closeSlideOut(MY_PROJECTS_PANEL_ID);
   }, [closeSlideOut]);
   
@@ -130,9 +127,23 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
 
   /**
    * Handle tool selection with automatic state clearing
+   * Special handling for brand-voice and personas which open slide-outs
    */
   const handleToolClick = useCallback((toolId: string) => {
     const currentToolId = useWorkspaceStore.getState().activeToolId;
+    
+    // Special handling for brand-voice and personas - open slide-outs instead
+    if (toolId === 'brand-voice') {
+      console.log('🎨 Opening Brand Voice slide-out');
+      openSlideOut(BRAND_VOICE_PANEL_ID);
+      return;
+    }
+    
+    if (toolId === 'personas') {
+      console.log('👥 Opening Personas slide-out');
+      openSlideOut(PERSONAS_PANEL_ID);
+      return;
+    }
     
     // Only clear if switching to a different tool
     if (currentToolId !== toolId) {
@@ -140,7 +151,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       clearAllToolStates();
     }
     useWorkspaceStore.getState().setActiveTool(toolId);
-  }, [clearAllToolStates]);
+  }, [clearAllToolStates, openSlideOut]);
 
   /**
    * Toggle section expansion
@@ -176,17 +187,20 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       
       {/* MY PROJECTS SECTION */}
       <div className="space-y-1">
-        {/* Section Header - Click to expand slide-out OR toggle collapse */}
+        {/* Section Header - Click to open slide-out */}
         <div className="flex items-center gap-1">
-          {/* Main header button - toggles local collapse */}
+          {/* Main header button - opens slide-out */}
           <button
-            onClick={() => toggleSection('projects')}
+            onClick={() => {
+              console.log('🖱️ MY PROJECTS header clicked');
+              openProjectsSlideOut();
+            }}
             className={cn(
               'flex-1 flex items-center justify-between p-2 rounded-lg',
               'hover:bg-apple-gray-bg transition-colors duration-200',
               'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
             )}
-            aria-expanded={isProjectsExpanded}
+            aria-label="Open My Projects navigator"
           >
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-apple-text-dark" />
@@ -194,73 +208,69 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                 My Projects
               </span>
             </div>
-            {isProjectsExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            )}
+            <PanelLeftOpen className="w-4 h-4 text-gray-400" />
           </button>
           
-          {/* Expand to slide-out button */}
+          {/* Local collapse toggle button */}
           <button
-            onClick={openProjectsSlideOut}
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log('🖱️ Local toggle clicked, isExpanded:', isProjectsExpanded);
+              toggleSection('projects');
+            }}
             className={cn(
               'p-2 rounded-lg',
-              'text-gray-400 hover:text-apple-blue hover:bg-apple-gray-bg',
+              'text-gray-400 hover:text-gray-600 hover:bg-apple-gray-bg',
               'transition-colors duration-200',
               'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
             )}
-            title="Expand project navigator"
-            aria-label="Open full project navigator"
+            title="Show/hide project selector"
+            aria-label="Toggle project selector visibility"
           >
-            <PanelLeftOpen className="w-4 h-4" />
+            {isProjectsExpanded ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
           </button>
         </div>
 
-        {/* Projects Content - Collapsed View */}
+        {/* Projects Content - Collapsed View - Simple project list */}
         {isProjectsExpanded && (
-          <div className="py-3 space-y-3">
-            {/* Project Selector */}
-            <ProjectSelector />
-          </div>
-        )}
-      </div>
-
-      {/* DOCUMENTS SECTION - Dynamic title based on active project */}
-      <div className="space-y-1">
-        {/* Section Header - Collapsible */}
-        <button
-          onClick={() => toggleSection('documents')}
-          className={cn(
-            'w-full flex items-center justify-between p-2 rounded-lg',
-            'hover:bg-apple-gray-bg transition-colors duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
-          )}
-          aria-expanded={expandedSections.has('documents')}
-        >
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-apple-text-dark" />
-            <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
-              {documentsSectionTitle}
-            </span>
-          </div>
-          {expandedSections.has('documents') ? (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          )}
-        </button>
-
-        {/* Documents Content - negative margin to cancel parent padding, allowing full-width buttons */}
-        {/* Scrollable document list with proper height constraints */}
-        {expandedSections.has('documents') && (
-          <div className="max-h-[400px] overflow-y-auto overflow-x-hidden -mx-4">
-            <DocumentList 
-              onDocumentClick={(doc) => {
-                console.log('📄 Document selected:', doc.title);
-                onDocumentClick?.(doc);
-              }}
-            />
+          <div className="py-2 space-y-1">
+            {projects.length > 0 ? (
+              projects.map((project) => (
+                <button
+                  key={project.id}
+                  onClick={() => {
+                    console.log('📁 Project clicked from collapsed view:', project.name);
+                    openProjectsSlideOut();
+                  }}
+                  className={cn(
+                    'w-full text-left px-3 py-2 rounded-lg',
+                    'text-sm transition-all duration-200',
+                    'hover:bg-apple-gray-bg',
+                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                    project.id === activeProjectId
+                      ? 'bg-apple-blue/10 text-apple-blue font-medium'
+                      : 'text-gray-700 hover:text-gray-900'
+                  )}
+                  title={`Open ${project.name} in navigator`}
+                >
+                  <div className="flex items-center gap-2">
+                    <FolderIcon className={cn(
+                      'w-4 h-4 flex-shrink-0',
+                      project.id === activeProjectId ? 'text-apple-blue' : 'text-gray-400'
+                    )} />
+                    <span className="truncate">{project.name}</span>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-center">
+                <p className="text-xs text-gray-500">No projects yet</p>
+              </div>
+            )}
           </div>
         )}
       </div>

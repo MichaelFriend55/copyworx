@@ -18,6 +18,8 @@ import { EditorArea, type EditorAreaHandle } from '@/components/workspace/Editor
 import { LeftSidebarContent } from '@/components/workspace/LeftSidebarContent';
 import { RightSidebarContent } from '@/components/workspace/RightSidebarContent';
 import { TemplateFormSlideOut, TEMPLATE_FORM_PANEL_ID } from '@/components/workspace/TemplateFormSlideOut';
+import { BrandVoiceSlideOut, BRAND_VOICE_PANEL_ID } from '@/components/workspace/BrandVoiceSlideOut';
+import { PersonasSlideOut, PERSONAS_PANEL_ID } from '@/components/workspace/PersonasSlideOut';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { getTemplateById } from '@/lib/data/templates';
@@ -58,8 +60,10 @@ export default function WorkspacePage() {
   // Prevent double initialization in StrictMode
   const initRef = useRef(false);
   
-  // Template form slide-out state
+  // Slide-outs state
   const isTemplateFormOpen = useIsSlideOutOpen(TEMPLATE_FORM_PANEL_ID);
+  const isBrandVoiceOpen = useIsSlideOutOpen(BRAND_VOICE_PANEL_ID);
+  const isPersonasOpen = useIsSlideOutOpen(PERSONAS_PANEL_ID);
   const { closeSlideOut } = useSlideOutActions();
   const selectedTemplateId = useWorkspaceStore((state) => state.selectedTemplateId);
   const activeProjectId = useWorkspaceStore((state) => state.activeProjectId);
@@ -129,6 +133,20 @@ export default function WorkspacePage() {
     closeSlideOut(TEMPLATE_FORM_PANEL_ID);
   }, [closeSlideOut]);
   
+  /**
+   * Handle closing brand voice slide-out
+   */
+  const handleCloseBrandVoice = useCallback(() => {
+    closeSlideOut(BRAND_VOICE_PANEL_ID);
+  }, [closeSlideOut]);
+  
+  /**
+   * Handle closing personas slide-out
+   */
+  const handleClosePersonas = useCallback(() => {
+    closeSlideOut(PERSONAS_PANEL_ID);
+  }, [closeSlideOut]);
+  
   // Show loading during SSR/hydration
   if (!mounted) {
     return <LoadingSpinner />;
@@ -150,6 +168,18 @@ export default function WorkspacePage() {
         template={selectedTemplate}
         editor={editor}
         activeProject={activeProject}
+      />
+      
+      {/* Brand Voice Slide-Out - Opens from right when brand voice tool clicked */}
+      <BrandVoiceSlideOut
+        isOpen={isBrandVoiceOpen}
+        onClose={handleCloseBrandVoice}
+      />
+      
+      {/* Personas Slide-Out - Opens from right when personas tool clicked */}
+      <PersonasSlideOut
+        isOpen={isPersonasOpen}
+        onClose={handleClosePersonas}
       />
     </>
   );

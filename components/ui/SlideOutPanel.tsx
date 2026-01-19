@@ -97,25 +97,31 @@ export function SlideOutPanel({
   const [isMounted, setIsMounted] = React.useState(false);
   const [isAnimating, setIsAnimating] = React.useState(false);
   
+  // Debug: Log when panel receives isOpen
+  console.log(`🎨 SlideOutPanel "${title}" received isOpen:`, isOpen, 'side:', side);
+  
   // Get panel width
   const panelWidth = width ?? PANEL_WIDTHS[side];
   
   // Handle mount state for SSR compatibility
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    console.log(`🎨 SlideOutPanel "${title}" mounted`);
+  }, [title]);
   
   // Handle animation state
   useEffect(() => {
+    console.log(`🎨 SlideOutPanel "${title}" isOpen changed to:`, isOpen, 'will animate:', isOpen);
     if (isOpen) {
       // Trigger animation on next frame for CSS transition
       requestAnimationFrame(() => {
         setIsAnimating(true);
+        console.log(`🎨 SlideOutPanel "${title}" animation started`);
       });
     } else {
       setIsAnimating(false);
     }
-  }, [isOpen]);
+  }, [isOpen, title]);
   
   // Handle ESC key to close
   const handleKeyDown = useCallback((event: KeyboardEvent) => {

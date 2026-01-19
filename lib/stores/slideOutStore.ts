@@ -79,11 +79,14 @@ export const useSlideOutStore = create<SlideOutState>()((set, get) => ({
   
   openSlideOut: (id: string) => {
     const { openSlideOutIds } = get();
+    console.log('📂 openSlideOut called with id:', id, 'current set:', Array.from(openSlideOutIds));
     if (!openSlideOutIds.has(id)) {
       const newSet = new Set(openSlideOutIds);
       newSet.add(id);
       set({ openSlideOutIds: newSet });
-      console.log('📂 Slide-out opened:', id);
+      console.log('📂 Slide-out opened:', id, 'new set:', Array.from(newSet));
+    } else {
+      console.log('⚠️ Slide-out already open:', id);
     }
   },
   
