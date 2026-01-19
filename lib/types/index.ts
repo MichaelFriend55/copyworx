@@ -168,4 +168,3 @@ export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
  * - focus: Distraction-free mode that highlights current paragraph
  */
 export type ViewMode = 'page' | 'scrolling' | 'focus';
-

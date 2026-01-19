@@ -17,7 +17,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import type { Editor } from '@tiptap/react';
 import {
@@ -45,7 +45,8 @@ import {
   Printer,
   ChevronRight,
 } from 'lucide-react';
-import { useActiveDocumentId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
+import { useActiveDocumentId, useActiveProjectId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
+import { getDocument } from '@/lib/storage/document-storage';
 import { ViewModeSelector } from './ViewModeSelector';
 import { SaveAsSnippetButton } from './SaveAsSnippetButton';
 import { cn } from '@/lib/utils';
@@ -629,35 +630,63 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
 
 /**
  * Document menu dropdown component
+ * Handles import, export, and print operations
  */
-function DocumentMenu() {
+function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; documentTitle?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showImportSubmenu, setShowImportSubmenu] = useState(false);
   const [showExportSubmenu, setShowExportSubmenu] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const menuContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle import file selection
-  const handleImportClick = (fileType: string) => {
-    console.log('Import triggered for file type:', fileType);
-    // TODO: Implement import functionality
+  // Clear export message after a delay
+  useEffect(() => {
+    if (exportMessage) {
+      const timer = setTimeout(() => {
+        setExportMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [exportMessage]);
+
+  // Close menu and submenus
+  const closeMenu = useCallback(() => {
     setIsOpen(false);
     setShowImportSubmenu(false);
-  };
-
-  // Handle export
-  const handleExportClick = (fileType: string) => {
-    console.log('Export triggered for file type:', fileType);
-    // TODO: Implement export functionality
-    setIsOpen(false);
     setShowExportSubmenu(false);
-  };
+  }, []);
 
-  // Handle print
-  const handlePrintClick = () => {
-    console.log('Print triggered');
-    window.print();
-    setIsOpen(false);
-  };
+  // Handle ESC key and click outside to close menu
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuContainerRef.current && !menuContainerRef.current.contains(event.target as Node)) {
+        closeMenu();
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeMenu();
+      }
+    };
+
+    // Add listeners after a small delay to prevent immediate closure
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }, 0);
+
+    // Cleanup event listeners
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen, closeMenu]);
 
   // Close submenus when main menu closes
   useEffect(() => {
@@ -667,8 +696,60 @@ function DocumentMenu() {
     }
   }, [isOpen]);
 
+  // Handle import file selection
+  const handleImportClick = (fileType: string) => {
+    console.log('Import triggered for file type:', fileType);
+    // TODO: Implement import functionality
+    closeMenu();
+  };
+
+  // Handle export with proper async handling
+  const handleExportClick = async (fileType: 'txt' | 'md' | 'docx') => {
+    try {
+      if (!editor) {
+        setExportMessage({ type: 'error', text: 'No editor available' });
+        return;
+      }
+
+      // Import export function dynamically to avoid SSR issues
+      const { exportDocument } = await import('@/lib/utils/document-export');
+      
+      setIsExporting(true);
+      closeMenu();
+      
+      const result = await exportDocument(editor, fileType, documentTitle);
+      
+      if (result.success) {
+        setExportMessage({ 
+          type: 'success', 
+          text: `Exported as ${result.filename}` 
+        });
+        console.log('✅ Export successful:', result.filename);
+      } else {
+        setExportMessage({ 
+          type: 'error', 
+          text: result.error || 'Export failed' 
+        });
+        console.error('❌ Export failed:', result.error);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Export failed';
+      setExportMessage({ type: 'error', text: errorMessage });
+      console.error('❌ Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Handle print
+  const handlePrintClick = () => {
+    console.log('Print triggered');
+    window.print();
+    closeMenu();
+  };
+
   return (
-    <div className="relative">
+    <div ref={menuContainerRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
@@ -688,14 +769,8 @@ function DocumentMenu() {
 
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-          />
-
           {/* Dropdown menu */}
-          <div className="absolute top-full left-0 mt-1 z-20 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[220px]">
+          <div className="absolute top-full left-0 mt-1 z-[100] bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[220px] overflow-visible">
             {/* Import Document */}
             <div className="relative">
               <button
@@ -718,7 +793,7 @@ function DocumentMenu() {
 
               {/* Import Submenu */}
               {showImportSubmenu && (
-                <div className="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px]">
+                <div className="absolute left-full top-0 ml-1 z-[110] bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px]">
                   <button
                     onClick={() => handleImportClick('docx')}
                     className={cn(
@@ -778,36 +853,42 @@ function DocumentMenu() {
 
               {/* Export Submenu */}
               {showExportSubmenu && (
-                <div className="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px]">
+                <div className="absolute left-full top-0 ml-1 z-[110] bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px]">
                   <button
                     onClick={() => handleExportClick('docx')}
+                    disabled={isExporting || !editor}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
                       'hover:bg-apple-gray-bg',
                       'transition-colors duration-150',
-                      'text-apple-text-dark'
+                      'text-apple-text-dark',
+                      'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >
                     Word Document (.docx)
                   </button>
                   <button
                     onClick={() => handleExportClick('txt')}
+                    disabled={isExporting || !editor}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
                       'hover:bg-apple-gray-bg',
                       'transition-colors duration-150',
-                      'text-apple-text-dark'
+                      'text-apple-text-dark',
+                      'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >
                     Plain Text (.txt)
                   </button>
                   <button
                     onClick={() => handleExportClick('md')}
+                    disabled={isExporting || !editor}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
                       'hover:bg-apple-gray-bg',
                       'transition-colors duration-150',
-                      'text-apple-text-dark'
+                      'text-apple-text-dark',
+                      'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >
                     Markdown (.md)
@@ -854,6 +935,38 @@ function DocumentMenu() {
           }
         }}
       />
+
+      {/* Export Loading Indicator */}
+      {isExporting && (
+        <div className="fixed top-20 right-6 z-50 flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200">
+          <div className="w-4 h-4 border-2 border-apple-blue border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-apple-text-dark">Exporting...</span>
+        </div>
+      )}
+
+      {/* Export Message Toast */}
+      {exportMessage && (
+        <div 
+          className={cn(
+            'fixed top-20 right-6 z-50 px-4 py-2 rounded-lg shadow-lg border',
+            'flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200',
+            exportMessage.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          )}
+        >
+          {exportMessage.type === 'success' ? (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+          <span className="text-sm">{exportMessage.text}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -864,6 +977,7 @@ function DocumentMenu() {
 export function Toolbar({ className }: ToolbarProps) {
   // Optimized selectors
   const activeDocumentId = useActiveDocumentId();
+  const activeProjectId = useActiveProjectId();
   const { toggleRightSidebar, setViewMode } = useUIActions();
   const viewMode = useViewMode();
   
@@ -874,6 +988,7 @@ export function Toolbar({ className }: ToolbarProps) {
   const isFocusMode = viewMode === 'focus';
 
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [documentTitle, setDocumentTitle] = useState<string | undefined>(undefined);
 
   // Get editor instance from window (set by EditorArea)
   useEffect(() => {
@@ -886,6 +1001,29 @@ export function Toolbar({ className }: ToolbarProps) {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Get document title from localStorage when document changes
+  useEffect(() => {
+    // Safety check: only run in browser
+    if (typeof window === 'undefined') return;
+    
+    try {
+      if (activeProjectId && activeDocumentId) {
+        const document = getDocument(activeProjectId, activeDocumentId);
+        if (document) {
+          // Use baseTitle for cleaner filename (without version suffix)
+          setDocumentTitle(document.baseTitle || document.title);
+        } else {
+          setDocumentTitle(undefined);
+        }
+      } else {
+        setDocumentTitle(undefined);
+      }
+    } catch (error) {
+      console.error('Error getting document title:', error);
+      setDocumentTitle(undefined);
+    }
+  }, [activeProjectId, activeDocumentId]);
 
 
   // Insert link handler
@@ -962,7 +1100,7 @@ export function Toolbar({ className }: ToolbarProps) {
           <span className="hidden sm:inline">Save</span>
         </button>
 
-        <DocumentMenu />
+        <DocumentMenu editor={editor} documentTitle={documentTitle} />
 
         <div className="w-px h-6 bg-gray-200 mx-1" />
 

@@ -10,7 +10,7 @@
  */
 
 import type { Metadata } from 'next';
-import { Inter, Roboto, Open_Sans, Lato, Montserrat } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
@@ -26,36 +26,36 @@ const inter = Inter({
 });
 
 /**
- * Additional Google Fonts for editor font selection
- * These are loaded but only used when explicitly selected in the editor
+ * Additional Google Fonts TEMPORARILY DISABLED to speed up build
+ * Will re-enable once font loading timeout issue is resolved
  */
-const roboto = Roboto({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-roboto',
-  weight: ['400', '500', '700'],
-});
+// const roboto = Roboto({
+//   subsets: ['latin'],
+//   display: 'swap',
+//   variable: '--font-roboto',
+//   weight: ['400', '500', '700'],
+// });
 
-const openSans = Open_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-open-sans',
-  weight: ['400', '500', '600', '700'],
-});
+// const openSans = Open_Sans({
+//   subsets: ['latin'],
+//   display: 'swap',
+//   variable: '--font-open-sans',
+//   weight: ['400', '500', '600', '700'],
+// });
 
-const lato = Lato({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-lato',
-  weight: ['400', '700'],
-});
+// const lato = Lato({
+//   subsets: ['latin'],
+//   display: 'swap',
+//   variable: '--font-lato',
+//   weight: ['400', '700'],
+// });
 
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-montserrat',
-  weight: ['400', '500', '600', '700'],
-});
+// const montserrat = Montserrat({
+//   subsets: ['latin'],
+//   display: 'swap',
+//   variable: '--font-montserrat',
+//   weight: ['400', '500', '600', '700'],
+// });
 
 /**
  * Application metadata for SEO and social sharing
@@ -109,7 +109,7 @@ export default function RootLayout({
   return (
     <html 
       lang="en" 
-      className={`${inter.variable} ${roboto.variable} ${openSans.variable} ${lato.variable} ${montserrat.variable}`}
+      className={`${inter.variable}`}
       suppressHydrationWarning
     >
       <body className={`${inter.className} min-h-screen bg-background antialiased`}>
