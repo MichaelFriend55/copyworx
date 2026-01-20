@@ -16,7 +16,9 @@ export { TemplateGenerator } from './TemplateGenerator';
 export { TemplateFormField } from './TemplateFormField';
 export { ProjectSelector } from './ProjectSelector';
 export { BrandVoiceTool } from './BrandVoiceTool';
+export { BrandAlignmentTool } from './BrandAlignmentTool';
 export { PersonasTool } from './PersonasTool';
+export { PersonaAlignmentTool } from './PersonaAlignmentTool';
 export { PersonaCard } from './PersonaCard';
 export { PersonaForm } from './PersonaForm';
 export { LeftSidebarContent } from './LeftSidebarContent';
@@ -29,6 +31,8 @@ export { TemplatesSlideOut, TEMPLATES_PANEL_ID } from './TemplatesSlideOut';
 export { TemplateFormSlideOut, TEMPLATE_FORM_PANEL_ID } from './TemplateFormSlideOut';
 export { BrandVoiceSlideOut, BRAND_VOICE_PANEL_ID } from './BrandVoiceSlideOut';
 export { PersonasSlideOut, PERSONAS_PANEL_ID } from './PersonasSlideOut';
+export { InsightsSlideOut, INSIGHTS_PANEL_ID } from './InsightsSlideOut';
+export type { InsightsPanelType } from './InsightsSlideOut';
 export { DeleteProjectModal } from './DeleteProjectModal';
 
 

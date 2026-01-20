@@ -1,11 +1,15 @@
 /**
  * @file components/workspace/DocumentInsights.tsx
- * @description AI@Worx™ Live - Real-time document insights panel
+ * @description AI@Worx™ Live - Controls panel for real-time document insights
  * 
- * Provides instant feedback on document quality with:
- * - Basic metrics (word count, character count, reading time, readability)
- * - AI-powered metrics (tone detection, brand voice alignment, persona alignment)
- * - Configurable update frequency and metric toggles
+ * This component provides controls for AI@Worx™ Live in the left sidebar.
+ * Results are displayed in the InsightsSlideOut panel on the right side.
+ * 
+ * Features:
+ * - Basic metrics (word count, character count, reading time)
+ * - Update frequency controls (Pause, On Save, Real-time)
+ * - Metric toggles (Readability, Tone, Brand Voice, Persona)
+ * - View Results button to open slide-out panel
  */
 
 'use client';
@@ -17,23 +21,15 @@ import {
   ChevronRight,
   RefreshCw,
   Loader2,
-  CheckCircle,
-  AlertCircle,
-  BookOpen,
-  Hash,
-  Clock,
-  Target,
-  Palette,
-  User,
-  Activity,
+  PanelRightOpen,
 } from 'lucide-react';
 import {
-  useWorkspaceStore,
   useDocumentInsights,
   useDocumentInsightsActions,
   useActiveProjectId,
   useActiveDocumentId,
   useProjects,
+  useInsightsPanelActions,
   type InsightsUpdateFrequency,
 } from '@/lib/stores/workspaceStore';
 import { getDocument } from '@/lib/storage/document-storage';
@@ -50,91 +46,9 @@ const REALTIME_DEBOUNCE = 1000;
 /** Debounce delay for on-pause updates (ms) */
 const ON_PAUSE_DEBOUNCE = 2000;
 
-/** Cache duration for AI metrics (ms) */
-const AI_CACHE_DURATION = 30000;
-
 // ============================================================================
 // Helper Components
 // ============================================================================
-
-/**
- * Score indicator badge with color coding - COMPACT VERSION
- */
-function ScoreBadge({ 
-  score, 
-  maxScore = 10,
-  showOutOf = true,
-}: { 
-  score: number; 
-  maxScore?: number;
-  showOutOf?: boolean;
-}) {
-  const normalizedScore = (score / maxScore) * 10;
-  
-  let colorClass = 'bg-red-100 text-red-700 border-red-200';
-  let icon = <AlertCircle className="w-2.5 h-2.5" />;
-  
-  if (normalizedScore >= 8) {
-    colorClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
-    icon = <CheckCircle className="w-2.5 h-2.5" />;
-  } else if (normalizedScore >= 5) {
-    colorClass = 'bg-amber-100 text-amber-700 border-amber-200';
-    icon = <Activity className="w-2.5 h-2.5" />;
-  }
-  
-  return (
-    <span className={cn(
-      'inline-flex items-center gap-0.5 px-1 py-0 rounded-full text-[10px] font-medium border',
-      colorClass
-    )}>
-      {icon}
-      {showOutOf ? `${score}/${maxScore}` : score}
-    </span>
-  );
-}
-
-/**
- * Metric row component - COMPACT VERSION
- */
-function MetricRow({
-  icon: Icon,
-  label,
-  value,
-  subValue,
-  badge,
-  isLoading,
-  className,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: React.ReactNode;
-  subValue?: string;
-  badge?: React.ReactNode;
-  isLoading?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={cn('flex items-center justify-between py-0.5', className)}>
-      <div className="flex items-center gap-1.5 text-xs text-gray-600">
-        <Icon className="w-3 h-3 text-gray-400" />
-        <span>{label}</span>
-      </div>
-      <div className="flex items-center gap-1">
-        {isLoading ? (
-          <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
-        ) : (
-          <>
-            <span className="text-xs font-medium text-gray-900">{value}</span>
-            {subValue && (
-              <span className="text-[10px] text-gray-500">({subValue})</span>
-            )}
-            {badge}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 /**
  * Radio button for update frequency - COMPACT VERSION
@@ -206,7 +120,9 @@ function MetricCheckbox({
 // ============================================================================
 
 /**
- * DocumentInsights - AI@Worx™ Live panel
+ * DocumentInsights - AI@Worx™ Live controls panel
+ * 
+ * Controls only - results are shown in InsightsSlideOut
  */
 export function DocumentInsights() {
   const activeProjectId = useActiveProjectId();
@@ -235,6 +151,8 @@ export function DocumentInsights() {
     clearAIMetrics,
   } = useDocumentInsightsActions();
   
+  const { openInsightsPanel } = useInsightsPanelActions();
+  
   // Get active project for brand voice and personas
   const activeProject = useMemo(() => 
     projects.find(p => p.id === activeProjectId),
@@ -255,7 +173,7 @@ export function DocumentInsights() {
   }, [documentContent]);
   
   /**
-   * Trigger AI analysis
+   * Trigger AI analysis and open slide-out
    */
   const triggerAIAnalysis = useCallback(() => {
     if (!insights.isActive) return;
@@ -277,6 +195,9 @@ export function DocumentInsights() {
         goals: activePersona.goals,
       } : null
     );
+    
+    // Open the slide-out panel to show results
+    openInsightsPanel('aiworx-live');
   }, [
     insights.isActive,
     insights.enabledMetrics,
@@ -284,6 +205,7 @@ export function DocumentInsights() {
     brandVoice,
     activePersona,
     runAIAnalysis,
+    openInsightsPanel,
   ]);
   
   /**
@@ -346,6 +268,13 @@ export function DocumentInsights() {
   }, [clearAIMetrics, triggerAIAnalysis]);
   
   /**
+   * Handle view results button
+   */
+  const handleViewResults = useCallback(() => {
+    openInsightsPanel('aiworx-live');
+  }, [openInsightsPanel]);
+  
+  /**
    * Toggle active state
    */
   const toggleActive = useCallback(() => {
@@ -368,9 +297,16 @@ export function DocumentInsights() {
   const hasBrandVoice = !!brandVoice?.brandName;
   const hasPersona = !!activePersona?.name;
   
+  // Check if any results are available
+  const hasResults = !!(
+    insights.aiMetrics.tone ||
+    insights.aiMetrics.brandAlignment ||
+    insights.aiMetrics.personaAlignment
+  );
+  
   return (
     <div className="border-t border-gray-200 pt-1.5 mt-1.5">
-      {/* Header - LARGER to match other section headers */}
+      {/* Header */}
       <button
         onClick={toggleExpanded}
         className={cn(
@@ -409,12 +345,12 @@ export function DocumentInsights() {
         </div>
       </button>
       
-      {/* Content - COMPACT */}
+      {/* Content */}
       {insights.isExpanded && (
         <div className="px-1.5 pb-1.5 space-y-1.5">
-          {/* Settings Section - COMPACT */}
+          {/* Settings Section */}
           <div className="bg-gray-50 rounded p-1.5 space-y-1">
-            {/* Update Frequency - NO LABEL, ONE LINE */}
+            {/* Update Frequency */}
             <div className="flex items-center gap-x-2.5">
               <FrequencyRadio
                 value="onPause"
@@ -442,7 +378,7 @@ export function DocumentInsights() {
               </p>
             )}
             
-            {/* Metrics to Show - NO LABEL, 2x2 GRID */}
+            {/* Metrics to Show */}
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
               <MetricCheckbox
                 label="Readability"
@@ -475,10 +411,10 @@ export function DocumentInsights() {
             )}
           </div>
           
-          {/* Metrics Display - COMPACT */}
+          {/* Metrics Display */}
           {insights.isActive && (
-            <div className="space-y-1">
-              {/* Basic Metrics - COMBINED ON ONE LINE */}
+            <div className="space-y-1.5">
+              {/* Basic Metrics - Word/Char/Time counts */}
               <div className="text-[11px] text-gray-600 flex items-center gap-1.5 py-0.5">
                 <span className="font-medium text-gray-900">{documentMetrics?.wordCount.toLocaleString() ?? '0'}</span> words
                 <span className="text-gray-400">•</span>
@@ -487,86 +423,14 @@ export function DocumentInsights() {
                 <span className="font-medium text-gray-900">{documentMetrics?.readingTimeFormatted ?? '< 1 sec'}</span>
               </div>
               
-              {/* Readability Metrics - OPTIMIZED LAYOUT */}
-              {insights.enabledMetrics.readability && documentMetrics && (
-                <div className="border-t border-gray-100 pt-1">
-                  <div className="flex items-center gap-1.5 py-0.5">
-                    <BookOpen className="w-3 h-3 text-gray-400" />
-                    <span className="text-xs text-gray-600">Readability</span>
-                    <ScoreBadge score={documentMetrics.normalizedScore} />
-                    <span className="text-[10px] text-gray-500">
-                      ({documentMetrics.gradeLevelLabel})
-                    </span>
-                  </div>
-                </div>
-              )}
-              
-              {/* AI Metrics - COMPACT */}
-              {(insights.enabledMetrics.tone || 
-                (insights.enabledMetrics.brandVoice && hasBrandVoice) || 
-                (insights.enabledMetrics.persona && hasPersona)) && (
-                <div className="border-t border-gray-100 pt-1 space-y-0">
-                  {/* Tone Detection */}
-                  {insights.enabledMetrics.tone && (
-                    <MetricRow
-                      icon={Palette}
-                      label="Tone"
-                      value={insights.aiMetrics.tone?.label ?? '—'}
-                      subValue={insights.aiMetrics.tone 
-                        ? `${insights.aiMetrics.tone.confidence}%`
-                        : undefined}
-                      isLoading={insights.aiMetricsLoading}
-                    />
-                  )}
-                  
-                  {/* Brand Voice Alignment */}
-                  {insights.enabledMetrics.brandVoice && hasBrandVoice && (
-                    <MetricRow
-                      icon={Target}
-                      label="Brand"
-                      value={insights.aiMetrics.brandAlignment 
-                        ? insights.aiMetrics.brandAlignment.feedback.split('.')[0] || 'Analyzed'
-                        : '—'}
-                      badge={insights.aiMetrics.brandAlignment && (
-                        <ScoreBadge score={insights.aiMetrics.brandAlignment.score} />
-                      )}
-                      isLoading={insights.aiMetricsLoading}
-                    />
-                  )}
-                  
-                  {/* Persona Alignment */}
-                  {insights.enabledMetrics.persona && hasPersona && (
-                    <MetricRow
-                      icon={User}
-                      label="Persona"
-                      value={insights.aiMetrics.personaAlignment
-                        ? insights.aiMetrics.personaAlignment.feedback.split('.')[0] || 'Analyzed'
-                        : '—'}
-                      badge={insights.aiMetrics.personaAlignment && (
-                        <ScoreBadge score={insights.aiMetrics.personaAlignment.score} />
-                      )}
-                      isLoading={insights.aiMetricsLoading}
-                    />
-                  )}
-                </div>
-              )}
-              
-              {/* Error State - COMPACT */}
-              {insights.aiMetricsError && (
-                <div className="bg-red-50 border border-red-100 rounded p-1">
-                  <p className="text-[10px] text-red-600">{insights.aiMetricsError}</p>
-                </div>
-              )}
-              
-              {/* Refresh Button - COMPACT */}
-              {(insights.enabledMetrics.tone || 
-                insights.enabledMetrics.brandVoice || 
-                insights.enabledMetrics.persona) && (
+              {/* Action Buttons */}
+              <div className="flex gap-1.5">
+                {/* Refresh Button */}
                 <button
                   onClick={handleRefresh}
-                  disabled={insights.aiMetricsLoading}
+                  disabled={insights.aiMetricsLoading || !documentContent}
                   className={cn(
-                    'w-full flex items-center justify-center gap-1 px-2 py-0.5 rounded',
+                    'flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded',
                     'text-[10px] font-medium transition-colors',
                     'border border-gray-200 hover:border-gray-300',
                     'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
@@ -581,15 +445,32 @@ export function DocumentInsights() {
                   ) : (
                     <>
                       <RefreshCw className="w-2.5 h-2.5" />
-                      Refresh
+                      Analyze
                     </>
                   )}
                 </button>
-              )}
+                
+                {/* View Results Button */}
+                <button
+                  onClick={handleViewResults}
+                  disabled={!hasResults && !insights.aiMetricsLoading}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded',
+                    'text-[10px] font-medium transition-colors',
+                    hasResults
+                      ? 'bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200'
+                      : 'border border-gray-200 text-gray-400',
+                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                  )}
+                >
+                  <PanelRightOpen className="w-2.5 h-2.5" />
+                  View Results
+                </button>
+              </div>
               
-              {/* No Content State - COMPACT */}
+              {/* No Content State */}
               {!documentContent && (
-                <div className="text-center py-2">
+                <div className="text-center py-1">
                   <p className="text-[10px] text-gray-400">
                     Start writing to see insights
                   </p>
@@ -598,7 +479,7 @@ export function DocumentInsights() {
             </div>
           )}
           
-          {/* Inactive State - COMPACT */}
+          {/* Inactive State */}
           {!insights.isActive && (
             <div className="text-center py-2">
               <p className="text-[10px] text-gray-400">

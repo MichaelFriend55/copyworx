@@ -25,6 +25,8 @@ import { ShortenTool } from '@/components/workspace/ShortenTool';
 import { RewriteChannelTool } from '@/components/workspace/RewriteChannelTool';
 import { BrandVoiceTool } from '@/components/workspace/BrandVoiceTool';
 import { PersonasTool } from '@/components/workspace/PersonasTool';
+import { BrandAlignmentTool } from '@/components/workspace/BrandAlignmentTool';
+import { PersonaAlignmentTool } from '@/components/workspace/PersonaAlignmentTool';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getTemplateById } from '@/lib/data/templates';
 import type { Editor } from '@tiptap/react';
@@ -75,16 +77,12 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<{ editor: Editor | nul
   'personas': PersonasTool,
   'brand-voice': BrandVoiceTool,
   
-  // MY INSIGHTS (placeholders)
+  // MY INSIGHTS
   'competitor-analyzer': (props) => (
     <PlaceholderTool {...props} title="Competitor Analyzer" description="Analyze competitor copy" />
   ),
-  'persona-alignment': (props) => (
-    <PlaceholderTool {...props} title="Persona Alignment" description="Check persona fit" />
-  ),
-  'brand-alignment': (props) => (
-    <PlaceholderTool {...props} title="Brand Alignment" description="Check brand consistency" />
-  ),
+  'persona-alignment': PersonaAlignmentTool,
+  'brand-alignment': BrandAlignmentTool,
 };
 
 /**

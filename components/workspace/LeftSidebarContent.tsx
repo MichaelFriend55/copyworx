@@ -22,15 +22,34 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
-import { Sparkles, ChevronRight, ChevronDown, PanelLeftOpen, Folder as FolderIcon } from 'lucide-react';
+import { 
+  Sparkles, 
+  ChevronRight, 
+  ChevronDown, 
+  PanelLeftOpen, 
+  Folder as FolderIcon,
+  Zap,
+  UserCheck,
+  Target,
+} from 'lucide-react';
 import { DocumentInsights } from '@/components/workspace/DocumentInsights';
 import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
 import { TemplatesSlideOut, TEMPLATES_PANEL_ID } from '@/components/workspace/TemplatesSlideOut';
 import { BRAND_VOICE_PANEL_ID } from '@/components/workspace/BrandVoiceSlideOut';
 import { PERSONAS_PANEL_ID } from '@/components/workspace/PersonasSlideOut';
-import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
+import { InsightsSlideOut, INSIGHTS_PANEL_ID, type InsightsPanelType } from '@/components/workspace/InsightsSlideOut';
+import { 
+  useWorkspaceStore, 
+  useActiveProjectId, 
+  useProjects,
+  useActiveInsightsPanel,
+  useInsightsPanelActions,
+  useSelectedText,
+  useBrandAlignmentActions,
+  usePersonaAlignmentActions,
+} from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { cn } from '@/lib/utils';
@@ -53,15 +72,28 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const activeToolId = useWorkspaceStore((state) => state.activeToolId);
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
+  const selectedText = useSelectedText();
   
   // Slide-out state
   const isProjectsSlideOutOpen = useIsSlideOutOpen(MY_PROJECTS_PANEL_ID);
   const isTemplatesSlideOutOpen = useIsSlideOutOpen(TEMPLATES_PANEL_ID);
   const { openSlideOut, closeSlideOut } = useSlideOutActions();
   
+  // Insights panel state
+  const activeInsightsPanel = useActiveInsightsPanel();
+  const { openInsightsPanel, closeInsightsPanel } = useInsightsPanelActions();
+  const { runBrandAlignment } = useBrandAlignmentActions();
+  const { runPersonaAlignment } = usePersonaAlignmentActions();
+  
+  // Get active project for brand voice and personas
+  const activeProject = useMemo(
+    () => projects.find((p) => p.id === activeProjectId),
+    [projects, activeProjectId]
+  );
+  
   // Track which sections are expanded (Projects and Optimizer start expanded)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['projects', 'optimizer'])
+    new Set(['projects', 'optimizer', 'insights'])
   );
   
   // NOTE: Project initialization is now handled in the parent WorkspacePage
@@ -101,6 +133,39 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const handleSlideOutDocumentClick = useCallback((doc: ProjectDocument) => {
     onDocumentClick?.(doc);
   }, [onDocumentClick]);
+  
+  /**
+   * Handle Check Brand Alignment click
+   */
+  const handleCheckBrandAlignment = useCallback(() => {
+    // Open the slide-out panel
+    openInsightsPanel('brand-alignment');
+    
+    // If we have selected text and brand voice, run the analysis
+    if (selectedText && selectedText.trim() && activeProject?.brandVoice) {
+      runBrandAlignment(selectedText, activeProject.brandVoice);
+    }
+  }, [openInsightsPanel, selectedText, activeProject, runBrandAlignment]);
+  
+  /**
+   * Handle Check Persona Alignment click
+   */
+  const handleCheckPersonaAlignment = useCallback(() => {
+    // Open the slide-out panel
+    openInsightsPanel('persona-alignment');
+    
+    // If we have selected text and a persona, run the analysis with first persona
+    if (selectedText && selectedText.trim() && activeProject?.personas?.length) {
+      runPersonaAlignment(selectedText, activeProject.personas[0]);
+    }
+  }, [openInsightsPanel, selectedText, activeProject, runPersonaAlignment]);
+  
+  /**
+   * Close insights panel
+   */
+  const handleCloseInsightsPanel = useCallback(() => {
+    closeInsightsPanel();
+  }, [closeInsightsPanel]);
 
   /**
    * Clear all tool states before switching tools
@@ -167,7 +232,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   return (
     <div className="space-y-1">
       {/* CopyWorx Logo Header */}
-      <div className="bg-gray-200 -mx-2 -mt-6 mb-4 px-6 py-4 flex items-center justify-center">
+      <div className="bg-gray-200 -mx-2 -mt-6 mb-4 py-4 flex items-center justify-center">
         <Image
           src="/copyworx-studio-logo.png"
           alt="CopyWorx Studio"
@@ -192,6 +257,15 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       <TemplatesSlideOut
         isOpen={isTemplatesSlideOutOpen}
         onClose={closeTemplatesSlideOut}
+      />
+      
+      {/* Insights Slide-Out Panel */}
+      <InsightsSlideOut
+        isOpen={activeInsightsPanel !== null}
+        onClose={handleCloseInsightsPanel}
+        panelType={activeInsightsPanel}
+        onCheckBrandAlignment={handleCheckBrandAlignment}
+        onCheckPersonaAlignment={handleCheckPersonaAlignment}
       />
       
       {/* MY PROJECTS SECTION */}
@@ -397,6 +471,88 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           </div>
         );
       })}
+
+      {/* Divider */}
+      <div className="border-t border-gray-200 my-2" />
+
+      {/* MY INSIGHTS SECTION - Dedicated buttons for alignment checks */}
+      <div className="space-y-1">
+        {/* Section Header */}
+        <button
+          onClick={() => toggleSection('insights')}
+          className={cn(
+            'w-full flex items-center justify-between p-2 rounded-lg',
+            'hover:bg-apple-gray-bg transition-colors duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+          )}
+          aria-expanded={expandedSections.has('insights')}
+        >
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-apple-text-dark" />
+            <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
+              My Insights
+            </span>
+          </div>
+          {expandedSections.has('insights') ? (
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          )}
+        </button>
+
+        {/* Insights Buttons */}
+        {expandedSections.has('insights') && (
+          <div className="ml-6 space-y-1">
+            {/* Check Brand Alignment Button */}
+            <button
+              onClick={handleCheckBrandAlignment}
+              className={cn(
+                'w-full text-left p-2 rounded-lg',
+                'transition-all duration-200',
+                'flex items-center gap-2',
+                'group',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                activeInsightsPanel === 'brand-alignment'
+                  ? 'bg-apple-blue text-white shadow-sm'
+                  : 'hover:bg-apple-gray-bg text-apple-text-dark'
+              )}
+              title="Check how well your copy aligns with your brand voice"
+            >
+              <Zap
+                className={cn(
+                  'w-4 h-4 flex-shrink-0',
+                  activeInsightsPanel === 'brand-alignment' ? 'text-white' : 'text-apple-blue'
+                )}
+              />
+              <span className="text-sm font-medium flex-1">Check Brand Alignment</span>
+            </button>
+            
+            {/* Check Persona Alignment Button */}
+            <button
+              onClick={handleCheckPersonaAlignment}
+              className={cn(
+                'w-full text-left p-2 rounded-lg',
+                'transition-all duration-200',
+                'flex items-center gap-2',
+                'group',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                activeInsightsPanel === 'persona-alignment'
+                  ? 'bg-apple-blue text-white shadow-sm'
+                  : 'hover:bg-apple-gray-bg text-apple-text-dark'
+              )}
+              title="Check how well your copy resonates with your target persona"
+            >
+              <UserCheck
+                className={cn(
+                  'w-4 h-4 flex-shrink-0',
+                  activeInsightsPanel === 'persona-alignment' ? 'text-white' : 'text-apple-blue'
+                )}
+              />
+              <span className="text-sm font-medium flex-1">Check Persona Alignment</span>
+            </button>
+          </div>
+        )}
+      </div>
 
         {/* AI@Worx™ Live - Document Insights Panel */}
         <DocumentInsights />

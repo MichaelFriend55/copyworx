@@ -25,6 +25,23 @@ import type { ToolCategory, AIAnalysisMode, ViewMode } from '@/lib/types';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
 import type { BrandVoice, BrandAlignmentResult } from '@/lib/types/brand';
+import type { Persona } from '@/lib/types/project';
+
+/**
+ * Insights panel types for the right slide-out
+ */
+export type InsightsPanelType = 'brand-alignment' | 'persona-alignment' | 'aiworx-live' | null;
+
+/**
+ * Persona alignment result from AI analysis
+ */
+export interface PersonaAlignmentResult {
+  score: number;
+  assessment: string;
+  strengths: string[];
+  improvements: string[];
+  recommendations: string[];
+}
 import {
   getAllProjects,
   getActiveProjectId,
@@ -163,12 +180,20 @@ interface WorkspaceState {
   brandAlignmentLoading: boolean;
   brandAlignmentError: string | null;
   
+  // Persona Alignment Tool state
+  personaAlignmentResult: PersonaAlignmentResult | null;
+  personaAlignmentLoading: boolean;
+  personaAlignmentError: string | null;
+  
   // Template Generator state
   selectedTemplateId: string | null;
   isGeneratingTemplate: boolean;
   
   // Document Insights state
   documentInsights: DocumentInsightsState;
+  
+  // Active insights panel for right slide-out
+  activeInsightsPanel: InsightsPanelType;
   
   // Project actions
   setProjects: (projects: Project[]) => void;
@@ -220,6 +245,10 @@ interface WorkspaceState {
   runBrandAlignment: (text: string, brandVoice: BrandVoice) => Promise<void>;
   clearBrandAlignmentResult: () => void;
   
+  // Persona Alignment Tool actions
+  runPersonaAlignment: (text: string, persona: Persona) => Promise<void>;
+  clearPersonaAlignmentResult: () => void;
+  
   // Template Generator actions
   setSelectedTemplateId: (id: string | null) => void;
   setIsGeneratingTemplate: (isGenerating: boolean) => void;
@@ -232,6 +261,11 @@ interface WorkspaceState {
   runAIAnalysis: (content: string, brandVoice?: BrandVoice | null, persona?: { name: string; demographics: string; psychographics: string; painPoints: string; goals: string } | null) => Promise<void>;
   clearAIMetrics: () => void;
   setAIMetrics: (metrics: Partial<AIMetrics>) => void;
+  
+  // Insights panel actions
+  setActiveInsightsPanel: (panel: InsightsPanelType) => void;
+  openInsightsPanel: (panel: InsightsPanelType) => void;
+  closeInsightsPanel: () => void;
 }
 
 /**
@@ -285,6 +319,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       brandAlignmentLoading: false,
       brandAlignmentError: null,
       
+      // Persona Alignment Tool initial state
+      personaAlignmentResult: null,
+      personaAlignmentLoading: false,
+      personaAlignmentError: null,
+      
       // Template Generator initial state
       selectedTemplateId: null,
       isGeneratingTemplate: false,
@@ -310,6 +349,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         lastAnalyzedAt: null,
         lastAnalyzedContent: null,
       },
+      
+      // Active insights panel - null means closed
+      activeInsightsPanel: null,
 
       // Project actions
       setProjects: (projects: Project[]) => {
@@ -324,6 +366,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({
           brandAlignmentResult: null,
           brandAlignmentError: null,
+          personaAlignmentResult: null,
+          personaAlignmentError: null,
           toneShiftResult: null,
           toneShiftError: null,
           expandResult: null,
@@ -839,6 +883,65 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       clearBrandAlignmentResult: () => {
         set({ brandAlignmentResult: null, brandAlignmentError: null });
       },
+
+      // Persona Alignment Tool actions
+      runPersonaAlignment: async (text: string, persona: Persona): Promise<void> => {
+        // Validate inputs
+        try {
+          validateNotEmpty(text, 'Text');
+          validateTextLength(text, 'Text');
+          validateNotEmpty(persona.name, 'Persona name');
+        } catch (error) {
+          set({ 
+            personaAlignmentError: formatErrorForUser(error, 'Validation'),
+            personaAlignmentLoading: false 
+          });
+          return;
+        }
+
+        // Set loading state
+        set({ 
+          personaAlignmentLoading: true, 
+          personaAlignmentError: null,
+          personaAlignmentResult: null 
+        });
+
+        try {
+          const response = await retryWithBackoff(
+            () => fetchWithTimeout('/api/persona-alignment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text, persona }),
+            }),
+            2, // maxRetries
+            1000 // baseDelay
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.details || errorData.error || 'Failed to check persona alignment');
+          }
+
+          const data = await response.json();
+          
+          set({ 
+            personaAlignmentResult: data.result,
+            personaAlignmentLoading: false,
+            personaAlignmentError: null 
+          });
+        } catch (error) {
+          set({ 
+            personaAlignmentError: formatErrorForUser(error, 'Persona alignment'),
+            personaAlignmentLoading: false,
+            personaAlignmentResult: null 
+          });
+          logError(error, 'Persona alignment');
+        }
+      },
+
+      clearPersonaAlignmentResult: () => {
+        set({ personaAlignmentResult: null, personaAlignmentError: null });
+      },
       
       // Template Generator actions
       setSelectedTemplateId: (id: string | null) => {
@@ -986,6 +1089,19 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }
         }));
       },
+      
+      // Insights panel actions
+      setActiveInsightsPanel: (panel: InsightsPanelType) => {
+        set({ activeInsightsPanel: panel });
+      },
+      
+      openInsightsPanel: (panel: InsightsPanelType) => {
+        set({ activeInsightsPanel: panel });
+      },
+      
+      closeInsightsPanel: () => {
+        set({ activeInsightsPanel: null });
+      },
     }),
     {
       name: 'copyworx-workspace',
@@ -1084,6 +1200,13 @@ export const useBrandAlignmentLoading = () => useWorkspaceStore((state) => state
 export const useBrandAlignmentError = () => useWorkspaceStore((state) => state.brandAlignmentError);
 
 /**
+ * Persona Alignment Tool selector hooks
+ */
+export const usePersonaAlignmentResult = () => useWorkspaceStore((state) => state.personaAlignmentResult);
+export const usePersonaAlignmentLoading = () => useWorkspaceStore((state) => state.personaAlignmentLoading);
+export const usePersonaAlignmentError = () => useWorkspaceStore((state) => state.personaAlignmentError);
+
+/**
  * Editor selection selector hooks
  */
 export const useSelectedText = () => useWorkspaceStore((state) => state.selectedText);
@@ -1144,6 +1267,13 @@ export const useBrandAlignmentActions = () => useWorkspaceStore(
   useShallow((state) => ({
     runBrandAlignment: state.runBrandAlignment,
     clearBrandAlignmentResult: state.clearBrandAlignmentResult,
+  }))
+);
+
+export const usePersonaAlignmentActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    runPersonaAlignment: state.runPersonaAlignment,
+    clearPersonaAlignmentResult: state.clearPersonaAlignmentResult,
   }))
 );
 
@@ -1210,6 +1340,18 @@ export const useDocumentInsightsActions = () => useWorkspaceStore(
     runAIAnalysis: state.runAIAnalysis,
     clearAIMetrics: state.clearAIMetrics,
     setAIMetrics: state.setAIMetrics,
+  }))
+);
+
+/**
+ * Insights panel selector hooks
+ */
+export const useActiveInsightsPanel = () => useWorkspaceStore((state) => state.activeInsightsPanel);
+export const useInsightsPanelActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    setActiveInsightsPanel: state.setActiveInsightsPanel,
+    openInsightsPanel: state.openInsightsPanel,
+    closeInsightsPanel: state.closeInsightsPanel,
   }))
 );
 

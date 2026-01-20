@@ -22,7 +22,6 @@ import React, { useState } from 'react';
 import { 
   Repeat,
   Linkedin,
-  Twitter,
   Instagram,
   Facebook,
   Mail,
@@ -45,6 +44,22 @@ import { formatGeneratedContent } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
+
+/**
+ * X (Twitter) social media logo icon component
+ */
+function XLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 interface RewriteChannelToolProps {
   /** TipTap editor instance */
@@ -78,8 +93,8 @@ const CHANNEL_OPTIONS: {
   },
   {
     value: 'twitter',
-    label: 'Twitter',
-    icon: Twitter,
+    label: 'X',
+    icon: XLogo,
     description: 'Punchy & conversational',
     color: 'sky',
   },
@@ -244,7 +259,7 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
                 onClick={() => handleChannelSelect(channel.value)}
                 disabled={rewriteChannelLoading}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2.5 rounded-lg',
+                  'flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg',
                   'border transition-all duration-200',
                   'hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
                   'disabled:opacity-50 disabled:cursor-not-allowed',
@@ -255,7 +270,9 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
                 title={channel.description}
               >
                 <Icon className={cn('w-4 h-4', isSelected ? 'text-white' : 'text-apple-blue')} />
-                <span className="text-sm font-medium">{channel.label}</span>
+                {channel.value !== 'twitter' && (
+                  <span className="text-sm font-medium">{channel.label}</span>
+                )}
               </button>
             );
           })}

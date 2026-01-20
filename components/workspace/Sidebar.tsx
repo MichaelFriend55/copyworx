@@ -58,7 +58,7 @@ export function Sidebar({
   className,
   width,
 }: SidebarProps) {
-  const defaultWidth = side === 'left' ? 280 : 320;
+  const defaultWidth = side === 'left' ? 300 : 320;
   const sidebarWidth = width || defaultWidth;
 
   return (
@@ -76,7 +76,7 @@ export function Sidebar({
           'shadow-sm hover:shadow',
           'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
           side === 'left' 
-            ? (isOpen ? 'left-[277px]' : 'left-0')
+            ? (isOpen ? 'left-[297px]' : 'left-0')
             : (isOpen ? 'right-[317px]' : 'right-0')
         )}
         aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${side} sidebar`}

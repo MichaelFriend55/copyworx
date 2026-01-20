@@ -165,7 +165,7 @@ export const SECTIONS: SectionConfig[] = [
   },
   {
     id: 'brand',
-    name: 'My Brand & Audience',
+    name: 'Brand & Audience',
     icon: Users,
     description: 'Brand voice and target personas',
     defaultExpanded: false,
