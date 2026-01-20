@@ -162,9 +162,10 @@ export function DocumentInsights() {
   const brandVoice = activeProject?.brandVoice;
   const activePersona = activeProject?.personas?.[0]; // Use first persona for now
   
-  // Refs for debouncing
+  // Refs for debouncing and mount tracking
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastContentRef = useRef<string>('');
+  const isInitialMountRef = useRef<boolean>(true);
   
   // Calculate basic metrics from document content
   const documentMetrics = useMemo((): DocumentMetrics | null => {
@@ -173,9 +174,10 @@ export function DocumentInsights() {
   }, [documentContent]);
   
   /**
-   * Trigger AI analysis and open slide-out
+   * Trigger AI analysis with optional panel auto-open
+   * @param shouldOpenPanel - Whether to automatically open the panel after analysis
    */
-  const triggerAIAnalysis = useCallback(() => {
+  const triggerAIAnalysis = useCallback((shouldOpenPanel: boolean = true) => {
     if (!insights.isActive) return;
     if (!documentContent) return;
     
@@ -196,8 +198,10 @@ export function DocumentInsights() {
       } : null
     );
     
-    // Open the slide-out panel to show results
-    openInsightsPanel('aiworx-live');
+    // Only open the slide-out panel if explicitly requested
+    if (shouldOpenPanel) {
+      openInsightsPanel('aiworx-live');
+    }
   }, [
     insights.isActive,
     insights.enabledMetrics,
@@ -244,7 +248,13 @@ export function DocumentInsights() {
     
     // Schedule AI analysis
     debounceTimerRef.current = setTimeout(() => {
-      triggerAIAnalysis();
+      // On initial mount, run analysis but don't auto-open panel
+      // On subsequent content changes, run analysis and auto-open panel
+      const shouldOpenPanel = !isInitialMountRef.current;
+      triggerAIAnalysis(shouldOpenPanel);
+      
+      // Mark that we've completed the initial mount
+      isInitialMountRef.current = false;
     }, delay);
     
     return () => {
@@ -260,11 +270,11 @@ export function DocumentInsights() {
   ]);
   
   /**
-   * Handle manual refresh
+   * Handle manual refresh - explicitly opens panel
    */
   const handleRefresh = useCallback(() => {
     clearAIMetrics();
-    triggerAIAnalysis();
+    triggerAIAnalysis(true); // Explicitly open panel for manual refresh
   }, [clearAIMetrics, triggerAIAnalysis]);
   
   /**
@@ -310,15 +320,19 @@ export function DocumentInsights() {
       <button
         onClick={toggleExpanded}
         className={cn(
-          'w-full flex items-center justify-between p-2 rounded-lg',
-          'hover:bg-gray-50 transition-colors duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1'
+          'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
+          'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
+          'relative pl-5 border-l-[3px] border-transparent',
+          'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+          'before:w-[3px] before:rounded-l-lg',
+          'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
         )}
         aria-expanded={insights.isExpanded}
       >
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <span className="font-semibold text-sm text-gray-900 tracking-wide">
+          <span className="font-semibold text-sm text-gray-900 tracking-wide uppercase">
             AI@Worx™ Live
           </span>
           <button

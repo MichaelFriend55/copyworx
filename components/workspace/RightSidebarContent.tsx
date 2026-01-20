@@ -29,6 +29,7 @@ import { BrandAlignmentTool } from '@/components/workspace/BrandAlignmentTool';
 import { PersonaAlignmentTool } from '@/components/workspace/PersonaAlignmentTool';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getTemplateById } from '@/lib/data/templates';
+import { cn } from '@/lib/utils';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
 
@@ -142,9 +143,16 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
   return (
     <div className="space-y-6">
       {/* Header - Always Shows "AI@Worx™ ToolBox" */}
-      <div className="flex items-center gap-2">
+      <div className={cn(
+        'flex items-center gap-2 px-3 py-2.5 rounded-lg',
+        'bg-gray-50',
+        'relative pl-5 border-l-[3px] border-transparent',
+        'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+        'before:w-[3px] before:rounded-l-lg',
+        'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
+      )}>
         <Sparkles className="w-5 h-5 text-apple-blue" />
-        <h2 className="text-lg font-semibold text-apple-text-dark">
+        <h2 className="text-sm font-semibold text-apple-text-dark uppercase tracking-wide">
           AI@Worx™ ToolBox
         </h2>
       </div>

@@ -278,9 +278,13 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
               openProjectsSlideOut();
             }}
             className={cn(
-              'flex-1 flex items-center justify-between p-2 rounded-lg',
-              'hover:bg-apple-gray-bg transition-colors duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+              'flex-1 flex items-center justify-between px-3 py-2.5 rounded-lg',
+              'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              'relative pl-5 border-l-[3px] border-transparent',
+              'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+              'before:w-[3px] before:rounded-l-lg',
+              'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
             )}
             aria-label="Open My Projects navigator"
           >
@@ -364,8 +368,12 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           onClick={openTemplatesSlideOut}
           className={cn(
             'w-full flex items-center justify-between px-3 py-3 rounded-lg',
-            'hover:bg-apple-gray-bg transition-all duration-200',
+            'bg-gray-50 hover:bg-gray-100 transition-all duration-200',
             'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+            'relative pl-5 border-l-[3px] border-transparent',
+            'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+            'before:w-[3px] before:rounded-l-lg',
+            'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]',
             'group'
           )}
         >
@@ -399,9 +407,13 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
             <button
               onClick={() => toggleSection(section.id)}
               className={cn(
-                'w-full flex items-center justify-between p-2 rounded-lg',
-                'hover:bg-apple-gray-bg transition-colors duration-200',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+                'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
+                'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                'relative pl-5 border-l-[3px] border-transparent',
+                'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+                'before:w-[3px] before:rounded-l-lg',
+                'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
               )}
               aria-expanded={isExpanded}
             >
@@ -481,9 +493,13 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
         <button
           onClick={() => toggleSection('insights')}
           className={cn(
-            'w-full flex items-center justify-between p-2 rounded-lg',
-            'hover:bg-apple-gray-bg transition-colors duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+            'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
+            'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+            'relative pl-5 border-l-[3px] border-transparent',
+            'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+            'before:w-[3px] before:rounded-l-lg',
+            'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
           )}
           aria-expanded={expandedSections.has('insights')}
         >
