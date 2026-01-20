@@ -44,8 +44,9 @@ interface ErrorResponse {
 
 /**
  * System prompt that establishes Claude's role and expertise
+ * AGGRESSIVE SHORTENING: Targets 40-50% length reduction
  */
-const SYSTEM_PROMPT = `You are an expert copywriter with 40 years of experience. Your job is to shorten copy while preserving its core message and impact.
+const SYSTEM_PROMPT = `You are an expert copywriter with 40 years of experience. Your job is to AGGRESSIVELY shorten copy by cutting it to approximately 40-50% of its original length while preserving only the essential core message.
 
 CRITICAL OUTPUT FORMAT:
 You must output valid HTML that preserves the original structure while shortening the content.
@@ -63,34 +64,55 @@ HTML RULES:
 - If input has headings, output must have headings
 - Output ONLY HTML, no markdown, no preamble
 - Do NOT add blank lines between tags
-- Remove unnecessary words while preserving core message and impact
 
-When shortening:
-- Remove unnecessary words and redundancies
-- Tighten sentences and eliminate fluff
-- Make every word count
-- Maintain the original tone and key points
-- Keep the fundamental message intact
-- Preserve the most important benefits and claims
-- Ensure the shortened version is still clear and compelling
-- Do NOT change the core message or omit critical information
-- Do NOT add new information
+AGGRESSIVE SHORTENING STRATEGY:
+- TARGET: Reduce to approximately HALF the original length (40-50% reduction)
+- Cut ruthlessly - every word must earn its place
+- Remove ALL redundant phrases and filler words
+- Eliminate descriptive fluff and unnecessary modifiers
+- Strip out repetitive explanations
+- Keep ONLY the essential information and core value proposition
+- Use the most concise possible wording
+- Combine related ideas into single, tight sentences
+- Remove examples unless absolutely critical
+- Cut transitional phrases and connecting words where possible
+- Be ruthless: if it doesn't add critical value, cut it
+
+What to KEEP:
+- The single most important benefit or message
+- Critical facts, numbers, or claims that drive the message
+- Essential calls-to-action
+- Core brand differentiators
+
+What to CUT:
+- Adjective stacking (e.g., "amazing, incredible, fantastic" → pick ONE)
+- Redundant phrases (e.g., "completely and totally" → "completely")
+- Unnecessary explanations
+- Backstory and context unless critical
+- Polite filler (e.g., "We are pleased to announce" → "Announcing")
+- Examples and illustrations unless they ARE the message
+
+Do NOT change the core message or add new information.
 
 Return ONLY the shortened HTML, no explanations or preambles.`;
 
 /**
  * Generates a user prompt with the text to shorten
+ * AGGRESSIVE VERSION: Emphasizes 40-50% length reduction
  */
 function buildUserPrompt(text: string): string {
-  return `Shorten the following copy while preserving its core message and impact. Remove unnecessary words, tighten sentences, and make every word count. Maintain the original tone and key points.
+  return `AGGRESSIVELY shorten the following copy to approximately 40-50% of its original length. Cut ruthlessly while preserving only the essential core message. Remove ALL redundant phrases, eliminate unnecessary words, and keep ONLY critical information.
 
-CRITICAL: Output must be valid HTML with preserved structure. If the input has headings, keep them as headings. If it has bullets, keep them as bullets (just more concise). Do not add a preamble or explanation - just return the shortened HTML.
+CRITICAL: Output must be valid HTML with preserved structure. If the input has headings, keep them as headings. If it has bullets, keep them as bullets (just drastically shorter). Do not add a preamble or explanation - just return the aggressively shortened HTML.
 
-Example - shortening while preserving structure:
-INPUT:
-<p>Our coffee delivers a bold, robust flavor profile that awakens your senses with every sip. The carefully selected beans provide a powerful energizing kick.</p>
-OUTPUT:
-<p>Our <strong>bold coffee</strong> awakens your senses and delivers a powerful energizing kick.</p>
+Example - aggressive shortening (notice the 50%+ reduction):
+INPUT (33 words):
+<p>Our coffee delivers a bold, robust flavor profile that awakens your senses with every sip. The carefully selected beans provide a powerful energizing kick that will keep you going all day long.</p>
+
+OUTPUT (11 words - 67% reduction):
+<p><strong>Bold coffee</strong> that energizes and keeps you going.</p>
+
+TARGET: Aim for approximately HALF the original word count. Be ruthless - every word must justify its existence.
 
 ORIGINAL COPY:
 ${text}
