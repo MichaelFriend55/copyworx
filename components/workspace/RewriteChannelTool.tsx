@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { 
   useSelectedText,
+  useSelectedHTML,
   useSelectionRange,
   useRewriteChannelResult,
   useRewriteChannelLoading,
@@ -111,6 +112,7 @@ const CHANNEL_OPTIONS: {
 export function RewriteChannelTool({ editor, className }: RewriteChannelToolProps) {
   // Optimized selectors - only re-render when these specific values change
   const selectedText = useSelectedText();
+  const selectedHTML = useSelectedHTML();
   const selectionRange = useSelectionRange();
   const rewriteChannelResult = useRewriteChannelResult();
   const rewriteChannelLoading = useRewriteChannelLoading();
@@ -137,11 +139,23 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
 
   /**
    * Handle rewrite action
+   * Uses HTML content to preserve formatting (bullets, headings, etc.)
    */
   const handleRewrite = async () => {
-    if (!selectedChannel || !selectedText) return;
+    if (!selectedChannel) return;
     
-    await runRewriteChannel(selectedText, selectedChannel);
+    // Prefer HTML for formatting preservation, fallback to plain text
+    const contentToRewrite = selectedHTML || selectedText;
+    if (!contentToRewrite) return;
+    
+    console.log('📝 Rewriting for channel with formatting:', {
+      hasHTML: !!selectedHTML,
+      textLength: selectedText?.length || 0,
+      htmlLength: selectedHTML?.length || 0,
+      channel: selectedChannel,
+    });
+    
+    await runRewriteChannel(contentToRewrite, selectedChannel);
   };
 
   /**

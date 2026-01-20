@@ -9,6 +9,7 @@
  */
 
 import type { Editor } from '@tiptap/react';
+import { DOMSerializer } from '@tiptap/pm/model';
 
 /**
  * Selection data returned by getEditorSelection
@@ -25,6 +26,10 @@ export interface EditorSelection {
 /**
  * Gets the current text selection from the editor
  * 
+ * IMPORTANT: This function correctly extracts HTML from the selection by:
+ * 1. Getting the document slice for the selection
+ * 2. Using ProseMirror's DOMSerializer to convert to HTML
+ * 
  * @param editor - TipTap editor instance
  * @returns Selection data or null if no selection or editor unavailable
  * 
@@ -33,6 +38,7 @@ export interface EditorSelection {
  * const selection = getEditorSelection(editor);
  * if (selection) {
  *   console.log('Selected:', selection.text);
+ *   console.log('Selected HTML:', selection.html);
  *   console.log('Range:', selection.range);
  * }
  * ```
@@ -55,12 +61,35 @@ export function getEditorSelection(editor: Editor | null): EditorSelection | nul
     // Get the selected text (plain text)
     const text = editor.state.doc.textBetween(from, to, ' ');
     
-    // Get the selected HTML content
-    const html = editor.getHTML().substring(from, to);
-    
     if (!text || text.trim().length === 0) {
       console.log('⚠️ Selection is empty');
       return null;
+    }
+
+    // Get the selected HTML content properly using ProseMirror's DOMSerializer
+    let html = '';
+    try {
+      // Get the slice of the document that's selected
+      const slice = editor.state.doc.slice(from, to);
+      
+      // Use ProseMirror's DOMSerializer to convert to HTML
+      const serializer = DOMSerializer.fromSchema(editor.schema);
+      const fragment = serializer.serializeFragment(slice.content);
+      
+      // Convert the DOM fragment to HTML string
+      const div = document.createElement('div');
+      div.appendChild(fragment);
+      html = div.innerHTML;
+      
+      console.log('📋 Selection HTML extracted:', {
+        textLength: text.length,
+        htmlLength: html.length,
+        hasFormatting: html.includes('<ul>') || html.includes('<ol>') || html.includes('<h') || html.includes('<strong>'),
+      });
+    } catch (htmlError) {
+      // Fallback: wrap plain text in paragraph tags
+      console.warn('⚠️ Could not extract HTML, falling back to plain text:', htmlError);
+      html = `<p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
     }
 
     return {

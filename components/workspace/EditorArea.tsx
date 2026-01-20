@@ -343,9 +343,10 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         const selection = getEditorSelection(editor);
         
         if (selection) {
-          setSelectedTextRef.current(selection.text, selection.range);
+          // Pass text, HTML, and range to the store
+          setSelectedTextRef.current(selection.text, selection.html, selection.range);
         } else {
-          setSelectedTextRef.current(null, null);
+          setSelectedTextRef.current(null, null, null);
         }
       }, 150);
     };

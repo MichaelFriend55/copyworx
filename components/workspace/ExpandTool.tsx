@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { 
   useSelectedText,
+  useSelectedHTML,
   useSelectionRange,
   useExpandResult,
   useExpandLoading,
@@ -54,6 +55,7 @@ interface ExpandToolProps {
 export function ExpandTool({ editor, className }: ExpandToolProps) {
   // Optimized selectors - only re-render when these specific values change
   const selectedText = useSelectedText();
+  const selectedHTML = useSelectedHTML();
   const selectionRange = useSelectionRange();
   const expandResult = useExpandResult();
   const expandLoading = useExpandLoading();
@@ -66,11 +68,20 @@ export function ExpandTool({ editor, className }: ExpandToolProps) {
 
   /**
    * Handle expand action
+   * Uses HTML content to preserve formatting (bullets, headings, etc.)
    */
   const handleExpand = async () => {
-    if (!selectedText) return;
+    // Prefer HTML for formatting preservation, fallback to plain text
+    const contentToExpand = selectedHTML || selectedText;
+    if (!contentToExpand) return;
     
-    await runExpand(selectedText);
+    console.log('📝 Expanding with formatting:', {
+      hasHTML: !!selectedHTML,
+      textLength: selectedText?.length || 0,
+      htmlLength: selectedHTML?.length || 0,
+    });
+    
+    await runExpand(contentToExpand);
   };
 
   /**

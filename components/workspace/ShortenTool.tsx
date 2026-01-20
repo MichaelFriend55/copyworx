@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { 
   useSelectedText,
+  useSelectedHTML,
   useSelectionRange,
   useShortenResult,
   useShortenLoading,
@@ -54,6 +55,7 @@ interface ShortenToolProps {
 export function ShortenTool({ editor, className }: ShortenToolProps) {
   // Optimized selectors - only re-render when these specific values change
   const selectedText = useSelectedText();
+  const selectedHTML = useSelectedHTML();
   const selectionRange = useSelectionRange();
   const shortenResult = useShortenResult();
   const shortenLoading = useShortenLoading();
@@ -66,11 +68,20 @@ export function ShortenTool({ editor, className }: ShortenToolProps) {
 
   /**
    * Handle shorten action
+   * Uses HTML content to preserve formatting (bullets, headings, etc.)
    */
   const handleShorten = async () => {
-    if (!selectedText) return;
+    // Prefer HTML for formatting preservation, fallback to plain text
+    const contentToShorten = selectedHTML || selectedText;
+    if (!contentToShorten) return;
     
-    await runShorten(selectedText);
+    console.log('📝 Shortening with formatting:', {
+      hasHTML: !!selectedHTML,
+      textLength: selectedText?.length || 0,
+      htmlLength: selectedHTML?.length || 0,
+    });
+    
+    await runShorten(contentToShorten);
   };
 
   /**

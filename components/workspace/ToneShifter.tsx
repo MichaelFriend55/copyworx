@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { 
   useSelectedText,
+  useSelectedHTML,
   useSelectionRange,
   useSelectedTone,
   useToneShiftResult,
@@ -115,6 +116,7 @@ const TONE_OPTIONS: {
 export function ToneShifter({ editor, className }: ToneShifterProps) {
   // Optimized selectors - only re-render when these specific values change
   const selectedText = useSelectedText();
+  const selectedHTML = useSelectedHTML();
   const selectionRange = useSelectionRange();
   const selectedTone = useSelectedTone();
   const toneShiftResult = useToneShiftResult();
@@ -135,11 +137,23 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
 
   /**
    * Handle tone shift action
+   * Uses HTML content to preserve formatting (bullets, headings, etc.)
    */
   const handleShiftTone = async (): Promise<void> => {
-    if (!selectedTone || !selectedText) return;
+    if (!selectedTone) return;
     
-    await runToneShift(selectedText, selectedTone);
+    // Prefer HTML for formatting preservation, fallback to plain text
+    const contentToShift = selectedHTML || selectedText;
+    if (!contentToShift) return;
+    
+    console.log('📝 Tone shifting with formatting:', {
+      hasHTML: !!selectedHTML,
+      textLength: selectedText?.length || 0,
+      htmlLength: selectedHTML?.length || 0,
+      tone: selectedTone,
+    });
+    
+    await runToneShift(contentToShift, selectedTone);
   };
 
   /**

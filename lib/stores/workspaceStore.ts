@@ -134,6 +134,7 @@ interface WorkspaceState {
   
   // Editor selection state
   selectedText: string | null;
+  selectedHTML: string | null;
   selectionRange: { from: number; to: number } | null;
   
   // Tone Shifter state
@@ -191,7 +192,7 @@ interface WorkspaceState {
   setViewMode: (mode: ViewMode) => void;
   
   // Editor selection actions
-  setSelectedText: (text: string | null, range: { from: number; to: number } | null) => void;
+  setSelectedText: (text: string | null, html: string | null, range: { from: number; to: number } | null) => void;
   clearSelection: () => void;
   
   // Tone Shifter actions
@@ -255,6 +256,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       
       // Editor selection initial state
       selectedText: null,
+      selectedHTML: null,
       selectionRange: null,
       
       // Tone Shifter initial state
@@ -428,16 +430,18 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       // Editor selection actions
-      setSelectedText: (text: string | null, range: { from: number; to: number } | null) => {
+      setSelectedText: (text: string | null, html: string | null, range: { from: number; to: number } | null) => {
         set({ 
-          selectedText: text, 
+          selectedText: text,
+          selectedHTML: html,
           selectionRange: range 
         });
       },
 
       clearSelection: () => {
         set({ 
-          selectedText: null, 
+          selectedText: null,
+          selectedHTML: null,
           selectionRange: null 
         });
       },
@@ -1083,6 +1087,7 @@ export const useBrandAlignmentError = () => useWorkspaceStore((state) => state.b
  * Editor selection selector hooks
  */
 export const useSelectedText = () => useWorkspaceStore((state) => state.selectedText);
+export const useSelectedHTML = () => useWorkspaceStore((state) => state.selectedHTML);
 export const useSelectionRange = () => useWorkspaceStore((state) => state.selectionRange);
 
 /**
