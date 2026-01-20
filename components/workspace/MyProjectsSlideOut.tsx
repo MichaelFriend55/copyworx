@@ -413,6 +413,7 @@ interface ProjectSectionProps {
   onAddSnippet?: (projectId: string) => void;
   onEditSnippet?: (snippet: Snippet) => void;
   onDeleteProject?: (project: Project) => void;
+  onRenameProject?: (projectId: string, newName: string) => void;
   canDelete: boolean;
 }
 
@@ -430,6 +431,7 @@ function ProjectSection({
   onAddSnippet,
   onEditSnippet,
   onDeleteProject,
+  onRenameProject,
   canDelete,
 }: ProjectSectionProps) {
   // Local state
@@ -439,6 +441,10 @@ function ProjectSection({
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  
+  // Project rename state
+  const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+  const [projectNameEditValue, setProjectNameEditValue] = useState('');
 
   // Load data when project changes or expands
   useEffect(() => {
@@ -571,6 +577,45 @@ function ProjectSection({
     }
   };
 
+  // Project rename operations
+  const handleStartProjectRename = () => {
+    setIsEditingProjectName(true);
+    setProjectNameEditValue(project.name);
+  };
+
+  const handleSaveProjectRename = () => {
+    const trimmedName = projectNameEditValue.trim();
+    
+    if (!trimmedName) {
+      // Don't allow empty names
+      setIsEditingProjectName(false);
+      setProjectNameEditValue('');
+      return;
+    }
+    
+    if (trimmedName !== project.name) {
+      onRenameProject?.(project.id, trimmedName);
+    }
+    
+    setIsEditingProjectName(false);
+    setProjectNameEditValue('');
+  };
+
+  const handleCancelProjectRename = () => {
+    setIsEditingProjectName(false);
+    setProjectNameEditValue('');
+  };
+
+  const handleProjectRenameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveProjectRename();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelProjectRename();
+    }
+  };
+
   // Render folder recursively
   const renderFolder = (folder: Folder, level: number = 0) => {
     const isExpanded = expandedFolders.has(folder.id);
@@ -633,13 +678,15 @@ function ProjectSection({
       {/* Project header */}
       <div
         className={cn(
-          'group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer',
+          'group flex items-center gap-2 px-3 py-2.5 rounded-lg',
           'transition-colors duration-150',
           isActive
             ? 'bg-blue-100 border border-blue-300'
-            : 'hover:bg-gray-100 border border-transparent'
+            : 'hover:bg-gray-100 border border-transparent',
+          !isEditingProjectName && 'cursor-pointer'
         )}
         onClick={() => {
+          if (isEditingProjectName) return;
           if (!isActive) {
             onSelect();
           }
@@ -647,50 +694,105 @@ function ProjectSection({
         }}
       >
         {isExpanded ? (
-          <ChevronDown className="h-4 w-4 text-gray-500" />
+          <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-gray-500" />
+          <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
         )}
         
         <FolderIcon className={cn(
-          'h-5 w-5',
+          'h-5 w-5 flex-shrink-0',
           isActive ? 'text-blue-600' : 'text-gray-400'
         )} />
         
-        <span className={cn(
-          'flex-1 font-semibold truncate',
-          isActive ? 'text-blue-900' : 'text-gray-900'
-        )}>
-          {project.name}
-        </span>
-        
-        {isActive && (
-          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded flex-shrink-0">
-            Active
-          </span>
-        )}
-        
-        <span className="text-xs text-gray-500 flex-shrink-0">
-          {documents.length} docs
-        </span>
-        
-        {/* Delete button - visible on hover */}
-        {canDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteProject?.(project);
-            }}
-            className={cn(
-              'p-1.5 rounded opacity-0 group-hover:opacity-100',
-              'hover:bg-red-100 transition-all duration-150',
-              'flex-shrink-0'
+        {/* Project name - editable or display */}
+        {isEditingProjectName ? (
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <input
+              type="text"
+              value={projectNameEditValue}
+              onChange={(e) => setProjectNameEditValue(e.target.value)}
+              onKeyDown={handleProjectRenameKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 px-2 py-1 text-sm font-semibold border-2 border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              autoFocus
+              placeholder="Project name"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSaveProjectRename();
+              }}
+              className="p-1 text-green-600 hover:bg-green-50 rounded flex-shrink-0"
+              title="Save"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCancelProjectRename();
+              }}
+              className="p-1 text-gray-500 hover:bg-gray-100 rounded flex-shrink-0"
+              title="Cancel"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <span className={cn(
+              'flex-1 font-semibold truncate',
+              isActive ? 'text-blue-900' : 'text-gray-900'
+            )}>
+              {project.name}
+            </span>
+            
+            {isActive && (
+              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded flex-shrink-0">
+                Active
+              </span>
             )}
-            title="Delete project"
-            aria-label={`Delete project ${project.name}`}
-          >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </button>
+            
+            <span className="text-xs text-gray-500 flex-shrink-0">
+              {documents.length} docs
+            </span>
+            
+            {/* Edit button - visible on hover */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStartProjectRename();
+              }}
+              className={cn(
+                'p-1.5 rounded opacity-0 group-hover:opacity-100',
+                'hover:bg-blue-100 transition-all duration-150',
+                'flex-shrink-0'
+              )}
+              title="Rename project"
+              aria-label={`Rename project ${project.name}`}
+            >
+              <Pencil className="h-3.5 w-3.5 text-blue-600" />
+            </button>
+            
+            {/* Delete button - visible on hover */}
+            {canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteProject?.(project);
+                }}
+                className={cn(
+                  'p-1.5 rounded opacity-0 group-hover:opacity-100',
+                  'hover:bg-red-100 transition-all duration-150',
+                  'flex-shrink-0'
+                )}
+                title="Delete project"
+                aria-label={`Delete project ${project.name}`}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </button>
+            )}
+          </>
         )}
       </div>
       
@@ -950,6 +1052,28 @@ export function MyProjectsSlideOut({
   // Always allow delete - we'll auto-create a default project if needed
   const canDeleteProject = true;
   
+  // Rename project handler
+  const handleRenameProject = useCallback((projectId: string, newName: string) => {
+    try {
+      // Import updateProject from storage
+      const { updateProject } = require('@/lib/storage/project-storage');
+      
+      // Update in storage
+      updateProject(projectId, { name: newName });
+      
+      // Refresh the store to reflect changes
+      useWorkspaceStore.getState().refreshProjects();
+      
+      // Force UI refresh
+      setRefreshKey(k => k + 1);
+      
+      console.log('✅ Project renamed:', { projectId, newName });
+    } catch (error) {
+      console.error('❌ Failed to rename project:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to rename project');
+    }
+  }, []);
+  
   // Snippet handlers
   const handleSnippetClick = useCallback((snippet: Snippet) => {
     // Load snippets for the snippet's project if needed
@@ -1052,6 +1176,7 @@ export function MyProjectsSlideOut({
               onAddSnippet={handleAddSnippet}
               onEditSnippet={handleEditSnippet}
               onDeleteProject={handleOpenDeleteModal}
+              onRenameProject={handleRenameProject}
               canDelete={canDeleteProject}
             />
           ))}
