@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateTextLength, validateNotEmpty, logError } from '@/lib/utils/error-handling';
-import type { Persona } from '@/lib/types/persona';
+import type { Persona } from '@/lib/types/project';
 
 // ============================================================================
 // Type Definitions
