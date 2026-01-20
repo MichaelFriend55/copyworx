@@ -1041,6 +1041,8 @@ export function Toolbar({ className }: ToolbarProps) {
 
   const [editor, setEditor] = useState<Editor | null>(null);
   const [documentTitle, setDocumentTitle] = useState<string | undefined>(undefined);
+  // Force re-render counter for editor state updates (undo/redo availability)
+  const [, forceUpdate] = useState(0);
 
   // Get editor instance from window (set by EditorArea)
   useEffect(() => {
@@ -1053,6 +1055,23 @@ export function Toolbar({ className }: ToolbarProps) {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Subscribe to editor transactions to update undo/redo button states
+  useEffect(() => {
+    if (!editor) return;
+
+    // This handler triggers re-render when editor state changes
+    // so that can().undo() and can().redo() are re-evaluated
+    const handleUpdate = () => {
+      forceUpdate(n => n + 1);
+    };
+
+    editor.on('transaction', handleUpdate);
+
+    return () => {
+      editor.off('transaction', handleUpdate);
+    };
+  }, [editor]);
 
   // Get document title from localStorage when document changes
   useEffect(() => {
