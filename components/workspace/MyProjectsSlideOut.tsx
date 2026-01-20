@@ -68,12 +68,13 @@ import {
   deleteFolder,
   updateFolder,
 } from '@/lib/storage/folder-storage';
-import { createProject } from '@/lib/storage/project-storage';
+import { createProject, deleteProject as deleteProjectFromStorage } from '@/lib/storage/project-storage';
 import type { Project, ProjectDocument, Folder } from '@/lib/types/project';
 import type { Snippet } from '@/lib/types/snippet';
 import { SnippetSection } from './SnippetSection';
 import { SnippetModals } from './SnippetModals';
 import { useSnippetActions, useSnippetStore } from '@/lib/stores/snippetStore';
+import { DeleteProjectModal } from './DeleteProjectModal';
 
 // ============================================================================
 // Constants
@@ -411,6 +412,8 @@ interface ProjectSectionProps {
   onSnippetClick?: (snippet: Snippet) => void;
   onAddSnippet?: (projectId: string) => void;
   onEditSnippet?: (snippet: Snippet) => void;
+  onDeleteProject?: (project: Project) => void;
+  canDelete: boolean;
 }
 
 function ProjectSection({
@@ -426,6 +429,8 @@ function ProjectSection({
   onSnippetClick,
   onAddSnippet,
   onEditSnippet,
+  onDeleteProject,
+  canDelete,
 }: ProjectSectionProps) {
   // Local state
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -628,7 +633,7 @@ function ProjectSection({
       {/* Project header */}
       <div
         className={cn(
-          'flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer',
+          'group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer',
           'transition-colors duration-150',
           isActive
             ? 'bg-blue-100 border border-blue-300'
@@ -653,21 +658,40 @@ function ProjectSection({
         )} />
         
         <span className={cn(
-          'flex-1 font-semibold',
+          'flex-1 font-semibold truncate',
           isActive ? 'text-blue-900' : 'text-gray-900'
         )}>
           {project.name}
         </span>
         
         {isActive && (
-          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded flex-shrink-0">
             Active
           </span>
         )}
         
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-gray-500 flex-shrink-0">
           {documents.length} docs
         </span>
+        
+        {/* Delete button - visible on hover */}
+        {canDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteProject?.(project);
+            }}
+            className={cn(
+              'p-1.5 rounded opacity-0 group-hover:opacity-100',
+              'hover:bg-red-100 transition-all duration-150',
+              'flex-shrink-0'
+            )}
+            title="Delete project"
+            aria-label={`Delete project ${project.name}`}
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </button>
+        )}
       </div>
       
       {/* Project contents */}
@@ -742,8 +766,13 @@ export function MyProjectsSlideOut({
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  // ACCORDION BEHAVIOR: Only track one expanded project ID at a time
+  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Delete project modal state
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Track previous isOpen to detect open transitions
   const wasOpenRef = React.useRef(false);
@@ -751,7 +780,7 @@ export function MyProjectsSlideOut({
   // Auto-expand active project on open
   useEffect(() => {
     if (isOpen && activeProjectId) {
-      setExpandedProjects(prev => new Set([...prev, activeProjectId]));
+      setExpandedProjectId(activeProjectId);
     }
   }, [isOpen, activeProjectId]);
 
@@ -764,16 +793,15 @@ export function MyProjectsSlideOut({
     wasOpenRef.current = isOpen;
   }, [isOpen]);
 
-  // Toggle project expansion
+  // Toggle project expansion - ACCORDION: only one open at a time
   const toggleProject = useCallback((projectId: string) => {
-    setExpandedProjects(prev => {
-      const next = new Set(prev);
-      if (next.has(projectId)) {
-        next.delete(projectId);
-      } else {
-        next.add(projectId);
+    setExpandedProjectId(prev => {
+      // If clicking the already-expanded project, collapse it
+      if (prev === projectId) {
+        return null;
       }
-      return next;
+      // Otherwise, expand this project (and implicitly close others)
+      return projectId;
     });
   }, []);
 
@@ -809,7 +837,8 @@ export function MyProjectsSlideOut({
       // Use getState() to avoid dependency on refreshProjects
       useWorkspaceStore.getState().refreshProjects();
       setActiveProjectId(newProject.id);
-      setExpandedProjects(prev => new Set([...prev, newProject.id]));
+      // ACCORDION: Auto-expand the newly created project
+      setExpandedProjectId(newProject.id);
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'Failed to create project');
     }
@@ -856,6 +885,70 @@ export function MyProjectsSlideOut({
   const handleRefresh = useCallback(() => {
     setRefreshKey(k => k + 1);
   }, []);
+  
+  // Delete project handlers
+  const handleOpenDeleteModal = useCallback((project: Project) => {
+    setProjectToDelete(project);
+  }, []);
+  
+  const handleCloseDeleteModal = useCallback(() => {
+    if (!isDeleting) {
+      setProjectToDelete(null);
+    }
+  }, [isDeleting]);
+  
+  const handleConfirmDelete = useCallback(async () => {
+    if (!projectToDelete) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      const deletingActiveProject = projectToDelete.id === activeProjectId;
+      const projectIdToDelete = projectToDelete.id;
+      const isLastProject = projects.length <= 1;
+      
+      // If this is the last project, create a default one first
+      if (isLastProject) {
+        console.log('📝 Creating default project before deleting last project...');
+        const newProject = createProject('My Project');
+        useWorkspaceStore.getState().refreshProjects();
+        setActiveProjectId(newProject.id);
+        // ACCORDION: Expand the newly created default project
+        setExpandedProjectId(newProject.id);
+      }
+      
+      // Delete from storage (this also handles switching active project if needed)
+      deleteProjectFromStorage(projectIdToDelete);
+      
+      // Refresh the store state
+      useWorkspaceStore.getState().refreshProjects();
+      
+      // If we deleted the active project, clear active document
+      // (the storage function already handles switching to another project)
+      if (deletingActiveProject) {
+        setActiveDocumentId(null);
+      }
+      
+      // ACCORDION: If the deleted project was expanded, clear the expansion
+      if (expandedProjectId === projectIdToDelete) {
+        setExpandedProjectId(null);
+      }
+      
+      // Force refresh
+      setRefreshKey(k => k + 1);
+      
+      console.log('✅ Project deleted:', projectToDelete.name);
+    } catch (error) {
+      console.error('❌ Failed to delete project:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to delete project');
+    } finally {
+      setIsDeleting(false);
+      setProjectToDelete(null);
+    }
+  }, [projectToDelete, projects.length, activeProjectId, setActiveDocumentId, setActiveProjectId, expandedProjectId]);
+  
+  // Always allow delete - we'll auto-create a default project if needed
+  const canDeleteProject = true;
   
   // Snippet handlers
   const handleSnippetClick = useCallback((snippet: Snippet) => {
@@ -948,7 +1041,7 @@ export function MyProjectsSlideOut({
               key={project.id}
               project={project}
               isActive={project.id === activeProjectId}
-              isExpanded={expandedProjects.has(project.id)}
+              isExpanded={expandedProjectId === project.id}
               selectedDocId={activeDocumentId}
               searchQuery={searchQuery}
               onToggle={() => toggleProject(project.id)}
@@ -958,6 +1051,8 @@ export function MyProjectsSlideOut({
               onSnippetClick={handleSnippetClick}
               onAddSnippet={handleAddSnippet}
               onEditSnippet={handleEditSnippet}
+              onDeleteProject={handleOpenDeleteModal}
+              canDelete={canDeleteProject}
             />
           ))}
           
@@ -977,6 +1072,15 @@ export function MyProjectsSlideOut({
     
     {/* Snippet modals */}
     <SnippetModals />
+    
+    {/* Delete project confirmation modal */}
+    <DeleteProjectModal
+      isOpen={projectToDelete !== null}
+      projectName={projectToDelete?.name || ''}
+      onClose={handleCloseDeleteModal}
+      onConfirm={handleConfirmDelete}
+      isDeleting={isDeleting}
+    />
   </>
   );
 }

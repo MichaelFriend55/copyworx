@@ -365,11 +365,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       deleteProject: (id: string) => {
         const { projects } = get();
         
-        if (projects.length <= 1) {
-          console.error('❌ Cannot delete last project');
-          return;
-        }
-        
         try {
           deleteStorageProject(id);
           const updatedProjects = projects.filter((p) => p.id !== id);

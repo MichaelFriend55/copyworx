@@ -248,7 +248,8 @@ export function updateProject(id: string, updates: Partial<Project>): void {
 
 /**
  * Delete project
- * Prevents deletion if it's the last project
+ * Note: Caller is responsible for ensuring at least one project exists
+ * (e.g., create a default project first if deleting the last one)
  */
 export function deleteProject(id: string): void {
   if (typeof window === 'undefined') {
@@ -256,11 +257,6 @@ export function deleteProject(id: string): void {
   }
   
   const projects = getAllProjects();
-  
-  // Prevent deletion of last project
-  if (projects.length <= 1) {
-    throw new Error('Cannot delete the last project. At least one project must exist.');
-  }
   
   const index = projects.findIndex((p) => p.id === id);
   

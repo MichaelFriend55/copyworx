@@ -29,6 +29,7 @@ export { TemplatesSlideOut, TEMPLATES_PANEL_ID } from './TemplatesSlideOut';
 export { TemplateFormSlideOut, TEMPLATE_FORM_PANEL_ID } from './TemplateFormSlideOut';
 export { BrandVoiceSlideOut, BRAND_VOICE_PANEL_ID } from './BrandVoiceSlideOut';
 export { PersonasSlideOut, PERSONAS_PANEL_ID } from './PersonasSlideOut';
+export { DeleteProjectModal } from './DeleteProjectModal';
 
 
 
