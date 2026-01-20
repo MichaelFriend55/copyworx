@@ -18,13 +18,15 @@ import {
   CheckCircle,
   AlertTriangle,
   Folder,
+  Trash2,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId, useProjects, useProjectActions } from '@/lib/stores/workspaceStore';
-import { saveBrandVoiceToProject } from '@/lib/storage/project-storage';
+import { saveBrandVoiceToProject, deleteBrandVoiceFromProject } from '@/lib/storage/project-storage';
 import type { BrandVoice } from '@/lib/types/brand';
 
 // ═══════════════════════════════════════════════════════════
@@ -75,6 +77,10 @@ export function BrandVoiceSlideOut({
   // UI state
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  
+  // Delete confirmation state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Load brand voice from active project when panel opens
   useEffect(() => {
@@ -188,41 +194,108 @@ export function BrandVoiceSlideOut({
     onClose();
   }, [onClose]);
   
+  /**
+   * Handle delete brand voice - show confirmation modal
+   */
+  const handleDelete = useCallback(() => {
+    setShowDeleteModal(true);
+  }, []);
+  
+  /**
+   * Confirm delete brand voice
+   */
+  const confirmDelete = useCallback(async () => {
+    if (!activeProjectId || !activeProject?.brandVoice) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      deleteBrandVoiceFromProject(activeProjectId);
+      
+      // Update Zustand store
+      updateProject(activeProjectId, { brandVoice: undefined });
+      
+      // Clear form
+      setBrandName('');
+      setBrandTone('');
+      setApprovedPhrases('');
+      setForbiddenWords('');
+      setBrandValues('');
+      
+      console.log('✅ Brand voice deleted');
+      
+      // Close modal and slide-out
+      setShowDeleteModal(false);
+      setTimeout(() => {
+        onClose();
+      }, 500);
+    } catch (error) {
+      console.error('❌ Failed to delete brand voice:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to delete brand voice');
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [activeProjectId, activeProject, updateProject, onClose]);
+  
+  /**
+   * Cancel delete
+   */
+  const cancelDelete = useCallback(() => {
+    setShowDeleteModal(false);
+  }, []);
+  
   // Panel footer with action buttons
   const panelFooter = (
-    <div className="flex gap-3">
-      <Button
-        variant="outline"
-        size="default"
-        onClick={handleCancel}
-        disabled={saveSuccess}
-        className="flex-1"
-      >
-        Cancel
-      </Button>
-      <Button
-        variant="default"
-        size="default"
-        onClick={handleSave}
-        disabled={!activeProject || saveSuccess}
-        className="flex-1 bg-apple-blue hover:bg-apple-blue/90"
-      >
-        {saveSuccess ? (
-          <>
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Saved!
-          </>
-        ) : (
-          <>
-            <Save className="h-4 w-4 mr-2" />
-            Save Brand Voice
-          </>
-        )}
-      </Button>
+    <div className="space-y-3">
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          size="default"
+          onClick={handleCancel}
+          disabled={saveSuccess}
+          className="flex-1"
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="brand"
+          size="default"
+          onClick={handleSave}
+          disabled={!activeProject || saveSuccess}
+          className="flex-1"
+        >
+          {saveSuccess ? (
+            <>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Saved!
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Save Brand Voice
+            </>
+          )}
+        </Button>
+      </div>
+      
+      {/* Delete Button - Only show if brand voice exists */}
+      {activeProject?.brandVoice && (
+        <Button
+          variant="outline"
+          size="default"
+          onClick={handleDelete}
+          disabled={saveSuccess}
+          className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete Brand Voice
+        </Button>
+      )}
     </div>
   );
   
   return (
+    <>
     <SlideOutPanel
       isOpen={isOpen}
       onClose={onClose}
@@ -413,5 +486,19 @@ export function BrandVoiceSlideOut({
         </div>
       </div>
     </SlideOutPanel>
+    
+    {/* Delete Confirmation Modal */}
+    <ConfirmationModal
+      isOpen={showDeleteModal}
+      title="Delete Brand Voice"
+      message={`Delete "${activeProject?.brandVoice?.brandName}" brand voice?`}
+      description="This will permanently remove this brand voice. This cannot be undone."
+      confirmLabel="Delete Brand Voice"
+      onClose={cancelDelete}
+      onConfirm={confirmDelete}
+      isConfirming={isDeleting}
+      isDestructive={true}
+    />
+    </>
   );
 }

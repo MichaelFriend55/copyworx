@@ -347,11 +347,17 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
         Cancel
       </Button>
       <Button
-        variant="default"
+        variant={generationSuccess ? 'default' : isGenerating ? 'default' : 'brand'}
         size="default"
         onClick={handleGenerate}
         disabled={isGenerating || !editor || !activeDocumentId || generationSuccess}
-        className="flex-1 bg-apple-blue hover:bg-apple-blue/90"
+        className={cn(
+          'flex-1',
+          // Animated gradient when generating (override background)
+          isGenerating && 'aiworx-gradient-animated',
+          // Green when success
+          generationSuccess && 'bg-green-500 hover:bg-green-600'
+        )}
       >
         {isGenerating ? (
           <AIWorxButtonLoader />

@@ -238,7 +238,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           alt="CopyWorx Studio"
           width={140}
           height={140}
-          className="object-contain"
+          className="object-contain ml-2"
           priority
           unoptimized
         />

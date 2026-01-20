@@ -286,5 +286,42 @@
   .font-editor-open-sans { font-family: var(--font-open-sans), system-ui, sans-serif; }
   .font-editor-lato { font-family: var(--font-lato), system-ui, sans-serif; }
   .font-editor-montserrat { font-family: var(--font-montserrat), system-ui, sans-serif; }
+
+  /* Animated gradient for AI generation button */
+  .aiworx-gradient-animated {
+    background: linear-gradient(90deg, #006EE6, #7A3991, #006EE6);
+    background-size: 200% 100%;
+    animation: gradient-flow 3s ease-in-out infinite;
+  }
+
+  @keyframes gradient-flow {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  /* Brand button - Blue to Purple active state */
+  .btn-brand {
+    background-color: #006EE6;
+    color: white;
+    transition: background-color 200ms ease-in-out, transform 200ms ease-in-out;
+  }
+
+  .btn-brand:hover:not(:disabled) {
+    background-color: #0062CC;
+  }
+
+  .btn-brand:active:not(:disabled) {
+    background-color: #7A3991;
+    transform: scale(0.98);
+  }
+
+  .btn-brand:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 

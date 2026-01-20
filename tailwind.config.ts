@@ -152,6 +152,14 @@ const config: Config = {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.5' },
         },
+        'gradient-flow': {
+          '0%, 100%': { 
+            backgroundPosition: '0% 50%',
+          },
+          '50%': { 
+            backgroundPosition: '100% 50%',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -161,6 +169,7 @@ const config: Config = {
         'slide-in-right': 'slide-in-right 0.4s ease-out forwards',
         shimmer: 'shimmer 2s ease-in-out infinite',
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'gradient-flow': 'gradient-flow 3s ease-in-out infinite',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

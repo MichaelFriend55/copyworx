@@ -532,15 +532,15 @@ export function TemplateGenerator({
           onClick={handleGenerate}
           disabled={isGenerating || generationSuccess}
           className={cn(
-            'w-full py-3 px-4 rounded-lg font-medium text-sm',
-            'transition-all duration-200',
+            'w-full py-3 px-4 rounded-lg font-medium text-sm text-white',
             'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
             'flex items-center justify-center gap-2',
-            // Keep blue gradient during loading
-            'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow',
-            'disabled:from-blue-500 disabled:to-blue-600 disabled:text-white disabled:cursor-wait',
+            // Animated gradient when generating
+            isGenerating && 'aiworx-gradient-animated cursor-wait',
+            // Brand button with blue→purple active when not generating
+            !isGenerating && !generationSuccess && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
             // Green background only for success state
-            generationSuccess && 'bg-green-500 from-green-500 to-green-500'
+            generationSuccess && 'bg-green-500'
           )}
         >
           {isGenerating ? (

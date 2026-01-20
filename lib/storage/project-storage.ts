@@ -339,6 +339,32 @@ export function saveBrandVoiceToProject(projectId: string, brandVoice: BrandVoic
 }
 
 /**
+ * Delete brand voice from project
+ * @throws Error if project not found or storage unavailable
+ */
+export function deleteBrandVoiceFromProject(projectId: string): void {
+  if (typeof window === 'undefined') {
+    throw new Error('Cannot delete brand voice in non-browser environment');
+  }
+  
+  // Ensure storage is available
+  ensureStorageAvailable();
+  
+  // Get project to verify it exists
+  const project = getProject(projectId);
+  if (!project) {
+    throw new Error(`Project not found: ${projectId}`);
+  }
+  
+  // Update project with undefined brand voice (removes it)
+  updateProject(projectId, { brandVoice: undefined });
+  
+  console.log('🗑️ Brand voice deleted from project:', {
+    projectId,
+  });
+}
+
+/**
  * Initialize default project if none exist
  * Called on first app load
  */

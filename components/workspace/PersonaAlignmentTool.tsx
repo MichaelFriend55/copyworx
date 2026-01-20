@@ -268,11 +268,13 @@ export function PersonaAlignmentTool({ editor, className }: PersonaAlignmentTool
         disabled={!canCheck}
         className={cn(
           'w-full py-3 px-4 rounded-lg',
-          'font-medium text-sm',
-          'transition-all duration-200',
+          'font-medium text-sm text-white',
           'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-          'bg-apple-blue text-white hover:bg-blue-600 shadow-sm hover:shadow',
-          'disabled:bg-apple-blue disabled:text-white disabled:cursor-wait',
+          // Animated gradient when loading
+          personaAlignmentLoading && 'aiworx-gradient-animated cursor-wait',
+          // Brand button with blue→purple active when not loading
+          !personaAlignmentLoading && (hasSelection && selectedPersona) && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
+          // Gray background when truly disabled (not loading)
           (!hasSelection || !selectedPersona) && !personaAlignmentLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
         )}
       >

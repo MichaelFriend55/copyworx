@@ -34,6 +34,8 @@ const buttonVariants = cva(
           'bg-amber-500 text-ink-900 hover:bg-amber-400 active:scale-[0.98] shadow-lg hover:shadow-xl glow-amber',
         ink:
           'bg-ink-900 text-white hover:bg-ink-800 active:scale-[0.98] shadow-lg hover:shadow-xl',
+        brand:
+          'bg-[#006EE6] text-white hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
       },
       size: {
         default: 'h-10 px-4 py-2',

@@ -28,6 +28,7 @@ import {
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import {
@@ -156,6 +157,10 @@ export function PersonasSlideOut({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   
+  // Delete confirmation state
+  const [personaToDelete, setPersonaToDelete] = useState<Persona | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   // Load personas when project changes or panel opens
   useEffect(() => {
     if (!isOpen || !activeProjectId) {
@@ -276,35 +281,50 @@ export function PersonasSlideOut({
   }, [activeProject, activeProjectId, name, demographics, psychographics, painPoints, languagePatterns, goals, viewMode, editingPersona, loadPersonas, handleBackToList]);
   
   /**
-   * Handle delete persona
+   * Handle delete persona - show confirmation modal
    */
   const handleDelete = useCallback((persona: Persona) => {
-    if (!activeProjectId) return;
+    setPersonaToDelete(persona);
+  }, []);
+  
+  /**
+   * Confirm delete persona
+   */
+  const confirmDelete = useCallback(async () => {
+    if (!activeProjectId || !personaToDelete) return;
     
-    const confirmed = confirm(
-      `Are you sure you want to delete "${persona.name}"?\n\nThis action cannot be undone.`
-    );
-    
-    if (!confirmed) return;
+    setIsDeleting(true);
     
     try {
-      deletePersona(activeProjectId, persona.id);
+      deletePersona(activeProjectId, personaToDelete.id);
       loadPersonas();
       console.log('✅ Persona deleted');
+      
+      // Close modal
+      setPersonaToDelete(null);
     } catch (error) {
       console.error('❌ Failed to delete persona:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete persona');
+    } finally {
+      setIsDeleting(false);
     }
-  }, [activeProjectId, loadPersonas]);
+  }, [activeProjectId, personaToDelete, loadPersonas]);
+  
+  /**
+   * Cancel delete
+   */
+  const cancelDelete = useCallback(() => {
+    setPersonaToDelete(null);
+  }, []);
   
   // Panel footer - varies by view mode
   const panelFooter = viewMode === 'list' ? (
     <Button
-      variant="default"
+      variant="brand"
       size="default"
       onClick={handleCreateNew}
       disabled={!activeProject}
-      className="w-full bg-apple-blue hover:bg-apple-blue/90"
+      className="w-full"
     >
       <Plus className="h-4 w-4 mr-2" />
       Create New Persona
@@ -322,11 +342,11 @@ export function PersonasSlideOut({
         Back to List
       </Button>
       <Button
-        variant="default"
+        variant="brand"
         size="default"
         onClick={handleSave}
         disabled={!activeProject || saveSuccess}
-        className="flex-1 bg-apple-blue hover:bg-apple-blue/90"
+        className="flex-1"
       >
         {saveSuccess ? (
           <>
@@ -344,6 +364,7 @@ export function PersonasSlideOut({
   );
   
   return (
+    <>
     <SlideOutPanel
       isOpen={isOpen}
       onClose={onClose}
@@ -603,5 +624,19 @@ export function PersonasSlideOut({
         )}
       </div>
     </SlideOutPanel>
+    
+    {/* Delete Confirmation Modal */}
+    <ConfirmationModal
+      isOpen={!!personaToDelete}
+      title="Delete Persona"
+      message={`Delete "${personaToDelete?.name}"?`}
+      description="This will permanently remove this persona. This cannot be undone."
+      confirmLabel="Delete Persona"
+      onClose={cancelDelete}
+      onConfirm={confirmDelete}
+      isConfirming={isDeleting}
+      isDestructive={true}
+    />
+    </>
   );
 }
