@@ -3,9 +3,9 @@
  * @description Entry splash page for CopyWorx v2
  * 
  * Features:
- * - Centered logo and title "CopyWorx™ Studio"
+ * - Centered CopyWorx Studio logo
  * - Subtitle: "AI-Powered Writing Suite"
- * - Four large action buttons in a row
+ * - Three action buttons in a row
  * - Apple-style aesthetic with blue accent
  * - Responsive (stacks on mobile)
  * - Footer with copyright
@@ -20,11 +20,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   FilePlus,
   Sparkles,
   Upload,
-  FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
@@ -39,7 +39,7 @@ interface ActionButtonProps {
 }
 
 /**
- * Large action button for splash page
+ * Action button for splash page with full text
  */
 function ActionButton({ icon, label, description, onClick }: ActionButtonProps) {
   return (
@@ -48,28 +48,28 @@ function ActionButton({ icon, label, description, onClick }: ActionButtonProps) 
       className={cn(
         'group',
         'flex flex-col items-center justify-center',
-        'w-full sm:w-64 h-64',
-        'bg-apple-blue hover:bg-apple-blue-dark',
+        'w-32 h-32',
+        'bg-apple-blue hover:bg-[#7A3991]',
         'text-white',
-        'rounded-2xl',
-        'shadow-lg hover:shadow-2xl',
+        'rounded-xl',
+        'shadow-md hover:shadow-xl',
         'transition-all duration-300',
-        'transform hover:-translate-y-2',
-        'focus:outline-none focus:ring-4 focus:ring-apple-blue/30 focus:ring-offset-4'
+        'transform hover:-translate-y-1',
+        'focus:outline-none focus:ring-2 focus:ring-apple-blue/30 focus:ring-offset-2'
       )}
     >
       {/* Icon */}
-      <div className="mb-4 transform group-hover:scale-110 transition-transform duration-300">
+      <div className="mb-2 transform group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
 
       {/* Label */}
-      <div className="text-2xl font-semibold mb-2">
+      <div className="text-sm font-semibold mb-1">
         {label}
       </div>
 
       {/* Description */}
-      <div className="text-sm opacity-90 px-4 text-center">
+      <div className="text-xs opacity-90 px-2 text-center leading-tight">
         {description}
       </div>
     </button>
@@ -118,37 +118,27 @@ export function SplashPage() {
     router.push('/copyworx/workspace?action=import');
   };
 
-  const handleOpenCWX = () => {
-    router.push('/copyworx/workspace?action=open');
-  };
-
   return (
     <div className="min-h-screen w-full bg-apple-gray-bg flex flex-col">
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
-        {/* Logo placeholder & Title */}
-        <div className="text-center mb-16 animate-fade-in">
-          {/* Logo placeholder - you can replace with actual logo */}
+        {/* Logo & Subtitle */}
+        <div className="text-center mb-12 animate-fade-in">
+          {/* CopyWorx Studio Logo */}
           <div className="mb-6 flex justify-center">
-            <div
-              className={cn(
-                'w-24 h-24 rounded-3xl',
-                'bg-gradient-to-br from-apple-blue to-apple-blue-dark',
-                'flex items-center justify-center',
-                'shadow-2xl'
-              )}
-            >
-              <Sparkles className="w-12 h-12 text-white" strokeWidth={2} />
-            </div>
+            <Image
+              src="/copyworx-studio-logo.png"
+              alt="CopyWorx Studio"
+              width={256}
+              height={256}
+              className="object-contain"
+              priority
+              unoptimized
+            />
           </div>
 
-          {/* Title */}
-          <h1 className="text-5xl sm:text-6xl font-sans font-bold text-apple-text-dark mb-4">
-            CopyWorx™ Studio
-          </h1>
-
           {/* Subtitle */}
-          <p className="text-xl sm:text-2xl text-gray-600 font-medium">
+          <p className="text-xl sm:text-2xl text-[#58595b] font-medium">
             AI-Powered Writing Suite
           </p>
         </div>
@@ -156,37 +146,30 @@ export function SplashPage() {
         {/* Action buttons */}
         <div
           className={cn(
-            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-            'gap-6 max-w-7xl w-full',
+            'flex flex-row items-center justify-center',
+            'gap-6',
             'animate-fade-in-up'
           )}
         >
           <ActionButton
-            icon={<FilePlus className="w-16 h-16" strokeWidth={1.5} />}
+            icon={<FilePlus className="w-8 h-8" strokeWidth={1.5} />}
             label="New"
             description="Start fresh project"
             onClick={handleNewDocument}
           />
 
           <ActionButton
-            icon={<Sparkles className="w-16 h-16" strokeWidth={1.5} />}
+            icon={<Sparkles className="w-8 h-8" strokeWidth={1.5} />}
             label="AI@Worx™"
             description="Start from AI template"
             onClick={handleAITemplate}
           />
 
           <ActionButton
-            icon={<Upload className="w-16 h-16" strokeWidth={1.5} />}
+            icon={<Upload className="w-8 h-8" strokeWidth={1.5} />}
             label="Import"
             description="Open text file"
             onClick={handleImport}
-          />
-
-          <ActionButton
-            icon={<FolderOpen className="w-16 h-16" strokeWidth={1.5} />}
-            label="Open .cwx"
-            description="CopyWorx format"
-            onClick={handleOpenCWX}
           />
         </div>
 
@@ -206,7 +189,7 @@ export function SplashPage() {
           © {new Date().getFullYear()} CopyWorx™ Studio. All rights reserved.
         </p>
         <p className="mt-1">
-          CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Corporation.
+          CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio LLC.
         </p>
       </footer>
 

@@ -17,6 +17,8 @@ const nextConfig = {
   images: {
     domains: [],
     formats: ['image/avif', 'image/webp'],
+    unoptimized: false,
+    remotePatterns: [],
   },
   
   // Experimental features for App Router optimization

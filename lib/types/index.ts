@@ -95,8 +95,7 @@ export type SidebarPosition = 'left' | 'right';
 export type WorkspaceAction = 
   | 'new'         // Create new blank document
   | 'template'    // Start from template
-  | 'import'      // Import text file
-  | 'open';       // Open .cwx file
+  | 'import';     // Import text file
 
 /**
  * @deprecated Use TemplateDefinition from './template' instead

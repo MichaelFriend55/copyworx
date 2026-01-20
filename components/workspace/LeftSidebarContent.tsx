@@ -23,6 +23,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Sparkles, ChevronRight, ChevronDown, PanelLeftOpen, Folder as FolderIcon } from 'lucide-react';
 import { DocumentInsights } from '@/components/workspace/DocumentInsights';
 import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
@@ -164,9 +165,24 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const isProjectsExpanded = expandedSections.has('projects');
 
   return (
-    <div className="space-y-1 px-4">
-      {/* My Projects Slide-Out Panel */}
-      <MyProjectsSlideOut
+    <div className="space-y-1">
+      {/* CopyWorx Logo Header */}
+      <div className="bg-gray-200 -mx-2 -mt-6 mb-4 px-6 py-4 flex items-center justify-center">
+        <Image
+          src="/copyworx-studio-logo.png"
+          alt="CopyWorx Studio"
+          width={140}
+          height={140}
+          className="object-contain"
+          priority
+          unoptimized
+        />
+      </div>
+      
+      {/* Content with padding */}
+      <div className="px-4 space-y-1">
+        {/* My Projects Slide-Out Panel */}
+        <MyProjectsSlideOut
         isOpen={isProjectsSlideOutOpen}
         onClose={closeProjectsSlideOut}
         onDocumentClick={handleSlideOutDocumentClick}
@@ -382,8 +398,9 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
         );
       })}
 
-      {/* AI@Worx™ Live - Document Insights Panel */}
-      <DocumentInsights />
+        {/* AI@Worx™ Live - Document Insights Panel */}
+        <DocumentInsights />
+      </div>
     </div>
   );
 }

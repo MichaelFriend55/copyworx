@@ -143,11 +143,11 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header - Always Shows "AI@Worx™ Analysis" */}
+      {/* Header - Always Shows "AI@Worx™ ToolBox" */}
       <div className="flex items-center gap-2">
         <Sparkles className="w-5 h-5 text-apple-blue" />
         <h2 className="text-lg font-semibold text-apple-text-dark">
-          AI@Worx™ Analysis
+          AI@Worx™ ToolBox
         </h2>
       </div>
 
