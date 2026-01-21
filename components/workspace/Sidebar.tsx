@@ -81,6 +81,7 @@ export function Sidebar({
         )}
         aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${side} sidebar`}
         title={`${isOpen ? 'Collapse' : 'Expand'} ${side} sidebar`}
+        data-print-hide
       >
         {side === 'left' ? (
           isOpen ? (
@@ -111,6 +112,8 @@ export function Sidebar({
         }}
         aria-label={`${side} sidebar`}
         aria-expanded={isOpen}
+        data-sidebar={side}
+        data-print-hide
       >
         {/* Sidebar content with overflow handling */}
         <div

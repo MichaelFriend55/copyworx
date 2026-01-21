@@ -64,7 +64,10 @@ export function WorkspaceLayout({
   const isFocusMode = viewMode === 'focus';
 
   return (
-    <div className={cn('h-screen w-screen flex flex-col overflow-hidden', className)}>
+    <div 
+      className={cn('h-screen w-screen flex flex-col overflow-hidden', className)}
+      data-print-layout
+    >
       {/* Top toolbar */}
       <Toolbar />
 

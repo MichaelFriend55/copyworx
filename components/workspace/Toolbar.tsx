@@ -3,7 +3,7 @@
  * @description Top toolbar with file menu, formatting controls, and view modes
  * 
  * Features:
- * - Left: File operations (Home, Save, Undo, Redo)
+ * - Left: File operations (Home, Undo, Redo)
  * - Center: Rich text formatting controls
  * - Right: View mode selector
  * - Apple-style aesthetic with smooth interactions
@@ -21,7 +21,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import type { Editor } from '@tiptap/react';
 import {
-  Save,
   FolderOpen,
   Undo,
   Redo,
@@ -1128,6 +1127,7 @@ export function Toolbar({ className }: ToolbarProps) {
         backdropFilter: 'blur(10px)',
         backgroundColor: 'rgba(255, 255, 255, 0.98)',
       }}
+      data-print-hide
     >
       {/* Left section - File operations (hidden in Focus Mode) */}
       <div className={cn(
@@ -1150,26 +1150,6 @@ export function Toolbar({ className }: ToolbarProps) {
             <span className="hidden sm:inline">Home</span>
           </button>
         </Link>
-
-        <div className="w-px h-6 bg-gray-200 mx-1" />
-
-        <button
-          className={cn(
-            'px-3 py-2 rounded-lg',
-            'text-sm font-medium',
-            hasActiveDocument
-              ? 'text-apple-text-dark hover:bg-apple-gray-bg'
-              : 'text-gray-400 cursor-not-allowed',
-            'transition-colors duration-150',
-            'flex items-center gap-2',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
-          )}
-          disabled={!hasActiveDocument}
-          title="Save (⌘S)"
-        >
-          <Save className="w-4 h-4" />
-          <span className="hidden sm:inline">Save</span>
-        </button>
 
         <DocumentMenu editor={editor} documentTitle={documentTitle} />
 

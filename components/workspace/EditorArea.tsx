@@ -570,6 +570,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         !isPageMode && 'flex items-start justify-center', // Center content except in Page Mode
         className
       )}
+      data-print-content
     >
       {/* Page Mode uses PageModeWrapper, Scrolling/Focus use Paper Container */}
       {isPageMode && currentDocument ? (
@@ -581,7 +582,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           isReady={pageCalcsReady}
         >
           {/* Page Mode Document Header - Same as Scrolling Mode */}
-          <div className="px-16 py-3 border-b border-gray-200 flex items-center justify-between mb-4 bg-white">
+          <div className="px-16 py-3 border-b border-gray-200 flex items-center justify-between mb-4 bg-white" data-print-hide>
             {/* Title display with version button */}
             <div className="flex items-center gap-2 flex-1 min-w-0 pr-4">
               <span className="text-xl font-sans font-semibold text-black line-clamp-2">
@@ -750,6 +751,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                   ? 'px-8 py-2 border-b border-transparent' // Focus Mode: minimal header
                   : 'px-16 py-3 border-b border-gray-200' // Normal: standard header
               )}
+              data-print-hide
             >
               {/* Title display */}
               <div className={cn(
