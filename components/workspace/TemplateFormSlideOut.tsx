@@ -108,6 +108,28 @@ export function TemplateFormSlideOut({
     ? ((LucideIcons as unknown as Record<string, LucideIcon>)[template.icon] || Sparkles)
     : Sparkles;
   
+  /**
+   * Get dynamic loading message for email sequences
+   */
+  const getLoadingMessage = useCallback((): string => {
+    if (!template) return 'Generating...';
+    
+    // Check if this is an email sequence template
+    if (template.id === 'email-sequence-kickoff') {
+      const numEmails = formData.numberOfEmails;
+      if (numEmails) {
+        // Extract number from "X emails" format
+        const match = numEmails.match(/^(\d+)/);
+        if (match) {
+          return `Generating ${match[1]}-email sequence...`;
+        }
+      }
+      return 'Generating email sequence...';
+    }
+    
+    return 'Generating...';
+  }, [template, formData.numberOfEmails]);
+  
   // Initialize form data when template changes
   useEffect(() => {
     if (!template) return;
@@ -360,7 +382,10 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
         )}
       >
         {isGenerating ? (
-          <AIWorxButtonLoader />
+          <div className="flex flex-col items-center gap-1">
+            <AIWorxButtonLoader />
+            <span className="text-xs">{getLoadingMessage()}</span>
+          </div>
         ) : generationSuccess ? (
           <>
             <CheckCircle className="h-4 w-4 mr-2" />

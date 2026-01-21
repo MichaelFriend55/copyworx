@@ -213,16 +213,16 @@ Format each element clearly labeled.`
 };
 
 /**
- * Email Sequence Kickoff Template
- * Creates compelling first email for subscriber welcome sequences
+ * Email Sequence Template
+ * Creates complete multi-email sequences (3-7 emails) with narrative arc
  */
 export const EMAIL_SEQUENCE_KICKOFF_TEMPLATE: Template = {
   id: 'email-sequence-kickoff',
-  name: 'Email Sequence Kickoff',
+  name: 'Email Sequence',
   category: 'email',
-  description: 'Create a compelling first email that welcomes subscribers and sets expectations.',
-  complexity: 'Beginner',
-  estimatedTime: '10-15 min',
+  description: 'Generate a complete email sequence (3-7 emails) with strategic narrative arc and timing.',
+  complexity: 'Intermediate',
+  estimatedTime: '2-5 min',
   icon: 'Mail',
   fields: [
     {
@@ -236,20 +236,24 @@ export const EMAIL_SEQUENCE_KICKOFF_TEMPLATE: Template = {
         'Lead Magnet Follow-up',
         'Product Launch',
         'Course/Training',
-        'Newsletter',
+        'Sales Sequence',
+        'Onboarding',
+        'Re-engagement',
         'Other (specify)'
       ]
     },
     {
-      id: 'sequenceLength',
-      label: 'Sequence Length',
+      id: 'numberOfEmails',
+      label: 'Number of Emails',
       type: 'select',
-      helperText: 'How many emails in this sequence?',
+      helperText: 'How many emails should be in this sequence?',
       required: true,
       options: [
-        '3-email series',
-        '5-email series',
-        '7-email series'
+        '3 emails',
+        '4 emails',
+        '5 emails',
+        '6 emails',
+        '7 emails'
       ]
     },
     {
@@ -257,7 +261,7 @@ export const EMAIL_SEQUENCE_KICKOFF_TEMPLATE: Template = {
       label: 'Recipient Profile',
       type: 'textarea',
       placeholder: 'e.g., Small business owners who signed up for our free marketing checklist...',
-      helperText: 'Who receives this email? Describe their background and interests',
+      helperText: 'Who receives these emails? Describe their background and interests',
       required: true,
       maxLength: 400
     },
@@ -271,10 +275,27 @@ export const EMAIL_SEQUENCE_KICKOFF_TEMPLATE: Template = {
       maxLength: 300
     },
     {
+      id: 'endGoal',
+      label: 'Sequence End Goal',
+      type: 'select',
+      helperText: 'What should subscribers do by the end of the sequence?',
+      required: true,
+      options: [
+        'Purchase Product/Service',
+        'Book a Call/Demo',
+        'Start Free Trial',
+        'Join Community/Group',
+        'Upgrade Account',
+        'Complete Onboarding',
+        'Stay Engaged (nurture)',
+        'Other (specify)'
+      ]
+    },
+    {
       id: 'tone',
       label: 'Tone',
       type: 'select',
-      helperText: 'What tone should this email have?',
+      helperText: 'What tone should these emails have?',
       required: true,
       options: [
         'Professional',
@@ -282,58 +303,116 @@ export const EMAIL_SEQUENCE_KICKOFF_TEMPLATE: Template = {
         'Educational',
         'Enthusiastic',
         'Authoritative',
-        'Other (specify)'
-      ]
-    },
-    {
-      id: 'emailGoal',
-      label: 'Email Goal',
-      type: 'select',
-      helperText: 'Primary objective of this first email',
-      required: true,
-      options: [
-        'Build Trust',
-        'Educate',
-        'Drive Action',
-        'Set Expectations',
-        'Deliver Value',
+        'Conversational',
         'Other (specify)'
       ]
     },
     {
       id: 'keyMessage',
-      label: 'Key Message',
+      label: 'Key Message/Theme',
       type: 'textarea',
       placeholder: "e.g., We're here to help you grow, not sell you stuff...",
-      helperText: 'Specific message or theme to emphasize (optional)',
+      helperText: 'Central theme or message that should run through all emails (optional)',
       required: false,
       maxLength: 250
+    },
+    {
+      id: 'productService',
+      label: 'Product/Service (if selling)',
+      type: 'textarea',
+      placeholder: 'e.g., Our premium marketing course that teaches...',
+      helperText: 'What are you ultimately promoting? (optional for nurture sequences)',
+      required: false,
+      maxLength: 300
     }
   ],
-  systemPrompt: `You are an expert email marketing copywriter specializing in nurture sequences. Create a compelling first/kickoff email based on these details:
+  systemPrompt: `You are an expert email marketing copywriter specializing in high-converting email sequences. Create a COMPLETE email sequence with ALL emails based on these details:
 
 Campaign Type: {campaignType}
-Sequence Length: {sequenceLength}
+Number of Emails: {numberOfEmails}
 Recipient Profile: {recipientProfile}
 Offer/Value Proposition: {offerValue}
+Sequence End Goal: {endGoal}
 Tone: {tone}
-Email Goal: {emailGoal}
-Key Message: {keyMessage}
+Key Message/Theme: {keyMessage}
+Product/Service: {productService}
 
 {brandVoiceInstructions}
 {personaInstructions}
 
-Write a powerful kickoff email that:
-1. Opens with a warm, engaging subject line that creates curiosity
-2. Welcomes them personally and acknowledges why they signed up
-3. Clearly communicates what to expect from the email sequence
-4. Delivers immediate value (a tip, insight, or resource)
-5. Sets expectations for frequency and content type
-6. Teases what's coming next in the sequence
-7. Ends with a soft call-to-action (reply, follow, read, etc.)
+CRITICAL: You MUST generate ALL emails specified in "Number of Emails". Not just the first one.
 
-Target length: 200-350 words for the email body.
-Format as a complete email with subject line.`
+STRATEGIC EMAIL SEQUENCE FRAMEWORK:
+Based on the number of emails requested, follow this narrative arc:
+
+FOR 3 EMAILS:
+- Email 1: WELCOME + VALUE (Day 1) - Warm welcome, set expectations, deliver quick win
+- Email 2: PROOF + EDUCATION (Day 3) - Share expertise, social proof, build trust
+- Email 3: CLOSE (Day 5) - Clear CTA, urgency, final push toward end goal
+
+FOR 4 EMAILS:
+- Email 1: WELCOME (Day 1) - Warm intro, set stage, immediate value
+- Email 2: VALUE (Day 3) - Educational content, build expertise
+- Email 3: PROOF (Day 5) - Testimonials, case studies, results
+- Email 4: CLOSE (Day 7) - Urgency, clear CTA, final action
+
+FOR 5 EMAILS:
+- Email 1: WELCOME (Day 1) - Introduction, expectations, quick win
+- Email 2: VALUE (Day 3) - Deep educational content, build trust
+- Email 3: PROOF (Day 5) - Social proof, success stories
+- Email 4: ENGAGEMENT (Day 7) - Interactive, questions, deepen relationship
+- Email 5: CLOSE (Day 10) - Strong CTA, urgency, final push
+
+FOR 6 EMAILS:
+- Email 1: WELCOME (Day 1) - Warm greeting, expectations, initial value
+- Email 2: VALUE (Day 3) - Educational tip or insight
+- Email 3: STORY (Day 5) - Case study or transformation story
+- Email 4: PROOF (Day 7) - Testimonials, results, credibility
+- Email 5: OBJECTIONS (Day 9) - Address concerns, FAQ style
+- Email 6: CLOSE (Day 12) - Final CTA with urgency
+
+FOR 7 EMAILS:
+- Email 1: WELCOME (Day 1) - Warm introduction, set expectations
+- Email 2: VALUE (Day 2) - Quick tip, immediate usefulness
+- Email 3: EDUCATION (Day 4) - Deeper teaching, establish expertise
+- Email 4: STORY (Day 6) - Case study, transformation narrative
+- Email 5: PROOF (Day 8) - Social proof, testimonials
+- Email 6: OBJECTIONS (Day 10) - Handle concerns, build confidence
+- Email 7: CLOSE (Day 14) - Final push, urgency, clear CTA
+
+REQUIREMENTS FOR EACH EMAIL:
+1. Compelling subject line that creates curiosity
+2. Clear purpose aligned with its position in the arc
+3. Reference previous emails naturally ("As I mentioned...")
+4. Escalate commitment gradually
+5. Maintain consistent brand voice throughout
+6. Each email: 150-300 words body (shorter is better for engagement)
+7. End with soft CTA for early emails, strong CTA for final emails
+
+OUTPUT FORMAT (CRITICAL - Follow exactly):
+
+<h2>═══ EMAIL 1 of X: [PURPOSE] ═══</h2>
+<p><strong>📅 Send: Day 1</strong> (Immediately after signup)</p>
+<h3>Subject: [Your Compelling Subject Line]</h3>
+<p>[Email body - use multiple paragraphs]</p>
+<p>[Include bullet points with <ul><li> where helpful]</p>
+<p>[Signature]</p>
+
+<hr>
+
+<h2>═══ EMAIL 2 of X: [PURPOSE] ═══</h2>
+<p><strong>📅 Send: Day 3</strong> (2 days after Email 1)</p>
+<h3>Subject: [Your Compelling Subject Line]</h3>
+<p>[Email body...]</p>
+
+[Continue with <hr> between each email until you've written ALL emails]
+
+REMEMBER: 
+- Generate EVERY email in the sequence, not just the first
+- Use <hr> to separate emails clearly
+- Include timing recommendations for each
+- Build narrative momentum across the sequence
+- Make each email standalone readable but part of a cohesive journey`
 };
 
 /**

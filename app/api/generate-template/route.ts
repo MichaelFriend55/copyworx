@@ -111,6 +111,20 @@ function buildPrompt(
 // ============================================================================
 
 /**
+ * Extract number of emails from form data for email sequence templates
+ * @param formData - Form data from request
+ * @returns Number of emails (1 if not an email sequence)
+ */
+function getEmailSequenceCount(formData: TemplateFormData): number {
+  const numberOfEmails = formData.numberOfEmails;
+  if (!numberOfEmails) return 1;
+  
+  // Parse "X emails" format (e.g., "5 emails" -> 5)
+  const match = numberOfEmails.match(/^(\d+)/);
+  return match ? parseInt(match[1], 10) : 1;
+}
+
+/**
  * POST /api/generate-template
  * 
  * Generates copy from a template using Claude AI
@@ -225,13 +239,34 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
     );
 
     // ------------------------------------------------------------------------
-    // 5. Call Claude API to generate copy
+    // 5. Calculate dynamic timeout and tokens for email sequences
+    // ------------------------------------------------------------------------
+    
+    const isEmailSequence = templateId === 'email-sequence-kickoff';
+    const emailCount = isEmailSequence ? getEmailSequenceCount(formData) : 1;
+    
+    // Dynamic timeout: 30s base + 20s per email for sequences
+    // 3 emails = 90s, 5 emails = 130s, 7 emails = 170s
+    const timeoutMs = isEmailSequence 
+      ? 30000 + (emailCount * 20000)
+      : 30000;
+    
+    // Dynamic max tokens: ~1000 tokens per email (subject + body + formatting)
+    // Base 4000 for single content, scale up for sequences
+    const maxTokens = isEmailSequence 
+      ? Math.min(8000, 1200 * emailCount) // Cap at 8000 tokens
+      : 4000;
+    
+    console.log(`📧 Template: ${templateId}, Emails: ${emailCount}, Timeout: ${timeoutMs}ms, MaxTokens: ${maxTokens}`);
+
+    // ------------------------------------------------------------------------
+    // 6. Call Claude API to generate copy
     // ------------------------------------------------------------------------
     
     const message = await Promise.race([
       anthropic.messages.create({
         model: 'claude-sonnet-4-20250514', // Latest Claude Sonnet model
-        max_tokens: 4000, // Maximum length of response
+        max_tokens: maxTokens, // Dynamic based on content type
         system: `You are an expert copywriter with 40 years of experience. You create compelling, high-converting copy that resonates with target audiences. Follow all instructions carefully and deliver polished, professional copy.
 
 CRITICAL OUTPUT FORMAT:
@@ -300,7 +335,7 @@ REMEMBER: Output ONLY HTML. No markdown, no preamble, no explanation. Just the H
         ],
       }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000)
+        setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs / 1000} seconds`)), timeoutMs)
       ),
     ]);
 

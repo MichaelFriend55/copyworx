@@ -90,16 +90,94 @@ export function processEmailHTML(html: string): string {
 }
 
 /**
+ * Process HTML for email sequence templates
+ * Ensures proper formatting and visual separation between multiple emails
+ * 
+ * @param html - HTML from Claude (email sequence)
+ * @returns Processed HTML with proper email separators and styling
+ */
+export function processEmailSequenceHTML(html: string): string {
+  if (!html || typeof html !== 'string') {
+    console.warn('⚠️ processEmailSequenceHTML received invalid input:', html);
+    return '<p>Error: No content generated</p>';
+  }
+  
+  let processed = html;
+  
+  // Count emails in the sequence for logging
+  const emailCount = (processed.match(/═══\s*EMAIL\s*\d+/gi) || []).length;
+  console.log(`📧 Processing email sequence with ${emailCount} emails`);
+  
+  // Ensure horizontal rules are properly formatted for TipTap
+  // TipTap uses <hr> tags which render as horizontal dividers
+  processed = processed.replace(/<hr\s*\/?>/gi, '<hr>');
+  
+  // Add visual spacing around email headers if they exist as plain text
+  // Pattern: === EMAIL X of Y: TITLE ===
+  processed = processed.replace(
+    /═{3,}\s*(EMAIL\s*\d+[^═]*?)═{3,}/gi,
+    (match, content) => {
+      // Keep it as-is if already in h2 tags, otherwise the h2 should handle it
+      return match;
+    }
+  );
+  
+  // Ensure all Subject: lines are h3 headings
+  processed = processed.replace(
+    /<p>\s*Subject:\s*([^<]+)<\/p>/gi,
+    '<h3>Subject: $1</h3>'
+  );
+  
+  // Also handle Subject: that may be wrapped directly (not in p tags)
+  processed = processed.replace(
+    /(?<![<h3>])Subject:\s*([^\n<]+)(?=\n|<)/gi,
+    (match, subject) => {
+      // Only replace if not already in an h3
+      if (!match.includes('<h3>')) {
+        return `<h3>Subject: ${subject.trim()}</h3>`;
+      }
+      return match;
+    }
+  );
+  
+  return sanitizeGeneratedHTML(processed);
+}
+
+/**
+ * Check if content appears to be an email sequence (multiple emails)
+ * 
+ * @param html - HTML content to check
+ * @returns True if content contains multiple email markers
+ */
+export function isEmailSequence(html: string): boolean {
+  if (!html) return false;
+  
+  // Check for email sequence markers (EMAIL 1, EMAIL 2, etc.)
+  const emailMarkers = html.match(/EMAIL\s*\d+/gi);
+  return emailMarkers !== null && emailMarkers.length > 1;
+}
+
+/**
  * Main entry point for formatting generated content
  * Routes to appropriate processor based on content type
  * 
  * @param html - HTML from Claude API
- * @param isEmail - Whether this is email content
+ * @param isEmail - Whether this is email content (single email)
  * @returns Sanitized and processed HTML
  */
 export function formatGeneratedContent(html: string, isEmail: boolean = false): string {
   try {
-    const processed = isEmail ? processEmailHTML(html) : sanitizeGeneratedHTML(html);
+    let processed: string;
+    
+    // Auto-detect email sequences (multiple emails in one generation)
+    if (isEmailSequence(html)) {
+      console.log('📧 Detected email sequence, using sequence processor');
+      processed = processEmailSequenceHTML(html);
+    } else if (isEmail) {
+      processed = processEmailHTML(html);
+    } else {
+      processed = sanitizeGeneratedHTML(html);
+    }
     
     // Validate result
     if (!processed || processed.trim().length === 0) {
