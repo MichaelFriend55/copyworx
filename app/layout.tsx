@@ -12,6 +12,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 /**
@@ -138,6 +139,16 @@ export default function RootLayout({
           }}
         >
           {children}
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
+                borderRadius: '0.5rem',
+              },
+            }}
+          />
         </ClerkProvider>
       </body>
     </html>

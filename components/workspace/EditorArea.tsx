@@ -34,11 +34,12 @@ import Highlight from '@tiptap/extension-highlight';
 import { FontSize } from '@/lib/tiptap/font-size';
 import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId, useViewMode } from '@/lib/stores/workspaceStore';
 import { useSnippetStore } from '@/lib/stores/snippetStore';
-import { getDocument, updateDocument } from '@/lib/storage/document-storage';
+import { getDocument, updateDocument, createDocumentVersion } from '@/lib/storage/document-storage';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
-import { ZoomIn, ZoomOut } from 'lucide-react';
+import { ZoomIn, ZoomOut, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import { usePageCalculations, PAGE_CONFIG } from '@/lib/hooks/usePageCalculations';
 import { PageModeWrapper } from './PageModeWrapper';
@@ -478,6 +479,80 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
    */
   const canZoomOut = zoomLevel > ZOOM_LEVELS[0];
 
+  /**
+   * Parse version number from document title
+   * Extracts the LAST occurrence of " v" followed by digits
+   */
+  const parseVersionFromTitle = useCallback((title: string): { base: string; version: number | null } => {
+    // Match " v" or " V" followed by digits at the end of string
+    const regex = /\s+v(\d+)$/i;
+    const match = title.match(regex);
+    
+    if (match) {
+      const version = parseInt(match[1], 10);
+      const base = title.slice(0, match.index).trim();
+      return { base, version };
+    }
+    
+    return { base: title, version: null };
+  }, []);
+
+  /**
+   * Handle "Save as New Version" - creates a copy with incremented version
+   */
+  const handleSaveAsNewVersion = useCallback(() => {
+    if (!currentDocument || !activeProjectId || !editor) {
+      console.error('❌ Cannot save version: missing document, project, or editor');
+      return;
+    }
+
+    try {
+      // Get current editor content
+      const currentContent = editor.getHTML();
+      
+      // Parse current title for version info
+      const { base, version } = parseVersionFromTitle(currentDocument.title);
+      const currentVersion = version ?? 1;
+      const newVersion = currentVersion + 1;
+      
+      // Create new version using storage function
+      const newDoc = createDocumentVersion(activeProjectId, currentDocument.id, currentContent);
+      
+      // Update the new document's title with correct version
+      const newTitle = `${base} v${newVersion}`;
+      updateDocument(activeProjectId, newDoc.id, { 
+        title: newTitle,
+        baseTitle: base,
+        version: newVersion 
+      });
+      
+      // Update local state to show new document
+      setCurrentDocument({
+        ...newDoc,
+        title: newTitle,
+        baseTitle: base,
+        version: newVersion,
+        content: currentContent,
+      });
+      
+      // Update active document ID in store
+      setActiveDocumentIdRef.current(newDoc.id);
+      
+      // Show success toast
+      toast.success(`Created ${newTitle}`);
+      
+      console.log('✅ New version created:', {
+        originalTitle: currentDocument.title,
+        newTitle,
+        newVersion,
+        newId: newDoc.id,
+      });
+    } catch (error) {
+      console.error('❌ Failed to create new version:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create new version');
+    }
+  }, [currentDocument, activeProjectId, editor, parseVersionFromTitle]);
+
   // Expose loadDocument via ref for parent components
   useImperativeHandle(ref, () => ({
     loadDocument: handleLoadDocument,
@@ -507,14 +582,25 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         >
           {/* Page Mode Document Header - Same as Scrolling Mode */}
           <div className="px-16 py-3 border-b border-gray-200 flex items-center justify-between mb-4 bg-white">
-            {/* Title display */}
-            <div className="flex items-start gap-2 flex-1 min-w-0 pr-4">
+            {/* Title display with version button */}
+            <div className="flex items-center gap-2 flex-1 min-w-0 pr-4">
               <span className="text-xl font-sans font-semibold text-black line-clamp-2">
                 {currentDocument.title}
               </span>
-              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium flex-shrink-0 mt-0.5">
-                v{currentDocument.version}
-              </span>
+              {/* Save as New Version button */}
+              <button
+                onClick={handleSaveAsNewVersion}
+                className={cn(
+                  'p-1.5 rounded flex-shrink-0',
+                  'hover:bg-gray-100 active:bg-gray-200',
+                  'transition-colors duration-150',
+                  'focus:outline-none focus:ring-2 focus:ring-primary/20'
+                )}
+                title="Save as New Version"
+                aria-label="Save as New Version"
+              >
+                <Copy className="w-4 h-4 text-gray-500" />
+              </button>
             </div>
 
             {/* Right side: Zoom controls + Save status */}
@@ -667,7 +753,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
             >
               {/* Title display */}
               <div className={cn(
-                'flex items-start gap-2 flex-1 min-w-0 pr-4',
+                'flex items-center gap-2 flex-1 min-w-0 pr-4',
                 isFocusMode && 'opacity-0' // Hide title in Focus Mode for cleaner look
               )}>
                 <span
@@ -680,9 +766,20 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                 >
                   {currentDocument.title}
                 </span>
-                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium flex-shrink-0 mt-0.5">
-                  v{currentDocument.version}
-                </span>
+                {/* Save as New Version button */}
+                <button
+                  onClick={handleSaveAsNewVersion}
+                  className={cn(
+                    'p-1.5 rounded flex-shrink-0',
+                    'hover:bg-gray-100 active:bg-gray-200',
+                    'transition-colors duration-150',
+                    'focus:outline-none focus:ring-2 focus:ring-primary/20'
+                  )}
+                  title="Save as New Version"
+                  aria-label="Save as New Version"
+                >
+                  <Copy className="w-4 h-4 text-gray-500" />
+                </button>
               </div>
 
               {/* Right side: Zoom controls + Save status (hidden in Focus Mode) */}

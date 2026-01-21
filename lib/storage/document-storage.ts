@@ -120,12 +120,12 @@ export function createDocument(
   // Create timestamp
   const now = new Date().toISOString();
   
-  // Create new document with version 1
+  // Create new document (no automatic version suffix)
   const newDocument: ProjectDocument = {
     id: generateId(),
     projectId,
     baseTitle: sanitizedTitle,
-    title: `${sanitizedTitle} v1`,
+    title: sanitizedTitle,
     version: 1,
     content,
     createdAt: now,
@@ -469,11 +469,11 @@ export function renameDocument(
   const existingDoc = project.documents[docIndex];
   const now = new Date().toISOString();
   
-  // Create renamed document - new family, version 1
+  // Create renamed document - new family (no automatic version suffix)
   const renamedDoc: ProjectDocument = {
     ...existingDoc,
     baseTitle: sanitizedTitle,
-    title: `${sanitizedTitle} v1`,
+    title: sanitizedTitle,
     version: 1,
     parentVersionId: undefined, // Break link to original version group
     modifiedAt: now,
