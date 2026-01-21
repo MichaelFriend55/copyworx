@@ -612,32 +612,40 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           zoomLevel={zoomLevel}
           isReady={pageCalcsReady}
         >
-          {/* Page Mode Document Header - Same as Scrolling Mode */}
-          <div className="px-16 py-3 border-b border-gray-200 flex items-center justify-between mb-4 bg-white" data-print-hide>
-            {/* Title display with version button */}
-            <div className="flex items-center gap-2 flex-1 min-w-0 pr-4">
-              <span className="text-xl font-sans font-semibold text-black line-clamp-2">
+          {/* Page Mode Document Header - Two-line layout */}
+          <div className="px-16 py-3 border-b border-gray-200 mb-4 bg-white space-y-2" data-print-hide>
+            {/* LINE 1: Document title and Save as New Version button */}
+            <div className="flex items-start justify-between gap-4">
+              {/* Title - left aligned, can wrap */}
+              <h1 
+                className="text-xl font-sans font-semibold text-black leading-tight max-w-[70%]"
+                title={currentDocument.title}
+              >
                 {currentDocument.title}
-              </span>
-              {/* Save as New Version button */}
+              </h1>
+              
+              {/* Save as New Version button - right aligned */}
               <button
                 onClick={handleSaveAsNewVersion}
                 className={cn(
-                  'p-1.5 rounded flex-shrink-0',
-                  'hover:bg-gray-100 active:bg-gray-200',
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md flex-shrink-0',
+                  'text-sm font-medium',
+                  'bg-primary/10 text-primary',
+                  'hover:bg-primary/20 active:bg-primary/25',
                   'transition-colors duration-150',
-                  'focus:outline-none focus:ring-2 focus:ring-primary/20'
+                  'focus:outline-none focus:ring-2 focus:ring-primary/30'
                 )}
                 title="Save as New Version"
                 aria-label="Save as New Version"
               >
-                <Copy className="w-4 h-4 text-gray-500" />
+                <Copy className="w-4 h-4" />
+                <span>Save as New Version</span>
               </button>
             </div>
 
-            {/* Right side: Zoom controls + Save status */}
-            <div className="flex items-center gap-4 flex-shrink-0">
-              {/* Zoom controls */}
+            {/* LINE 2: Zoom controls and Save status */}
+            <div className="flex items-center justify-between">
+              {/* Zoom controls - left side */}
               <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
                 {/* Zoom out button */}
                 <button
@@ -711,11 +719,8 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                 </button>
               </div>
 
-              {/* Vertical divider between zoom and save status */}
-              <div className="w-px h-5 bg-gray-200" />
-
-              {/* Last edited with auto-save indicator */}
-              <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap min-w-[180px]">
+              {/* Save status - right side */}
+              <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
                 <span>
                   Saved{' '}
                   {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 
@@ -774,53 +779,54 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         >
         {currentDocument ? (
           <>
-            {/* Document header */}
+            {/* Document header - Two-line layout */}
             <div
               className={cn(
-                'flex items-center justify-between transition-all duration-300',
+                'transition-all duration-300',
                 isFocusMode 
                   ? 'px-8 py-2 border-b border-transparent' // Focus Mode: minimal header
-                  : 'px-16 py-3 border-b border-gray-200' // Normal: standard header
+                  : 'px-16 py-3 border-b border-gray-200 space-y-2' // Normal: standard header
               )}
               data-print-hide
             >
-              {/* Title display */}
+              {/* LINE 1: Document title and Save as New Version button */}
               <div className={cn(
-                'flex items-center gap-2 flex-1 min-w-0 pr-4',
-                isFocusMode && 'opacity-0' // Hide title in Focus Mode for cleaner look
+                'flex items-start justify-between gap-4',
+                isFocusMode && 'opacity-0' // Hide in Focus Mode
               )}>
-                <span
-                  className={cn(
-                    'text-xl font-sans font-semibold',
-                    'text-black',
-                    'line-clamp-2'
-                  )}
+                {/* Title - left aligned, can wrap */}
+                <h1 
+                  className="text-xl font-sans font-semibold text-black leading-tight max-w-[70%]"
                   title={currentDocument.title}
                 >
                   {currentDocument.title}
-                </span>
-                {/* Save as New Version button */}
+                </h1>
+                
+                {/* Save as New Version button - right aligned */}
                 <button
                   onClick={handleSaveAsNewVersion}
                   className={cn(
-                    'p-1.5 rounded flex-shrink-0',
-                    'hover:bg-gray-100 active:bg-gray-200',
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md flex-shrink-0',
+                    'text-sm font-medium',
+                    'bg-primary/10 text-primary',
+                    'hover:bg-primary/20 active:bg-primary/25',
                     'transition-colors duration-150',
-                    'focus:outline-none focus:ring-2 focus:ring-primary/20'
+                    'focus:outline-none focus:ring-2 focus:ring-primary/30'
                   )}
                   title="Save as New Version"
                   aria-label="Save as New Version"
                 >
-                  <Copy className="w-4 h-4 text-gray-500" />
+                  <Copy className="w-4 h-4" />
+                  <span>Save as New Version</span>
                 </button>
               </div>
 
-              {/* Right side: Zoom controls + Save status (hidden in Focus Mode) */}
+              {/* LINE 2: Zoom controls and Save status (hidden in Focus Mode) */}
               <div className={cn(
-                'flex items-center gap-4 transition-all duration-300 flex-shrink-0',
-                isFocusMode && 'opacity-0 w-0 overflow-hidden'
+                'flex items-center justify-between transition-all duration-300',
+                isFocusMode && 'opacity-0 h-0 overflow-hidden'
               )}>
-                {/* Zoom controls */}
+                {/* Zoom controls - left side */}
                 <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
                   {/* Zoom out button */}
                   <button
@@ -894,11 +900,8 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                   </button>
                 </div>
 
-                {/* Vertical divider between zoom and save status */}
-                <div className="w-px h-5 bg-gray-200" />
-
-                {/* Last edited with auto-save indicator */}
-                <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap min-w-[180px]">
+                {/* Save status - right side */}
+                <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
                   <span>
                     Saved{' '}
                     {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 

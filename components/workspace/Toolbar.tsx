@@ -48,6 +48,7 @@ import { useActiveDocumentId, useActiveProjectId, useUIActions, useViewMode } fr
 import { getDocument, updateDocument } from '@/lib/storage/document-storage';
 import { ViewModeSelector } from './ViewModeSelector';
 import { SaveAsSnippetButton } from './SaveAsSnippetButton';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { cn } from '@/lib/utils';
 
 interface ToolbarProps {
@@ -649,6 +650,8 @@ function DocumentMenu({
   const [showExportSubmenu, setShowExportSubmenu] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+  const [pendingImportType, setPendingImportType] = useState<'txt' | 'md' | 'docx' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuContainerRef = useRef<HTMLDivElement>(null);
 
@@ -707,8 +710,49 @@ function DocumentMenu({
     }
   }, [isOpen]);
 
-  // Handle import file selection - trigger file input
-  const handleImportClick = (fileType: 'txt' | 'md' | 'docx') => {
+  /**
+   * Check if editor has content (not empty or just whitespace)
+   * 
+   * @returns true if editor has meaningful content, false if empty
+   */
+  const hasEditorContent = useCallback((): boolean => {
+    if (!editor) return false;
+    
+    // Get plain text content and check if it's not just whitespace
+    const text = editor.getText().trim();
+    return text.length > 0;
+  }, [editor]);
+
+  /**
+   * Handle confirming overwrite - proceed with file import
+   */
+  const handleConfirmOverwrite = useCallback(() => {
+    if (!pendingImportType) return;
+    
+    // Close modal
+    setShowOverwriteModal(false);
+    
+    // Proceed with import
+    triggerFileInput(pendingImportType);
+    
+    // Clear pending import type
+    setPendingImportType(null);
+  }, [pendingImportType]);
+
+  /**
+   * Handle canceling overwrite - abort import
+   */
+  const handleCancelOverwrite = useCallback(() => {
+    setShowOverwriteModal(false);
+    setPendingImportType(null);
+  }, []);
+
+  /**
+   * Trigger file input for import
+   * 
+   * @param fileType - Type of file to import
+   */
+  const triggerFileInput = (fileType: 'txt' | 'md' | 'docx') => {
     // Store the file type so we can validate it when file is selected
     fileInputRef.current?.setAttribute('data-import-type', fileType);
     
@@ -730,6 +774,20 @@ function DocumentMenu({
     // Trigger file input
     fileInputRef.current?.click();
     closeMenu();
+  };
+
+  // Handle import file selection - check for content first
+  const handleImportClick = (fileType: 'txt' | 'md' | 'docx') => {
+    // Check if editor has content
+    if (hasEditorContent()) {
+      // Show overwrite confirmation modal
+      setPendingImportType(fileType);
+      setShowOverwriteModal(true);
+      closeMenu();
+    } else {
+      // No content, proceed directly with import
+      triggerFileInput(fileType);
+    }
   };
 
   /**
@@ -1077,6 +1135,18 @@ function DocumentMenu({
           <span className="text-sm">{exportMessage.text}</span>
         </div>
       )}
+
+      {/* Overwrite Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showOverwriteModal}
+        title="Overwrite Current Document?"
+        message={`Importing will replace all content in '${documentTitle || 'this document'}'. This action cannot be undone.`}
+        confirmLabel="Import Anyway"
+        cancelLabel="Cancel"
+        onClose={handleCancelOverwrite}
+        onConfirm={handleConfirmOverwrite}
+        isDestructive={false}
+      />
     </div>
   );
 }

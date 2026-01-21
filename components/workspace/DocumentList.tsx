@@ -144,7 +144,7 @@ const DraggableDocumentRow = React.memo(({
       ref={setNodeRef}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       className={cn(
-        'group flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer',
+        'group flex items-start gap-1.5 px-2 py-1.5 rounded cursor-pointer',
         'transition-colors duration-100',
         isSelected
           ? 'bg-primary/10 text-primary'
@@ -190,7 +190,7 @@ const DraggableDocumentRow = React.memo(({
       ) : (
         <span
           className={cn(
-            'flex-1 truncate text-xs',
+            'flex-1 text-xs leading-tight line-clamp-2',
             isSelected ? 'font-medium text-primary' : 'text-foreground'
           )}
           onDoubleClick={(e) => {
@@ -356,7 +356,7 @@ function DocumentRow({
   return (
     <div
       className={cn(
-        'group flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer',
+        'group flex items-start gap-1.5 px-2 py-1.5 rounded cursor-pointer',
         'transition-colors duration-100',
         isSelected
           ? 'bg-primary/10 text-primary'
@@ -366,12 +366,12 @@ function DocumentRow({
     >
       {/* Horizontal connector line - dark and visible */}
       {showConnector && (
-        <div className="w-3 h-px bg-foreground/30 -ml-2 flex-shrink-0" />
+        <div className="w-3 h-px bg-foreground/30 -ml-2 flex-shrink-0 mt-1.5" />
       )}
       
       {/* File icon */}
       <FileText className={cn(
-        'h-3 w-3 flex-shrink-0',
+        'h-3 w-3 flex-shrink-0 mt-0.5',
         isSelected ? 'text-primary' : 'text-muted-foreground'
       )} />
       
@@ -396,7 +396,7 @@ function DocumentRow({
       ) : (
         <span
           className={cn(
-            'flex-1 truncate text-xs',
+            'flex-1 text-xs leading-tight line-clamp-2',
             isSelected ? 'font-medium text-primary' : 'text-foreground'
           )}
           onDoubleClick={(e) => {

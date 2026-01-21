@@ -187,82 +187,85 @@ function DocumentRow({
   return (
     <div
       className={cn(
-        'group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer',
+        'group flex items-start gap-1.5 px-2 py-1.5 rounded-md cursor-pointer',
         'transition-colors duration-150',
         isSelected
           ? 'bg-blue-50 border border-blue-200'
           : 'hover:bg-gray-50'
       )}
-      style={{ paddingLeft: `${12 + indentLevel * 16}px` }}
+      style={{ paddingLeft: `${8 + indentLevel * 12}px` }}
       onClick={() => !isEditing && onSelect(doc)}
     >
       <FileText className={cn(
-        'h-4 w-4 flex-shrink-0',
+        'h-3.5 w-3.5 flex-shrink-0 mt-px',
         isSelected ? 'text-blue-600' : 'text-gray-400'
       )} />
       
       {isEditing ? (
-        <div className="flex-1 flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-1.5">
           <input
             type="text"
             value={editValue}
             onChange={(e) => onEditChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 px-2 py-1 text-sm border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1 px-1.5 py-0.5 text-xs border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
             autoFocus
           />
           <button
             onClick={(e) => { e.stopPropagation(); onSaveEdit(); }}
-            className="p-1 text-green-600 hover:bg-green-50 rounded"
+            className="p-0.5 text-green-600 hover:bg-green-50 rounded"
           >
-            <Check className="h-3.5 w-3.5" />
+            <Check className="h-3 w-3" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onCancelEdit(); }}
-            className="p-1 text-gray-500 hover:bg-gray-100 rounded"
+            className="p-0.5 text-gray-500 hover:bg-gray-100 rounded"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-3 w-3" />
           </button>
         </div>
       ) : (
         <>
           <div className="flex-1 min-w-0">
-            <div className={cn(
-              'text-sm font-medium truncate',
-              isSelected ? 'text-blue-900' : 'text-gray-900'
-            )}>
+            <div 
+              className={cn(
+                'text-xs font-medium leading-snug line-clamp-2',
+                isSelected ? 'text-blue-900' : 'text-gray-900'
+              )}
+              title={doc.title}
+            >
               {doc.title}
             </div>
-            <div className="flex items-center gap-3 mt-0.5">
-              <span className="flex items-center gap-1 text-xs text-gray-500">
-                <Calendar className="h-3 w-3" />
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="flex items-center gap-0.5 text-[10px] text-gray-500">
+                <Calendar className="h-2.5 w-2.5" />
                 {formatRelativeDate(doc.modifiedAt)}
               </span>
               {doc.metadata?.wordCount !== undefined && (
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                  <Type className="h-3 w-3" />
-                  {doc.metadata.wordCount} words
+                <span className="flex items-center gap-0.5 text-[10px] text-gray-500">
+                  <Type className="h-2.5 w-2.5" />
+                  {doc.metadata.wordCount}w
                 </span>
               )}
             </div>
           </div>
           
           {/* Actions - visible on hover */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
             <button
               onClick={(e) => { e.stopPropagation(); onStartEdit(); }}
-              className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+              className="p-1 rounded hover:bg-gray-200 transition-colors"
               title="Rename"
             >
-              <Pencil className="h-3.5 w-3.5 text-gray-500" />
+              <Pencil className="h-3 w-3 text-gray-500" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="p-1.5 rounded hover:bg-red-100 transition-colors"
+              className="p-1 rounded hover:bg-red-100 transition-colors"
               title="Delete"
             >
-              <Trash2 className="h-3.5 w-3.5 text-red-500" />
+              <Trash2 className="h-3 w-3 text-red-500" />
             </button>
           </div>
         </>
@@ -318,76 +321,76 @@ function FolderRow({
   return (
     <div
       className={cn(
-        'group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer',
+        'group flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer',
         'hover:bg-gray-50 transition-colors duration-150'
       )}
-      style={{ paddingLeft: `${12 + indentLevel * 16}px` }}
+      style={{ paddingLeft: `${8 + indentLevel * 12}px` }}
       onClick={() => !isEditing && onToggle()}
     >
       {isExpanded ? (
-        <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+        <ChevronDown className="h-3 w-3 text-gray-400 flex-shrink-0" />
       ) : (
-        <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+        <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
       )}
       
-      <FolderIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+      <FolderIcon className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
       
       {isEditing ? (
-        <div className="flex-1 flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-1.5">
           <input
             type="text"
             value={editValue}
             onChange={(e) => onEditChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 px-2 py-1 text-sm border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1 px-1.5 py-0.5 text-xs border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
             autoFocus
           />
           <button
             onClick={(e) => { e.stopPropagation(); onSaveEdit(); }}
-            className="p-1 text-green-600 hover:bg-green-50 rounded"
+            className="p-0.5 text-green-600 hover:bg-green-50 rounded"
           >
-            <Check className="h-3.5 w-3.5" />
+            <Check className="h-3 w-3" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onCancelEdit(); }}
-            className="p-1 text-gray-500 hover:bg-gray-100 rounded"
+            className="p-0.5 text-gray-500 hover:bg-gray-100 rounded"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-3 w-3" />
           </button>
         </div>
       ) : (
         <>
-          <span className="flex-1 text-sm font-semibold text-gray-900 truncate">
+          <span className="flex-1 text-xs font-semibold text-gray-900 truncate">
             {folder.name}
           </span>
           
-          <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-100 rounded-full">
+          <span className="text-[10px] text-gray-500 px-1.5 py-0.5 bg-gray-100 rounded-full">
             {documentCount}
           </span>
           
           {/* Actions - visible on hover */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={(e) => { e.stopPropagation(); onCreateDocument(); }}
-              className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+              className="p-1 rounded hover:bg-gray-200 transition-colors"
               title="New document in folder"
             >
-              <FilePlus className="h-3.5 w-3.5 text-gray-500" />
+              <FilePlus className="h-3 w-3 text-gray-500" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onStartEdit(); }}
-              className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+              className="p-1 rounded hover:bg-gray-200 transition-colors"
               title="Rename folder"
             >
-              <Pencil className="h-3.5 w-3.5 text-gray-500" />
+              <Pencil className="h-3 w-3 text-gray-500" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="p-1.5 rounded hover:bg-red-100 transition-colors"
+              className="p-1 rounded hover:bg-red-100 transition-colors"
               title="Delete folder"
             >
-              <Trash2 className="h-3.5 w-3.5 text-red-500" />
+              <Trash2 className="h-3 w-3 text-red-500" />
             </button>
           </div>
         </>
@@ -674,11 +677,11 @@ function ProjectSection({
   };
 
   return (
-    <div className="mb-4">
+    <div className="mb-3">
       {/* Project header */}
       <div
         className={cn(
-          'group flex items-center gap-2 px-3 py-2.5 rounded-lg',
+          'group flex items-center gap-1.5 px-2 py-1.5 rounded-md',
           'transition-colors duration-150',
           isActive
             ? 'bg-blue-100 border border-blue-300'
@@ -694,26 +697,26 @@ function ProjectSection({
         }}
       >
         {isExpanded ? (
-          <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
+          <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
+          <ChevronRight className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
         )}
         
         <FolderIcon className={cn(
-          'h-5 w-5 flex-shrink-0',
+          'h-4 w-4 flex-shrink-0',
           isActive ? 'text-blue-600' : 'text-gray-400'
         )} />
         
         {/* Project name - editable or display */}
         {isEditingProjectName ? (
-          <div className="flex-1 flex items-center gap-2 min-w-0">
+          <div className="flex-1 flex items-center gap-1.5 min-w-0">
             <input
               type="text"
               value={projectNameEditValue}
               onChange={(e) => setProjectNameEditValue(e.target.value)}
               onKeyDown={handleProjectRenameKeyDown}
               onClick={(e) => e.stopPropagation()}
-              className="flex-1 px-2 py-1 text-sm font-semibold border-2 border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="flex-1 px-1.5 py-0.5 text-xs font-semibold border-2 border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               autoFocus
               placeholder="Project name"
             />
@@ -722,38 +725,38 @@ function ProjectSection({
                 e.stopPropagation();
                 handleSaveProjectRename();
               }}
-              className="p-1 text-green-600 hover:bg-green-50 rounded flex-shrink-0"
+              className="p-0.5 text-green-600 hover:bg-green-50 rounded flex-shrink-0"
               title="Save"
             >
-              <Check className="h-4 w-4" />
+              <Check className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleCancelProjectRename();
               }}
-              className="p-1 text-gray-500 hover:bg-gray-100 rounded flex-shrink-0"
+              className="p-0.5 text-gray-500 hover:bg-gray-100 rounded flex-shrink-0"
               title="Cancel"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ) : (
           <>
             <span className={cn(
-              'flex-1 font-semibold truncate',
+              'flex-1 text-xs font-semibold truncate',
               isActive ? 'text-blue-900' : 'text-gray-900'
             )}>
               {project.name}
             </span>
             
             {isActive && (
-              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded flex-shrink-0">
+              <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">
                 Active
               </span>
             )}
             
-            <span className="text-xs text-gray-500 flex-shrink-0">
+            <span className="text-[10px] text-gray-500 flex-shrink-0">
               {documents.length} docs
             </span>
             
@@ -764,14 +767,14 @@ function ProjectSection({
                 handleStartProjectRename();
               }}
               className={cn(
-                'p-1.5 rounded opacity-0 group-hover:opacity-100',
+                'p-1 rounded opacity-0 group-hover:opacity-100',
                 'hover:bg-blue-100 transition-all duration-150',
                 'flex-shrink-0'
               )}
               title="Rename project"
               aria-label={`Rename project ${project.name}`}
             >
-              <Pencil className="h-3.5 w-3.5 text-blue-600" />
+              <Pencil className="h-3 w-3 text-blue-600" />
             </button>
             
             {/* Delete button - visible on hover */}
@@ -782,14 +785,14 @@ function ProjectSection({
                   onDeleteProject?.(project);
                 }}
                 className={cn(
-                  'p-1.5 rounded opacity-0 group-hover:opacity-100',
+                  'p-1 rounded opacity-0 group-hover:opacity-100',
                   'hover:bg-red-100 transition-all duration-150',
                   'flex-shrink-0'
                 )}
                 title="Delete project"
                 aria-label={`Delete project ${project.name}`}
               >
-                <Trash2 className="h-4 w-4 text-red-500" />
+                <Trash2 className="h-3 w-3 text-red-500" />
               </button>
             )}
           </>
