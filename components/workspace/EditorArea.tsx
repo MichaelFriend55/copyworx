@@ -307,6 +307,37 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   }, [editor, activeDocumentId, loadDocumentFromStorage]);
 
   /**
+   * Listen for document updates from external sources (like import)
+   * Reload document from storage when title or other metadata changes
+   */
+  useEffect(() => {
+    const handleDocumentUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { projectId, documentId } = customEvent.detail;
+      
+      // Only reload if it's the currently active document
+      if (projectId === activeProjectId && documentId === activeDocumentId && editor) {
+        try {
+          const doc = getDocument(projectId, documentId);
+          if (doc) {
+            // Update currentDocument state with new data (keeps editor content unchanged)
+            setCurrentDocument(doc);
+            console.log('✅ Document metadata refreshed:', doc.title);
+          }
+        } catch (error) {
+          console.error('❌ Failed to refresh document:', error);
+        }
+      }
+    };
+
+    window.addEventListener('documentUpdated', handleDocumentUpdated);
+    
+    return () => {
+      window.removeEventListener('documentUpdated', handleDocumentUpdated);
+    };
+  }, [activeProjectId, activeDocumentId, editor]);
+
+  /**
    * Listen to editor updates for auto-save
    */
   useEffect(() => {

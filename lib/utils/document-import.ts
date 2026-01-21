@@ -3,18 +3,30 @@
  * @description Document import utilities for Plain Text, Markdown, and Word Document formats
  * 
  * Features:
- * - Import .txt (plain text) files into TipTap editor
- * - Import .md (Markdown) files and convert to HTML
- * - Import .docx (Word Document) files and convert to HTML
+ * - Import .txt (plain text) files into TipTap editor with preserved line breaks
+ * - Import .md (Markdown) files with full formatting conversion via markdown-it
+ * - Import .docx (Word Document) files with formatting preservation via mammoth
  * - File validation and error handling
  * 
  * Dependencies:
  * - mammoth: DOCX to HTML conversion (for .docx files)
+ * - markdown-it: Markdown to HTML parsing (for .md files)
+ * 
+ * Formatting Preserved:
+ * - Headings (H1-H6)
+ * - Bold, italic, underline, strikethrough
+ * - Ordered and unordered lists (including nested)
+ * - Links
+ * - Code blocks and inline code
+ * - Blockquotes
+ * - Text alignment (from Word documents)
+ * - Paragraph spacing and line breaks
  */
 
 'use client';
 
 import type { Editor } from '@tiptap/react';
+import MarkdownIt from 'markdown-it';
 
 // ============================================================================
 // Types
@@ -134,64 +146,67 @@ export function validateFile(
 }
 
 // ============================================================================
+// Markdown Parser Instance
+// ============================================================================
+
+/**
+ * Configured markdown-it instance for parsing Markdown to HTML
+ * 
+ * Configuration:
+ * - html: true - Allow HTML tags in source (passthrough)
+ * - breaks: true - Convert \n to <br> in paragraphs
+ * - linkify: true - Auto-convert URL-like text to links
+ */
+const markdownParser = new MarkdownIt({
+  html: true,
+  breaks: true,
+  linkify: true,
+  typographer: true, // Smart quotes, dashes, etc.
+});
+
+// ============================================================================
 // Markdown to HTML Conversion
 // ============================================================================
 
 /**
- * Convert Markdown to HTML
- * This is a simple conversion - for production, consider using marked.js or similar
+ * Convert Markdown to HTML using markdown-it parser
+ * 
+ * Supports all standard Markdown features:
+ * - Headings (# ## ### etc.)
+ * - Bold (**text** or __text__)
+ * - Italic (*text* or _text_)
+ * - Strikethrough (~~text~~)
+ * - Links [text](url)
+ * - Unordered lists (- or * or +)
+ * - Ordered lists (1. 2. 3.)
+ * - Nested lists
+ * - Blockquotes (>)
+ * - Code blocks (``` or indented)
+ * - Inline code (`code`)
+ * - Horizontal rules (--- or ***)
  * 
  * @param markdown - Markdown content
- * @returns HTML content
+ * @returns HTML content compatible with TipTap editor
  */
 export function markdownToHtml(markdown: string): string {
   if (!markdown || typeof markdown !== 'string') {
     return '';
   }
 
-  let html = markdown;
+  // Normalize line endings (CRLF → LF)
+  const normalized = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-  // Convert headings
-  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+  // Parse markdown to HTML
+  let html = markdownParser.render(normalized);
 
-  // Convert bold
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  // Post-process: Convert <del> to <s> for TipTap strikethrough compatibility
+  // (markdown-it uses <del> by default, TipTap expects <s>)
+  html = html.replace(/<del>/g, '<s>').replace(/<\/del>/g, '</s>');
 
-  // Convert italic
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+  // Post-process: Ensure empty paragraphs are preserved
+  html = html.replace(/<p><\/p>/g, '<p>&nbsp;</p>');
 
-  // Convert strikethrough
-  html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
-
-  // Convert links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-
-  // Convert unordered lists
-  html = html.replace(/^\* (.+)$/gim, '<li>$1</li>');
-  html = html.replace(/^- (.+)$/gim, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-  // Convert ordered lists
-  html = html.replace(/^\d+\. (.+)$/gim, '<li>$1</li>');
-
-  // Convert paragraphs (double line breaks)
-  const paragraphs = html.split('\n\n');
-  html = paragraphs
-    .map(p => {
-      // Don't wrap if it's already wrapped in a block element
-      if (p.match(/^<(h[1-6]|ul|ol|li)/)) {
-        return p;
-      }
-      // Wrap in paragraph tag
-      return `<p>${p.replace(/\n/g, '<br>')}</p>`;
-    })
-    .join('\n');
-
-  return html;
+  return html.trim();
 }
 
 // ============================================================================
@@ -201,6 +216,16 @@ export function markdownToHtml(markdown: string): string {
 /**
  * Convert plain text to HTML with preserved formatting
  * 
+ * Preserves:
+ * - Paragraph breaks (double newlines)
+ * - Single line breaks (converted to <br>)
+ * - Leading/trailing whitespace within paragraphs
+ * 
+ * Handles:
+ * - Windows line endings (CRLF → LF)
+ * - Mac Classic line endings (CR → LF)
+ * - Multiple consecutive blank lines (collapsed to single paragraph break)
+ * 
  * @param plainText - Plain text content
  * @returns HTML content with paragraphs
  */
@@ -209,16 +234,52 @@ export function plainTextToHtml(plainText: string): string {
     return '';
   }
 
-  // Split by double line breaks (paragraphs)
-  const paragraphs = plainText
-    .split(/\n\n+/)
-    .map(p => p.trim())
-    .filter(p => p.length > 0);
+  // Step 1: Normalize line endings (CRLF → LF, CR → LF)
+  const normalized = plainText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-  // Wrap each paragraph in <p> tags
-  return paragraphs
-    .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-    .join('\n');
+  // Step 2: Split by double line breaks (paragraphs)
+  // Using \n\n+ to collapse multiple blank lines as requested
+  const paragraphs = normalized.split(/\n\n+/);
+
+  // Step 3: Convert each paragraph
+  const htmlParagraphs = paragraphs.map(paragraph => {
+    // Trim the paragraph but preserve internal formatting
+    const trimmed = paragraph.trim();
+    
+    // Handle empty paragraphs (shouldn't happen after split, but safe guard)
+    if (!trimmed) {
+      return '';
+    }
+
+    // Escape HTML special characters for safety
+    const escaped = escapeHtml(trimmed);
+
+    // Convert single newlines within paragraph to <br>
+    const withBreaks = escaped.replace(/\n/g, '<br>');
+
+    return `<p>${withBreaks}</p>`;
+  });
+
+  // Filter out empty strings and join
+  return htmlParagraphs.filter(p => p.length > 0).join('\n');
+}
+
+/**
+ * Escape HTML special characters to prevent XSS and ensure proper rendering
+ * 
+ * @param text - Raw text to escape
+ * @returns Text with HTML entities escaped
+ */
+function escapeHtml(text: string): string {
+  const htmlEntities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+  
+  return text.replace(/[&<>"']/g, (char) => htmlEntities[char] || char);
 }
 
 // ============================================================================
@@ -226,28 +287,147 @@ export function plainTextToHtml(plainText: string): string {
 // ============================================================================
 
 /**
- * Convert DOCX to HTML using mammoth
+ * Style mapping for mammoth DOCX conversion
+ * Maps Word styles to HTML elements with proper formatting
+ * 
+ * Key mappings:
+ * - Headings: Word heading styles → HTML h1-h6
+ * - Text formatting: bold, italic, underline, strikethrough
+ * - Alignment: Center/Right aligned paragraphs get CSS classes
+ */
+const MAMMOTH_STYLE_MAP = [
+  // Heading mappings (various Word style names)
+  "p[style-name='Heading 1'] => h1:fresh",
+  "p[style-name='Heading 2'] => h2:fresh",
+  "p[style-name='Heading 3'] => h3:fresh",
+  "p[style-name='Heading 4'] => h4:fresh",
+  "p[style-name='Heading 5'] => h5:fresh",
+  "p[style-name='Heading 6'] => h6:fresh",
+  "p[style-name='Title'] => h1:fresh",
+  "p[style-name='Subtitle'] => h2:fresh",
+  
+  // Text formatting (explicit run-level formatting)
+  "b => strong",
+  "i => em",
+  "u => u",              // Preserve underline (mammoth ignores by default)
+  "strike => s",         // Strikethrough
+  
+  // Alignment classes (used with transforms below)
+  "p[style-name='Center'] => p.text-center:fresh",
+  "p[style-name='Right'] => p.text-right:fresh",
+  "p[style-name='Justify'] => p.text-justify:fresh",
+];
+
+/**
+ * Convert DOCX to HTML using mammoth with full formatting preservation
+ * 
+ * Preserves:
+ * - Headings (H1-H6)
+ * - Bold, italic, underline, strikethrough
+ * - Ordered and unordered lists
+ * - Text alignment (center, right, justify)
+ * - Links
+ * - Tables
+ * 
+ * Does NOT preserve (by design):
+ * - Images (as requested)
+ * - Exact font sizes/colors (mammoth limitation)
+ * - Page margins/layout
  * 
  * @param arrayBuffer - DOCX file content as ArrayBuffer
- * @returns Promise<string> - HTML content
+ * @returns Promise<string> - HTML content compatible with TipTap
  */
 export async function docxToHtml(arrayBuffer: ArrayBuffer): Promise<string> {
   try {
     // Dynamically import mammoth to avoid SSR issues
     const mammoth = await import('mammoth');
     
+    // Access transforms helper (not in TypeScript types but exists at runtime)
+    // The transforms API exists at runtime but isn't in @types/mammoth
+    const mammothWithTransforms = mammoth as unknown as MammothWithTransforms;
+    
+    // Build transform function if transforms helper is available
+    let transformDocument: ((element: unknown) => unknown) | undefined;
+    
+    if (mammothWithTransforms.transforms?.paragraph) {
+      // Use mammoth's transform helper to capture alignment
+      transformDocument = mammothWithTransforms.transforms.paragraph(
+        (paragraph: MammothParagraph) => {
+          // Check paragraph alignment and assign style names for CSS class mapping
+          if (paragraph.alignment === 'center' && !paragraph.styleName) {
+            return { ...paragraph, styleName: 'Center' };
+          }
+          if (paragraph.alignment === 'right' && !paragraph.styleName) {
+            return { ...paragraph, styleName: 'Right' };
+          }
+          if (paragraph.alignment === 'both' && !paragraph.styleName) {
+            // 'both' is justify in Word
+            return { ...paragraph, styleName: 'Justify' };
+          }
+          return paragraph;
+        }
+      );
+    }
+    
+    // Configure mammoth options for maximum formatting preservation
+    const options: Parameters<typeof mammoth.convertToHtml>[1] = {
+      styleMap: MAMMOTH_STYLE_MAP,
+      
+      // Transform document for alignment (if available)
+      ...(transformDocument && { transformDocument }),
+      
+      // Ignore images as requested
+      convertImage: mammoth.images.imgElement(() => {
+        // Return empty to skip images
+        return Promise.resolve({ src: '' });
+      }),
+    };
+    
     // Convert DOCX to HTML
-    const result = await mammoth.convertToHtml({ arrayBuffer });
+    const result = await mammoth.convertToHtml({ arrayBuffer }, options);
     
     if (result.messages && result.messages.length > 0) {
+      // Log warnings but don't fail (e.g., unsupported features)
       console.warn('⚠️ DOCX conversion warnings:', result.messages);
     }
     
-    return result.value;
+    // Post-process: Convert alignment classes to TipTap-compatible format
+    let html = result.value;
+    
+    // TipTap's TextAlign extension uses data attributes, but inline styles work too
+    // Convert our classes to inline styles for TipTap compatibility
+    html = html.replace(/class="text-center"/g, 'style="text-align: center"');
+    html = html.replace(/class="text-right"/g, 'style="text-align: right"');
+    html = html.replace(/class="text-justify"/g, 'style="text-align: justify"');
+    
+    // Remove empty image tags that were skipped
+    html = html.replace(/<img[^>]*src=""[^>]*>/g, '');
+    
+    return html;
   } catch (error) {
     console.error('❌ Error converting DOCX to HTML:', error);
     throw new Error('Failed to convert Word document. The file may be corrupted or in an unsupported format.');
   }
+}
+
+/**
+ * Extended mammoth type that includes the transforms helper
+ * The transforms API exists at runtime but isn't in @types/mammoth
+ */
+interface MammothWithTransforms {
+  transforms?: {
+    paragraph: (fn: (p: MammothParagraph) => MammothParagraph) => (element: unknown) => unknown;
+  };
+}
+
+/**
+ * Mammoth paragraph type for transform function
+ * Simplified type for the paragraph properties we use
+ */
+interface MammothParagraph {
+  alignment?: 'left' | 'center' | 'right' | 'both';
+  styleName?: string;
+  [key: string]: unknown;
 }
 
 // ============================================================================

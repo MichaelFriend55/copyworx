@@ -355,6 +355,12 @@ export function updateDocument(
     };
   }
   
+  // Validate and sanitize baseTitle if it's being updated
+  let updatedBaseTitle = existingDoc.baseTitle;
+  if (updates.baseTitle !== undefined) {
+    updatedBaseTitle = validateBaseTitle(updates.baseTitle);
+  }
+  
   // Merge updates with existing document, protecting immutable fields
   const updatedDoc: ProjectDocument = {
     ...existingDoc,
@@ -364,7 +370,8 @@ export function updateDocument(
     projectId: existingDoc.projectId,
     version: existingDoc.version,
     parentVersionId: existingDoc.parentVersionId,
-    baseTitle: existingDoc.baseTitle,
+    // Allow baseTitle to be updated (with validation)
+    baseTitle: updatedBaseTitle,
     // Always update modifiedAt
     modifiedAt: new Date().toISOString(),
     // Updated metadata (with recalculated counts if content changed)

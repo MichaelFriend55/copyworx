@@ -45,7 +45,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useActiveDocumentId, useActiveProjectId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
-import { getDocument } from '@/lib/storage/document-storage';
+import { getDocument, updateDocument } from '@/lib/storage/document-storage';
 import { ViewModeSelector } from './ViewModeSelector';
 import { SaveAsSnippetButton } from './SaveAsSnippetButton';
 import { cn } from '@/lib/utils';
@@ -631,7 +631,19 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
  * Document menu dropdown component
  * Handles import, export, and print operations
  */
-function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; documentTitle?: string }) {
+function DocumentMenu({ 
+  editor, 
+  documentTitle,
+  activeProjectId,
+  activeDocumentId,
+  onTitleUpdate
+}: { 
+  editor: Editor | null; 
+  documentTitle?: string;
+  activeProjectId: string | null;
+  activeDocumentId: string | null;
+  onTitleUpdate: (newTitle: string) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [showImportSubmenu, setShowImportSubmenu] = useState(false);
   const [showExportSubmenu, setShowExportSubmenu] = useState(false);
@@ -720,6 +732,27 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
     closeMenu();
   };
 
+  /**
+   * Extract filename without extension
+   * Handles edge cases like multiple dots and no extension
+   * 
+   * @param filename - Full filename with extension
+   * @returns Filename without extension
+   * @example
+   * extractFilenameWithoutExtension('Marketing Brief.docx') => 'Marketing Brief'
+   * extractFilenameWithoutExtension('report.v2.final.txt') => 'report.v2.final'
+   * extractFilenameWithoutExtension('readme') => 'readme'
+   */
+  const extractFilenameWithoutExtension = (filename: string): string => {
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex === -1) {
+      // No extension found, return full filename
+      return filename;
+    }
+    // Return everything before the last dot
+    return filename.substring(0, lastDotIndex);
+  };
+
   // Handle file import after file is selected
   const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -737,6 +770,32 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
       const result = await importDocument(editor, file);
       
       if (result.success) {
+        // Extract filename without extension
+        const newTitle = extractFilenameWithoutExtension(file.name);
+        
+        // Update document title if we have an active document
+        if (activeProjectId && activeDocumentId) {
+          try {
+            updateDocument(activeProjectId, activeDocumentId, {
+              title: newTitle,
+              baseTitle: newTitle
+            });
+            
+            // Update the Toolbar's local state so title displays immediately
+            onTitleUpdate(newTitle);
+            
+            // Dispatch custom event to notify EditorArea to reload document
+            window.dispatchEvent(new CustomEvent('documentUpdated', {
+              detail: { projectId: activeProjectId, documentId: activeDocumentId }
+            }));
+            
+            console.log('✅ Document title updated to:', newTitle);
+          } catch (updateError) {
+            console.warn('⚠️ Could not update document title:', updateError);
+            // Don't fail the import if title update fails
+          }
+        }
+        
         setExportMessage({ 
           type: 'success', 
           text: `Imported ${file.name}` 
@@ -1151,7 +1210,13 @@ export function Toolbar({ className }: ToolbarProps) {
           </button>
         </Link>
 
-        <DocumentMenu editor={editor} documentTitle={documentTitle} />
+        <DocumentMenu 
+          editor={editor} 
+          documentTitle={documentTitle}
+          activeProjectId={activeProjectId}
+          activeDocumentId={activeDocumentId}
+          onTitleUpdate={setDocumentTitle}
+        />
 
         <div className="w-px h-6 bg-gray-200 mx-1" />
 
