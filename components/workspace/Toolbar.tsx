@@ -835,7 +835,7 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
                 onMouseEnter={() => setShowImportSubmenu(true)}
                 className={cn(
                   'w-full px-4 py-2 text-left text-sm',
-                  'hover:bg-apple-gray-bg',
+                  'hover:text-apple-blue',
                   'transition-colors duration-150',
                   'text-apple-text-dark',
                   'flex items-center justify-between'
@@ -855,7 +855,7 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
                     onClick={() => handleImportClick('docx')}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
-                      'hover:bg-apple-gray-bg',
+                      'hover:text-apple-blue',
                       'transition-colors duration-150',
                       'text-apple-text-dark'
                     )}
@@ -866,7 +866,7 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
                     onClick={() => handleImportClick('txt')}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
-                      'hover:bg-apple-gray-bg',
+                      'hover:text-apple-blue',
                       'transition-colors duration-150',
                       'text-apple-text-dark'
                     )}
@@ -877,7 +877,7 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
                     onClick={() => handleImportClick('md')}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
-                      'hover:bg-apple-gray-bg',
+                      'hover:text-apple-blue',
                       'transition-colors duration-150',
                       'text-apple-text-dark'
                     )}
@@ -895,7 +895,7 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
                 onMouseEnter={() => setShowExportSubmenu(true)}
                 className={cn(
                   'w-full px-4 py-2 text-left text-sm',
-                  'hover:bg-apple-gray-bg',
+                  'hover:text-apple-blue',
                   'transition-colors duration-150',
                   'text-apple-text-dark',
                   'flex items-center justify-between'
@@ -916,10 +916,10 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
                     disabled={isExporting || !editor}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
-                      'hover:bg-apple-gray-bg',
                       'transition-colors duration-150',
                       'text-apple-text-dark',
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
+                      'disabled:opacity-50 disabled:cursor-not-allowed',
+                      'hover:text-apple-blue disabled:hover:text-apple-text-dark'
                     )}
                   >
                     Word Document (.docx)
@@ -929,10 +929,10 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
                     disabled={isExporting || !editor}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
-                      'hover:bg-apple-gray-bg',
                       'transition-colors duration-150',
                       'text-apple-text-dark',
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
+                      'disabled:opacity-50 disabled:cursor-not-allowed',
+                      'hover:text-apple-blue disabled:hover:text-apple-text-dark'
                     )}
                   >
                     Plain Text (.txt)
@@ -942,10 +942,10 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
                     disabled={isExporting || !editor}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm',
-                      'hover:bg-apple-gray-bg',
                       'transition-colors duration-150',
                       'text-apple-text-dark',
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
+                      'disabled:opacity-50 disabled:cursor-not-allowed',
+                      'hover:text-apple-blue disabled:hover:text-apple-text-dark'
                     )}
                   >
                     Markdown (.md)
@@ -962,7 +962,7 @@ function DocumentMenu({ editor, documentTitle }: { editor: Editor | null; docume
               onClick={handlePrintClick}
               className={cn(
                 'w-full px-4 py-2 text-left text-sm',
-                'hover:bg-apple-gray-bg',
+                'hover:text-apple-blue',
                 'transition-colors duration-150',
                 'text-apple-text-dark',
                 'flex items-center justify-between'
