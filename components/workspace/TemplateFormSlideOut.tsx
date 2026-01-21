@@ -30,7 +30,7 @@ import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import { TemplateFormField, OTHER_OPTION_VALUE } from './TemplateFormField';
 import { cn } from '@/lib/utils';
 import { formatGeneratedContent } from '@/lib/utils/content-formatting';
-import { updateDocument as updateDocumentInStorage } from '@/lib/storage/document-storage';
+import { createDocument, updateDocument as updateDocumentInStorage } from '@/lib/storage/document-storage';
 import { getProjectPersonas } from '@/lib/storage/persona-storage';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useSlideOutActions } from '@/lib/stores/slideOutStore';
@@ -49,6 +49,26 @@ export const TEMPLATE_FORM_PANEL_ID = 'template-form';
  * Get the suffix used for storing custom "Other" values
  */
 const getOtherFieldId = (fieldId: string): string => `${fieldId}_other`;
+
+/**
+ * Generate a document title from template name and current timestamp
+ * Format: "Template Name - Jan 21, 2026 10:30am"
+ */
+function generateDocumentTitle(templateName: string): string {
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+  const formattedTime = now.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit',
+    hour12: true 
+  }).toLowerCase().replace(' ', '');
+  
+  return `${templateName} - ${formattedDate} ${formattedTime}`;
+}
 
 // ═══════════════════════════════════════════════════════════
 // TYPES
@@ -110,9 +130,11 @@ export function TemplateFormSlideOut({
   
   /**
    * Get dynamic loading message for email sequences
+   * Returns null for simple templates (loader is self-explanatory)
+   * Returns descriptive text only when there's meaningful context to add
    */
-  const getLoadingMessage = useCallback((): string => {
-    if (!template) return 'Generating...';
+  const getLoadingMessage = useCallback((): string | null => {
+    if (!template) return null;
     
     // Check if this is an email sequence template
     if (template.id === 'email-sequence-kickoff') {
@@ -127,7 +149,8 @@ export function TemplateFormSlideOut({
       return 'Generating email sequence...';
     }
     
-    return 'Generating...';
+    // For all other templates, just show the loader without text
+    return null;
   }, [template, formData.numberOfEmails]);
   
   // Initialize form data when template changes
@@ -189,68 +212,6 @@ export function TemplateFormSlideOut({
   }, [template, formData]);
   
   /**
-   * Build the AI prompt from template and form data
-   */
-  const buildPrompt = useCallback((): string => {
-    if (!template) return '';
-    
-    let prompt = template.systemPrompt;
-    
-    // Replace field placeholders
-    template.fields.forEach((field) => {
-      let value = formData[field.id] || '';
-      
-      // If "Other" is selected, use the custom value instead
-      if (value === OTHER_OPTION_VALUE) {
-        value = formData[getOtherFieldId(field.id)] || value;
-      }
-      
-      prompt = prompt.replace(new RegExp(`\\{${field.id}\\}`, 'g'), value);
-    });
-    
-    // Brand voice instructions
-    if (applyBrandVoice && activeProject?.brandVoice) {
-      const { brandName, brandTone, brandValues } = activeProject.brandVoice;
-      const brandInstructions = `
-BRAND VOICE GUIDELINES:
-- Brand: ${brandName}
-- Tone: ${brandTone}
-- Core Values: ${brandValues.join(', ')}
-
-Apply this brand voice throughout the copy. Maintain consistency with the brand's tone and values.
-`;
-      prompt = prompt.replace('{brandVoiceInstructions}', brandInstructions);
-    } else {
-      prompt = prompt.replace('{brandVoiceInstructions}', '');
-    }
-    
-    // Persona instructions
-    if (selectedPersonaId) {
-      const persona = personas.find((p) => p.id === selectedPersonaId);
-      if (persona) {
-        const personaInstructions = `
-PERSONA TARGET:
-Write specifically for this persona:
-- Name: ${persona.name}
-- Demographics: ${persona.demographics}
-- Goals: ${persona.goals}
-- Pain Points: ${persona.painPoints}
-- Psychographics: ${persona.psychographics}
-
-Tailor the copy to resonate with this specific persona's needs and characteristics.
-`;
-        prompt = prompt.replace('{personaInstructions}', personaInstructions);
-      } else {
-        prompt = prompt.replace('{personaInstructions}', '');
-      }
-    } else {
-      prompt = prompt.replace('{personaInstructions}', '');
-    }
-    
-    return prompt;
-  }, [template, formData, applyBrandVoice, selectedPersonaId, activeProject, personas]);
-  
-  /**
    * Handle form field change
    */
   const handleFieldChange = useCallback((fieldId: string, value: string) => {
@@ -265,13 +226,49 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
   
   /**
    * Handle template generation
+   * Auto-creates a document if none is currently open
    */
   const handleGenerate = useCallback(async () => {
-    if (!template || !editor || !activeDocumentId || !activeProject) return;
+    // Must have template, editor, and active project
+    if (!template || !editor || !activeProject) return;
+    
+    // Track the document ID to use (existing or newly created)
+    let targetDocumentId = activeDocumentId;
+    
+    // Auto-create document if none is open
+    if (!targetDocumentId) {
+      try {
+        const docTitle = generateDocumentTitle(template.name);
+        const newDoc = createDocument(activeProject.id, docTitle);
+        targetDocumentId = newDoc.id;
+        
+        // Set as active document in store
+        useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
+        
+        console.log('📄 Auto-created document for template:', {
+          title: newDoc.title,
+          id: newDoc.id,
+          templateName: template.name,
+        });
+        
+        // Brief delay to allow EditorArea to react to the new activeDocumentId
+        await new Promise(resolve => setTimeout(resolve, 150));
+      } catch (createError) {
+        console.error('❌ Failed to create document:', createError);
+        setGenerationError('Failed to create document. Please try again.');
+        return;
+      }
+    }
     
     // Validate form
     if (!validateForm()) {
       setGenerationError('Please fill in all required fields');
+      return;
+    }
+    
+    // Validate brand voice if checkbox is checked
+    if (applyBrandVoice && !activeProject?.brandVoice?.brandName) {
+      setGenerationError('Brand Voice is enabled but not configured. Please set up your Brand Voice first or uncheck the option.');
       return;
     }
     
@@ -280,19 +277,25 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
     setGenerationSuccess(false);
     
     try {
-      const prompt = buildPrompt();
+      // Get the selected persona if one is chosen
+      const selectedPersona = selectedPersonaId 
+        ? personas.find((p) => p.id === selectedPersonaId) 
+        : undefined;
       
       console.log('🎨 Generating template copy:', template.name);
-      console.log('📝 Prompt length:', prompt.length);
+      console.log('🎯 Brand Voice:', applyBrandVoice ? activeProject?.brandVoice?.brandName : 'disabled');
+      console.log('👤 Persona:', selectedPersona?.name || 'none');
       
-      // Call Claude API
+      // Call Claude API - send brand voice and persona data for server-side prompt building
       const response = await fetch('/api/generate-template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           templateId: template.id,
-          prompt,
           formData,
+          applyBrandVoice,
+          brandVoice: applyBrandVoice ? activeProject?.brandVoice : undefined,
+          persona: selectedPersona,
         }),
       });
       
@@ -314,7 +317,7 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
       
       // Update document in storage
       try {
-        updateDocumentInStorage(activeProject.id, activeDocumentId, {
+        updateDocumentInStorage(activeProject.id, targetDocumentId, {
           content: formattedContent,
         });
         console.log('💾 Document saved with generated content');
@@ -344,7 +347,7 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
     } finally {
       setIsGenerating(false);
     }
-  }, [template, editor, activeDocumentId, validateForm, buildPrompt, formData, closeSlideOut]);
+  }, [template, editor, activeDocumentId, activeProject, validateForm, formData, applyBrandVoice, selectedPersonaId, personas, closeSlideOut]);
   
   /**
    * Handle cancel
@@ -372,7 +375,7 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
         variant={generationSuccess ? 'default' : isGenerating ? 'default' : 'brand'}
         size="default"
         onClick={handleGenerate}
-        disabled={isGenerating || !editor || !activeDocumentId || generationSuccess}
+        disabled={isGenerating || !editor || !activeProject || generationSuccess}
         className={cn(
           'flex-1',
           // Animated gradient when generating (override background)
@@ -384,7 +387,9 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
         {isGenerating ? (
           <div className="flex flex-col items-center gap-1">
             <AIWorxButtonLoader />
-            <span className="text-xs">{getLoadingMessage()}</span>
+            {getLoadingMessage() && (
+              <span className="text-xs">{getLoadingMessage()}</span>
+            )}
           </div>
         ) : generationSuccess ? (
           <>
@@ -537,14 +542,6 @@ Tailor the copy to resonate with this specific persona's needs and characteristi
           ))}
         </div>
 
-        {/* No document warning */}
-        {!activeDocumentId && (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Note:</strong> Please create or open a document to generate template content.
-            </p>
-          </div>
-        )}
       </div>
     </SlideOutPanel>
   );
