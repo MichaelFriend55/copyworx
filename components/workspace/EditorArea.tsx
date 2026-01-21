@@ -508,17 +508,17 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           {/* Page Mode Document Header - Same as Scrolling Mode */}
           <div className="px-16 py-3 border-b border-gray-200 flex items-center justify-between mb-4 bg-white">
             {/* Title display */}
-            <div className="flex items-center gap-2 flex-1">
-              <span className="text-xl font-sans font-semibold text-black truncate">
+            <div className="flex items-start gap-2 flex-1 min-w-0 pr-4">
+              <span className="text-xl font-sans font-semibold text-black line-clamp-2">
                 {currentDocument.title}
               </span>
-              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
+              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium flex-shrink-0 mt-0.5">
                 v{currentDocument.version}
               </span>
             </div>
 
             {/* Right side: Zoom controls + Save status */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-shrink-0">
               {/* Zoom controls */}
               <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
                 {/* Zoom out button */}
@@ -597,7 +597,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
               <div className="w-px h-5 bg-gray-200" />
 
               {/* Last edited with auto-save indicator */}
-              <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
+              <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap min-w-[180px]">
                 <span>
                   Saved{' '}
                   {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 
@@ -605,18 +605,20 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                     minute: '2-digit' 
                   })}
                 </span>
-                {saveStatus === 'saved' && (
-                  <span className="text-green-500 text-xs flex items-center gap-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Saved
-                  </span>
-                )}
-                {saveStatus === 'saving' && (
-                  <span className="text-yellow-500 text-xs flex items-center gap-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                    Saving...
-                  </span>
-                )}
+                <span className="min-w-[60px]">
+                  {saveStatus === 'saved' && (
+                    <span className="text-green-500 text-xs flex items-center gap-1">
+                      <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                      Saved
+                    </span>
+                  )}
+                  {saveStatus === 'saving' && (
+                    <span className="text-yellow-500 text-xs flex items-center gap-1">
+                      <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                      Saving...
+                    </span>
+                  )}
+                </span>
               </div>
             </div>
           </div>
@@ -665,27 +667,27 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
             >
               {/* Title display */}
               <div className={cn(
-                'flex items-center gap-2 flex-1',
+                'flex items-start gap-2 flex-1 min-w-0 pr-4',
                 isFocusMode && 'opacity-0' // Hide title in Focus Mode for cleaner look
               )}>
                 <span
                   className={cn(
                     'text-xl font-sans font-semibold',
                     'text-black',
-                    'truncate'
+                    'line-clamp-2'
                   )}
                   title={currentDocument.title}
                 >
                   {currentDocument.title}
                 </span>
-                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium flex-shrink-0 mt-0.5">
                   v{currentDocument.version}
                 </span>
               </div>
 
               {/* Right side: Zoom controls + Save status (hidden in Focus Mode) */}
               <div className={cn(
-                'flex items-center gap-4 transition-all duration-300',
+                'flex items-center gap-4 transition-all duration-300 flex-shrink-0',
                 isFocusMode && 'opacity-0 w-0 overflow-hidden'
               )}>
                 {/* Zoom controls */}
@@ -766,7 +768,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                 <div className="w-px h-5 bg-gray-200" />
 
                 {/* Last edited with auto-save indicator */}
-                <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
+                <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap min-w-[180px]">
                   <span>
                     Saved{' '}
                     {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 
@@ -774,18 +776,20 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                       minute: '2-digit' 
                     })}
                   </span>
-                  {saveStatus === 'saved' && (
-                    <span className="text-green-500 text-xs flex items-center gap-1">
-                      <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                      Saved
-                    </span>
-                  )}
-                  {saveStatus === 'saving' && (
-                    <span className="text-yellow-500 text-xs flex items-center gap-1">
-                      <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                      Saving...
-                    </span>
-                  )}
+                  <span className="min-w-[60px]">
+                    {saveStatus === 'saved' && (
+                      <span className="text-green-500 text-xs flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                        Saved
+                      </span>
+                    )}
+                    {saveStatus === 'saving' && (
+                      <span className="text-yellow-500 text-xs flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                        Saving...
+                      </span>
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
