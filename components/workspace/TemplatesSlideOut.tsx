@@ -100,9 +100,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
  * Difficulty badge colors
  */
 const DIFFICULTY_COLORS: Record<Template['complexity'], string> = {
-  Beginner: 'bg-green-100 text-green-700 border-green-200',
-  Intermediate: 'bg-blue-100 text-blue-700 border-blue-200',
-  Advanced: 'bg-purple-100 text-purple-700 border-purple-200',
+  Beginner: 'bg-green-100 text-green-800 border-green-200',
+  Intermediate: 'bg-blue-100 text-blue-800 border-blue-200',
+  Advanced: 'bg-purple-100 text-purple-800 border-purple-200',
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -435,6 +435,56 @@ export function TemplatesSlideOut({
             </div>
           )}
         </div>
+
+        {/* Complexity Legend */}
+        {filteredTemplates.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="bg-gray-50 rounded-lg px-4 py-3">
+              <div className="flex items-start gap-2 mb-3">
+                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Complexity Guide:
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                {/* Beginner */}
+                <div className="flex flex-col items-start gap-1.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800 border border-green-200">
+                    Beginner
+                  </span>
+                  <div className="text-gray-600 space-y-0.5">
+                    <div className="font-medium text-gray-700">5-10 min</div>
+                    <div className="text-gray-600">3-5 fields</div>
+                    <div className="text-gray-500">Basic info</div>
+                  </div>
+                </div>
+                
+                {/* Intermediate */}
+                <div className="flex flex-col items-start gap-1.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                    Intermediate
+                  </span>
+                  <div className="text-gray-600 space-y-0.5">
+                    <div className="font-medium text-gray-700">15-20 min</div>
+                    <div className="text-gray-600">5-8 fields</div>
+                    <div className="text-gray-500">Strategy needed</div>
+                  </div>
+                </div>
+                
+                {/* Advanced */}
+                <div className="flex flex-col items-start gap-1.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                    Advanced
+                  </span>
+                  <div className="text-gray-600 space-y-0.5">
+                    <div className="font-medium text-gray-700">20-30 min</div>
+                    <div className="text-gray-600">8-12+ fields</div>
+                    <div className="text-gray-500">Comprehensive</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </SlideOutPanel>
   );
