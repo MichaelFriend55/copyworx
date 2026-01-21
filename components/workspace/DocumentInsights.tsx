@@ -167,6 +167,14 @@ export function DocumentInsights() {
   const lastContentRef = useRef<string>('');
   const isInitialMountRef = useRef<boolean>(true);
   
+  /**
+   * Reset initial mount flag when document changes
+   * This prevents auto-opening the sidebar when switching documents
+   */
+  useEffect(() => {
+    isInitialMountRef.current = true;
+  }, [activeDocumentId]);
+  
   // Calculate basic metrics from document content
   const documentMetrics = useMemo((): DocumentMetrics | null => {
     if (!documentContent) return null;
@@ -439,15 +447,14 @@ export function DocumentInsights() {
               
               {/* Action Buttons */}
               <div className="flex gap-1.5">
-                {/* Refresh Button */}
+                {/* Analyze Button */}
                 <button
                   onClick={handleRefresh}
                   disabled={insights.aiMetricsLoading || !documentContent}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded',
                     'text-[10px] font-medium transition-colors',
-                    'border border-gray-200 hover:border-gray-300',
-                    'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                    'bg-blue-500 text-white hover:bg-blue-600',
                     'disabled:opacity-50 disabled:cursor-not-allowed'
                   )}
                 >
