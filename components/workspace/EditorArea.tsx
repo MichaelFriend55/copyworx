@@ -788,15 +788,15 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
               className={cn(
                 'transition-all duration-300',
                 isFocusMode 
-                  ? 'px-8 py-2 border-b border-transparent' // Focus Mode: minimal header
+                  ? 'px-8 py-3 border-b border-gray-100 space-y-2' // Focus Mode: clean minimal header
                   : 'px-16 py-3 border-b border-gray-200 space-y-2' // Normal: standard header
               )}
               data-print-hide
             >
               {/* LINE 1: Document title and Save as New Version button */}
               <div className={cn(
-                'flex items-start justify-between gap-4',
-                isFocusMode && 'opacity-0' // Hide in Focus Mode
+                'flex items-start justify-between gap-4'
+                // Always visible - removed isFocusMode hide
               )}>
                 {/* Title - left aligned, can wrap */}
                 <h1 
@@ -825,10 +825,10 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                 </button>
               </div>
 
-              {/* LINE 2: Zoom controls and Save status (hidden in Focus Mode) */}
+              {/* LINE 2: Zoom controls and Save status */}
               <div className={cn(
-                'flex items-center justify-between transition-all duration-300',
-                isFocusMode && 'opacity-0 h-0 overflow-hidden'
+                'flex items-center justify-between transition-all duration-300'
+                // Always visible - removed isFocusMode hide
               )}>
                 {/* Zoom controls - left side */}
                 <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
