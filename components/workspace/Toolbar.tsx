@@ -54,6 +54,8 @@ import { cn } from '@/lib/utils';
 interface ToolbarProps {
   /** Optional CSS classes */
   className?: string;
+  /** Callback to restart the product tour */
+  onRestartTour?: () => void;
 }
 
 /**
@@ -637,7 +639,7 @@ function DocumentMenu({
   documentTitle,
   activeProjectId,
   activeDocumentId,
-  onTitleUpdate
+  onTitleUpdate,
 }: { 
   editor: Editor | null; 
   documentTitle?: string;
@@ -1154,7 +1156,7 @@ function DocumentMenu({
 /**
  * Top toolbar component with file menu and formatting controls
  */
-export function Toolbar({ className }: ToolbarProps) {
+export function Toolbar({ className, onRestartTour }: ToolbarProps) {
   // Optimized selectors
   const activeDocumentId = useActiveDocumentId();
   const activeProjectId = useActiveProjectId();
@@ -1448,7 +1450,7 @@ export function Toolbar({ className }: ToolbarProps) {
         )}
       </div>
 
-      {/* Right section - View Mode */}
+      {/* Right section - View Mode and Tour Button */}
       <div className="flex items-center gap-3">
         {/* View Mode Selector - Always visible */}
         <ViewModeSelector
@@ -1456,6 +1458,23 @@ export function Toolbar({ className }: ToolbarProps) {
           onViewModeChange={setViewMode}
           disabled={!hasActiveDocument}
         />
+        
+        {/* Product Tour Button */}
+        <button 
+          onClick={onRestartTour}
+          className={cn(
+            'w-8 h-8 rounded-full',
+            'bg-gray-100 hover:bg-[#006EE6] hover:text-white',
+            'text-gray-600',
+            'flex items-center justify-center',
+            'text-lg font-bold',
+            'transition-colors duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-[#006EE6] focus:ring-offset-2'
+          )}
+          title="Take Product Tour"
+        >
+          ?
+        </button>
       </div>
     </header>
   );

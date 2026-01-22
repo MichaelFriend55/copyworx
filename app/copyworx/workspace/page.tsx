@@ -12,6 +12,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { WorkspaceLayout } from '@/components/workspace/WorkspaceLayout';
 import { EditorArea, type EditorAreaHandle } from '@/components/workspace/EditorArea';
@@ -25,8 +26,14 @@ import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStor
 import { getTemplateById } from '@/lib/data/templates';
 import { initializeProjectSystem } from '@/lib/utils/project-utils';
 import { createDocument, getDocument } from '@/lib/storage/document-storage';
+import { useProductTour } from '@/lib/hooks/useProductTour';
 import type { Editor } from '@tiptap/react';
 import type { ProjectDocument, Project } from '@/lib/types/project';
+
+// Dynamic import for ProductTour to avoid SSR issues with react-joyride
+const ProductTour = dynamic(() => import('@/components/ProductTour'), {
+  ssr: false,
+});
 
 /**
  * Loading spinner component
@@ -63,6 +70,9 @@ export default function WorkspacePage() {
   
   // Prevent double initialization in StrictMode
   const initRef = useRef(false);
+  
+  // Product tour state
+  const { runTour, completeTour, restartTour } = useProductTour();
   
   // Slide-outs state
   const isTemplateFormOpen = useIsSlideOutOpen(TEMPLATE_FORM_PANEL_ID);
@@ -305,6 +315,7 @@ export default function WorkspacePage() {
       <WorkspaceLayout
         leftSidebar={<LeftSidebarContent onDocumentClick={handleDocumentClick} />}
         rightSidebar={<RightSidebarContent editor={editor} />}
+        onRestartTour={restartTour}
       >
         <EditorArea ref={editorRef} onEditorReady={handleEditorReady} />
       </WorkspaceLayout>
@@ -332,6 +343,9 @@ export default function WorkspacePage() {
         isOpen={isPersonasOpen}
         onClose={handleClosePersonas}
       />
+      
+      {/* Product Tour - Shows on first visit */}
+      <ProductTour run={runTour} onComplete={completeTour} />
     </>
   );
 }

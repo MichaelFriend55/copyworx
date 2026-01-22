@@ -43,6 +43,9 @@ interface WorkspaceLayoutProps {
   
   /** Optional CSS classes */
   className?: string;
+  
+  /** Callback to restart the product tour */
+  onRestartTour?: () => void;
 }
 
 /**
@@ -53,6 +56,7 @@ export function WorkspaceLayout({
   rightSidebar,
   children,
   className,
+  onRestartTour,
 }: WorkspaceLayoutProps) {
   // Optimized selectors
   const leftSidebarOpen = useLeftSidebarOpen();
@@ -69,7 +73,7 @@ export function WorkspaceLayout({
       data-print-layout
     >
       {/* Top toolbar */}
-      <Toolbar />
+      <Toolbar onRestartTour={onRestartTour} />
 
       {/* Main workspace area */}
       <div className="flex-1 flex overflow-hidden transition-all duration-300">

@@ -269,7 +269,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       />
       
       {/* MY PROJECTS SECTION */}
-      <div className="space-y-1">
+      <div className="space-y-1" data-tour="projects">
         {/* Section Header - Click to open slide-out */}
         <div className="flex items-center gap-1">
           {/* Main header button - opens slide-out */}
@@ -363,7 +363,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       <div className="border-t border-gray-200 my-2" />
 
       {/* AI@WORX TEMPLATES SECTION */}
-      <div className="mb-2">
+      <div className="mb-2" data-tour="templates">
         <button
           onClick={openTemplatesSlideOut}
           className={cn(
@@ -397,12 +397,16 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
 
       {/* EXISTING TOOL SECTIONS - Exclude 'insights' section (replaced by AI@Worx™ Live) */}
       {SECTIONS.filter(section => section.id !== 'insights').map((section) => {
+        // Determine data-tour attribute for specific sections
+        const dataTourAttr = section.id === 'optimizer' ? 'copy-optimizer' 
+          : section.id === 'brand' ? 'brand-voice' 
+          : undefined;
         const tools = getToolsBySection(section.id);
         const isExpanded = expandedSections.has(section.id);
         const SectionIcon = section.icon;
 
         return (
-          <div key={section.id} className="space-y-1">
+          <div key={section.id} className="space-y-1" data-tour={dataTourAttr}>
             {/* Section Header - Collapsible */}
             <button
               onClick={() => toggleSection(section.id)}

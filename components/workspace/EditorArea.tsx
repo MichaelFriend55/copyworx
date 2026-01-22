@@ -603,6 +603,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         className
       )}
       data-print-content
+      data-tour="editor"
     >
       {/* Template Resume Banner - shows when document has incomplete template progress */}
       <TemplateResumeBanner />

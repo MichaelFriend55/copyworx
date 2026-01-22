@@ -113,6 +113,7 @@ export function Sidebar({
         aria-label={`${side} sidebar`}
         aria-expanded={isOpen}
         data-sidebar={side}
+        data-tour={side === 'right' ? 'toolbox' : undefined}
         data-print-hide
       >
         {/* Sidebar content with overflow handling */}
