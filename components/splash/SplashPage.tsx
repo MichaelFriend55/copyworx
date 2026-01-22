@@ -18,7 +18,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
 import { createDocument } from '@/lib/storage/document-storage';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
+import { getTemplateById } from '@/lib/data/templates';
 
 interface ActionButtonProps {
   icon: React.ReactNode;
@@ -85,6 +86,9 @@ export function SplashPage() {
   
   // Templates modal state
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
+  
+  // File input ref for importing documents
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleNewDocument = () => {
     if (!activeProjectId) {
@@ -114,8 +118,142 @@ export function SplashPage() {
     setTemplatesModalOpen(true);
   };
 
+  /**
+   * Handle template selection from modal
+   * Creates document immediately and navigates to workspace
+   */
+  const handleTemplateSelect = (templateId: string) => {
+    console.log('🎨 Template selected from splash page:', templateId);
+    
+    // Get template details to use its name for the document
+    const template = getTemplateById(templateId);
+    if (!template) {
+      console.error('❌ Template not found:', templateId);
+      return;
+    }
+    
+    // Check for active project
+    if (!activeProjectId) {
+      console.warn('⚠️ No active project, cannot create document');
+      router.push('/copyworx/workspace?template=' + templateId);
+      return;
+    }
+    
+    try {
+      // Create document immediately with template name
+      const newDoc = createDocument(activeProjectId, template.name);
+      console.log('✅ Created document for template:', newDoc.id, newDoc.title);
+      
+      // Set as active document in store
+      useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
+      
+      // Navigate to workspace with both template and document IDs
+      router.push(`/copyworx/workspace?template=${templateId}&document=${newDoc.id}`);
+    } catch (error) {
+      console.error('❌ Failed to create document for template:', error);
+      // Still navigate to workspace with just template ID
+      router.push('/copyworx/workspace?template=' + templateId);
+    }
+  };
+
+  /**
+   * Handle import button click - opens file picker
+   */
   const handleImport = () => {
-    router.push('/copyworx/workspace?action=import');
+    // Set accept attribute to allow common document formats
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = '.docx,.txt,.md';
+    }
+    
+    // Trigger the hidden file input
+    fileInputRef.current?.click();
+  };
+
+  /**
+   * Handle file selection for import
+   * Creates document and navigates to workspace with file stored temporarily
+   */
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !activeProjectId) {
+      console.warn('⚠️ No file selected or no active project');
+      return;
+    }
+
+    try {
+      // Extract filename without extension for document title
+      const fileName = file.name;
+      const lastDotIndex = fileName.lastIndexOf('.');
+      const documentTitle = lastDotIndex === -1 
+        ? fileName 
+        : fileName.substring(0, lastDotIndex);
+
+      // Create a new document for the import
+      const newDoc = createDocument(activeProjectId, documentTitle);
+      console.log('✅ Created document for import:', newDoc.id, newDoc.title);
+
+      // Set as active document
+      useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
+
+      // Store file data in localStorage temporarily
+      // We'll read it as ArrayBuffer for binary files (docx) or text for txt/md
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          const result = e.target?.result;
+          
+          // Store file metadata and content
+          localStorage.setItem('pendingFileImport', JSON.stringify({
+            documentId: newDoc.id,
+            fileName: file.name,
+            fileType: file.type,
+            timestamp: Date.now()
+          }));
+
+          // Store the actual file content separately
+          // For text files, store as text; for binary (docx), store as base64
+          if (file.name.endsWith('.docx')) {
+            // Convert ArrayBuffer to base64
+            const base64 = btoa(
+              new Uint8Array(result as ArrayBuffer)
+                .reduce((data, byte) => data + String.fromCharCode(byte), '')
+            );
+            localStorage.setItem('pendingFileContent', base64);
+          } else {
+            // Store text directly
+            localStorage.setItem('pendingFileContent', result as string);
+          }
+
+          // Navigate to workspace
+          router.push(`/copyworx/workspace?document=${newDoc.id}&import=true`);
+        } catch (error) {
+          console.error('❌ Failed to store file:', error);
+          // Navigate anyway, document is created
+          router.push(`/copyworx/workspace?document=${newDoc.id}`);
+        }
+      };
+
+      reader.onerror = () => {
+        console.error('❌ Failed to read file');
+        // Still navigate, workspace can handle empty document
+        router.push(`/copyworx/workspace?document=${newDoc.id}`);
+      };
+
+      // Read file appropriately based on type
+      if (file.name.endsWith('.docx')) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
+      }
+
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('❌ Failed to handle file import:', error);
+    }
   };
 
   return (
@@ -197,6 +335,16 @@ export function SplashPage() {
       <TemplatesModal
         isOpen={templatesModalOpen}
         onClose={() => setTemplatesModalOpen(false)}
+        onTemplateSelect={handleTemplateSelect}
+      />
+
+      {/* Hidden file input for importing documents */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".docx,.txt,.md"
+        className="hidden"
+        onChange={handleFileSelect}
       />
     </div>
   );

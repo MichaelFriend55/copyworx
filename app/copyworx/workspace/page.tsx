@@ -24,6 +24,7 @@ import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { getTemplateById } from '@/lib/data/templates';
 import { initializeProjectSystem } from '@/lib/utils/project-utils';
+import { createDocument, getDocument } from '@/lib/storage/document-storage';
 import type { Editor } from '@tiptap/react';
 import type { ProjectDocument, Project } from '@/lib/types/project';
 
@@ -47,6 +48,9 @@ function LoadingSpinner() {
 export default function WorkspacePage() {
   const searchParams = useSearchParams();
   const action = searchParams.get('action');
+  const templateParam = searchParams.get('template');
+  const documentParam = searchParams.get('document');
+  const importParam = searchParams.get('import');
   
   // Client-side mounting state
   const [mounted, setMounted] = useState(false);
@@ -102,6 +106,150 @@ export default function WorkspacePage() {
     // The activeDocumentId will be restored from Zustand persistence if it exists
     console.log('✅ Workspace initialized');
   }, [mounted, action]);
+  
+  // Handle template parameter from URL (coming from splash page)
+  useEffect(() => {
+    if (!mounted || !templateParam) return;
+    
+    console.log('🎨 Template parameter detected:', templateParam);
+    console.log('📄 Document parameter:', documentParam);
+    
+    // Get store state
+    const store = useWorkspaceStore.getState();
+    
+    // Check if we have an active project
+    if (!store.activeProjectId) {
+      console.error('❌ No active project found');
+      return;
+    }
+    
+    // If document parameter exists, load that existing document
+    if (documentParam) {
+      try {
+        const existingDoc = getDocument(store.activeProjectId, documentParam);
+        
+        if (existingDoc) {
+          // Set as active document
+          store.setActiveDocumentId(existingDoc.id);
+          console.log('✅ Loading existing document from splash page:', existingDoc.id, existingDoc.title);
+          
+          // Load the document into the editor
+          if (editorRef.current) {
+            editorRef.current.loadDocument(existingDoc);
+          }
+        } else {
+          console.error('❌ Document not found:', documentParam);
+        }
+      } catch (error) {
+        console.error('❌ Failed to load document:', error);
+      }
+    }
+    // Fallback: create new document if no document parameter provided
+    else if (!store.activeDocumentId) {
+      try {
+        const template = getTemplateById(templateParam);
+        if (!template) {
+          console.error('❌ Template not found:', templateParam);
+          return;
+        }
+        
+        const newDoc = createDocument(store.activeProjectId, `${template.name}`);
+        store.setActiveDocumentId(newDoc.id);
+        console.log('✅ Created new document for template:', newDoc.id, newDoc.title);
+        
+        // Load the document into the editor
+        if (editorRef.current) {
+          editorRef.current.loadDocument(newDoc);
+        }
+      } catch (error) {
+        console.error('❌ Failed to create document for template:', error);
+      }
+    }
+    
+    // Set the template if not already set
+    if (!store.selectedTemplateId) {
+      store.setSelectedTemplateId(templateParam);
+    }
+    
+    // Ensure right sidebar is open
+    if (!store.rightSidebarOpen) {
+      store.setRightSidebarOpen(true);
+    }
+    
+    console.log('✅ Template slideout should be visible');
+  }, [mounted, templateParam, documentParam]);
+  
+  // Handle file import from splash page
+  useEffect(() => {
+    if (!mounted || !importParam || !editor) return;
+    
+    console.log('📥 Import parameter detected, checking for pending file...');
+    
+    // Check for pending file import in localStorage
+    const pendingImportStr = localStorage.getItem('pendingFileImport');
+    const pendingContent = localStorage.getItem('pendingFileContent');
+    
+    if (!pendingImportStr || !pendingContent) {
+      console.warn('⚠️ No pending import found');
+      return;
+    }
+    
+    try {
+      const importData = JSON.parse(pendingImportStr);
+      const { fileName, fileType, documentId } = importData;
+      
+      console.log('📥 Processing import:', fileName);
+      
+      // Process the import based on file type
+      const processImport = async () => {
+        try {
+          if (fileName.endsWith('.docx')) {
+            // Decode base64 back to binary
+            const binaryString = atob(pendingContent);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            const file = new File([blob], fileName, { type: fileType });
+            
+            // Import using the document-import utility
+            const { importDocument } = await import('@/lib/utils/document-import');
+            const result = await importDocument(editor, file);
+            
+            if (result.success) {
+              console.log('✅ Successfully imported DOCX file');
+            } else {
+              console.error('❌ Failed to import DOCX:', result.error);
+            }
+          } else {
+            // For text files (txt, md), just set the content directly
+            editor.commands.setContent(pendingContent);
+            console.log('✅ Successfully imported text file');
+          }
+          
+          // Clear the pending import data
+          localStorage.removeItem('pendingFileImport');
+          localStorage.removeItem('pendingFileContent');
+          
+        } catch (error) {
+          console.error('❌ Error processing import:', error);
+          // Clear the data anyway to prevent retry loop
+          localStorage.removeItem('pendingFileImport');
+          localStorage.removeItem('pendingFileContent');
+        }
+      };
+      
+      // Execute the import
+      processImport();
+      
+    } catch (error) {
+      console.error('❌ Error parsing pending import:', error);
+      // Clear corrupted data
+      localStorage.removeItem('pendingFileImport');
+      localStorage.removeItem('pendingFileContent');
+    }
+  }, [mounted, importParam, editor]);
   
   // Handle editor ready
   const handleEditorReady = React.useCallback((editorInstance: Editor | null) => {

@@ -1163,9 +1163,6 @@ export function Toolbar({ className }: ToolbarProps) {
   
   // Check if we have an active document
   const hasActiveDocument = !!activeDocumentId;
-  
-  // Check if we're in Focus Mode
-  const isFocusMode = viewMode === 'focus';
 
   const [editor, setEditor] = useState<Editor | null>(null);
   const [documentTitle, setDocumentTitle] = useState<string | undefined>(undefined);
@@ -1249,7 +1246,7 @@ export function Toolbar({ className }: ToolbarProps) {
         'sticky top-0 z-50',
         'border-b border-gray-200',
         'transition-all duration-300',
-        isFocusMode ? 'h-12' : 'h-16',
+        'h-16',
         className
       )}
       style={{
@@ -1258,10 +1255,9 @@ export function Toolbar({ className }: ToolbarProps) {
       }}
       data-print-hide
     >
-      {/* Left section - File operations (hidden in Focus Mode) */}
+      {/* Left section - File operations */}
       <div className={cn(
-        'flex items-center gap-2 transition-all duration-300',
-        isFocusMode && 'opacity-0 w-0 overflow-hidden'
+        'flex items-center gap-2 transition-all duration-300'
       )}>
         <Link href="/copyworx">
           <button
@@ -1321,12 +1317,11 @@ export function Toolbar({ className }: ToolbarProps) {
         </button>
       </div>
 
-      {/* Center section - Formatting controls (hidden in Focus Mode) */}
+      {/* Center section - Formatting controls */}
       <div className={cn(
-        'flex-1 flex items-center justify-center gap-1 transition-all duration-300',
-        isFocusMode && 'opacity-0 w-0 overflow-hidden'
+        'flex-1 flex items-center justify-center gap-1 transition-all duration-300'
       )}>
-        {hasActiveDocument && editor && !isFocusMode ? (
+        {hasActiveDocument && editor ? (
           <>
             {/* Font controls - placed at LEFT */}
             <FontFamilyDropdown editor={editor} />
@@ -1454,10 +1449,7 @@ export function Toolbar({ className }: ToolbarProps) {
       </div>
 
       {/* Right section - View Mode */}
-      <div className={cn(
-        'flex items-center gap-3 transition-all duration-300',
-        isFocusMode && 'mx-auto'
-      )}>
+      <div className="flex items-center gap-3">
         {/* View Mode Selector - Always visible */}
         <ViewModeSelector
           viewMode={viewMode}

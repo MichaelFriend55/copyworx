@@ -35,6 +35,8 @@ type ModalTemplateCategory = 'all' | ImportedTemplateCategory;
 interface TemplatesModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Optional callback when a template is selected (useful for navigation from splash page) */
+  onTemplateSelect?: (templateId: string) => void;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -65,7 +67,7 @@ const DIFFICULTY_COLORS: Record<Template['complexity'], string> = {
 // COMPONENT
 // ═══════════════════════════════════════════════════════════
 
-export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
+export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesModalProps) {
   const [activeCategory, setActiveCategory] = useState<ModalTemplateCategory>('all');
   
   // Optimized action selectors - only re-render when actions change (never)
@@ -134,6 +136,11 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
     
     // Close modal
     onClose();
+    
+    // Call optional callback (used for navigation from splash page)
+    if (onTemplateSelect) {
+      onTemplateSelect(template.id);
+    }
   };
 
   if (!isOpen) return null;
