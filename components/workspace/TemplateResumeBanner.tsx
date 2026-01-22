@@ -43,20 +43,36 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
   
   // Check for template progress when document changes
   useEffect(() => {
+    console.log('🎗️ TemplateResumeBanner: Checking for progress...', {
+      activeDocumentId,
+      activeProjectId,
+      selectedTemplateId
+    });
+    
     if (!activeDocumentId || !activeProjectId) {
+      console.log('⚠️ Banner: No active document or project');
       setTemplateProgress(null);
       setIsDismissed(false);
       return;
     }
     
     const doc = getDocument(activeProjectId, activeDocumentId);
+    console.log('📄 Banner: Document loaded', {
+      hasDoc: !!doc,
+      hasProgress: !!doc?.templateProgress,
+      isComplete: doc?.templateProgress?.isComplete,
+      templateId: doc?.templateProgress?.templateId
+    });
+    
     if (doc?.templateProgress && !doc.templateProgress.isComplete) {
+      console.log('✅ Banner: Found incomplete progress - SHOWING BANNER');
       setTemplateProgress(doc.templateProgress);
       setIsDismissed(false);
     } else {
+      console.log('❌ Banner: No incomplete progress found');
       setTemplateProgress(null);
     }
-  }, [activeDocumentId, activeProjectId]);
+  }, [activeDocumentId, activeProjectId, selectedTemplateId]);
   
   /**
    * Handle Continue - opens the multi-section template
@@ -102,8 +118,16 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
   
   // Don't show if no template progress, already complete, dismissed, or template already open
   if (!templateProgress || templateProgress.isComplete || isDismissed || selectedTemplateId) {
+    console.log('🚫 Banner: Hidden because:', {
+      noProgress: !templateProgress,
+      isComplete: templateProgress?.isComplete,
+      isDismissed,
+      templateIsOpen: !!selectedTemplateId
+    });
     return null;
   }
+  
+  console.log('✨ Banner: RENDERING - showing resume button');
   
   // Get current section info
   const currentSectionIndex = templateProgress.currentSection;

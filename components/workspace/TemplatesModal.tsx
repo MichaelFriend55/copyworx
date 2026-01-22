@@ -134,20 +134,26 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
     clearBrandAlignmentResult();
     setIsGeneratingTemplate(false);
     
-    // For multi-section templates, ensure a document exists
+    // For multi-section templates, ALWAYS create a new document
+    // This ensures the template has a clean document to work with
     if (template.id === 'brochure-multi-section') {
       const store = useWorkspaceStore.getState();
-      const { activeProjectId, activeDocumentId } = store;
+      const { activeProjectId } = store;
       
-      // Only create if no document is currently open
-      if (activeProjectId && !activeDocumentId) {
+      if (activeProjectId) {
         try {
+          // Always create a new document for multi-section templates
           const newDoc = createDocument(activeProjectId, template.name);
           store.setActiveDocumentId(newDoc.id);
-          console.log('✅ Created document for multi-section template:', newDoc.id);
+          console.log('✅ Created new document for multi-section template:', {
+            id: newDoc.id,
+            title: newDoc.title
+          });
         } catch (error) {
           console.error('❌ Failed to create document:', error);
         }
+      } else {
+        console.error('❌ No active project - cannot create document');
       }
     }
     
