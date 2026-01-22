@@ -310,13 +310,16 @@ export default function WorkspacePage() {
       </WorkspaceLayout>
       
       {/* Template Form Slide-Out - Opens from right when template selected */}
-      <TemplateFormSlideOut
-        isOpen={isTemplateFormOpen}
-        onClose={handleCloseTemplateForm}
-        template={selectedTemplate}
-        editor={editor}
-        activeProject={activeProject}
-      />
+      {/* Only render for non-multi-section templates - multi-section templates use RightSidebarContent */}
+      {selectedTemplate && selectedTemplate.id !== 'brochure-multi-section' && (
+        <TemplateFormSlideOut
+          isOpen={isTemplateFormOpen}
+          onClose={handleCloseTemplateForm}
+          template={selectedTemplate}
+          editor={editor}
+          activeProject={activeProject}
+        />
+      )}
       
       {/* Brand Voice Slide-Out - Opens from right when brand voice tool clicked */}
       <BrandVoiceSlideOut

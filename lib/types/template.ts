@@ -12,14 +12,14 @@ import type { Persona } from './project';
 /**
  * Template category types
  */
-export type TemplateCategory = 
-  | 'email' 
-  | 'advertising' 
-  | 'landing-page' 
-  | 'social' 
-  | 'collateral' 
-  | 'website' 
-  | 'blog' 
+export type TemplateCategory =
+  | 'email'
+  | 'advertising'
+  | 'landing-page'
+  | 'social'
+  | 'collateral'
+  | 'website'
+  | 'blog'
   | 'other';
 
 /**

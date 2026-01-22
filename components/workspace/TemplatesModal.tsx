@@ -22,7 +22,8 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
+import { createDocument } from '@/lib/storage/document-storage';
 import { ALL_TEMPLATES } from '@/lib/data/templates';
 import type { Template, TemplateCategory as ImportedTemplateCategory } from '@/lib/types/template';
 
@@ -62,6 +63,14 @@ const DIFFICULTY_COLORS: Record<Template['complexity'], string> = {
   Intermediate: 'bg-blue-100 text-blue-800 border-blue-200',
   Advanced: 'bg-purple-100 text-purple-800 border-purple-200',
 };
+
+/**
+ * Check if a template is a multi-section advanced template
+ * These templates use a special component instead of the standard form
+ */
+function isMultiSectionTemplate(templateId: string): boolean {
+  return templateId === 'brochure-multi-section';
+}
 
 // ═══════════════════════════════════════════════════════════
 // COMPONENT
@@ -124,6 +133,23 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
     clearRewriteChannelResult();
     clearBrandAlignmentResult();
     setIsGeneratingTemplate(false);
+    
+    // For multi-section templates, ensure a document exists
+    if (template.id === 'brochure-multi-section') {
+      const store = useWorkspaceStore.getState();
+      const { activeProjectId, activeDocumentId } = store;
+      
+      // Only create if no document is currently open
+      if (activeProjectId && !activeDocumentId) {
+        try {
+          const newDoc = createDocument(activeProjectId, template.name);
+          store.setActiveDocumentId(newDoc.id);
+          console.log('✅ Created document for multi-section template:', newDoc.id);
+        } catch (error) {
+          console.error('❌ Failed to create document:', error);
+        }
+      }
+    }
     
     // Set selected template ID in store
     setSelectedTemplateId(template.id);
@@ -237,11 +263,18 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
                         className={cn(
                           'group relative bg-white border border-[#d2d2d7] rounded-xl p-5',
                           'transition-all duration-200 hover:shadow-lg hover:border-[#007AFF]',
-                          'flex flex-col'
+                          'flex flex-col',
+                          // Highlight multi-section templates
+                          isMultiSectionTemplate(template.id) && 'border-purple-200 bg-purple-50/30'
                         )}
                       >
                         {/* Category Badge */}
-                        <div className="absolute top-4 right-4">
+                        <div className="absolute top-4 right-4 flex gap-1.5">
+                          {isMultiSectionTemplate(template.id) && (
+                            <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
+                              Multi-Section
+                            </span>
+                          )}
                           <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full capitalize">
                             {template.category.replace('-', ' ')}
                           </span>

@@ -34,6 +34,8 @@ export { PersonasSlideOut, PERSONAS_PANEL_ID } from './PersonasSlideOut';
 export { InsightsSlideOut, INSIGHTS_PANEL_ID } from './InsightsSlideOut';
 export type { InsightsPanelType } from './InsightsSlideOut';
 export { DeleteProjectModal } from './DeleteProjectModal';
+export { BrochureMultiSectionTemplate, BROCHURE_TEMPLATE_PANEL_ID } from './BrochureMultiSectionTemplate';
+export { TemplateResumeBanner } from './TemplateResumeBanner';
 
 
 

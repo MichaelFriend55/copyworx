@@ -31,6 +31,23 @@ export type {
   TemplateGenerationResponse
 } from './template';
 
+// Re-export template progress types for multi-section templates
+export type {
+  TemplateProgress,
+  TemplateSection,
+  TemplateSectionField,
+  CompletedSection,
+  MultiSectionTemplate,
+  SectionGenerationRequest,
+  SectionGenerationResponse,
+  SectionStatus
+} from './template-progress';
+export {
+  isValidTemplateProgress,
+  createInitialProgress,
+  generateContentHash
+} from './template-progress';
+
 /**
  * Represents a copywriting document in the workspace
  */

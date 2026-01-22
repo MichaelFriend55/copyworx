@@ -43,6 +43,7 @@ import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import { usePageCalculations, PAGE_CONFIG } from '@/lib/hooks/usePageCalculations';
 import { PageModeWrapper } from './PageModeWrapper';
+import { TemplateResumeBanner } from './TemplateResumeBanner';
 
 interface EditorAreaProps {
   className?: string;
@@ -603,6 +604,9 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       )}
       data-print-content
     >
+      {/* Template Resume Banner - shows when document has incomplete template progress */}
+      <TemplateResumeBanner />
+      
       {/* Page Mode uses PageModeWrapper, Scrolling/Focus use Paper Container */}
       {isPageMode && currentDocument ? (
         <PageModeWrapper

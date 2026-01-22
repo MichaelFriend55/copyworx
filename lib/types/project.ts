@@ -11,6 +11,7 @@
 
 import type { BrandVoice } from './brand';
 import type { Snippet } from './snippet';
+import type { TemplateProgress } from './template-progress';
 
 /**
  * Folder interface - Organizational container for documents
@@ -175,6 +176,12 @@ export interface ProjectDocument {
     /** Tags for organization */
     tags?: string[];
   };
+  
+  /**
+   * Template progress state for multi-section templates
+   * Tracks section-by-section generation progress and allows resuming
+   */
+  templateProgress?: TemplateProgress;
 }
 
 /**

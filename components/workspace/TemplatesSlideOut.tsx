@@ -33,8 +33,9 @@ import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ALL_TEMPLATES } from '@/lib/data/templates';
+import { createDocument } from '@/lib/storage/document-storage';
 import type { Template, TemplateCategory } from '@/lib/types/template';
-import { useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
 import { useSlideOutActions as useGlobalSlideOutActions } from '@/lib/stores/slideOutStore';
 import { TEMPLATE_FORM_PANEL_ID } from './TemplateFormSlideOut';
 
@@ -285,7 +286,7 @@ export function TemplatesSlideOut({
   onClose,
 }: TemplatesSlideOutProps) {
   // Store actions
-  const { setActiveTool } = useUIActions();
+  const { setActiveTool, setRightSidebarOpen } = useUIActions();
   const { 
     setSelectedTemplateId, 
     setIsGeneratingTemplate,
@@ -356,22 +357,48 @@ export function TemplatesSlideOut({
       clearBrandAlignmentResult();
       setIsGeneratingTemplate(false);
       
+      // For multi-section templates, ensure a document exists
+      const isMultiSectionTemplate = template.id === 'brochure-multi-section';
+      
+      if (isMultiSectionTemplate) {
+        const store = useWorkspaceStore.getState();
+        const { activeProjectId, activeDocumentId } = store;
+        
+        // Only create if no document is currently open
+        if (activeProjectId && !activeDocumentId) {
+          try {
+            const newDoc = createDocument(activeProjectId, template.name);
+            store.setActiveDocumentId(newDoc.id);
+            console.log('✅ Created document for multi-section template:', newDoc.id);
+          } catch (error) {
+            console.error('❌ Failed to create document:', error);
+          }
+        }
+      }
+      
       // Set selected template ID in store
       setSelectedTemplateId(template.id);
       
       // Clear active tool (template generator is special - not a tool in the sidebar)
       setActiveTool(null);
       
-      // Open template form slide-out from right
-      openSlideOut(TEMPLATE_FORM_PANEL_ID);
+      if (isMultiSectionTemplate) {
+        // Open right sidebar to show multi-section template component (NOT the slideout)
+        setRightSidebarOpen(true);
+        console.log('✅ Multi-section template: Opening right sidebar (NOT slideout)');
+      } else {
+        // Open template form slide-out from right for regular templates
+        openSlideOut(TEMPLATE_FORM_PANEL_ID);
+        console.log('✅ Regular template: Opening slideout panel');
+      }
       
       // NOTE: Do NOT close the templates browser - allow both panels to be open
-      console.log('✅ Template form slide-out opening from right, keeping browser open');
     },
     [
       setSelectedTemplateId,
       setIsGeneratingTemplate,
       setActiveTool,
+      setRightSidebarOpen,
       openSlideOut,
       clearToneShiftResult,
       clearExpandResult,

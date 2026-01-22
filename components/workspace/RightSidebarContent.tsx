@@ -20,6 +20,7 @@ import React, { useCallback, useMemo } from 'react';
 import { Sparkles, Layers } from 'lucide-react';
 import { ToneShifter } from '@/components/workspace/ToneShifter';
 import { TemplateGenerator } from '@/components/workspace/TemplateGenerator';
+import { BrochureMultiSectionTemplate } from '@/components/workspace/BrochureMultiSectionTemplate';
 import { ExpandTool } from '@/components/workspace/ExpandTool';
 import { ShortenTool } from '@/components/workspace/ShortenTool';
 import { RewriteChannelTool } from '@/components/workspace/RewriteChannelTool';
@@ -29,6 +30,11 @@ import { BrandAlignmentTool } from '@/components/workspace/BrandAlignmentTool';
 import { PersonaAlignmentTool } from '@/components/workspace/PersonaAlignmentTool';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getTemplateById } from '@/lib/data/templates';
+
+/**
+ * Multi-section template IDs that use special components
+ */
+const MULTI_SECTION_TEMPLATE_IDS = ['brochure-multi-section'];
 import { cn } from '@/lib/utils';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
@@ -111,11 +117,6 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
   // Get the active tool component
   const ActiveToolComponent = activeToolId ? TOOL_COMPONENTS[activeToolId] : null;
   
-  // Get selected template if in template generation mode
-  const selectedTemplate = useMemo(() => {
-    return selectedTemplateId ? getTemplateById(selectedTemplateId) : null;
-  }, [selectedTemplateId]);
-  
   /**
    * Handle template generator cancel
    * Uses getState() to avoid stale closures and dependency issues
@@ -126,40 +127,63 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
     store.setActiveTool(null);
   }, []);
 
-  // Special case: Template Generator
-  if (selectedTemplate) {
+  // PRIORITY 1: Check for templates FIRST (before showing empty tool state)
+  // Check the template ID directly to avoid race conditions with memos
+  
+  // Special case: Multi-Section Template (e.g., Brochure)
+  // Check the ID directly - don't rely on memoized values
+  if (selectedTemplateId && MULTI_SECTION_TEMPLATE_IDS.includes(selectedTemplateId)) {
     return (
       <div className="h-full">
-        <TemplateGenerator
-          template={selectedTemplate}
+        <BrochureMultiSectionTemplate
+          onClose={handleTemplateCancel}
           editor={editor}
           activeProject={activeProject}
-          onCancel={handleTemplateCancel}
         />
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header - Always Shows "AI@Worx™ ToolBox" */}
-      <div className={cn(
-        'flex items-center gap-2 px-3 py-2.5 rounded-lg',
-        'bg-gray-50',
-        'relative pl-5 border-l-[3px] border-transparent',
-        'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
-        'before:w-[3px] before:rounded-l-lg',
-        'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
-      )}>
-        <Sparkles className="w-5 h-5 text-apple-blue" />
-        <h2 className="text-sm font-semibold text-apple-text-dark uppercase tracking-wide">
-          AI@Worx™ ToolBox
-        </h2>
-      </div>
+  // Special case: Regular Template Generator
+  // Only render if we have a template ID and it's NOT a multi-section template
+  if (selectedTemplateId && !MULTI_SECTION_TEMPLATE_IDS.includes(selectedTemplateId)) {
+    const selectedTemplate = getTemplateById(selectedTemplateId);
+    if (selectedTemplate) {
+      return (
+        <div className="h-full">
+          <TemplateGenerator
+            template={selectedTemplate}
+            editor={editor}
+            activeProject={activeProject}
+            onCancel={handleTemplateCancel}
+          />
+        </div>
+      );
+    }
+  }
 
-      {/* Dynamic Tool Rendering - Check tool selection FIRST */}
-      {!ActiveToolComponent ? (
-        // No tool selected
+  // PRIORITY 2: If no template is selected, show tools or empty state
+  // Only show the toolbox header and empty states if NO template is active
+  // Don't show anything if we're waiting for a template to load
+  if (!ActiveToolComponent && !selectedTemplateId) {
+    return (
+      <div className="space-y-6">
+        {/* Header - Always Shows "AI@Worx™ ToolBox" */}
+        <div className={cn(
+          'flex items-center gap-2 px-3 py-2.5 rounded-lg',
+          'bg-gray-50',
+          'relative pl-5 border-l-[3px] border-transparent',
+          'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+          'before:w-[3px] before:rounded-l-lg',
+          'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
+        )}>
+          <Sparkles className="w-5 h-5 text-apple-blue" />
+          <h2 className="text-sm font-semibold text-apple-text-dark uppercase tracking-wide">
+            AI@Worx™ ToolBox
+          </h2>
+        </div>
+
+        {/* Empty state - no tool selected */}
         <div className="text-center py-16 text-gray-400">
           <Layers className="w-16 h-16 mx-auto mb-4 opacity-20" />
           <p className="text-sm font-medium text-gray-600 mb-1">
@@ -169,21 +193,50 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
             Choose a tool from the left sidebar to get started
           </p>
         </div>
-      ) : !hasActiveDocument ? (
-        // Tool selected but no document open
-        <div className="text-center py-16 text-gray-400">
-          <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" />
-          <p className="text-sm font-medium text-gray-600 mb-1">
-            No Document Open
-          </p>
-          <p className="text-xs text-gray-500">
-            Create a document to use this tool
-          </p>
+      </div>
+    );
+  }
+
+  // Show tool content if a tool is selected
+  if (ActiveToolComponent) {
+    return (
+      <div className="space-y-6">
+        {/* Header - Always Shows "AI@Worx™ ToolBox" */}
+        <div className={cn(
+          'flex items-center gap-2 px-3 py-2.5 rounded-lg',
+          'bg-gray-50',
+          'relative pl-5 border-l-[3px] border-transparent',
+          'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+          'before:w-[3px] before:rounded-l-lg',
+          'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
+        )}>
+          <Sparkles className="w-5 h-5 text-apple-blue" />
+          <h2 className="text-sm font-semibold text-apple-text-dark uppercase tracking-wide">
+            AI@Worx™ ToolBox
+          </h2>
         </div>
-      ) : (
-        // Render active tool
-        <ActiveToolComponent editor={editor} />
-      )}
-    </div>
-  );
+
+        {/* Dynamic Tool Rendering */}
+        {!hasActiveDocument ? (
+          // Tool selected but no document open
+          <div className="text-center py-16 text-gray-400">
+            <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" />
+            <p className="text-sm font-medium text-gray-600 mb-1">
+              No Document Open
+            </p>
+            <p className="text-xs text-gray-500">
+              Create a document to use this tool
+            </p>
+          </div>
+        ) : (
+          // Render active tool
+          <ActiveToolComponent editor={editor} />
+        )}
+      </div>
+    );
+  }
+
+  // If we get here, something is loading (likely a template that hasn't rendered yet)
+  // Show nothing or a minimal loading state
+  return null;
 }

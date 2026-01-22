@@ -878,231 +878,6 @@ Remember: Every word must earn its place. Print ads are expensive—make each wo
 Include the mandatories naturally if provided.`
 };
 
-/**
- * Brochure Copy Template
- * Multi-section brochure content generation
- */
-export const BROCHURE_COPY_TEMPLATE: Template = {
-  id: 'brochure-copy',
-  name: 'Brochure Copy (Multi-Section)',
-  category: 'collateral',
-  description: 'Generate targeted copy for specific brochure sections—cover, hero, benefits, solutions, or CTA.',
-  complexity: 'Intermediate',
-  estimatedTime: '10-15 min',
-  icon: 'FileEdit',
-  fields: [
-    {
-      id: 'brochureGoal',
-      label: 'Brochure Goal',
-      type: 'select',
-      helperText: 'Primary purpose of this brochure',
-      required: true,
-      options: [
-        'Generate Leads',
-        'Educate Prospects',
-        'Support Sales',
-        'Build Brand',
-        'Product Launch',
-        'Other (specify)'
-      ]
-    },
-    {
-      id: 'brochureFormat',
-      label: 'Brochure Format',
-      type: 'select',
-      helperText: 'Physical format of the brochure',
-      required: true,
-      options: [
-        'Tri-Fold',
-        'Bi-Fold',
-        'Multi-Page Booklet',
-        'Single Sheet',
-        'Digital PDF'
-      ]
-    },
-    {
-      id: 'section',
-      label: 'Which Section Are You Writing?',
-      type: 'select',
-      helperText: 'Select the specific section to generate',
-      required: true,
-      options: [
-        'Cover/Title',
-        'Hero/Introduction',
-        'Benefits Section',
-        'Solutions/Features',
-        'Case Study/Proof',
-        'Call-to-Action'
-      ]
-    },
-    {
-      id: 'productService',
-      label: 'Product/Service/Company Description',
-      type: 'textarea',
-      placeholder: 'e.g., B2B software platform that automates invoice processing for mid-market companies...',
-      helperText: 'What are you promoting?',
-      required: true,
-      maxLength: 300
-    },
-    {
-      id: 'targetAudience',
-      label: 'Target Audience',
-      type: 'textarea',
-      placeholder: 'e.g., CFOs and Finance Directors at companies with 100-500 employees...',
-      helperText: 'Who will be reading this brochure?',
-      required: true,
-      maxLength: 360
-    },
-    {
-      id: 'painPoint',
-      label: 'Primary Pain Point/Problem',
-      type: 'textarea',
-      placeholder: 'e.g., Manual invoice processing costs $15 per invoice and creates 3% error rate...',
-      helperText: 'What problem does your audience face?',
-      required: true,
-      maxLength: 300
-    },
-    {
-      id: 'keyBenefits',
-      label: 'Top 3 Key Benefits',
-      type: 'textarea',
-      placeholder: 'e.g., \n- Reduce processing costs by 80%\n- Eliminate data entry errors\n- Free up 20+ hours per week',
-      helperText: 'Main selling points (separate each with a new line)',
-      required: true,
-      maxLength: 400
-    },
-    {
-      id: 'differentiator',
-      label: 'Your Unique Differentiator',
-      type: 'textarea',
-      placeholder: 'e.g., Only solution with 99.9% accuracy AI that learns your specific workflows...',
-      helperText: 'What makes you different from competitors?',
-      required: true,
-      maxLength: 250
-    },
-    {
-      id: 'socialProofType',
-      label: 'Type of Social Proof to Emphasize',
-      type: 'select',
-      helperText: 'What kind of proof will you highlight? (optional)',
-      required: false,
-      options: [
-        'Customer Testimonials',
-        'Case Studies',
-        'Industry Awards',
-        'Certifications',
-        'Client Logos',
-        'Statistics'
-      ]
-    },
-    {
-      id: 'proofDetail',
-      label: 'Proof Point Detail',
-      type: 'textarea',
-      placeholder: 'e.g., "Saved us $200K in the first year" - Jane Smith, CFO at Acme Corp',
-      helperText: 'The specific stat, quote, or result (optional)',
-      required: false,
-      maxLength: 200
-    },
-    {
-      id: 'primaryCta',
-      label: 'Primary Call-to-Action',
-      type: 'select',
-      helperText: 'What action should readers take?',
-      required: true,
-      options: [
-        'Request Demo',
-        'Get Quote',
-        'Schedule Consultation',
-        'Download Resource',
-        'Contact Sales',
-        'Visit Website',
-        'Other (specify)'
-      ]
-    },
-    {
-      id: 'tone',
-      label: 'Desired Tone',
-      type: 'select',
-      helperText: 'What tone should the copy convey?',
-      required: true,
-      options: [
-        'Professional',
-        'Friendly',
-        'Authoritative',
-        'Inspirational',
-        'Technical',
-        'Other (specify)'
-      ]
-    },
-    {
-      id: 'ctaIncentive',
-      label: 'CTA Incentive/Reason to Act Now',
-      type: 'textarea',
-      placeholder: 'e.g., Free ROI assessment worth $2,500 for companies that book this month...',
-      helperText: 'Why should they act immediately? (optional)',
-      required: false,
-      maxLength: 200
-    }
-  ],
-  systemPrompt: `You are an expert B2B copywriter specializing in sales collateral. Create brochure section copy based on these details:
-
-Brochure Goal: {brochureGoal}
-Format: {brochureFormat}
-Section to Write: {section}
-Product/Service: {productService}
-Target Audience: {targetAudience}
-Primary Pain Point: {painPoint}
-Key Benefits: {keyBenefits}
-Unique Differentiator: {differentiator}
-Social Proof Type: {socialProofType}
-Proof Detail: {proofDetail}
-Primary CTA: {primaryCta}
-Tone: {tone}
-CTA Incentive: {ctaIncentive}
-
-{brandVoiceInstructions}
-{personaInstructions}
-
-Generate copy for the "{section}" section following these guidelines:
-
-COVER/TITLE SECTION:
-- Headline: 5-8 words, benefit-focused
-- Tagline: Supporting line, 10-15 words
-- Visual direction suggestion
-
-HERO/INTRODUCTION SECTION:
-- Opening headline: Problem-aware
-- 2-3 sentences establishing the pain point
-- 2-3 sentences introducing your solution
-- Transition to benefits
-
-BENEFITS SECTION:
-- Section headline
-- 3 benefits with headlines and 2-3 sentence explanations each
-- Focus on outcomes, not features
-
-SOLUTIONS/FEATURES SECTION:
-- Section headline
-- 3-4 features framed as solutions
-- Each with clear benefit statement
-
-CASE STUDY/PROOF SECTION:
-- Section headline
-- Customer situation summary
-- Solution implemented
-- Results achieved (with numbers)
-- Pull quote if provided
-
-CALL-TO-ACTION SECTION:
-- Compelling headline
-- 2-3 sentences on why to act now
-- Clear next step
-- Contact information placeholder
-- Incentive if provided
-
-Write ONLY the requested section with appropriate length for the brochure format.`
-};
 
 /**
  * Website Copy (SEO-Optimized) Template
@@ -1323,6 +1098,27 @@ Target word count: 600-900 words total page copy.`
 };
 
 /**
+ * Multi-Section Brochure Template (Advanced)
+ * This is a special template that generates content section by section
+ * with context awareness and progress persistence.
+ * 
+ * Note: This template uses a custom component (BrochureMultiSectionTemplate)
+ * rather than the standard TemplateFormSlideOut. The template definition
+ * here is for display in the TemplatesModal.
+ */
+export const BROCHURE_MULTI_SECTION_TEMPLATE: Template = {
+  id: 'brochure-multi-section',
+  name: 'Brochure Copy (Multi-Section)',
+  category: 'collateral',
+  description: 'Generate complete brochure section by section with context. Progress saves across sessions.',
+  complexity: 'Advanced',
+  estimatedTime: '30-45 min',
+  icon: 'BookOpen',
+  fields: [], // Fields are defined per-section in the config
+  systemPrompt: '', // System prompt is built dynamically per section
+};
+
+/**
  * All available templates
  * Add new templates to this array to make them available
  */
@@ -1333,8 +1129,8 @@ export const ALL_TEMPLATES: Template[] = [
   SOCIAL_MEDIA_AD_COPY_TEMPLATE,
   SOCIAL_MEDIA_POST_TEMPLATE,
   PRINT_MEDIA_TEMPLATE,
-  BROCHURE_COPY_TEMPLATE,
-  WEBSITE_COPY_SEO_TEMPLATE
+  WEBSITE_COPY_SEO_TEMPLATE,
+  BROCHURE_MULTI_SECTION_TEMPLATE,
 ];
 
 /**
