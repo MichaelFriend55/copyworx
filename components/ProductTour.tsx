@@ -36,7 +36,7 @@ const tourSteps: Step[] = [
     target: 'body',
     content: (
       <div>
-        <h2 className="text-2xl font-bold text-[#006EE6] mb-3">Welcome to CopyWorx™!</h2>
+        <h2 className="text-2xl font-bold text-[#006EE6] mb-3">Welcome to CopyWorx™ Studio!</h2>
         <p className="text-base mb-3">Let&apos;s take a quick 60-second tour to show you the key features.</p>
         <p className="text-sm text-gray-600">You can skip this tour anytime by clicking &quot;Skip&quot; or pressing ESC.</p>
       </div>
@@ -49,7 +49,7 @@ const tourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">My Projects</h3>
-        <p className="text-base">Organize your work by client, campaign, or project. Keep everything structured and easy to find.</p>
+        <p className="text-base">Organize your work by project, client or campaign. Keep everything structured and easy to find.</p>
       </div>
     ),
     placement: 'right',
@@ -60,7 +60,7 @@ const tourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">Brand Voice &amp; Personas</h3>
-        <p className="text-base mb-2">This is your strategic foundation. Set up your Brand Voice first—it ensures every piece of copy maintains consistency.</p>
+        <p className="text-base mb-2">This is your strategic foundation. Set up your Brand Voice first, then a Persona or two — they ensure every piece of copy maintains consistency.</p>
         <p className="text-sm text-gray-600 italic">Pro tip: Spend 10 minutes here before writing anything!</p>
       </div>
     ),
@@ -85,7 +85,7 @@ const tourSteps: Step[] = [
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">Copy Optimizer Suite</h3>
         <p className="text-base mb-2">Transform your copy with:</p>
         <ul className="text-sm list-disc list-inside space-y-1">
-          <li>Tone Shifter (8 professional tones)</li>
+          <li>Tone Shifter (6 professional tones)</li>
           <li>Expand or Shorten</li>
           <li>Rewrite for Channel (email, social, ads)</li>
         </ul>
@@ -121,8 +121,8 @@ const tourSteps: Step[] = [
     content: (
       <div>
         <h2 className="text-2xl font-bold text-[#7A3991] mb-3">You&apos;re Ready to Rock!</h2>
-        <p className="text-base mb-3">Start by setting up your Brand Voice, or jump straight into a template.</p>
-        <p className="text-sm text-gray-600">Remember: CopyWorx™ Studio turns mere mortals into junior copywriters. Junior copywriters into senior copywriters. And senior copywriters into rock stars.</p>
+        <p className="text-base mb-3">Start by setting up your Brand Voice and Personas, or jump straight into a template.</p>
+        <p className="text-base font-semibold text-[#006EE6]">NOW GET TO WORX with CopyWorx™ Studio!</p>
       </div>
     ),
     placement: 'center',
