@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   Folder,
   User,
+  Edit2,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
