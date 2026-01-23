@@ -351,7 +351,7 @@ export function DocumentInsights() {
             className={cn(
               'px-1.5 py-0.5 text-[10px] font-bold rounded uppercase transition-colors',
               insights.isActive
-                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                ? 'bg-[#006EE6] text-white hover:bg-[#0062CC]'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
             )}
           >
@@ -479,7 +479,7 @@ export function DocumentInsights() {
                     'flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded',
                     'text-[10px] font-medium transition-colors',
                     hasResults
-                      ? 'bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200'
+                      ? 'bg-[#A755F7] text-white hover:bg-[#9333EA]'
                       : 'border border-gray-200 text-gray-400',
                     'disabled:opacity-50 disabled:cursor-not-allowed'
                   )}

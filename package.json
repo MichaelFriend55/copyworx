@@ -21,6 +21,7 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@tiptap/extension-character-count": "^3.15.3",
     "@tiptap/extension-color": "^3.15.3",
+    "@tiptap/extension-dropcursor": "^3.17.0",
     "@tiptap/extension-font-family": "^3.15.3",
     "@tiptap/extension-highlight": "^3.15.3",
     "@tiptap/extension-link": "^3.15.3",

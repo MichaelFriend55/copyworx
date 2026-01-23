@@ -148,7 +148,7 @@ const TEXT_COLORS = [
   { label: 'Gray', value: '#9CA3AF' },
   { label: 'Red', value: '#EF4444' },
   { label: 'Orange', value: '#F97316' },
-  { label: 'Amber', value: '#F59E0B' },
+  { label: 'Amber', value: '#EFBF04' },
   { label: 'Yellow', value: '#EAB308' },
   { label: 'Lime', value: '#84CC16' },
   { label: 'Green', value: '#22C55E' },

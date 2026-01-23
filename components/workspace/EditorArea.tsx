@@ -27,6 +27,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Typography from '@tiptap/extension-typography';
+import Dropcursor from '@tiptap/extension-dropcursor';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { Color } from '@tiptap/extension-color';
@@ -150,6 +151,11 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         },
       }),
       Typography,
+      // Drag-and-drop cursor indicator
+      Dropcursor.configure({
+        color: '#0071E3', // Apple blue to match theme
+        width: 2,
+      }),
       // Font styling extensions
       TextStyle,
       FontFamily.configure({
@@ -176,6 +182,11 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     editorProps: {
       attributes: {
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[800px] text-apple-text-dark',
+      },
+      // Allow native drag-and-drop behavior for text selections
+      handleDOMEvents: {
+        drop: () => false, // Return false to let ProseMirror handle the drop event
+        dragstart: () => false, // Return false to let ProseMirror handle drag start
       },
     },
   });
@@ -1127,6 +1138,13 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
 
         .tiptap-editor [data-text-align="justify"] {
           text-align: justify;
+        }
+
+        /* Drag-and-drop cursor indicator */
+        .ProseMirror .ProseMirror-dropcursor {
+          border-left: 2px solid #0071E3;
+          pointer-events: none;
+          position: absolute;
         }
 
         /* Zoom container styles */

@@ -38,8 +38,8 @@
     --muted: 220 14% 96%;
     --muted-foreground: 220 8% 46%;
     
-    /* Accent - Warm Amber */
-    --accent: 38 92% 50%;
+    /* Accent - Warm Yellow */
+    --accent: 48 97% 48%;
     --accent-foreground: 222 47% 11%;
     
     /* Destructive actions */
@@ -49,7 +49,7 @@
     /* Borders & Inputs */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 38 92% 50%;
+    --ring: 48 97% 48%;
     
     /* Border Radius */
     --radius: 0.625rem;
@@ -66,7 +66,7 @@
     --popover: 222 47% 11%;
     --popover-foreground: 40 33% 98%;
     
-    --primary: 38 92% 50%;
+    --primary: 48 97% 48%;
     --primary-foreground: 222 47% 8%;
     
     --secondary: 222 30% 18%;
@@ -75,7 +75,7 @@
     --muted: 222 30% 18%;
     --muted-foreground: 220 14% 60%;
     
-    --accent: 38 92% 50%;
+    --accent: 48 97% 48%;
     --accent-foreground: 222 47% 8%;
     
     --destructive: 0 62% 50%;
@@ -83,7 +83,7 @@
     
     --border: 222 30% 22%;
     --input: 222 30% 22%;
-    --ring: 38 92% 50%;
+    --ring: 48 97% 48%;
   }
 }
 
@@ -181,7 +181,7 @@
 
   /* Glow effect for CTAs */
   .glow-amber {
-    box-shadow: 0 0 40px -10px hsl(38 92% 50% / 0.5);
+    box-shadow: 0 0 40px -10px hsl(48 97% 48% / 0.5);
   }
 
   .glow-ink {
