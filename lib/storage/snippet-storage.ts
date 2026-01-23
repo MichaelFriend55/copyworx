@@ -11,9 +11,12 @@
 
 import type { Snippet, CreateSnippetInput, UpdateSnippetInput } from '@/lib/types/snippet';
 import { validateSnippetName, validateSnippetContent } from '@/lib/types/snippet';
-import { getProject, updateProject } from './project-storage';
+import { getProject, getAllProjects } from './project-storage';
 import { logError, logWarning } from '@/lib/utils/error-handling';
 import { logger } from '@/lib/utils/logger';
+
+// Storage key for projects (used for direct localStorage updates)
+const STORAGE_KEY = 'copyworx_projects';
 
 // ============================================================================
 // Types
@@ -72,10 +75,15 @@ function getProjectSnippets(projectId: string): Snippet[] {
 }
 
 /**
- * Save snippets array to project
+ * Save snippets array to project (localStorage only)
  */
 function saveProjectSnippets(projectId: string, snippets: Snippet[]): void {
-  updateProject(projectId, { snippets } as unknown as Partial<ProjectWithSnippets>);
+  // Save to localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  const projects = getAllProjects();
+  const updatedProjects = projects.map(p =>
+    p.id === projectId ? { ...p, snippets } as ProjectWithSnippets : p as ProjectWithSnippets
+  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
 }
 
 // ============================================================================

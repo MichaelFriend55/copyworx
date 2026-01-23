@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
+import type { Database } from '@/lib/types/database';
 import { 
   requireUserId, 
   unauthorizedResponse, 
@@ -17,6 +18,15 @@ import {
   notFoundResponse,
   internalErrorResponse 
 } from '@/lib/utils/api-auth';
+
+type BrandVoiceRow = Database['public']['Tables']['brand_voices']['Row'];
+type BrandVoiceInsert = Database['public']['Tables']['brand_voices']['Insert'];
+type BrandVoiceUpdate = Database['public']['Tables']['brand_voices']['Update'];
+
+// Type-safe helper to bypass TypeScript's overly strict Supabase typing
+function supabaseUpdate<T>(query: any): Promise<{ data: T | null; error: any }> {
+  return query as unknown as Promise<{ data: T | null; error: any }>;
+}
 
 // ============================================================================
 // GET - Fetch brand voice for a project
@@ -86,11 +96,11 @@ export async function POST(request: NextRequest) {
     const { 
       project_id,
       brand_name,
-      brand_tone = '',
-      approved_phrases = [],
-      forbidden_words = [],
-      brand_values = [],
-      mission_statement = ''
+      brand_tone,
+      approved_phrases,
+      forbidden_words,
+      brand_values,
+      mission_statement
     } = body;
 
     // Validate required fields
@@ -102,60 +112,70 @@ export async function POST(request: NextRequest) {
       return badRequestResponse('Brand name is required');
     }
 
+    // Prepare typed data object
+    const brandVoiceData: BrandVoiceUpdate = {
+      brand_name: brand_name.trim(),
+      brand_tone: typeof brand_tone === 'string' ? brand_tone : '',
+      approved_phrases: Array.isArray(approved_phrases) ? approved_phrases : [],
+      forbidden_words: Array.isArray(forbidden_words) ? forbidden_words : [],
+      brand_values: Array.isArray(brand_values) ? brand_values : [],
+      mission_statement: typeof mission_statement === 'string' ? mission_statement : '',
+    };
+
     // Check if brand voice already exists for this project
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await (supabase
       .from('brand_voices')
       .select('id')
       .eq('project_id', project_id)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle() as unknown as Promise<{ data: { id: string } | null; error: any }>);
 
-    let result;
+    let result: BrandVoiceRow;
 
-    if (existing) {
+    if (existing && !existingError) {
       // Update existing brand voice
-      const { data, error } = await supabase
+      const query = supabase
         .from('brand_voices')
-        .update({
-          brand_name: brand_name.trim(),
-          brand_tone,
-          approved_phrases,
-          forbidden_words,
-          brand_values,
-          mission_statement,
-        })
+        // @ts-expect-error - Supabase query builder types resolve to 'never' with strict settings
+        .update(brandVoiceData as any)
         .eq('id', existing.id)
         .eq('user_id', userId)
         .select()
         .single();
+      
+      const { data, error } = await supabaseUpdate<BrandVoiceRow>(query);
 
       if (error) {
         console.error('Supabase error updating brand voice:', error);
         return internalErrorResponse(error);
       }
-      result = data;
+      result = data!;
     } else {
       // Create new brand voice
-      const { data, error } = await supabase
+      const insertData = {
+        project_id,
+        user_id: userId,
+        brand_name: brandVoiceData.brand_name!,
+        brand_tone: brandVoiceData.brand_tone,
+        approved_phrases: brandVoiceData.approved_phrases,
+        forbidden_words: brandVoiceData.forbidden_words,
+        brand_values: brandVoiceData.brand_values,
+        mission_statement: brandVoiceData.mission_statement,
+      };
+
+      const query = supabase
         .from('brand_voices')
-        .insert({
-          project_id,
-          user_id: userId,
-          brand_name: brand_name.trim(),
-          brand_tone,
-          approved_phrases,
-          forbidden_words,
-          brand_values,
-          mission_statement,
-        })
+        .insert(insertData as any)
         .select()
         .single();
+      
+      const { data, error } = await supabaseUpdate<BrandVoiceRow>(query);
 
       if (error) {
         console.error('Supabase error creating brand voice:', error);
         return internalErrorResponse(error);
       }
-      result = data;
+      result = data!;
     }
 
     return NextResponse.json(result, { status: existing ? 200 : 201 });

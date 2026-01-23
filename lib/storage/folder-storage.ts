@@ -13,13 +13,16 @@
 'use client';
 
 import type { Folder, ProjectDocument } from '@/lib/types/project';
-import { getProject, updateProject } from './project-storage';
+import { getProject, getAllProjects } from './project-storage';
 import {
   ensureStorageAvailable,
   validateNotEmpty,
   logError,
   logWarning,
 } from '@/lib/utils/error-handling';
+
+// Storage key for projects (used for direct localStorage updates)
+const STORAGE_KEY = 'copyworx_projects';
 
 // ============================================================================
 // Constants
@@ -181,8 +184,12 @@ export function createFolder(
   // Add to project's folders array
   const updatedFolders = [...folders, newFolder];
   
-  // Save via updateProject
-  updateProject(projectId, { folders: updatedFolders });
+  // Save to localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  const projects = getAllProjects();
+  const updatedProjects = projects.map(p =>
+    p.id === projectId ? { ...p, folders: updatedFolders } : p
+  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
   
   return newFolder;
 }
@@ -313,8 +320,12 @@ export function updateFolder(
   const updatedFolders = [...folders];
   updatedFolders[folderIndex] = updatedFolder;
   
-  // Save via updateProject
-  updateProject(projectId, { folders: updatedFolders });
+  // Save to localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  const projects = getAllProjects();
+  const updatedProjects = projects.map(p =>
+    p.id === projectId ? { ...p, folders: updatedFolders } : p
+  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
   
 }
 
@@ -371,8 +382,12 @@ export function deleteFolder(projectId: string, folderId: string): void {
   // Remove folder from array
   const updatedFolders = folders.filter(f => f.id !== folderId);
   
-  // Save via updateProject
-  updateProject(projectId, { folders: updatedFolders });
+  // Save to localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  const projects = getAllProjects();
+  const updatedProjects = projects.map(p =>
+    p.id === projectId ? { ...p, folders: updatedFolders } : p
+  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
   
 }
 
@@ -438,8 +453,12 @@ export function moveFolder(
   const updatedFolders = [...folders];
   updatedFolders[folderIndex] = updatedFolder;
   
-  // Save via updateProject
-  updateProject(projectId, { folders: updatedFolders });
+  // Save to localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  const projects = getAllProjects();
+  const updatedProjects = projects.map(p =>
+    p.id === projectId ? { ...p, folders: updatedFolders } : p
+  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
 }
 
 /**

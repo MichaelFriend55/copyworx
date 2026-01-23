@@ -330,10 +330,21 @@ export function saveBrandVoiceToProject(projectId: string, brandVoice: BrandVoic
   // Ensure storage is available
   ensureStorageAvailable();
   
-  // Update project (validation happens in updateProject)
-  updateProject(projectId, { brandVoice });
+  // Get project to verify it exists
+  const project = getProject(projectId);
+  if (!project) {
+    throw new Error(`Project not found: ${projectId}`);
+  }
   
-  logger.log('✅ Brand voice saved to project:', {
+  // Update localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  const projects = getAllProjects();
+  const updatedProjects = projects.map(p => 
+    p.id === projectId ? { ...p, brandVoice } : p
+  );
+  
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
+  
+  logger.log('✅ Brand voice saved to project (localStorage):', {
     projectId,
     brandName: brandVoice.brandName,
   });
@@ -357,10 +368,15 @@ export function deleteBrandVoiceFromProject(projectId: string): void {
     throw new Error(`Project not found: ${projectId}`);
   }
   
-  // Update project with undefined brand voice (removes it)
-  updateProject(projectId, { brandVoice: undefined });
+  // Update localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  const projects = getAllProjects();
+  const updatedProjects = projects.map(p => 
+    p.id === projectId ? { ...p, brandVoice: undefined } : p
+  );
   
-  logger.log('🗑️ Brand voice deleted from project:', {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
+  
+  logger.log('🗑️ Brand voice deleted from project (localStorage):', {
     projectId,
   });
 }
