@@ -33,7 +33,7 @@ import {
   createPersona,
   updatePersona,
   deletePersona,
-} from '@/lib/storage/persona-storage';
+} from '@/lib/storage/unified-storage';
 import { PersonaCard } from './PersonaCard';
 import { PersonaForm } from './PersonaForm';
 import { cn } from '@/lib/utils';
@@ -77,10 +77,10 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
   /**
    * Load personas from storage
    */
-  const loadPersonas = () => {
+  const loadPersonas = async () => {
     if (!activeProjectId) return;
     
-    const projectPersonas = getProjectPersonas(activeProjectId);
+    const projectPersonas = await getProjectPersonas(activeProjectId);
     setPersonas(projectPersonas);
     logger.log(`📋 Loaded ${projectPersonas.length} persona(s)`);
   };
@@ -104,7 +104,7 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
   /**
    * Handle save persona (create or update)
    */
-  const handleSave = (personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSave = async (personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!activeProjectId) {
       alert('No active project');
       return;
@@ -113,16 +113,16 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
     try {
       if (viewMode === 'edit' && editingPersona) {
         // Update existing persona
-        updatePersona(activeProjectId, editingPersona.id, personaData);
+        await updatePersona(activeProjectId, editingPersona.id, personaData);
         logger.log('✅ Persona updated');
       } else {
         // Create new persona
-        createPersona(activeProjectId, personaData);
+        await createPersona(activeProjectId, personaData);
         logger.log('✅ Persona created');
       }
 
       // Reload personas and return to list
-      loadPersonas();
+      await loadPersonas();
       setViewMode('list');
       setEditingPersona(null);
     } catch (error) {
@@ -134,7 +134,7 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
   /**
    * Handle delete persona
    */
-  const handleDelete = (personaId: string) => {
+  const handleDelete = async (personaId: string) => {
     if (!activeProjectId) return;
 
     const persona = personas.find((p) => p.id === personaId);
@@ -147,8 +147,8 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
     if (!confirmed) return;
 
     try {
-      deletePersona(activeProjectId, personaId);
-      loadPersonas();
+      await deletePersona(activeProjectId, personaId);
+      await loadPersonas();
       logger.log('🗑️ Persona deleted');
     } catch (error) {
       logger.error('❌ Failed to delete persona:', error);

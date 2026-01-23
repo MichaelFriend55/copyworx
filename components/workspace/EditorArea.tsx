@@ -35,7 +35,7 @@ import Highlight from '@tiptap/extension-highlight';
 import { FontSize } from '@/lib/tiptap/font-size';
 import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId, useViewMode } from '@/lib/stores/workspaceStore';
 import { useSnippetStore } from '@/lib/stores/snippetStore';
-import { getDocument, updateDocument, createDocumentVersion } from '@/lib/storage/document-storage';
+import { getDocument, updateDocument, createDocumentVersion } from '@/lib/storage/unified-storage';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
@@ -171,9 +171,9 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   });
 
   /**
-   * Save document content to localStorage
+   * Save document content to storage (cloud with localStorage fallback)
    */
-  const saveToLocalStorage = useCallback((content: string) => {
+  const saveToLocalStorage = useCallback(async (content: string) => {
     if (!activeProjectId || !currentDocument?.id) {
       logger.warn('⚠️ Cannot save: missing projectId or documentId');
       setSaveStatus('idle');
@@ -181,7 +181,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     }
     
     try {
-      updateDocument(activeProjectId, currentDocument.id, { content });
+      await updateDocument(activeProjectId, currentDocument.id, { content });
       setSaveStatus('saved');
       
       if (saveStatusTimerRef.current) {
@@ -224,9 +224,9 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   }, [editor, saveToLocalStorage]);
 
   /**
-   * Load document from localStorage
+   * Load document from storage (cloud with localStorage fallback)
    */
-  const loadDocumentFromStorage = useCallback((docId: string) => {
+  const loadDocumentFromStorage = useCallback(async (docId: string) => {
     if (!activeProjectId || !editor) {
       logger.warn('⚠️ Cannot load document: missing projectId or editor');
       return;
@@ -235,7 +235,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     isLoadingRef.current = true;
     
     try {
-      const doc = getDocument(activeProjectId, docId);
+      const doc = await getDocument(activeProjectId, docId);
       
       if (!doc) {
         logger.warn('⚠️ Document not found:', docId);
@@ -280,13 +280,13 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
    * Listen for document updates from external sources
    */
   useEffect(() => {
-    const handleDocumentUpdated = (event: Event) => {
+    const handleDocumentUpdated = async (event: Event) => {
       const customEvent = event as CustomEvent;
       const { projectId, documentId } = customEvent.detail;
       
       if (projectId === activeProjectId && documentId === activeDocumentId && editor) {
         try {
-          const doc = getDocument(projectId, documentId);
+          const doc = await getDocument(projectId, documentId);
           if (doc) {
             setCurrentDocument(doc);
             logger.log('✅ Document metadata refreshed:', doc.title);
@@ -461,7 +461,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   /**
    * Handle "Save as New Version"
    */
-  const handleSaveAsNewVersion = useCallback(() => {
+  const handleSaveAsNewVersion = useCallback(async () => {
     if (!currentDocument || !activeProjectId || !editor) {
       logger.error('❌ Cannot save version: missing document, project, or editor');
       return;
@@ -473,10 +473,10 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       const currentVersion = version ?? 1;
       const newVersion = currentVersion + 1;
       
-      const newDoc = createDocumentVersion(activeProjectId, currentDocument.id, currentContent);
+      const newDoc = await createDocumentVersion(activeProjectId, currentDocument.id, currentContent);
       const newTitle = `${base} v${newVersion}`;
       
-      updateDocument(activeProjectId, newDoc.id, { 
+      await updateDocument(activeProjectId, newDoc.id, { 
         title: newTitle,
         baseTitle: base,
         version: newVersion 

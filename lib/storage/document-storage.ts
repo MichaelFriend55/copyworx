@@ -1,22 +1,22 @@
 /**
  * @file lib/storage/document-storage.ts
- * @description Document storage layer with version control
+ * @description Document storage layer with Supabase API + localStorage fallback
  * 
  * Provides CRUD operations for documents within projects.
+ * Uses Supabase API calls for cloud storage with localStorage fallback.
  * Supports version control with linked versions via parentVersionId.
- * Persists through project-storage layer to localStorage.
  */
 
 'use client';
 
 import type { ProjectDocument } from '@/lib/types/project';
-import { getProject, updateProject } from './project-storage';
-import { 
-  validateNotEmpty,
-  logError,
-  logWarning
-} from '@/lib/utils/error-handling';
 import { logger } from '@/lib/utils/logger';
+
+// ============================================================================
+// Configuration
+// ============================================================================
+
+const API_BASE = '/api/db/documents';
 
 // ============================================================================
 // Helper Functions
@@ -24,113 +24,185 @@ import { logger } from '@/lib/utils/logger';
 
 /**
  * Generate a unique ID for documents
- * Uses crypto.randomUUID() if available, falls back to timestamp-based ID
  */
 function generateId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  // Fallback for environments without crypto.randomUUID
   return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**
  * Calculate word count from content string
- * Strips HTML tags and counts whitespace-separated words
  */
 function calculateWordCount(content: string): number {
   if (!content) return 0;
-  
-  // Strip HTML tags
   const textOnly = content.replace(/<[^>]*>/g, ' ');
-  
-  // Split by whitespace and filter empty strings
-  const words = textOnly
-    .split(/\s+/)
-    .filter(word => word.trim().length > 0);
-  
+  const words = textOnly.split(/\s+/).filter(word => word.trim().length > 0);
   return words.length;
 }
 
 /**
  * Calculate character count from content string
- * Strips HTML tags for accurate count
  */
 function calculateCharCount(content: string): number {
   if (!content) return 0;
-  
-  // Strip HTML tags
   const textOnly = content.replace(/<[^>]*>/g, '');
-  
   return textOnly.length;
 }
 
 /**
  * Validate and sanitize base title
- * @throws Error if baseTitle is empty
  */
 function validateBaseTitle(baseTitle: string): string {
-  // Validate not empty
-  validateNotEmpty(baseTitle, 'Document title');
+  if (!baseTitle || baseTitle.trim().length === 0) {
+    throw new Error('Document title cannot be empty');
+  }
   
-  // Trim whitespace
   const trimmed = baseTitle.trim();
-  
-  // Sanitize: remove < > characters (prevent XSS)
   const sanitized = trimmed.replace(/[<>]/g, '');
   
-  // Validate length
   if (sanitized.length > 200) {
-    throw new Error('Document title cannot exceed 200 characters.');
+    throw new Error('Document title cannot exceed 200 characters');
   }
   
   return sanitized;
 }
 
+/**
+ * Convert API response (snake_case) to frontend format (camelCase)
+ */
+function mapApiToDocument(apiDoc: Record<string, unknown>): ProjectDocument {
+  return {
+    id: apiDoc.id as string,
+    projectId: apiDoc.project_id as string,
+    baseTitle: apiDoc.base_title as string,
+    title: apiDoc.title as string,
+    version: apiDoc.version as number,
+    parentVersionId: apiDoc.parent_version_id as string | undefined,
+    folderId: apiDoc.folder_id as string | undefined,
+    content: apiDoc.content as string,
+    createdAt: apiDoc.created_at as string,
+    modifiedAt: apiDoc.modified_at as string,
+    metadata: apiDoc.metadata as ProjectDocument['metadata'],
+    templateProgress: apiDoc.template_progress as ProjectDocument['templateProgress'],
+  };
+}
+
+/**
+ * Convert frontend document to API format (snake_case)
+ */
+function mapDocumentToApi(doc: Partial<ProjectDocument>): Record<string, unknown> {
+  const apiDoc: Record<string, unknown> = {};
+  
+  if (doc.projectId !== undefined) apiDoc.project_id = doc.projectId;
+  if (doc.baseTitle !== undefined) apiDoc.base_title = doc.baseTitle;
+  if (doc.title !== undefined) apiDoc.title = doc.title;
+  if (doc.version !== undefined) apiDoc.version = doc.version;
+  if (doc.parentVersionId !== undefined) apiDoc.parent_version_id = doc.parentVersionId;
+  if (doc.folderId !== undefined) apiDoc.folder_id = doc.folderId;
+  if (doc.content !== undefined) apiDoc.content = doc.content;
+  if (doc.metadata !== undefined) apiDoc.metadata = doc.metadata;
+  if (doc.templateProgress !== undefined) apiDoc.template_progress = doc.templateProgress;
+  
+  return apiDoc;
+}
+
 // ============================================================================
-// CRUD Operations
+// localStorage Fallback Functions
+// ============================================================================
+
+const STORAGE_KEY = 'copyworx_documents';
+
+function getLocalDocuments(projectId: string): ProjectDocument[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return [];
+    const allDocs = JSON.parse(data) as ProjectDocument[];
+    return allDocs.filter(doc => doc.projectId === projectId);
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalDocument(doc: ProjectDocument): void {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    const allDocs = data ? JSON.parse(data) as ProjectDocument[] : [];
+    const existingIndex = allDocs.findIndex(d => d.id === doc.id);
+    if (existingIndex >= 0) {
+      allDocs[existingIndex] = doc;
+    } else {
+      allDocs.push(doc);
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(allDocs));
+  } catch (error) {
+    logger.error('❌ Failed to save to localStorage:', error);
+  }
+}
+
+function deleteLocalDocument(docId: string): void {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return;
+    const allDocs = JSON.parse(data) as ProjectDocument[];
+    const filtered = allDocs.filter(d => d.id !== docId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  } catch (error) {
+    logger.error('❌ Failed to delete from localStorage:', error);
+  }
+}
+
+// ============================================================================
+// API Call Wrapper
+// ============================================================================
+
+async function apiCall<T>(
+  url: string, 
+  options?: RequestInit
+): Promise<T> {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `API error: ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+// ============================================================================
+// CRUD Operations (API-first with localStorage fallback)
 // ============================================================================
 
 /**
  * Create a new document with version 1
- * 
- * @param projectId - ID of the project to add document to
- * @param baseTitle - Base title for the document (without version number)
- * @param content - Initial content (optional, defaults to empty)
- * @returns The newly created document
- * @throws Error if project not found or validation fails
  */
-export function createDocument(
+export async function createDocument(
   projectId: string,
   baseTitle: string,
   content: string = ''
-): ProjectDocument {
+): Promise<ProjectDocument> {
   if (typeof window === 'undefined') {
     throw new Error('Cannot create document in non-browser environment');
   }
   
-  // Validate and sanitize baseTitle
   const sanitizedTitle = validateBaseTitle(baseTitle);
-  
-  // Get project (throws if not found)
-  const project = getProject(projectId);
-  if (!project) {
-    throw new Error(`Project not found: ${projectId}`);
-  }
-  
-  // Create timestamp
   const now = new Date().toISOString();
   
-  // Create new document (no automatic version suffix)
-  const newDocument: ProjectDocument = {
-    id: generateId(),
-    projectId,
-    baseTitle: sanitizedTitle,
+  // Prepare document data
+  const docData = {
+    project_id: projectId,
+    base_title: sanitizedTitle,
     title: sanitizedTitle,
     version: 1,
     content,
-    createdAt: now,
-    modifiedAt: now,
     metadata: {
       wordCount: calculateWordCount(content),
       charCount: calculateCharCount(content),
@@ -138,370 +210,367 @@ export function createDocument(
     },
   };
   
-  // Add to project's documents array
-  const updatedDocuments = [...project.documents, newDocument];
-  
-  // Update project (persists to localStorage)
-  updateProject(projectId, { documents: updatedDocuments });
-  
-  return newDocument;
+  try {
+    // Try API first
+    const apiResponse = await apiCall<Record<string, unknown>>(API_BASE, {
+      method: 'POST',
+      body: JSON.stringify(docData),
+    });
+    
+    const newDoc = mapApiToDocument(apiResponse);
+    logger.log('☁️ Document created in cloud:', newDoc.id);
+    
+    // Also save to localStorage for offline access
+    saveLocalDocument(newDoc);
+    
+    return newDoc;
+  } catch (error) {
+    logger.warn('⚠️ API failed, falling back to localStorage:', error);
+    
+    // Fallback: create locally
+    const newDoc: ProjectDocument = {
+      id: generateId(),
+      projectId,
+      baseTitle: sanitizedTitle,
+      title: sanitizedTitle,
+      version: 1,
+      content,
+      createdAt: now,
+      modifiedAt: now,
+      metadata: {
+        wordCount: calculateWordCount(content),
+        charCount: calculateCharCount(content),
+        tags: [],
+      },
+    };
+    
+    saveLocalDocument(newDoc);
+    logger.log('💾 Document created locally:', newDoc.id);
+    
+    return newDoc;
+  }
 }
 
 /**
  * Create a new version of an existing document
- * 
- * @param projectId - ID of the project
- * @param sourceDocId - ID of the source document to version from
- * @param newContent - Optional new content (copies from source if not provided)
- * @returns The newly created document version
- * @throws Error if project or source document not found
  */
-export function createDocumentVersion(
+export async function createDocumentVersion(
   projectId: string,
   sourceDocId: string,
   newContent?: string
-): ProjectDocument {
+): Promise<ProjectDocument> {
   if (typeof window === 'undefined') {
     throw new Error('Cannot create document version in non-browser environment');
   }
   
-  // Get project
-  const project = getProject(projectId);
-  if (!project) {
-    throw new Error(`Project not found: ${projectId}`);
-  }
-  
-  // Find source document
-  const sourceDocument = project.documents.find(doc => doc.id === sourceDocId);
-  if (!sourceDocument) {
+  // Get source document
+  const sourceDoc = await getDocument(projectId, sourceDocId);
+  if (!sourceDoc) {
     throw new Error(`Source document not found: ${sourceDocId}`);
   }
   
-  // Find the highest version number for this baseTitle
-  const relatedVersions = project.documents.filter(
-    doc => doc.baseTitle === sourceDocument.baseTitle
-  );
-  const highestVersion = Math.max(...relatedVersions.map(doc => doc.version));
+  // Find highest version for this baseTitle
+  const versions = await getDocumentVersions(projectId, sourceDoc.baseTitle);
+  const highestVersion = Math.max(...versions.map(doc => doc.version), 0);
   const newVersion = highestVersion + 1;
   
-  // Determine content
-  const content = newContent !== undefined ? newContent : sourceDocument.content;
-  
-  // Create timestamp
+  const content = newContent !== undefined ? newContent : sourceDoc.content;
   const now = new Date().toISOString();
   
-  // Create new document version
-  const newDocument: ProjectDocument = {
-    id: generateId(),
-    projectId,
-    baseTitle: sourceDocument.baseTitle,
-    title: `${sourceDocument.baseTitle} v${newVersion}`,
+  const docData = {
+    project_id: projectId,
+    base_title: sourceDoc.baseTitle,
+    title: `${sourceDoc.baseTitle} v${newVersion}`,
     version: newVersion,
-    parentVersionId: sourceDocument.id,
+    parent_version_id: sourceDoc.id,
     content,
-    createdAt: now,
-    modifiedAt: now,
     metadata: {
       wordCount: calculateWordCount(content),
       charCount: calculateCharCount(content),
-      templateId: sourceDocument.metadata?.templateId,
-      tags: sourceDocument.metadata?.tags ? [...sourceDocument.metadata.tags] : [],
+      templateId: sourceDoc.metadata?.templateId,
+      tags: sourceDoc.metadata?.tags ? [...sourceDoc.metadata.tags] : [],
     },
   };
   
-  // Add to project's documents array
-  const updatedDocuments = [...project.documents, newDocument];
-  
-  // Update project (persists to localStorage)
-  updateProject(projectId, { documents: updatedDocuments });
-  
-  return newDocument;
+  try {
+    const apiResponse = await apiCall<Record<string, unknown>>(API_BASE, {
+      method: 'POST',
+      body: JSON.stringify(docData),
+    });
+    
+    const newDoc = mapApiToDocument(apiResponse);
+    logger.log('☁️ Document version created in cloud:', newDoc.id);
+    saveLocalDocument(newDoc);
+    
+    return newDoc;
+  } catch (error) {
+    logger.warn('⚠️ API failed, falling back to localStorage:', error);
+    
+    const newDoc: ProjectDocument = {
+      id: generateId(),
+      projectId,
+      baseTitle: sourceDoc.baseTitle,
+      title: `${sourceDoc.baseTitle} v${newVersion}`,
+      version: newVersion,
+      parentVersionId: sourceDoc.id,
+      content,
+      createdAt: now,
+      modifiedAt: now,
+      metadata: {
+        wordCount: calculateWordCount(content),
+        charCount: calculateCharCount(content),
+        templateId: sourceDoc.metadata?.templateId,
+        tags: sourceDoc.metadata?.tags ? [...sourceDoc.metadata.tags] : [],
+      },
+    };
+    
+    saveLocalDocument(newDoc);
+    logger.log('💾 Document version created locally:', newDoc.id);
+    
+    return newDoc;
+  }
 }
 
 /**
  * Get all documents for a project
- * 
- * @param projectId - ID of the project
- * @returns Array of documents sorted by modifiedAt (newest first)
  */
-export function getAllDocuments(projectId: string): ProjectDocument[] {
+export async function getAllDocuments(projectId: string): Promise<ProjectDocument[]> {
   if (typeof window === 'undefined') return [];
   
   try {
-    const project = getProject(projectId);
-    if (!project) {
-      logWarning(`Project not found when getting documents: ${projectId}`);
-      return [];
-    }
+    const apiResponse = await apiCall<Record<string, unknown>[]>(
+      `${API_BASE}?project_id=${encodeURIComponent(projectId)}`
+    );
     
-    // Ensure documents is an array
-    const documents = Array.isArray(project.documents) ? project.documents : [];
+    const docs = apiResponse.map(mapApiToDocument);
+    logger.log(`☁️ Fetched ${docs.length} documents from cloud`);
     
-    // Sort by modifiedAt (newest first)
-    const sorted = [...documents].sort((a, b) => {
-      const dateA = new Date(a.modifiedAt).getTime();
-      const dateB = new Date(b.modifiedAt).getTime();
-      return dateB - dateA;
-    });
+    // Update localStorage with latest data
+    docs.forEach(doc => saveLocalDocument(doc));
     
-    return sorted;
+    return docs;
   } catch (error) {
-    logError(error, `Failed to get documents for project ${projectId}`);
-    return [];
+    logger.warn('⚠️ API failed, falling back to localStorage:', error);
+    
+    const localDocs = getLocalDocuments(projectId);
+    logger.log(`💾 Loaded ${localDocs.length} documents from localStorage`);
+    
+    return localDocs.sort((a, b) => 
+      new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime()
+    );
   }
 }
 
 /**
  * Get a single document by ID
- * 
- * @param projectId - ID of the project
- * @param docId - ID of the document
- * @returns The document or null if not found
  */
-export function getDocument(
+export async function getDocument(
   projectId: string,
   docId: string
-): ProjectDocument | null {
+): Promise<ProjectDocument | null> {
   if (typeof window === 'undefined') return null;
   
   try {
-    const documents = getAllDocuments(projectId);
-    const document = documents.find(doc => doc.id === docId);
+    const apiResponse = await apiCall<Record<string, unknown>>(
+      `${API_BASE}?id=${encodeURIComponent(docId)}`
+    );
     
-    if (!document) {
-      logger.warn(`⚠️ Document not found: ${docId} in project ${projectId}`);
-      return null;
+    const doc = mapApiToDocument(apiResponse);
+    logger.log('☁️ Document fetched from cloud:', doc.id);
+    saveLocalDocument(doc);
+    
+    return doc;
+  } catch (error) {
+    logger.warn('⚠️ API failed, falling back to localStorage:', error);
+    
+    const localDocs = getLocalDocuments(projectId);
+    const doc = localDocs.find(d => d.id === docId) || null;
+    
+    if (doc) {
+      logger.log('💾 Document loaded from localStorage:', doc.id);
+    } else {
+      logger.warn(`⚠️ Document not found: ${docId}`);
     }
     
-    return document;
-  } catch (error) {
-    logError(error, `Failed to get document ${docId}`);
-    return null;
+    return doc;
   }
 }
 
 /**
  * Get all versions of a document by baseTitle
- * 
- * @param projectId - ID of the project
- * @param baseTitle - Base title to search for
- * @returns Array of document versions sorted by version number (ascending)
  */
-export function getDocumentVersions(
+export async function getDocumentVersions(
   projectId: string,
   baseTitle: string
-): ProjectDocument[] {
+): Promise<ProjectDocument[]> {
   if (typeof window === 'undefined') return [];
   
   try {
-    const documents = getAllDocuments(projectId);
+    const apiResponse = await apiCall<Record<string, unknown>[]>(
+      `${API_BASE}?project_id=${encodeURIComponent(projectId)}&base_title=${encodeURIComponent(baseTitle)}`
+    );
     
-    // Filter by matching baseTitle
-    const versions = documents.filter(doc => doc.baseTitle === baseTitle);
+    const docs = apiResponse.map(mapApiToDocument);
+    logger.log(`☁️ Fetched ${docs.length} versions for "${baseTitle}"`);
     
-    // Sort by version number (ascending)
-    const sorted = [...versions].sort((a, b) => a.version - b.version);
-    
-    logger.log(`📚 Found ${sorted.length} version(s) for "${baseTitle}"`);
-    
-    return sorted;
+    return docs.sort((a, b) => a.version - b.version);
   } catch (error) {
-    logError(error, `Failed to get document versions for "${baseTitle}"`);
-    return [];
+    logger.warn('⚠️ API failed, falling back to localStorage:', error);
+    
+    const localDocs = getLocalDocuments(projectId);
+    const versions = localDocs.filter(doc => doc.baseTitle === baseTitle);
+    
+    logger.log(`💾 Found ${versions.length} versions locally for "${baseTitle}"`);
+    
+    return versions.sort((a, b) => a.version - b.version);
   }
 }
 
 /**
  * Update a document
- * 
- * @param projectId - ID of the project
- * @param docId - ID of the document to update
- * @param updates - Partial document updates (some fields are protected)
- * @throws Error if project or document not found
  */
-export function updateDocument(
+export async function updateDocument(
   projectId: string,
   docId: string,
   updates: Partial<ProjectDocument>
-): void {
+): Promise<void> {
   if (typeof window === 'undefined') {
     throw new Error('Cannot update document in non-browser environment');
   }
   
-  // Get project
-  const project = getProject(projectId);
-  if (!project) {
-    throw new Error(`Project not found: ${projectId}`);
-  }
-  
-  // Find document index
-  const docIndex = project.documents.findIndex(doc => doc.id === docId);
-  if (docIndex === -1) {
-    throw new Error(`Document not found: ${docId}`);
-  }
-  
-  const existingDoc = project.documents[docIndex];
-  
-  // Determine if content changed
-  const contentChanged = updates.content !== undefined && 
-                         updates.content !== existingDoc.content;
-  
-  // Calculate new metadata if content changed
-  let updatedMetadata = existingDoc.metadata || {};
-  if (contentChanged && updates.content !== undefined) {
-    updatedMetadata = {
-      ...updatedMetadata,
+  // Calculate metadata if content changed
+  if (updates.content !== undefined) {
+    updates.metadata = {
+      ...updates.metadata,
       wordCount: calculateWordCount(updates.content),
       charCount: calculateCharCount(updates.content),
     };
   }
   
-  // Validate and sanitize baseTitle if it's being updated
-  let updatedBaseTitle = existingDoc.baseTitle;
+  // Validate baseTitle if being updated
   if (updates.baseTitle !== undefined) {
-    updatedBaseTitle = validateBaseTitle(updates.baseTitle);
+    updates.baseTitle = validateBaseTitle(updates.baseTitle);
   }
   
-  // Merge updates with existing document, protecting immutable fields
-  const updatedDoc: ProjectDocument = {
-    ...existingDoc,
-    ...updates,
-    // Protected fields - cannot be changed
-    id: existingDoc.id,
-    projectId: existingDoc.projectId,
-    version: existingDoc.version,
-    parentVersionId: existingDoc.parentVersionId,
-    // Allow baseTitle to be updated (with validation)
-    baseTitle: updatedBaseTitle,
-    // Always update modifiedAt
-    modifiedAt: new Date().toISOString(),
-    // Updated metadata (with recalculated counts if content changed)
-    metadata: {
-      ...updatedMetadata,
-      ...(updates.metadata || {}),
-    },
-  };
-  
-  // Update the documents array
-  const updatedDocuments = [...project.documents];
-  updatedDocuments[docIndex] = updatedDoc;
-  
-  // Update project (persists to localStorage)
-  updateProject(projectId, { documents: updatedDocuments });
-  
+  try {
+    await apiCall(API_BASE, {
+      method: 'PUT',
+      body: JSON.stringify({
+        id: docId,
+        ...mapDocumentToApi(updates),
+      }),
+    });
+    
+    logger.log('☁️ Document updated in cloud:', docId);
+    
+    // Update localStorage
+    const existingDoc = await getDocument(projectId, docId);
+    if (existingDoc) {
+      const updatedDoc = { ...existingDoc, ...updates, modifiedAt: new Date().toISOString() };
+      saveLocalDocument(updatedDoc);
+    }
+  } catch (error) {
+    logger.warn('⚠️ API failed, falling back to localStorage:', error);
+    
+    // Fallback: update locally
+    const localDocs = getLocalDocuments(projectId);
+    const docIndex = localDocs.findIndex(d => d.id === docId);
+    
+    if (docIndex === -1) {
+      throw new Error(`Document not found: ${docId}`);
+    }
+    
+    const updatedDoc = {
+      ...localDocs[docIndex],
+      ...updates,
+      modifiedAt: new Date().toISOString(),
+    };
+    
+    saveLocalDocument(updatedDoc);
+    logger.log('💾 Document updated locally:', docId);
+  }
 }
 
 /**
  * Delete a document
- * 
- * @param projectId - ID of the project
- * @param docId - ID of the document to delete
- * @throws Error if project or document not found
  */
-export function deleteDocument(projectId: string, docId: string): void {
+export async function deleteDocument(
+  projectId: string,
+  docId: string
+): Promise<void> {
   if (typeof window === 'undefined') {
     throw new Error('Cannot delete document in non-browser environment');
   }
   
-  // Get project
-  const project = getProject(projectId);
-  if (!project) {
-    throw new Error(`Project not found: ${projectId}`);
+  try {
+    await apiCall(`${API_BASE}?id=${encodeURIComponent(docId)}`, {
+      method: 'DELETE',
+    });
+    
+    logger.log('☁️ Document deleted from cloud:', docId);
+    deleteLocalDocument(docId);
+  } catch (error) {
+    logger.warn('⚠️ API failed, falling back to localStorage:', error);
+    
+    deleteLocalDocument(docId);
+    logger.log('💾 Document deleted locally:', docId);
   }
-  
-  // Find document
-  const docIndex = project.documents.findIndex(doc => doc.id === docId);
-  if (docIndex === -1) {
-    throw new Error(`Document not found: ${docId}`);
-  }
-  
-  const deletedDoc = project.documents[docIndex];
-  
-  // Remove document from array
-  const updatedDocuments = project.documents.filter(doc => doc.id !== docId);
-  
-  // Update project (persists to localStorage)
-  updateProject(projectId, { documents: updatedDocuments });
-  
 }
 
 /**
  * Rename a document to a new document family
- * 
- * This creates a NEW document family by:
- * - Changing the document's baseTitle to the new name
- * - Resetting the version to 1
- * - Clearing the parentVersionId (breaks link to original versions)
- * - Updating the title to "{newBaseTitle} v1"
- * 
- * The original version group remains unchanged (other versions stay).
- * 
- * @param projectId - ID of the project
- * @param docId - ID of the document to rename
- * @param newBaseTitle - New base title for the document
- * @returns The updated document
- * @throws Error if project or document not found, or validation fails
  */
-export function renameDocument(
+export async function renameDocument(
   projectId: string,
   docId: string,
   newBaseTitle: string
-): ProjectDocument {
+): Promise<ProjectDocument> {
   if (typeof window === 'undefined') {
     throw new Error('Cannot rename document in non-browser environment');
   }
   
-  // Validate new title
-  if (!newBaseTitle || newBaseTitle.trim().length === 0) {
-    throw new Error('Document title cannot be empty');
+  const sanitizedTitle = validateBaseTitle(newBaseTitle);
+  
+  try {
+    const apiResponse = await apiCall<Record<string, unknown>>(API_BASE, {
+      method: 'PUT',
+      body: JSON.stringify({
+        id: docId,
+        base_title: sanitizedTitle,
+        title: sanitizedTitle,
+      }),
+    });
+    
+    const renamedDoc = mapApiToDocument(apiResponse);
+    logger.log('☁️ Document renamed in cloud:', renamedDoc.id);
+    saveLocalDocument(renamedDoc);
+    
+    return renamedDoc;
+  } catch (error) {
+    logger.warn('⚠️ API failed, falling back to localStorage:', error);
+    
+    const localDocs = getLocalDocuments(projectId);
+    const docIndex = localDocs.findIndex(d => d.id === docId);
+    
+    if (docIndex === -1) {
+      throw new Error(`Document not found: ${docId}`);
+    }
+    
+    const existingDoc = localDocs[docIndex];
+    const renamedDoc: ProjectDocument = {
+      ...existingDoc,
+      baseTitle: sanitizedTitle,
+      title: sanitizedTitle,
+      version: 1,
+      parentVersionId: undefined,
+      modifiedAt: new Date().toISOString(),
+    };
+    
+    saveLocalDocument(renamedDoc);
+    logger.log('💾 Document renamed locally:', renamedDoc.id);
+    
+    return renamedDoc;
   }
-  
-  const sanitizedTitle = newBaseTitle.trim().replace(/[<>]/g, '');
-  
-  if (sanitizedTitle.length > 200) {
-    throw new Error('Document title cannot exceed 200 characters');
-  }
-  
-  // Get project
-  const project = getProject(projectId);
-  if (!project) {
-    throw new Error(`Project not found: ${projectId}`);
-  }
-  
-  // Find document index
-  const docIndex = project.documents.findIndex(doc => doc.id === docId);
-  if (docIndex === -1) {
-    throw new Error(`Document not found: ${docId}`);
-  }
-  
-  const existingDoc = project.documents[docIndex];
-  const now = new Date().toISOString();
-  
-  // Create renamed document - new family (no automatic version suffix)
-  const renamedDoc: ProjectDocument = {
-    ...existingDoc,
-    baseTitle: sanitizedTitle,
-    title: sanitizedTitle,
-    version: 1,
-    parentVersionId: undefined, // Break link to original version group
-    modifiedAt: now,
-  };
-  
-  // Update the documents array
-  const updatedDocuments = [...project.documents];
-  updatedDocuments[docIndex] = renamedDoc;
-  
-  // Update project (persists to localStorage)
-  updateProject(projectId, { documents: updatedDocuments });
-  
-  logger.log('✅ Document renamed to new family:', {
-    id: renamedDoc.id,
-    oldBaseTitle: existingDoc.baseTitle,
-    newBaseTitle: sanitizedTitle,
-    newTitle: renamedDoc.title,
-  });
-  
-  return renamedDoc;
 }
 
 // ============================================================================
@@ -510,48 +579,36 @@ export function renameDocument(
 
 /**
  * Get the latest version of a document by baseTitle
- * 
- * @param projectId - ID of the project
- * @param baseTitle - Base title to search for
- * @returns The latest version or null if none found
  */
-export function getLatestVersion(
+export async function getLatestVersion(
   projectId: string,
   baseTitle: string
-): ProjectDocument | null {
-  const versions = getDocumentVersions(projectId, baseTitle);
+): Promise<ProjectDocument | null> {
+  const versions = await getDocumentVersions(projectId, baseTitle);
   
   if (versions.length === 0) {
     return null;
   }
   
-  // Versions are sorted ascending, so last one is latest
   return versions[versions.length - 1];
 }
 
 /**
  * Check if a document has multiple versions
- * 
- * @param projectId - ID of the project
- * @param baseTitle - Base title to check
- * @returns True if there are multiple versions
  */
-export function hasMultipleVersions(
+export async function hasMultipleVersions(
   projectId: string,
   baseTitle: string
-): boolean {
-  const versions = getDocumentVersions(projectId, baseTitle);
+): Promise<boolean> {
+  const versions = await getDocumentVersions(projectId, baseTitle);
   return versions.length > 1;
 }
 
 /**
  * Get unique base titles (document groups) for a project
- * 
- * @param projectId - ID of the project
- * @returns Array of unique base titles
  */
-export function getUniqueBaseTitles(projectId: string): string[] {
-  const documents = getAllDocuments(projectId);
+export async function getUniqueBaseTitles(projectId: string): Promise<string[]> {
+  const documents = await getAllDocuments(projectId);
   const baseTitles = new Set(documents.map(doc => doc.baseTitle));
   return Array.from(baseTitles);
 }

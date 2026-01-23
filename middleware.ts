@@ -16,8 +16,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
  * - /about
  * - /pricing
  * - /sign-in, /sign-up (auth pages)
- * - /api/* (API routes)
- * - /copyworx/* (CopyWorx workspace - temporarily public for testing)
+ * - /api/* (API routes - handle their own auth)
  */
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -26,7 +25,6 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api(.*)',
-  '/copyworx(.*)',
 ]);
 
 /**

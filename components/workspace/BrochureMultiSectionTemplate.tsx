@@ -35,8 +35,7 @@ import {
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import { cn } from '@/lib/utils';
 import { formatGeneratedContent } from '@/lib/utils/content-formatting';
-import { updateDocument as updateDocumentInStorage, getDocument } from '@/lib/storage/document-storage';
-import { getProjectPersonas } from '@/lib/storage/persona-storage';
+import { updateDocument as updateDocumentInStorage, getDocument, getProjectPersonas } from '@/lib/storage/unified-storage';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { 
   BROCHURE_SECTIONS, 

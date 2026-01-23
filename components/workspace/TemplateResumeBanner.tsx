@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
-import { getDocument, updateDocument as updateDocumentInStorage } from '@/lib/storage/document-storage';
+import { getDocument, updateDocument as updateDocumentInStorage } from '@/lib/storage/unified-storage';
 import { BROCHURE_SECTIONS } from '@/lib/templates/brochure-multi-section-config';
 import type { TemplateProgress } from '@/lib/types/template-progress';
 
@@ -44,35 +44,38 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
   
   // Check for template progress when document changes
   useEffect(() => {
-    logger.log('🎗️ TemplateResumeBanner: Checking for progress...', {
-      activeDocumentId,
-      activeProjectId,
-      selectedTemplateId
-    });
-    
-    if (!activeDocumentId || !activeProjectId) {
-      logger.log('⚠️ Banner: No active document or project');
-      setTemplateProgress(null);
-      setIsDismissed(false);
-      return;
-    }
-    
-    const doc = getDocument(activeProjectId, activeDocumentId);
-    logger.log('📄 Banner: Document loaded', {
-      hasDoc: !!doc,
-      hasProgress: !!doc?.templateProgress,
-      isComplete: doc?.templateProgress?.isComplete,
-      templateId: doc?.templateProgress?.templateId
-    });
-    
-    if (doc?.templateProgress && !doc.templateProgress.isComplete) {
-      logger.log('✅ Banner: Found incomplete progress - SHOWING BANNER');
-      setTemplateProgress(doc.templateProgress);
-      setIsDismissed(false);
-    } else {
-      logger.log('❌ Banner: No incomplete progress found');
-      setTemplateProgress(null);
-    }
+    const checkTemplateProgress = async () => {
+      logger.log('🎗️ TemplateResumeBanner: Checking for progress...', {
+        activeDocumentId,
+        activeProjectId,
+        selectedTemplateId
+      });
+      
+      if (!activeDocumentId || !activeProjectId) {
+        logger.log('⚠️ Banner: No active document or project');
+        setTemplateProgress(null);
+        setIsDismissed(false);
+        return;
+      }
+      
+      const doc = await getDocument(activeProjectId, activeDocumentId);
+      logger.log('📄 Banner: Document loaded', {
+        hasDoc: !!doc,
+        hasProgress: !!doc?.templateProgress,
+        isComplete: doc?.templateProgress?.isComplete,
+        templateId: doc?.templateProgress?.templateId
+      });
+      
+      if (doc?.templateProgress && !doc.templateProgress.isComplete) {
+        logger.log('✅ Banner: Found incomplete progress - SHOWING BANNER');
+        setTemplateProgress(doc.templateProgress);
+        setIsDismissed(false);
+      } else {
+        logger.log('❌ Banner: No incomplete progress found');
+        setTemplateProgress(null);
+      }
+    };
+    checkTemplateProgress();
   }, [activeDocumentId, activeProjectId, selectedTemplateId]);
   
   /**
@@ -91,7 +94,7 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
   /**
    * Handle Exit - clears template progress from document
    */
-  const handleExit = useCallback(() => {
+  const handleExit = useCallback(async () => {
     if (!activeProjectId || !activeDocumentId) return;
     
     const confirmed = window.confirm(
@@ -101,7 +104,7 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
     if (!confirmed) return;
     
     try {
-      updateDocumentInStorage(activeProjectId, activeDocumentId, {
+      await updateDocumentInStorage(activeProjectId, activeDocumentId, {
         templateProgress: undefined,
       });
       setTemplateProgress(null);

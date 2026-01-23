@@ -45,7 +45,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useActiveDocumentId, useActiveProjectId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
-import { getDocument, updateDocument } from '@/lib/storage/document-storage';
+import { getDocument, updateDocument } from '@/lib/storage/unified-storage';
 import { ViewModeSelector } from './ViewModeSelector';
 import { SaveAsSnippetButton } from './SaveAsSnippetButton';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';

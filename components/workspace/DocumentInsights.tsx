@@ -32,7 +32,7 @@ import {
   useInsightsPanelActions,
   type InsightsUpdateFrequency,
 } from '@/lib/stores/workspaceStore';
-import { getDocument } from '@/lib/storage/document-storage';
+import { getDocument } from '@/lib/storage/unified-storage';
 import { analyzeDocument, type DocumentMetrics } from '@/lib/utils/readability';
 import { cn } from '@/lib/utils';
 
@@ -129,16 +129,19 @@ export function DocumentInsights() {
   const activeDocumentId = useActiveDocumentId();
   const projects = useProjects();
   
-  // Load document content from localStorage
+  // Load document content from storage (cloud with localStorage fallback)
   const [documentContent, setDocumentContent] = useState<string | null>(null);
   
   useEffect(() => {
-    if (activeProjectId && activeDocumentId) {
-      const doc = getDocument(activeProjectId, activeDocumentId);
-      setDocumentContent(doc?.content || null);
-    } else {
-      setDocumentContent(null);
-    }
+    const loadDocumentContent = async () => {
+      if (activeProjectId && activeDocumentId) {
+        const doc = await getDocument(activeProjectId, activeDocumentId);
+        setDocumentContent(doc?.content || null);
+      } else {
+        setDocumentContent(null);
+      }
+    };
+    loadDocumentContent();
   }, [activeProjectId, activeDocumentId]);
   
   const insights = useDocumentInsights();

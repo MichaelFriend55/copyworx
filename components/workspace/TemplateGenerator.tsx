@@ -23,8 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
-import { getProjectPersonas } from '@/lib/storage/persona-storage';
-import { updateDocument as updateDocumentInStorage } from '@/lib/storage/document-storage';
+import { getProjectPersonas, updateDocument as updateDocumentInStorage } from '@/lib/storage/unified-storage';
 import { formatGeneratedContent } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import { TemplateFormField, OTHER_OPTION_VALUE } from './TemplateFormField';

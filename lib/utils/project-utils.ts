@@ -17,10 +17,10 @@ import {
   getActiveProjectId,
   setActiveProjectId,
   createProject,
-  ensureDefaultProject,
-  getCurrentProject as getStorageCurrentProject,
   saveBrandVoiceToProject,
-} from '@/lib/storage/project-storage';
+} from '@/lib/storage/unified-storage';
+// Use local storage for sync initialization
+import * as localProjectStorage from '@/lib/storage/project-storage';
 import { logger } from './logger';
 
 /** Legacy brand voice localStorage key */
@@ -57,6 +57,7 @@ function markMigrationComplete(): void {
 
 /**
  * Migrate legacy brand voice data to project system
+ * Uses local storage directly for sync operation during initialization
  * 
  * This function:
  * 1. Checks for old brand voice in localStorage
@@ -89,25 +90,25 @@ function migrateLegacyBrandVoice(): void {
     const legacyBrandVoice: BrandVoice = JSON.parse(legacyBrandVoiceJson);
     logger.log('📦 Found legacy brand voice:', legacyBrandVoice.brandName);
     
-    // Get current projects
-    const projects = getAllProjects();
+    // Get current projects (use local storage for sync operation)
+    const projects = localProjectStorage.getAllProjects();
     
     if (projects.length === 0) {
       // No projects exist - create default project with brand voice
       logger.log('🆕 Creating default project with legacy brand voice...');
-      const defaultProject = createProject('My First Project');
-      saveBrandVoiceToProject(defaultProject.id, legacyBrandVoice);
-      setActiveProjectId(defaultProject.id);
+      const defaultProject = localProjectStorage.createProject('My First Project');
+      localProjectStorage.saveBrandVoiceToProject(defaultProject.id, legacyBrandVoice);
+      localProjectStorage.setActiveProjectId(defaultProject.id);
       logger.log('✅ Legacy brand voice migrated to new project');
     } else {
       // Projects exist - add to active project (or first project if no active)
-      const activeId = getActiveProjectId();
+      const activeId = localProjectStorage.getActiveProjectId();
       const targetProject = activeId 
         ? projects.find(p => p.id === activeId) || projects[0]
         : projects[0];
       
       logger.log(`🔄 Migrating brand voice to project: ${targetProject.name}`);
-      saveBrandVoiceToProject(targetProject.id, legacyBrandVoice);
+      localProjectStorage.saveBrandVoiceToProject(targetProject.id, legacyBrandVoice);
       logger.log('✅ Legacy brand voice migrated to existing project');
     }
     
@@ -128,6 +129,7 @@ function migrateLegacyBrandVoice(): void {
 
 /**
  * Initialize project system
+ * Uses local storage directly for sync initialization
  * 
  * This function should be called once when the app loads.
  * It:
@@ -144,26 +146,26 @@ export function initializeProjectSystem(): void {
   logger.log('🚀 Initializing project system...');
   
   try {
-    // Ensure at least one project exists
-    ensureDefaultProject();
+    // Ensure at least one project exists (use local storage for sync operation)
+    localProjectStorage.ensureDefaultProject();
     
     // Migrate legacy data
     migrateLegacyBrandVoice();
     
-    // Verify active project
-    const activeId = getActiveProjectId();
-    const projects = getAllProjects();
+    // Verify active project (use local storage for sync operation)
+    const activeId = localProjectStorage.getActiveProjectId();
+    const projects = localProjectStorage.getAllProjects();
     
     if (!activeId && projects.length > 0) {
       // No active project set - set first project as active
-      setActiveProjectId(projects[0].id);
+      localProjectStorage.setActiveProjectId(projects[0].id);
       logger.log('✅ Set first project as active');
     } else if (activeId) {
       // Verify active project exists
       const activeProject = projects.find(p => p.id === activeId);
       if (!activeProject && projects.length > 0) {
         // Active project doesn't exist - set first project as active
-        setActiveProjectId(projects[0].id);
+        localProjectStorage.setActiveProjectId(projects[0].id);
         logger.warn('⚠️ Active project not found. Switched to first project.');
       }
     }
@@ -176,27 +178,27 @@ export function initializeProjectSystem(): void {
 }
 
 /**
- * Get current active project
+ * Get current active project (sync - uses local storage)
  * Returns null if no active project exists
  */
 export function getCurrentProject(): Project | null {
-  return getStorageCurrentProject();
+  return localProjectStorage.getCurrentProject();
 }
 
 /**
  * Create new project and set as active
- * Returns the created project
+ * Returns the created project (async for cloud support)
  */
-export function createAndActivateProject(name: string): Project {
+export async function createAndActivateProject(name: string): Promise<Project> {
   if (typeof window === 'undefined') {
     throw new Error('Cannot create project in non-browser environment');
   }
   
   // Create project
-  const newProject = createProject(name);
+  const newProject = await createProject(name);
   
   // Set as active
-  setActiveProjectId(newProject.id);
+  await setActiveProjectId(newProject.id);
   
   logger.log('✅ Created and activated project:', {
     id: newProject.id,
@@ -207,16 +209,6 @@ export function createAndActivateProject(name: string): Project {
 }
 
 /**
- * Get all projects (re-export from storage for convenience)
+ * Re-export unified storage functions for convenience
  */
-export { getAllProjects } from '@/lib/storage/project-storage';
-
-/**
- * Get active project ID (re-export from storage for convenience)
- */
-export { getActiveProjectId } from '@/lib/storage/project-storage';
-
-/**
- * Set active project ID (re-export from storage for convenience)
- */
-export { setActiveProjectId } from '@/lib/storage/project-storage';
+export { getAllProjects, getActiveProjectId, setActiveProjectId } from '@/lib/storage/unified-storage';

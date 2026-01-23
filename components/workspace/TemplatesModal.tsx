@@ -24,7 +24,7 @@ import type { LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
-import { createDocument } from '@/lib/storage/document-storage';
+import { createDocument } from '@/lib/storage/unified-storage';
 import { ALL_TEMPLATES } from '@/lib/data/templates';
 import type { Template, TemplateCategory as ImportedTemplateCategory } from '@/lib/types/template';
 
@@ -123,7 +123,7 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
       : ALL_TEMPLATES.filter((template) => template.category === activeCategory);
 
   // Handle template selection
-  const handleSelectTemplate = (template: Template): void => {
+  const handleSelectTemplate = async (template: Template): Promise<void> => {
     logger.log('🎨 Selected template:', template.id, template.name);
     
     // Clear all other tool states first
@@ -144,7 +144,7 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
       if (activeProjectId) {
         try {
           // Always create a new document for multi-section templates
-          const newDoc = createDocument(activeProjectId, template.name);
+          const newDoc = await createDocument(activeProjectId, template.name);
           store.setActiveDocumentId(newDoc.id);
           logger.log('✅ Created new document for multi-section template:', {
             id: newDoc.id,

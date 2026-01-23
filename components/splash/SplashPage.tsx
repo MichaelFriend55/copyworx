@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
-import { createDocument } from '@/lib/storage/document-storage';
+import { createDocument } from '@/lib/storage/unified-storage';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { getTemplateById } from '@/lib/data/templates';
 import { logger } from '@/lib/utils/logger';

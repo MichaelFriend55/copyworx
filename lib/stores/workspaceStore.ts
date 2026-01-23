@@ -49,7 +49,7 @@ import {
   setActiveProjectId as setStorageActiveProjectId,
   updateProject as updateStorageProject,
   deleteProject as deleteStorageProject,
-} from '@/lib/storage/project-storage';
+} from '@/lib/storage/unified-storage';
 import { 
   fetchWithTimeout, 
   retryWithBackoff, 
@@ -198,11 +198,11 @@ interface WorkspaceState {
   
   // Project actions
   setProjects: (projects: Project[]) => void;
-  setActiveProjectId: (id: string) => void;
+  setActiveProjectId: (id: string) => Promise<void>;
   addProject: (project: Project) => void;
   updateProject: (id: string, updates: Partial<Project>) => void;
-  deleteProject: (id: string) => void;
-  refreshProjects: () => void;
+  deleteProject: (id: string) => Promise<void>;
+  refreshProjects: () => Promise<void>;
   
   // Document actions - SIMPLIFIED
   setActiveDocumentId: (id: string | null) => void;
@@ -359,9 +359,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ projects });
       },
 
-      setActiveProjectId: (id: string) => {
+      setActiveProjectId: async (id: string) => {
         set({ activeProjectId: id, activeDocumentId: null }); // Clear doc when switching projects
-        setStorageActiveProjectId(id);
+        await setStorageActiveProjectId(id);
         
         // Clear tool results when switching projects
         set({
@@ -394,7 +394,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           return;
         }
         
-        // Update in storage
+        // Update in storage (async but we don't wait)
         updateStorageProject(id, updates);
         
         // Update in state
@@ -409,11 +409,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ projects: updatedProjects });
       },
 
-      deleteProject: (id: string) => {
+      deleteProject: async (id: string) => {
         const { projects } = get();
         
         try {
-          deleteStorageProject(id);
+          await deleteStorageProject(id);
           const updatedProjects = projects.filter((p) => p.id !== id);
           set({ projects: updatedProjects });
         } catch (error) {
@@ -421,11 +421,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }
       },
 
-      refreshProjects: () => {
-        const projects = getAllProjects();
-        const activeProjectId = getActiveProjectId();
-        const safeProjects = Array.isArray(projects) ? projects : [];
-        set({ projects: safeProjects, activeProjectId });
+      refreshProjects: async () => {
+        try {
+          const projects = await getAllProjects();
+          const activeProjectId = await getActiveProjectId();
+          const safeProjects = Array.isArray(projects) ? projects : [];
+          set({ projects: safeProjects, activeProjectId });
+        } catch (error) {
+          logger.error('❌ Failed to refresh projects:', error);
+        }
       },
 
       // Document actions - SIMPLIFIED

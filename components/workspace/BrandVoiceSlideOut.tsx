@@ -27,7 +27,7 @@ import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId, useProjects, useProjectActions } from '@/lib/stores/workspaceStore';
-import { saveBrandVoiceToProject, deleteBrandVoiceFromProject } from '@/lib/storage/project-storage';
+import { saveBrandVoiceToProject, deleteBrandVoiceFromProject } from '@/lib/storage/unified-storage';
 import type { BrandVoice } from '@/lib/types/brand';
 
 // ═══════════════════════════════════════════════════════════
@@ -126,7 +126,7 @@ export function BrandVoiceSlideOut({
   /**
    * Handle save brand voice
    */
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     // Clear previous errors
     setSaveError(null);
     setSaveSuccess(false);
@@ -165,7 +165,7 @@ export function BrandVoiceSlideOut({
     
     // Save to active project
     try {
-      saveBrandVoiceToProject(activeProjectId, brandVoice);
+      await saveBrandVoiceToProject(activeProjectId, brandVoice);
       
       // Update Zustand store
       updateProject(activeProjectId, { brandVoice });
@@ -211,7 +211,7 @@ export function BrandVoiceSlideOut({
     setIsDeleting(true);
     
     try {
-      deleteBrandVoiceFromProject(activeProjectId);
+      await deleteBrandVoiceFromProject(activeProjectId);
       
       // Update Zustand store
       updateProject(activeProjectId, { brandVoice: undefined });

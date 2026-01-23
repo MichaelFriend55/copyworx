@@ -25,7 +25,7 @@ import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { getTemplateById } from '@/lib/data/templates';
 import { initializeProjectSystem } from '@/lib/utils/project-utils';
-import { createDocument, getDocument } from '@/lib/storage/document-storage';
+import { createDocument, getDocument } from '@/lib/storage/unified-storage';
 import { useProductTour } from '@/lib/hooks/useProductTour';
 import { logger } from '@/lib/utils/logger';
 import type { Editor } from '@tiptap/react';
@@ -134,60 +134,64 @@ export default function WorkspacePage() {
       return;
     }
     
-    // If document parameter exists, load that existing document
-    if (documentParam) {
-      try {
-        const existingDoc = getDocument(store.activeProjectId, documentParam);
-        
-        if (existingDoc) {
-          // Set as active document
-          store.setActiveDocumentId(existingDoc.id);
-          logger.log('✅ Loading existing document from splash page:', existingDoc.id, existingDoc.title);
+    const handleTemplateParam = async () => {
+      // If document parameter exists, load that existing document
+      if (documentParam) {
+        try {
+          const existingDoc = await getDocument(store.activeProjectId!, documentParam);
+          
+          if (existingDoc) {
+            // Set as active document
+            store.setActiveDocumentId(existingDoc.id);
+            logger.log('✅ Loading existing document from splash page:', existingDoc.id, existingDoc.title);
+            
+            // Load the document into the editor
+            if (editorRef.current) {
+              editorRef.current.loadDocument(existingDoc);
+            }
+          } else {
+            logger.error('❌ Document not found:', documentParam);
+          }
+        } catch (error) {
+          logger.error('❌ Failed to load document:', error);
+        }
+      }
+      // Fallback: create new document if no document parameter provided
+      else if (!store.activeDocumentId) {
+        try {
+          const template = getTemplateById(templateParam);
+          if (!template) {
+            logger.error('❌ Template not found:', templateParam);
+            return;
+          }
+          
+          const newDoc = await createDocument(store.activeProjectId!, `${template.name}`);
+          store.setActiveDocumentId(newDoc.id);
+          logger.log('✅ Created new document for template:', newDoc.id, newDoc.title);
           
           // Load the document into the editor
           if (editorRef.current) {
-            editorRef.current.loadDocument(existingDoc);
+            editorRef.current.loadDocument(newDoc);
           }
-        } else {
-          logger.error('❌ Document not found:', documentParam);
+        } catch (error) {
+          logger.error('❌ Failed to create document for template:', error);
         }
-      } catch (error) {
-        logger.error('❌ Failed to load document:', error);
       }
-    }
-    // Fallback: create new document if no document parameter provided
-    else if (!store.activeDocumentId) {
-      try {
-        const template = getTemplateById(templateParam);
-        if (!template) {
-          logger.error('❌ Template not found:', templateParam);
-          return;
-        }
-        
-        const newDoc = createDocument(store.activeProjectId, `${template.name}`);
-        store.setActiveDocumentId(newDoc.id);
-        logger.log('✅ Created new document for template:', newDoc.id, newDoc.title);
-        
-        // Load the document into the editor
-        if (editorRef.current) {
-          editorRef.current.loadDocument(newDoc);
-        }
-      } catch (error) {
-        logger.error('❌ Failed to create document for template:', error);
+      
+      // Set the template if not already set
+      if (!store.selectedTemplateId) {
+        store.setSelectedTemplateId(templateParam);
       }
-    }
+      
+      // Ensure right sidebar is open
+      if (!store.rightSidebarOpen) {
+        store.setRightSidebarOpen(true);
+      }
+      
+      logger.log('✅ Template slideout should be visible');
+    };
     
-    // Set the template if not already set
-    if (!store.selectedTemplateId) {
-      store.setSelectedTemplateId(templateParam);
-    }
-    
-    // Ensure right sidebar is open
-    if (!store.rightSidebarOpen) {
-      store.setRightSidebarOpen(true);
-    }
-    
-    logger.log('✅ Template slideout should be visible');
+    handleTemplateParam();
   }, [mounted, templateParam, documentParam]);
   
   // Handle file import from splash page

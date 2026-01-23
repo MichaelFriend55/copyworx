@@ -62,14 +62,14 @@ import {
   createDocument,
   deleteDocument,
   updateDocument,
-} from '@/lib/storage/document-storage';
-import {
   getAllFolders,
   createFolder,
   deleteFolder,
   updateFolder,
-} from '@/lib/storage/folder-storage';
-import { createProject, deleteProject as deleteProjectFromStorage } from '@/lib/storage/project-storage';
+  createProject,
+  updateProject,
+  deleteProject as deleteProjectFromStorage,
+} from '@/lib/storage/unified-storage';
 import type { Project, ProjectDocument, Folder } from '@/lib/types/project';
 import type { Snippet } from '@/lib/types/snippet';
 import { SnippetSection } from './SnippetSection';
@@ -452,16 +452,26 @@ function ProjectSection({
 
   // Load data when project changes or expands
   useEffect(() => {
-    if (isExpanded) {
-      const projectFolders = getAllFolders(project.id);
-      const projectDocs = getAllDocuments(project.id);
-      setFolders(projectFolders);
-      setDocuments(projectDocs);
-    }
+    const loadData = async () => {
+      if (isExpanded) {
+        try {
+          const projectFolders = await getAllFolders(project.id);
+          const projectDocs = await getAllDocuments(project.id);
+          setFolders(projectFolders);
+          setDocuments(projectDocs);
+        } catch (error) {
+          logger.error('Failed to load project data:', error);
+          setFolders([]);
+          setDocuments([]);
+        }
+      }
+    };
+    loadData();
   }, [project.id, isExpanded]);
 
   // Filter documents by search query
   const filteredDocuments = useMemo(() => {
+    if (!Array.isArray(documents)) return [];
     if (!searchQuery.trim()) return documents;
     const query = searchQuery.toLowerCase();
     return documents.filter(doc => 
@@ -470,9 +480,9 @@ function ProjectSection({
     );
   }, [documents, searchQuery]);
 
-  // Get root-level documents and folders
-  const rootFolders = folders.filter(f => !f.parentFolderId);
-  const rootDocs = filteredDocuments.filter(d => !d.folderId);
+  // Get root-level documents and folders (with defensive checks)
+  const rootFolders = Array.isArray(folders) ? folders.filter(f => !f.parentFolderId) : [];
+  const rootDocs = Array.isArray(filteredDocuments) ? filteredDocuments.filter(d => !d.folderId) : [];
 
   // Toggle folder expansion
   const toggleFolder = (folderId: string) => {
@@ -493,7 +503,7 @@ function ProjectSection({
     setEditValue(doc.title);
   };
 
-  const handleSaveDocEdit = (docId: string) => {
+  const handleSaveDocEdit = async (docId: string) => {
     if (!editValue.trim()) {
       setEditingDocId(null);
       return;
@@ -515,7 +525,7 @@ function ProjectSection({
         }
       }
       // Refresh local state
-      setDocuments(getAllDocuments(project.id));
+      setDocuments(await getAllDocuments(project.id));
       onRefresh();
     } catch (error) {
       logger.error('Failed to rename document:', error);
@@ -524,11 +534,11 @@ function ProjectSection({
     setEditValue('');
   };
 
-  const handleDeleteDoc = (docId: string) => {
+  const handleDeleteDoc = async (docId: string) => {
     if (!window.confirm('Delete this document? This cannot be undone.')) return;
     try {
-      deleteDocument(project.id, docId);
-      setDocuments(getAllDocuments(project.id));
+      await deleteDocument(project.id, docId);
+      setDocuments(await getAllDocuments(project.id));
       onRefresh();
     } catch (error) {
       logger.error('Failed to delete document:', error);
@@ -541,14 +551,14 @@ function ProjectSection({
     setEditValue(folder.name);
   };
 
-  const handleSaveFolderEdit = (folderId: string) => {
+  const handleSaveFolderEdit = async (folderId: string) => {
     if (!editValue.trim()) {
       setEditingFolderId(null);
       return;
     }
     try {
-      updateFolder(project.id, folderId, { name: editValue.trim() });
-      setFolders(getAllFolders(project.id));
+      await updateFolder(project.id, folderId, { name: editValue.trim() });
+      setFolders(await getAllFolders(project.id));
       onRefresh();
     } catch (error) {
       logger.error('Failed to rename folder:', error);
@@ -557,24 +567,24 @@ function ProjectSection({
     setEditValue('');
   };
 
-  const handleDeleteFolder = (folderId: string) => {
+  const handleDeleteFolder = async (folderId: string) => {
     if (!window.confirm('Delete this folder? It must be empty first.')) return;
     try {
-      deleteFolder(project.id, folderId);
-      setFolders(getAllFolders(project.id));
+      await deleteFolder(project.id, folderId);
+      setFolders(await getAllFolders(project.id));
       onRefresh();
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'Failed to delete folder');
     }
   };
 
-  const handleCreateDocInFolder = (folderId: string) => {
+  const handleCreateDocInFolder = async (folderId: string) => {
     const title = window.prompt('Document title:');
     if (!title?.trim()) return;
     try {
-      const newDoc = createDocument(project.id, title.trim());
-      updateDocument(project.id, newDoc.id, { folderId });
-      setDocuments(getAllDocuments(project.id));
+      const newDoc = await createDocument(project.id, title.trim());
+      await updateDocument(project.id, newDoc.id, { folderId });
+      setDocuments(await getAllDocuments(project.id));
       onRefresh();
     } catch (error) {
       logger.error('Failed to create document:', error);
@@ -623,8 +633,8 @@ function ProjectSection({
   // Render folder recursively
   const renderFolder = (folder: Folder, level: number = 0) => {
     const isExpanded = expandedFolders.has(folder.id);
-    const folderDocs = filteredDocuments.filter(d => d.folderId === folder.id);
-    const childFolders = folders.filter(f => f.parentFolderId === folder.id);
+    const folderDocs = Array.isArray(filteredDocuments) ? filteredDocuments.filter(d => d.folderId === folder.id) : [];
+    const childFolders = Array.isArray(folders) ? folders.filter(f => f.parentFolderId === folder.id) : [];
 
     return (
       <div key={folder.id}>
@@ -934,12 +944,12 @@ export function MyProjectsSlideOut({
   }, [setActiveProjectId]);
 
   // Create new project
-  const handleCreateProject = useCallback(() => {
+  const handleCreateProject = useCallback(async () => {
     const name = window.prompt('Project name:');
     if (!name?.trim()) return;
     
     try {
-      const newProject = createProject(name.trim());
+      const newProject = await createProject(name.trim());
       // Use getState() to avoid dependency on refreshProjects
       useWorkspaceStore.getState().refreshProjects();
       setActiveProjectId(newProject.id);
@@ -1016,7 +1026,7 @@ export function MyProjectsSlideOut({
       // If this is the last project, create a default one first
       if (isLastProject) {
         logger.log('📝 Creating default project before deleting last project...');
-        const newProject = createProject('My Project');
+        const newProject = await createProject('My Project');
         useWorkspaceStore.getState().refreshProjects();
         setActiveProjectId(newProject.id);
         // ACCORDION: Expand the newly created default project
@@ -1057,13 +1067,10 @@ export function MyProjectsSlideOut({
   const canDeleteProject = true;
   
   // Rename project handler
-  const handleRenameProject = useCallback((projectId: string, newName: string) => {
+  const handleRenameProject = useCallback(async (projectId: string, newName: string) => {
     try {
-      // Import updateProject from storage
-      const { updateProject } = require('@/lib/storage/project-storage');
-      
       // Update in storage
-      updateProject(projectId, { name: newName });
+      await updateProject(projectId, { name: newName });
       
       // Refresh the store to reflect changes
       useWorkspaceStore.getState().refreshProjects();

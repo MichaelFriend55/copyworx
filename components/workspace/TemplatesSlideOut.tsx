@@ -34,7 +34,7 @@ import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ALL_TEMPLATES } from '@/lib/data/templates';
-import { createDocument } from '@/lib/storage/document-storage';
+import { createDocument } from '@/lib/storage/unified-storage';
 import type { Template, TemplateCategory } from '@/lib/types/template';
 import { useWorkspaceStore, useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
 import { useSlideOutActions as useGlobalSlideOutActions } from '@/lib/stores/slideOutStore';
@@ -343,7 +343,7 @@ export function TemplatesSlideOut({
 
   // Handle template selection
   const handleSelectTemplate = useCallback(
-    (template: Template) => {
+    async (template: Template) => {
       logger.log('🎨 Selected template:', template.id, template.name);
       
       // Set local selected state for visual feedback
@@ -368,7 +368,7 @@ export function TemplatesSlideOut({
         // Always create a new document for multi-section templates
         if (activeProjectId) {
           try {
-            const newDoc = createDocument(activeProjectId, template.name);
+            const newDoc = await createDocument(activeProjectId, template.name);
             store.setActiveDocumentId(newDoc.id);
             logger.log('✅ Created new document for multi-section template:', {
               id: newDoc.id,

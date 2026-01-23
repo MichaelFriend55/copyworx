@@ -35,7 +35,7 @@ import {
   createPersona,
   updatePersona,
   deletePersona,
-} from '@/lib/storage/persona-storage';
+} from '@/lib/storage/unified-storage';
 import type { Persona } from '@/lib/types/project';
 
 // ═══════════════════════════════════════════════════════════
@@ -161,10 +161,10 @@ export function PersonasSlideOut({
   /**
    * Load personas from storage
    */
-  const loadPersonas = useCallback(() => {
+  const loadPersonas = useCallback(async () => {
     if (!activeProjectId) return;
     
-    const projectPersonas = getProjectPersonas(activeProjectId);
+    const projectPersonas = await getProjectPersonas(activeProjectId);
     setPersonas(projectPersonas);
     logger.log(`📋 Loaded ${projectPersonas.length} persona(s)`);
   }, [activeProjectId]);
@@ -196,7 +196,7 @@ export function PersonasSlideOut({
   /**
    * Handle save persona from PersonaForm
    */
-  const handleSave = useCallback((personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSave = useCallback(async (personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>) => {
     // Check if project exists
     if (!activeProject || !activeProjectId) {
       alert('No active project. Please create a project first.');
@@ -206,16 +206,16 @@ export function PersonasSlideOut({
     try {
       if (viewMode === 'edit' && editingPersona) {
         // Update existing persona
-        updatePersona(activeProjectId, editingPersona.id, personaData);
+        await updatePersona(activeProjectId, editingPersona.id, personaData);
         logger.log('✅ Persona updated');
       } else {
         // Create new persona
-        createPersona(activeProjectId, personaData);
+        await createPersona(activeProjectId, personaData);
         logger.log('✅ Persona created');
       }
       
       // Reload personas and return to list
-      loadPersonas();
+      await loadPersonas();
       handleBackToList();
     } catch (error) {
       const errorMessage = error instanceof Error 
@@ -242,8 +242,8 @@ export function PersonasSlideOut({
     setIsDeleting(true);
     
     try {
-      deletePersona(activeProjectId, personaToDelete.id);
-      loadPersonas();
+      await deletePersona(activeProjectId, personaToDelete.id);
+      await loadPersonas();
       logger.log('✅ Persona deleted');
       
       // Close modal

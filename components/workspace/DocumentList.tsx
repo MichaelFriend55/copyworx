@@ -37,14 +37,12 @@ import {
   deleteDocument,
   renameDocument,
   updateDocument,
-} from '@/lib/storage/document-storage';
-import {
   getAllFolders,
   createFolder,
   deleteFolder,
   moveFolder,
   updateFolder,
-} from '@/lib/storage/folder-storage';
+} from '@/lib/storage/unified-storage';
 import { 
   FileText, 
   FilePlus,
@@ -669,7 +667,7 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   // ---------------------------------------------------------------------------
   
   /** Load documents from storage */
-  const loadDocuments = useCallback(() => {
+  const loadDocuments = useCallback(async () => {
     if (!activeProjectId) {
       setDocuments([]);
       setGroupedDocs(new Map());
@@ -677,7 +675,7 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     }
     
     try {
-      const docs = getAllDocuments(activeProjectId);
+      const docs = await getAllDocuments(activeProjectId);
       setDocuments(docs);
       setGroupedDocs(groupDocumentsByBaseTitle(docs));
     } catch (error) {
@@ -688,14 +686,14 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, [activeProjectId]);
   
   /** Load folders from storage */
-  const loadFolders = useCallback(() => {
+  const loadFolders = useCallback(async () => {
     if (!activeProjectId) {
       setFolders([]);
       return;
     }
     
     try {
-      const projectFolders = getAllFolders(activeProjectId);
+      const projectFolders = await getAllFolders(activeProjectId);
       setFolders(projectFolders);
     } catch (error) {
       logger.error('❌ Failed to load folders:', error);
@@ -704,9 +702,8 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, [activeProjectId]);
   
   /** Refresh all data (documents and folders) - fixes auto-refresh issues */
-  const refreshAll = useCallback(() => {
-    loadDocuments();
-    loadFolders();
+  const refreshAll = useCallback(async () => {
+    await Promise.all([loadDocuments(), loadFolders()]);
   }, [loadDocuments, loadFolders]);
   
   // Load data on mount and when active project changes
@@ -988,7 +985,7 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, []);
   
   /** Create new document */
-  const handleCreateDocument = useCallback(() => {
+  const handleCreateDocument = useCallback(async () => {
     if (!activeProjectId) return;
     
     const defaultName = activeProject ? `${activeProject.name} Doc` : 'New Document';
@@ -997,14 +994,14 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     
     try {
       setIsLoading(true);
-      const newDoc = createDocument(activeProjectId, title.trim());
+      const newDoc = await createDocument(activeProjectId, title.trim());
       
       // If currently viewing a folder, place document in that folder
       if (currentFolderId) {
-        updateDocument(activeProjectId, newDoc.id, { folderId: currentFolderId });
+        await updateDocument(activeProjectId, newDoc.id, { folderId: currentFolderId });
       }
       
-      refreshAll();
+      await refreshAll();
       onDocumentClick(newDoc);
       setSelectedDocId(newDoc.id);
     } catch (error) {
@@ -1016,7 +1013,7 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, [activeProjectId, activeProject, currentFolderId, refreshAll, onDocumentClick]);
   
   /** Delete a document */
-  const handleDelete = useCallback((doc: ProjectDocument) => {
+  const handleDelete = useCallback(async (doc: ProjectDocument) => {
     if (!activeProjectId) return;
     
     // Get version count for this baseTitle
@@ -1032,8 +1029,8 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     if (!confirmed) return;
     
     try {
-      deleteDocument(activeProjectId, doc.id);
-      refreshAll();
+      await deleteDocument(activeProjectId, doc.id);
+      await refreshAll();
       if (selectedDocId === doc.id) {
         setSelectedDocId(null);
       }
@@ -1050,11 +1047,11 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, [onDocumentClick]);
   
   /** Move document to a folder */
-  const handleMoveDocument = useCallback((docId: string) => {
+  const handleMoveDocument = useCallback(async (docId: string) => {
     if (!activeProjectId) return;
     
     // Get all folders for picker
-    const allFolders = getAllFolders(activeProjectId);
+    const allFolders = await getAllFolders(activeProjectId);
     
     if (allFolders.length === 0) {
       window.alert('No folders available. Create a folder first.');
@@ -1074,16 +1071,16 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     try {
       if (choice === '0') {
         // Move to root (remove from folder)
-        updateDocument(activeProjectId, docId, { folderId: undefined });
+        await updateDocument(activeProjectId, docId, { folderId: undefined });
       } else if (index >= 0 && index < allFolders.length) {
         // Move to selected folder
-        updateDocument(activeProjectId, docId, { folderId: allFolders[index].id });
+        await updateDocument(activeProjectId, docId, { folderId: allFolders[index].id });
       } else {
         window.alert('Invalid choice');
         return;
       }
       
-      refreshAll();
+      await refreshAll();
       logger.log('✅ Document moved');
     } catch (error) {
       logger.error('❌ Failed to move document:', error);
@@ -1092,12 +1089,12 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, [activeProjectId, refreshAll]);
   
   /** Move a document directly to root (no folder) */
-  const handleMoveDocumentToRoot = useCallback((docId: string) => {
+  const handleMoveDocumentToRoot = useCallback(async (docId: string) => {
     if (!activeProjectId) return;
     
     try {
-      updateDocument(activeProjectId, docId, { folderId: undefined });
-      refreshAll();
+      await updateDocument(activeProjectId, docId, { folderId: undefined });
+      await refreshAll();
       logger.log('✅ Document moved to root');
     } catch (error) {
       logger.error('❌ Failed to move document:', error);
@@ -1106,12 +1103,12 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, [activeProjectId, refreshAll]);
   
   /** Move a folder directly to root (no parent) */
-  const handleMoveFolderToRoot = useCallback((folderId: string) => {
+  const handleMoveFolderToRoot = useCallback(async (folderId: string) => {
     if (!activeProjectId) return;
     
     try {
-      moveFolder(activeProjectId, folderId, null);
-      refreshAll();
+      await moveFolder(activeProjectId, folderId, null);
+      await refreshAll();
       logger.log('✅ Folder moved to root');
     } catch (error) {
       logger.error('❌ Failed to move folder:', error);
@@ -1133,7 +1130,7 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, []);
   
   /** Handle drag end - perform the move operation */
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (!over || !activeProjectId) {
@@ -1153,23 +1150,23 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
         // Dragging a document
         if (overType === 'folder') {
           // Drop document into folder
-          updateDocument(activeProjectId, activeId, { folderId: overId });
+          await updateDocument(activeProjectId, activeId, { folderId: overId });
         } else if (overType === 'root') {
           // Drop document to root
-          updateDocument(activeProjectId, activeId, { folderId: undefined });
+          await updateDocument(activeProjectId, activeId, { folderId: undefined });
         }
       } else if (activeType === 'folder') {
         // Dragging a folder
         if (overType === 'folder' && overId !== activeId) {
           // Drop folder into another folder (nest it)
-          moveFolder(activeProjectId, activeId, overId);
+          await moveFolder(activeProjectId, activeId, overId);
         } else if (overType === 'root') {
           // Drop folder to root
-          moveFolder(activeProjectId, activeId, null);
+          await moveFolder(activeProjectId, activeId, null);
         }
       }
       
-      refreshAll();
+      await refreshAll();
     } catch (error) {
       logger.error('❌ Failed to move item:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to move item');

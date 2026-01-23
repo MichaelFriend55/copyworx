@@ -45,7 +45,7 @@ import {
   useProjectActions,
 } from '@/lib/stores/workspaceStore';
 import { insertTextAtSelection } from '@/lib/editor-utils';
-import { saveBrandVoiceToProject } from '@/lib/storage/project-storage';
+import { saveBrandVoiceToProject } from '@/lib/storage/unified-storage';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
