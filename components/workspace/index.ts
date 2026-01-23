@@ -25,7 +25,6 @@ export { LeftSidebarContent } from './LeftSidebarContent';
 export { RightSidebarContent } from './RightSidebarContent';
 export { default as DocumentList } from './DocumentList';
 export { ViewModeSelector } from './ViewModeSelector';
-export { PageModeWrapper } from './PageModeWrapper';
 export { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from './MyProjectsSlideOut';
 export { TemplatesSlideOut, TEMPLATES_PANEL_ID } from './TemplatesSlideOut';
 export { TemplateFormSlideOut, TEMPLATE_FORM_PANEL_ID } from './TemplateFormSlideOut';

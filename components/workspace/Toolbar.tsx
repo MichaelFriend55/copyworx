@@ -1076,9 +1076,14 @@ function DocumentMenu({
             {/* Divider */}
             <div className="my-1 border-t border-gray-200" />
 
-            {/* Print */}
+            {/* Export PDF */}
             <button
               onClick={handlePrintClick}
+              onMouseEnter={() => {
+                // Close any open submenus when hovering over Export PDF
+                setShowExportSubmenu(false);
+                setShowImportSubmenu(false);
+              }}
               className={cn(
                 'w-full px-4 py-2 text-left text-sm',
                 'hover:text-apple-blue',
@@ -1089,7 +1094,7 @@ function DocumentMenu({
             >
               <span className="flex items-center gap-2">
                 <Printer className="w-4 h-4" />
-                Print
+                Export PDF
               </span>
               <span className="text-xs text-gray-400">⌘P</span>
             </button>

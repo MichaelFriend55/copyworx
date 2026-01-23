@@ -13,7 +13,7 @@
  * - Automatic content persistence to localStorage
  * - Real-time word/character count
  * - Zoom controls for editor view (50%-200%)
- * - Apple-style aesthetic
+ * - Two view modes: Scrolling (default) and Focus
  */
 
 'use client';
@@ -42,8 +42,6 @@ import type { ProjectDocument } from '@/lib/types/project';
 import { ZoomIn, ZoomOut, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
-import { usePageCalculations, PAGE_CONFIG } from '@/lib/hooks/usePageCalculations';
-import { PageModeWrapper } from './PageModeWrapper';
 import { TemplateResumeBanner } from './TemplateResumeBanner';
 
 interface EditorAreaProps {
@@ -84,12 +82,8 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   const setSelectedTextRef = useRef(useWorkspaceStore.getState().setSelectedText);
   const setActiveDocumentIdRef = useRef(useWorkspaceStore.getState().setActiveDocumentId);
   
-  // Check view mode flags
+  // Check view mode - only focus mode has special styling now
   const isFocusMode = viewMode === 'focus';
-  const isPageMode = viewMode === 'page';
-  
-  // Ref for page calculations content container
-  const pageContentRef = useRef<HTMLDivElement>(null);
   
   // Local state for document data loaded from localStorage
   const [currentDocument, setCurrentDocument] = useState<ProjectDocument | null>(null);
@@ -103,18 +97,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   
   // Zoom level state (view preference, not saved to document)
   const [zoomLevel, setZoomLevel] = useState<number>(DEFAULT_ZOOM);
-  
-  // Page calculations for Page Mode (must be after zoomLevel is defined)
-  const {
-    pageCount,
-    currentPage,
-    contentHeight: pageContentHeight,
-    isReady: pageCalcsReady,
-  } = usePageCalculations({
-    contentRef: pageContentRef,
-    enabled: isPageMode,
-    zoomLevel,
-  });
   
   // Track if we're loading content to prevent save during load
   const isLoadingRef = useRef(false);
@@ -151,12 +133,10 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         },
       }),
       Typography,
-      // Drag-and-drop cursor indicator
       Dropcursor.configure({
-        color: '#0071E3', // Apple blue to match theme
+        color: '#0071E3',
         width: 2,
       }),
-      // Font styling extensions
       TextStyle,
       FontFamily.configure({
         types: ['textStyle'],
@@ -164,7 +144,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       FontSize.configure({
         sizes: ['8px', '10px', '11px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px', '72px'],
       }),
-      // Color extensions
       Color.configure({
         types: ['textStyle'],
       }),
@@ -183,17 +162,15 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       attributes: {
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[800px] text-apple-text-dark',
       },
-      // Allow native drag-and-drop behavior for text selections
       handleDOMEvents: {
-        drop: () => false, // Return false to let ProseMirror handle the drop event
-        dragstart: () => false, // Return false to let ProseMirror handle drag start
+        drop: () => false,
+        dragstart: () => false,
       },
     },
   });
 
   /**
    * Save document content to localStorage
-   * Called on every editor change (debounced)
    */
   const saveToLocalStorage = useCallback((content: string) => {
     if (!activeProjectId || !currentDocument?.id) {
@@ -204,16 +181,12 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     
     try {
       updateDocument(activeProjectId, currentDocument.id, { content });
-      
-      // Update save status indicator
       setSaveStatus('saved');
       
-      // Clear any existing timer
       if (saveStatusTimerRef.current) {
         clearTimeout(saveStatusTimerRef.current);
       }
       
-      // Return to idle after 2 seconds
       saveStatusTimerRef.current = setTimeout(() => {
         setSaveStatus('idle');
       }, 2000);
@@ -226,28 +199,21 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
 
   /**
    * Handle editor content changes
-   * Debounces and saves to localStorage
    */
   const handleEditorUpdate = useCallback(() => {
-    // Don't save while loading
     if (isLoadingRef.current) return;
-    
     if (!editor) return;
     
-    // Show saving indicator immediately
     setSaveStatus('saving');
     
-    // Clear previous timer
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
     }
     
-    // Debounce save
     autoSaveTimerRef.current = setTimeout(() => {
       const html = editor.getHTML();
       saveToLocalStorage(html);
       
-      // Update local document state with new content
       setCurrentDocument((prev) => prev ? {
         ...prev,
         content: html,
@@ -257,7 +223,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   }, [editor, saveToLocalStorage]);
 
   /**
-   * Load document from localStorage and display in editor
+   * Load document from localStorage
    */
   const loadDocumentFromStorage = useCallback((docId: string) => {
     if (!activeProjectId || !editor) {
@@ -278,17 +244,13 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         return;
       }
       
-      // Set local state
       setCurrentDocument(doc);
-      
-      // Load content into editor
       editor.commands.setContent(doc.content || '');
     } catch (error) {
       console.error('❌ Failed to load document:', error);
       setCurrentDocument(null);
       editor.commands.setContent('');
     } finally {
-      // Use setTimeout to ensure content is set before allowing saves
       setTimeout(() => {
         isLoadingRef.current = false;
       }, 100);
@@ -297,10 +259,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
 
   /**
    * Load document when activeDocumentId changes
-   * This handles:
-   * - Initial load on page mount
-   * - Switching between documents
-   * - Rehydration after page refresh
    */
   useEffect(() => {
     if (!editor) return;
@@ -308,7 +266,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     if (activeDocumentId) {
       loadDocumentFromStorage(activeDocumentId);
     } else {
-      // No active document - clear editor
       setCurrentDocument(null);
       isLoadingRef.current = true;
       editor.commands.setContent('');
@@ -319,20 +276,17 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   }, [editor, activeDocumentId, loadDocumentFromStorage]);
 
   /**
-   * Listen for document updates from external sources (like import)
-   * Reload document from storage when title or other metadata changes
+   * Listen for document updates from external sources
    */
   useEffect(() => {
     const handleDocumentUpdated = (event: Event) => {
       const customEvent = event as CustomEvent;
       const { projectId, documentId } = customEvent.detail;
       
-      // Only reload if it's the currently active document
       if (projectId === activeProjectId && documentId === activeDocumentId && editor) {
         try {
           const doc = getDocument(projectId, documentId);
           if (doc) {
-            // Update currentDocument state with new data (keeps editor content unchanged)
             setCurrentDocument(doc);
             console.log('✅ Document metadata refreshed:', doc.title);
           }
@@ -343,10 +297,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     };
 
     window.addEventListener('documentUpdated', handleDocumentUpdated);
-    
-    return () => {
-      window.removeEventListener('documentUpdated', handleDocumentUpdated);
-    };
+    return () => window.removeEventListener('documentUpdated', handleDocumentUpdated);
   }, [activeProjectId, activeDocumentId, editor]);
 
   /**
@@ -359,11 +310,9 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     
     return () => {
       editor.off('update', handleEditorUpdate);
-      // Clear any pending save
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
-      // Clear status timer
       if (saveStatusTimerRef.current) {
         clearTimeout(saveStatusTimerRef.current);
       }
@@ -387,7 +336,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         const selection = getEditorSelection(editor);
         
         if (selection) {
-          // Pass text, HTML, and range to the store
           setSelectedTextRef.current(selection.text, selection.html, selection.range);
         } else {
           setSelectedTextRef.current(null, null, null);
@@ -417,20 +365,17 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   }, [editor]);
   
   /**
-   * Register editor with snippet store for snippet insertion
+   * Register editor with snippet store
    */
   useEffect(() => {
-    // Set editor reference in snippet store when editor is ready
     useSnippetStore.getState().setEditorRef(editor);
-    
     return () => {
-      // Clear reference when component unmounts
       useSnippetStore.getState().setEditorRef(null);
     };
   }, [editor]);
 
   /**
-   * Handle loading a document from external source (DocumentList click)
+   * Handle loading a document from external source
    */
   const handleLoadDocument = useCallback((doc: ProjectDocument) => {
     if (!editor) {
@@ -439,14 +384,8 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     }
     
     isLoadingRef.current = true;
-    
-    // Update Zustand with new active document ID
     setActiveDocumentIdRef.current(doc.id);
-    
-    // Set local state
     setCurrentDocument(doc);
-    
-    // Load content into editor
     editor.commands.setContent(doc.content || '');
     
     console.log('📄 Document loaded via click:', {
@@ -460,14 +399,11 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     }, 100);
   }, [editor]);
 
-  /**
-   * Zoom in to the next available zoom level
-   */
+  // Zoom handlers
   const handleZoomIn = useCallback(() => {
     setZoomLevel((current) => {
       const currentIndex = ZOOM_LEVELS.indexOf(current as typeof ZOOM_LEVELS[number]);
       if (currentIndex === -1) {
-        // Find the next level above current
         const nextLevel = ZOOM_LEVELS.find((level) => level > current);
         return nextLevel ?? ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
       }
@@ -478,14 +414,10 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     });
   }, []);
 
-  /**
-   * Zoom out to the previous available zoom level
-   */
   const handleZoomOut = useCallback(() => {
     setZoomLevel((current) => {
       const currentIndex = ZOOM_LEVELS.indexOf(current as typeof ZOOM_LEVELS[number]);
       if (currentIndex === -1) {
-        // Find the previous level below current
         const prevLevels = ZOOM_LEVELS.filter((level) => level < current);
         return prevLevels.length > 0 ? prevLevels[prevLevels.length - 1] : ZOOM_LEVELS[0];
       }
@@ -496,38 +428,23 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     });
   }, []);
 
-  /**
-   * Reset zoom to default (100%)
-   */
   const handleZoomReset = useCallback(() => {
     setZoomLevel(DEFAULT_ZOOM);
   }, []);
 
-  /**
-   * Handle slider value change
-   */
   const handleSliderChange = useCallback((value: number[]) => {
     if (value[0] !== undefined) {
       setZoomLevel(value[0]);
     }
   }, []);
 
-  /**
-   * Check if zoom in is available (not at max)
-   */
   const canZoomIn = zoomLevel < ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
-
-  /**
-   * Check if zoom out is available (not at min)
-   */
   const canZoomOut = zoomLevel > ZOOM_LEVELS[0];
 
   /**
    * Parse version number from document title
-   * Extracts the LAST occurrence of " v" followed by digits
    */
   const parseVersionFromTitle = useCallback((title: string): { base: string; version: number | null } => {
-    // Match " v" or " V" followed by digits at the end of string
     const regex = /\s+v(\d+)$/i;
     const match = title.match(regex);
     
@@ -541,7 +458,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   }, []);
 
   /**
-   * Handle "Save as New Version" - creates a copy with incremented version
+   * Handle "Save as New Version"
    */
   const handleSaveAsNewVersion = useCallback(() => {
     if (!currentDocument || !activeProjectId || !editor) {
@@ -550,26 +467,20 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     }
 
     try {
-      // Get current editor content
       const currentContent = editor.getHTML();
-      
-      // Parse current title for version info
       const { base, version } = parseVersionFromTitle(currentDocument.title);
       const currentVersion = version ?? 1;
       const newVersion = currentVersion + 1;
       
-      // Create new version using storage function
       const newDoc = createDocumentVersion(activeProjectId, currentDocument.id, currentContent);
-      
-      // Update the new document's title with correct version
       const newTitle = `${base} v${newVersion}`;
+      
       updateDocument(activeProjectId, newDoc.id, { 
         title: newTitle,
         baseTitle: base,
         version: newVersion 
       });
       
-      // Update local state to show new document
       setCurrentDocument({
         ...newDoc,
         title: newTitle,
@@ -578,10 +489,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         content: currentContent,
       });
       
-      // Update active document ID in store
       setActiveDocumentIdRef.current(newDoc.id);
-      
-      // Show success toast
       toast.success(`Created ${newTitle}`);
       
       console.log('✅ New version created:', {
@@ -596,7 +504,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     }
   }, [currentDocument, activeProjectId, editor, parseVersionFromTitle]);
 
-  // Expose loadDocument via ref for parent components
+  // Expose loadDocument via ref
   useImperativeHandle(ref, () => ({
     loadDocument: handleLoadDocument,
   }), [handleLoadDocument]);
@@ -608,209 +516,46 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
         'overflow-y-auto custom-scrollbar',
         'transition-all duration-300',
         isFocusMode 
-          ? 'bg-white py-8 px-4' // Focus Mode: clean white background, minimal padding
-          : 'bg-apple-editor-bg py-12 px-8', // Page & Scrolling: same gray bg, same padding
-        !isPageMode && 'flex items-start justify-center', // Center content except in Page Mode
+          ? 'bg-white py-8 px-4'
+          : 'bg-apple-editor-bg py-12 px-8',
+        'flex items-start justify-center',
         className
       )}
       data-print-content
       data-tour="editor"
     >
-      {/* Template Resume Banner - shows when document has incomplete template progress */}
+      {/* Template Resume Banner */}
       <TemplateResumeBanner />
       
-      {/* Page Mode uses PageModeWrapper, Scrolling/Focus use Paper Container */}
-      {isPageMode && currentDocument ? (
-        <PageModeWrapper
-          pageCount={pageCount}
-          currentPage={currentPage}
-          contentHeight={pageContentHeight}
-          zoomLevel={zoomLevel}
-          isReady={pageCalcsReady}
-        >
-          {/* Page Mode Document Header - Two-line layout */}
-          <div className="px-16 py-3 border-b border-gray-200 mb-4 bg-white space-y-2" data-print-hide>
-            {/* LINE 1: Document title and Save as New Version button */}
-            <div className="flex items-start justify-between gap-4">
-              {/* Title - left aligned, can wrap */}
-              <h1 
-                className="text-xl font-sans font-semibold text-black leading-tight max-w-[70%]"
-                title={currentDocument.title}
-              >
-                {currentDocument.title}
-              </h1>
-              
-              {/* Save as New Version button - right aligned */}
-              <button
-                onClick={handleSaveAsNewVersion}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md flex-shrink-0',
-                  'text-sm font-medium',
-                  'bg-primary/10 text-primary',
-                  'hover:bg-primary/20 active:bg-primary/25',
-                  'transition-colors duration-150',
-                  'focus:outline-none focus:ring-2 focus:ring-primary/30'
-                )}
-                title="Save as New Version"
-                aria-label="Save as New Version"
-              >
-                <Copy className="w-4 h-4" />
-                <span>Save as New Version</span>
-              </button>
-            </div>
-
-            {/* LINE 2: Zoom controls and Save status */}
-            <div className="flex items-center justify-between">
-              {/* Zoom controls - left side */}
-              <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
-                {/* Zoom out button */}
-                <button
-                  onClick={handleZoomOut}
-                  disabled={!canZoomOut}
-                  className={cn(
-                    'p-1 rounded transition-colors duration-150',
-                    'hover:bg-gray-100 active:bg-gray-200',
-                    'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
-                    'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset'
-                  )}
-                  title="Zoom out"
-                  aria-label="Zoom out"
-                >
-                  <ZoomOut className="w-4 h-4 text-gray-600" />
-                </button>
-
-                {/* Divider */}
-                <div className="w-px h-5 bg-gray-200" />
-
-                {/* Zoom slider */}
-                <div className="w-[120px] px-1">
-                  <Slider
-                    value={[zoomLevel]}
-                    onValueChange={handleSliderChange}
-                    min={50}
-                    max={200}
-                    step={5}
-                    className="cursor-pointer"
-                    aria-label="Zoom level"
-                  />
-                </div>
-
-                {/* Divider */}
-                <div className="w-px h-5 bg-gray-200" />
-
-                {/* Zoom percentage display - click to reset */}
-                <button
-                  onClick={handleZoomReset}
-                  className={cn(
-                    'px-2 py-1 min-w-[52px] text-center',
-                    'text-xs font-medium text-gray-700',
-                    'hover:bg-gray-100 active:bg-gray-200',
-                    'transition-colors duration-150',
-                    'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset',
-                    zoomLevel !== DEFAULT_ZOOM && 'text-primary'
-                  )}
-                  title="Reset to 100%"
-                  aria-label={`Current zoom: ${zoomLevel}%. Click to reset to 100%`}
-                >
-                  {zoomLevel}%
-                </button>
-
-                {/* Divider */}
-                <div className="w-px h-5 bg-gray-200" />
-
-                {/* Zoom in button */}
-                <button
-                  onClick={handleZoomIn}
-                  disabled={!canZoomIn}
-                  className={cn(
-                    'p-1 rounded transition-colors duration-150',
-                    'hover:bg-gray-100 active:bg-gray-200',
-                    'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
-                    'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-inset'
-                  )}
-                  title="Zoom in"
-                  aria-label="Zoom in"
-                >
-                  <ZoomIn className="w-4 h-4 text-gray-600" />
-                </button>
-              </div>
-
-              {/* Save status - right side */}
-              <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
-                <span>
-                  Saved{' '}
-                  {new Date(currentDocument.modifiedAt).toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </span>
-                <span className="min-w-[60px]">
-                  {saveStatus === 'saved' && (
-                    <span className="text-green-500 text-xs flex items-center gap-1">
-                      <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                      Saved
-                    </span>
-                  )}
-                  {saveStatus === 'saving' && (
-                    <span className="text-yellow-500 text-xs flex items-center gap-1">
-                      <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                      Saving...
-                    </span>
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Page Mode Editor Content */}
-          <div 
-            ref={pageContentRef}
-            className="px-16 pt-8 pb-8"
-          >
-            <EditorContent
-              editor={editor}
-              className={cn(
-                'tiptap-editor',
-                'text-base leading-relaxed',
-                'focus-within:outline-none'
-              )}
-            />
-          </div>
-        </PageModeWrapper>
-      ) : (
-        /* Scrolling / Focus Mode Paper Container */
-        <div
-          className={cn(
-            'w-full',
-            'bg-white',
-            'relative',
-            'transition-all duration-300',
-            isFocusMode 
-              ? 'max-w-[750px] shadow-none min-h-screen' // Focus Mode: comfortable reading width, no shadow
-              : 'max-w-[850px] rounded-sm min-h-[11in]', // Scrolling: standard width, rounded corners
-          )}
-          style={{
-            boxShadow: isFocusMode ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.08)',
-          }}
-        >
+      {/* Paper Container */}
+      <div
+        className={cn(
+          'w-full',
+          'bg-white',
+          'relative',
+          'transition-all duration-300',
+          isFocusMode 
+            ? 'max-w-[750px] shadow-none min-h-screen'
+            : 'max-w-[850px] rounded-sm min-h-[11in]',
+        )}
+        style={{
+          boxShadow: isFocusMode ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.08)',
+        }}
+      >
         {currentDocument ? (
           <>
-            {/* Document header - Two-line layout */}
+            {/* Document header */}
             <div
               className={cn(
                 'transition-all duration-300',
                 isFocusMode 
-                  ? 'px-8 py-3 border-b border-gray-100 space-y-2' // Focus Mode: clean minimal header
-                  : 'px-16 py-3 border-b border-gray-200 space-y-2' // Normal: standard header
+                  ? 'px-8 py-3 border-b border-gray-100 space-y-2'
+                  : 'px-16 py-3 border-b border-gray-200 space-y-2'
               )}
               data-print-hide
             >
               {/* LINE 1: Document title and Save as New Version button */}
-              <div className={cn(
-                'flex items-start justify-between gap-4'
-                // Always visible - removed isFocusMode hide
-              )}>
-                {/* Title - left aligned, can wrap */}
+              <div className="flex items-start justify-between gap-4">
                 <h1 
                   className="text-xl font-sans font-semibold text-black leading-tight max-w-[70%]"
                   title={currentDocument.title}
@@ -818,7 +563,6 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                   {currentDocument.title}
                 </h1>
                 
-                {/* Save as New Version button - right aligned */}
                 <button
                   onClick={handleSaveAsNewVersion}
                   className={cn(
@@ -838,13 +582,9 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
               </div>
 
               {/* LINE 2: Zoom controls and Save status */}
-              <div className={cn(
-                'flex items-center justify-between transition-all duration-300'
-                // Always visible - removed isFocusMode hide
-              )}>
-                {/* Zoom controls - left side */}
+              <div className="flex items-center justify-between">
+                {/* Zoom controls */}
                 <div className="flex items-center gap-2 border border-gray-200 rounded-md bg-gray-50/50 px-2 py-1.5">
-                  {/* Zoom out button */}
                   <button
                     onClick={handleZoomOut}
                     disabled={!canZoomOut}
@@ -860,10 +600,8 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                     <ZoomOut className="w-4 h-4 text-gray-600" />
                   </button>
 
-                  {/* Divider */}
                   <div className="w-px h-5 bg-gray-200" />
 
-                  {/* Zoom slider */}
                   <div className="w-[120px] px-1">
                     <Slider
                       value={[zoomLevel]}
@@ -876,10 +614,8 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                     />
                   </div>
 
-                  {/* Divider */}
                   <div className="w-px h-5 bg-gray-200" />
 
-                  {/* Zoom percentage display - click to reset */}
                   <button
                     onClick={handleZoomReset}
                     className={cn(
@@ -896,10 +632,8 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                     {zoomLevel}%
                   </button>
 
-                  {/* Divider */}
                   <div className="w-px h-5 bg-gray-200" />
 
-                  {/* Zoom in button */}
                   <button
                     onClick={handleZoomIn}
                     disabled={!canZoomIn}
@@ -916,7 +650,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                   </button>
                 </div>
 
-                {/* Save status - right side */}
+                {/* Save status */}
                 <div className="flex items-center gap-3 text-xs text-gray-500 whitespace-nowrap">
                   <span>
                     Saved{' '}
@@ -945,12 +679,12 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
 
             {/* TipTap editor with zoom */}
             <div
-              className="overflow-auto transition-all duration-300"
+              className="overflow-auto transition-all duration-300 print-editor-wrapper"
               style={{
                 paddingLeft: isFocusMode ? '40px' : '60px',
                 paddingRight: isFocusMode ? '40px' : '60px',
-                paddingTop: isFocusMode ? '60px' : '40px', // More top padding in Focus Mode
-                paddingBottom: isFocusMode ? '120px' : '40px', // More bottom padding in Focus Mode
+                paddingTop: isFocusMode ? '60px' : '40px',
+                paddingBottom: isFocusMode ? '120px' : '40px',
               }}
             >
               <div
@@ -962,14 +696,17 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
                   width: `${10000 / zoomLevel}%`,
                 }}
               >
-                <EditorContent
-                  editor={editor}
-                  className={cn(
-                    'tiptap-editor',
-                    'text-base leading-relaxed',
-                    'focus-within:outline-none'
-                  )}
-                />
+                {/* This is the actual print content - ID used by print CSS */}
+                <div id="print-content">
+                  <EditorContent
+                    editor={editor}
+                    className={cn(
+                      'tiptap-editor',
+                      'text-base leading-relaxed',
+                      'focus-within:outline-none'
+                    )}
+                  />
+                </div>
               </div>
             </div>
           </>
@@ -992,8 +729,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
             boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.03)',
           }}
         />
-        </div>
-      )}
+      </div>
 
       {/* TipTap styles */}
       <style jsx global>{`
@@ -1140,84 +876,20 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           text-align: justify;
         }
 
-        /* Drag-and-drop cursor indicator */
         .ProseMirror .ProseMirror-dropcursor {
           border-left: 2px solid #0071E3;
           pointer-events: none;
           position: absolute;
         }
 
-        /* Zoom container styles */
         .editor-zoom-container {
           will-change: transform;
         }
 
-        /* Ensure editor content is crisp at all zoom levels */
         .editor-zoom-container .ProseMirror {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
           text-rendering: optimizeLegibility;
-        }
-
-        /* Page Mode specific styles */
-        .page-mode-container {
-          position: relative;
-        }
-
-        .page-mode-container .page-background {
-          transition: box-shadow 0.2s ease;
-        }
-
-        .page-mode-container .page-break-indicator {
-          opacity: 0.6;
-          transition: opacity 0.2s ease;
-        }
-
-        .page-mode-container:hover .page-break-indicator {
-          opacity: 1;
-        }
-
-        .page-mode-container .page-number {
-          transition: opacity 0.2s ease;
-        }
-
-        .page-mode-container .page-content {
-          position: relative;
-          z-index: 1;
-        }
-
-        /* Page count badge animation */
-        .page-count-badge {
-          animation: fadeInUp 0.3s ease;
-        }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        /* Custom scrollbar for page mode */
-        .page-mode-container::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .page-mode-container::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .page-mode-container::-webkit-scrollbar-thumb {
-          background-color: rgba(0, 0, 0, 0.2);
-          border-radius: 4px;
-        }
-
-        .page-mode-container::-webkit-scrollbar-thumb:hover {
-          background-color: rgba(0, 0, 0, 0.3);
         }
       `}</style>
     </div>

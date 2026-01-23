@@ -179,8 +179,7 @@ export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 /**
  * Editor view mode options
- * - page: Traditional page layout with fixed width, mimicking printed document
- * - scrolling: Continuous scroll mode with full-width content
- * - focus: Distraction-free mode that highlights current paragraph
+ * - scrolling: Continuous scroll mode (default)
+ * - focus: Distraction-free writing mode
  */
-export type ViewMode = 'page' | 'scrolling' | 'focus';
+export type ViewMode = 'scrolling' | 'focus';
