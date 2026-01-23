@@ -18,6 +18,7 @@
 'use client';
 
 import React from 'react';
+import { logger } from '@/lib/utils/logger';
 import { 
   Briefcase, 
   Smile, 
@@ -146,7 +147,7 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
     const contentToShift = selectedHTML || selectedText;
     if (!contentToShift) return;
     
-    console.log('📝 Tone shifting with formatting:', {
+    logger.log('📝 Tone shifting with formatting:', {
       hasHTML: !!selectedHTML,
       textLength: selectedText?.length || 0,
       htmlLength: selectedHTML?.length || 0,
@@ -171,7 +172,7 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
     if (success) {
       // Clear the result after replacing
       clearToneShiftResult();
-      console.log('✅ Tone shifted content inserted with formatting preserved');
+      logger.log('✅ Tone shifted content inserted with formatting preserved');
     }
   };
 
@@ -192,9 +193,9 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
     try {
       // Copy the HTML to clipboard (user can paste into editor or other tools)
       await navigator.clipboard.writeText(toneShiftResult);
-      console.log('✅ Copied HTML to clipboard');
+      logger.log('✅ Copied HTML to clipboard');
     } catch (error) {
-      console.error('❌ Failed to copy:', error);
+      logger.error('❌ Failed to copy:', error);
     }
   };
 

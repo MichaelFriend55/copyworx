@@ -15,6 +15,7 @@
 
 import { useState, useCallback } from 'react';
 import Joyride, { CallBackProps, STATUS, Step, ACTIONS, EVENTS } from 'react-joyride';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Props for ProductTour component
@@ -207,9 +208,7 @@ export default function ProductTour({ run, onComplete }: ProductTourProps) {
     const { status, action, index, type } = data;
     
     // Log for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Tour callback:', { status, action, index, type });
-    }
+    logger.log('Tour callback:', { status, action, index, type });
 
     // Handle tour completion or skip
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {

@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateTextLength, validateNotEmpty, logError } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Type Definitions
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExpandRes
     const apiKey = process.env.ANTHROPIC_API_KEY;
     
     if (!apiKey) {
-      console.error('❌ ANTHROPIC_API_KEY not found in environment variables');
+      logger.error('❌ ANTHROPIC_API_KEY not found in environment variables');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'Server configuration error',
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExpandRes
     // 3. Call Claude API to expand the text
     // ------------------------------------------------------------------------
     
-    console.log('📝 Expand request:', {
+    logger.log('📝 Expand request:', {
       originalLength: text.length,
       preview: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
     });
@@ -219,7 +220,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExpandRes
       : '';
 
     if (!expandedText) {
-      console.error('❌ Claude returned empty response');
+      logger.error('❌ Claude returned empty response');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI processing error',
@@ -233,7 +234,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExpandRes
     const originalLength = text.length;
     const newLength = expandedText.length;
 
-    console.log('✅ Expand successful:', {
+    logger.log('✅ Expand successful:', {
       originalLength,
       newLength,
       expansionPercent: ((newLength - originalLength) / originalLength * 100).toFixed(1) + '%',

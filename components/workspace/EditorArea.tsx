@@ -43,6 +43,7 @@ import { ZoomIn, ZoomOut, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import { TemplateResumeBanner } from './TemplateResumeBanner';
+import { logger } from '@/lib/utils/logger';
 
 interface EditorAreaProps {
   className?: string;
@@ -174,7 +175,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
    */
   const saveToLocalStorage = useCallback((content: string) => {
     if (!activeProjectId || !currentDocument?.id) {
-      console.warn('⚠️ Cannot save: missing projectId or documentId');
+      logger.warn('⚠️ Cannot save: missing projectId or documentId');
       setSaveStatus('idle');
       return;
     }
@@ -192,7 +193,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       }, 2000);
       
     } catch (error) {
-      console.error('❌ Failed to save document:', error);
+      logger.error('❌ Failed to save document:', error);
       setSaveStatus('idle');
     }
   }, [activeProjectId, currentDocument?.id]);
@@ -227,7 +228,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
    */
   const loadDocumentFromStorage = useCallback((docId: string) => {
     if (!activeProjectId || !editor) {
-      console.warn('⚠️ Cannot load document: missing projectId or editor');
+      logger.warn('⚠️ Cannot load document: missing projectId or editor');
       return;
     }
     
@@ -237,7 +238,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       const doc = getDocument(activeProjectId, docId);
       
       if (!doc) {
-        console.warn('⚠️ Document not found:', docId);
+        logger.warn('⚠️ Document not found:', docId);
         setCurrentDocument(null);
         editor.commands.setContent('');
         isLoadingRef.current = false;
@@ -247,7 +248,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       setCurrentDocument(doc);
       editor.commands.setContent(doc.content || '');
     } catch (error) {
-      console.error('❌ Failed to load document:', error);
+      logger.error('❌ Failed to load document:', error);
       setCurrentDocument(null);
       editor.commands.setContent('');
     } finally {
@@ -288,10 +289,10 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           const doc = getDocument(projectId, documentId);
           if (doc) {
             setCurrentDocument(doc);
-            console.log('✅ Document metadata refreshed:', doc.title);
+            logger.log('✅ Document metadata refreshed:', doc.title);
           }
         } catch (error) {
-          console.error('❌ Failed to refresh document:', error);
+          logger.error('❌ Failed to refresh document:', error);
         }
       }
     };
@@ -379,7 +380,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
    */
   const handleLoadDocument = useCallback((doc: ProjectDocument) => {
     if (!editor) {
-      console.warn('⚠️ Editor not ready');
+      logger.warn('⚠️ Editor not ready');
       return;
     }
     
@@ -388,7 +389,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     setCurrentDocument(doc);
     editor.commands.setContent(doc.content || '');
     
-    console.log('📄 Document loaded via click:', {
+    logger.log('📄 Document loaded via click:', {
       id: doc.id,
       title: doc.title,
       version: doc.version,
@@ -462,7 +463,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
    */
   const handleSaveAsNewVersion = useCallback(() => {
     if (!currentDocument || !activeProjectId || !editor) {
-      console.error('❌ Cannot save version: missing document, project, or editor');
+      logger.error('❌ Cannot save version: missing document, project, or editor');
       return;
     }
 
@@ -492,14 +493,14 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       setActiveDocumentIdRef.current(newDoc.id);
       toast.success(`Created ${newTitle}`);
       
-      console.log('✅ New version created:', {
+      logger.log('✅ New version created:', {
         originalTitle: currentDocument.title,
         newTitle,
         newVersion,
         newId: newDoc.id,
       });
     } catch (error) {
-      console.error('❌ Failed to create new version:', error);
+      logger.error('❌ Failed to create new version:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create new version');
     }
   }, [currentDocument, activeProjectId, editor, parseVersionFromTitle]);

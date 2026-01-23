@@ -18,6 +18,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Folder,
   ChevronDown,
@@ -88,7 +89,7 @@ export function ProjectSelector({ className }: ProjectSelectorProps) {
 
     setActiveProjectId(projectId);
     setIsOpen(false);
-    console.log('🔄 Switched to project:', projectId);
+    logger.log('🔄 Switched to project:', projectId);
   };
 
   /**
@@ -371,7 +372,7 @@ function NewProjectDialog({
       // Notify parent
       onProjectCreated(newProject.id);
       
-      console.log('✅ Project created:', newProject.name);
+      logger.log('✅ Project created:', newProject.name);
     } catch (error) {
       setCreateError(error instanceof Error ? error.message : 'Failed to create project');
     }

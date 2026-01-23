@@ -16,6 +16,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   BookOpen,
   ChevronLeft,
@@ -261,14 +262,14 @@ export function BrochureMultiSectionTemplate({
    * Load or initialize template progress from document
    */
   useEffect(() => {
-    console.log('🔄 BrochureMultiSectionTemplate: Checking progress...', {
+    logger.log('🔄 BrochureMultiSectionTemplate: Checking progress...', {
       activeDocumentId,
       activeProjectId,
       hasProgress: !!progress
     });
     
     if (!activeDocumentId || !activeProjectId) {
-      console.warn('⚠️ Missing activeDocumentId or activeProjectId', {
+      logger.warn('⚠️ Missing activeDocumentId or activeProjectId', {
         activeDocumentId,
         activeProjectId
       });
@@ -277,11 +278,11 @@ export function BrochureMultiSectionTemplate({
     
     const doc = getDocument(activeProjectId, activeDocumentId);
     if (!doc) {
-      console.error('❌ Document not found:', activeDocumentId);
+      logger.error('❌ Document not found:', activeDocumentId);
       return;
     }
     
-    console.log('📄 Document loaded:', {
+    logger.log('📄 Document loaded:', {
       id: doc.id,
       title: doc.title,
       hasTemplateProgress: !!doc.templateProgress
@@ -289,7 +290,7 @@ export function BrochureMultiSectionTemplate({
     
     if (doc.templateProgress && doc.templateProgress.templateId === 'brochure-multi-section') {
       // Resume existing progress
-      console.log('🔄 Resuming existing template progress');
+      logger.log('🔄 Resuming existing template progress');
       const loadedProgress = doc.templateProgress;
       setProgress(loadedProgress);
       setApplyBrandVoice(loadedProgress.applyBrandVoice || false);
@@ -297,7 +298,7 @@ export function BrochureMultiSectionTemplate({
       
       // If complete, show completion view
       if (loadedProgress.isComplete) {
-        console.log('✅ Template is complete');
+        logger.log('✅ Template is complete');
         setViewState('completed');
       }
       
@@ -306,7 +307,7 @@ export function BrochureMultiSectionTemplate({
       const section = BROCHURE_SECTIONS[currentSectionIndex];
       
       if (section) {
-        console.log('📝 Loading form data for section:', section.name);
+        logger.log('📝 Loading form data for section:', section.name);
         // Check if we have saved form data for this section
         if (loadedProgress.sectionData[section.id]?.formData) {
           setFormData(loadedProgress.sectionData[section.id].formData);
@@ -321,18 +322,18 @@ export function BrochureMultiSectionTemplate({
       }
     } else {
       // Initialize new progress
-      console.log('✨ Initializing new template progress');
+      logger.log('✨ Initializing new template progress');
       const newProgress = createInitialProgress(
         'brochure-multi-section',
         BROCHURE_SECTIONS.length
       );
       setProgress(newProgress);
-      console.log('✅ Progress initialized:', newProgress);
+      logger.log('✅ Progress initialized:', newProgress);
       
       // Initialize form data for first section
       const section = BROCHURE_SECTIONS[0];
       if (section) {
-        console.log('📝 Initializing empty form data for first section:', section.name);
+        logger.log('📝 Initializing empty form data for first section:', section.name);
         const initialData: Record<string, string> = {};
         section.fields.forEach((field) => {
           initialData[field.id] = '';
@@ -349,16 +350,16 @@ export function BrochureMultiSectionTemplate({
   const initializeFormData = useCallback((sectionIndex: number, currentProgress: TemplateProgress | null) => {
     const section = BROCHURE_SECTIONS[sectionIndex];
     if (!section) {
-      console.warn('⚠️ Section not found for index:', sectionIndex);
+      logger.warn('⚠️ Section not found for index:', sectionIndex);
       return;
     }
     
     // Check if we have saved form data for this section
     if (currentProgress?.sectionData[section.id]?.formData) {
-      console.log('✅ Loading saved form data for section:', section.name);
+      logger.log('✅ Loading saved form data for section:', section.name);
       setFormData(currentProgress.sectionData[section.id].formData);
     } else {
-      console.log('📝 Initializing empty form data for section:', section.name);
+      logger.log('📝 Initializing empty form data for section:', section.name);
       // Initialize with empty values
       const initialData: Record<string, string> = {};
       section.fields.forEach((field) => {
@@ -380,7 +381,7 @@ export function BrochureMultiSectionTemplate({
       });
       setProgress(updatedProgress);
     } catch (error) {
-      console.error('❌ Failed to save template progress:', error);
+      logger.error('❌ Failed to save template progress:', error);
     }
   }, [activeProjectId, activeDocumentId]);
   
@@ -413,7 +414,7 @@ export function BrochureMultiSectionTemplate({
         content: fullContent,
       });
     } catch (error) {
-      console.error('❌ Failed to save document content:', error);
+      logger.error('❌ Failed to save document content:', error);
     }
   }, [activeProjectId, activeDocumentId, editor]);
   
@@ -573,7 +574,7 @@ export function BrochureMultiSectionTemplate({
       }
       
     } catch (error) {
-      console.error('❌ Section generation error:', error);
+      logger.error('❌ Section generation error:', error);
       setGenerationError(
         error instanceof Error ? error.message : 'Failed to generate section'
       );
@@ -678,7 +679,7 @@ export function BrochureMultiSectionTemplate({
     if (!confirmed) return;
     
     // Just close the template UI - progress stays in document
-    console.log('🚪 Closing template UI - progress saved for resume');
+    logger.log('🚪 Closing template UI - progress saved for resume');
     
     // Clear selectedTemplateId so resume banner can show
     useWorkspaceStore.getState().setSelectedTemplateId(null);
@@ -702,9 +703,9 @@ export function BrochureMultiSectionTemplate({
       updateDocumentInStorage(activeProjectId, activeDocumentId, {
         templateProgress: undefined,
       });
-      console.log('🗑️ Template progress deleted');
+      logger.log('🗑️ Template progress deleted');
     } catch (error) {
-      console.error('❌ Failed to delete template progress:', error);
+      logger.error('❌ Failed to delete template progress:', error);
     }
     
     onClose();
@@ -977,7 +978,7 @@ export function BrochureMultiSectionTemplate({
           </div>
           <button
             onClick={() => {
-              console.log('❌ Closing template - progress will be saved');
+              logger.log('❌ Closing template - progress will be saved');
               // Clear selectedTemplateId so resume banner can show
               useWorkspaceStore.getState().setSelectedTemplateId(null);
               onClose();

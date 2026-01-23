@@ -17,6 +17,7 @@ import type {
 import type { BrandVoice } from '@/lib/types/brand';
 import type { Persona } from '@/lib/types/project';
 import { logError } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Type Definitions
@@ -213,7 +214,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
     const apiKey = process.env.ANTHROPIC_API_KEY;
     
     if (!apiKey) {
-      console.error('❌ ANTHROPIC_API_KEY not found in environment variables');
+      logger.error('❌ ANTHROPIC_API_KEY not found in environment variables');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'Server configuration error',
@@ -257,7 +258,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
       ? Math.min(8000, 1200 * emailCount) // Cap at 8000 tokens
       : 4000;
     
-    console.log(`📧 Template: ${templateId}, Emails: ${emailCount}, Timeout: ${timeoutMs}ms, MaxTokens: ${maxTokens}`);
+    logger.log(`📧 Template: ${templateId}, Emails: ${emailCount}, Timeout: ${timeoutMs}ms, MaxTokens: ${maxTokens}`);
 
     // ------------------------------------------------------------------------
     // 6. Call Claude API to generate copy
@@ -348,7 +349,7 @@ REMEMBER: Output ONLY HTML. No markdown, no preamble, no explanation. Just the H
       : '';
 
     if (!generatedCopy) {
-      console.error('❌ Claude returned empty response');
+      logger.error('❌ Claude returned empty response');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI processing error',

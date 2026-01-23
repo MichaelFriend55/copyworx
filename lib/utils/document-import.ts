@@ -27,6 +27,7 @@
 
 import type { Editor } from '@tiptap/react';
 import MarkdownIt from 'markdown-it';
+import { logger } from './logger';
 
 // ============================================================================
 // Types
@@ -388,7 +389,7 @@ export async function docxToHtml(arrayBuffer: ArrayBuffer): Promise<string> {
     
     if (result.messages && result.messages.length > 0) {
       // Log warnings but don't fail (e.g., unsupported features)
-      console.warn('⚠️ DOCX conversion warnings:', result.messages);
+      logger.warn('⚠️ DOCX conversion warnings:', result.messages);
     }
     
     // Post-process: Convert alignment classes to TipTap-compatible format
@@ -405,7 +406,7 @@ export async function docxToHtml(arrayBuffer: ArrayBuffer): Promise<string> {
     
     return html;
   } catch (error) {
-    console.error('❌ Error converting DOCX to HTML:', error);
+    logger.error('❌ Error converting DOCX to HTML:', error);
     throw new Error('Failed to convert Word document. The file may be corrupted or in an unsupported format.');
   }
 }
@@ -471,7 +472,7 @@ export async function importPlainText(
     // Insert into editor (replaces current content)
     editor.commands.setContent(html);
 
-    console.log('✅ Imported plain text file:', file.name);
+    logger.log('✅ Imported plain text file:', file.name);
 
     return {
       success: true,
@@ -482,7 +483,7 @@ export async function importPlainText(
       ? error.message 
       : 'Failed to import plain text file';
     
-    console.error('❌ Plain text import error:', error);
+    logger.error('❌ Plain text import error:', error);
     
     return {
       success: false,
@@ -528,7 +529,7 @@ export async function importMarkdown(
     // Insert into editor (replaces current content)
     editor.commands.setContent(html);
 
-    console.log('✅ Imported Markdown file:', file.name);
+    logger.log('✅ Imported Markdown file:', file.name);
 
     return {
       success: true,
@@ -539,7 +540,7 @@ export async function importMarkdown(
       ? error.message 
       : 'Failed to import Markdown file';
     
-    console.error('❌ Markdown import error:', error);
+    logger.error('❌ Markdown import error:', error);
     
     return {
       success: false,
@@ -588,7 +589,7 @@ export async function importDocx(
     // Insert into editor (replaces current content)
     editor.commands.setContent(html);
 
-    console.log('✅ Imported Word Document:', file.name);
+    logger.log('✅ Imported Word Document:', file.name);
 
     return {
       success: true,
@@ -599,7 +600,7 @@ export async function importDocx(
       ? error.message 
       : 'Failed to import Word Document';
     
-    console.error('❌ DOCX import error:', error);
+    logger.error('❌ DOCX import error:', error);
     
     return {
       success: false,

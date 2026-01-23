@@ -33,6 +33,7 @@ import type { Template, TemplateFormData } from '@/lib/types/template';
 import type { Project, Persona } from '@/lib/types/project';
 import type { LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
 
 interface TemplateGeneratorProps {
   /** Selected template to generate from */
@@ -211,7 +212,7 @@ export function TemplateGenerator({
   const handleGenerate = async () => {
     // Validate form
     if (!validateForm()) {
-      console.warn('⚠️ Form validation failed');
+      logger.warn('⚠️ Form validation failed');
       return;
     }
     
@@ -245,7 +246,7 @@ export function TemplateGenerator({
         persona: selectedPersona || undefined,
       };
       
-      console.log('🚀 Generating template:', {
+      logger.log('🚀 Generating template:', {
         templateId: template.id,
         applyBrandVoice,
         personaId: selectedPersonaId,
@@ -294,7 +295,7 @@ export function TemplateGenerator({
       const isEmailTemplate = template.id.includes('email') || template.category === 'email';
       const formattedContent = formatGeneratedContent(data.generatedCopy, isEmailTemplate);
       
-      console.log('📝 Formatted content for editor:', {
+      logger.log('📝 Formatted content for editor:', {
         templateType: isEmailTemplate ? 'email' : 'regular',
         originalLength: data.generatedCopy.length,
         formattedLength: formattedContent.length,
@@ -312,10 +313,10 @@ export function TemplateGenerator({
       const { activeProjectId, activeDocumentId } = useWorkspaceStore.getState();
       if (activeProjectId && activeDocumentId) {
         updateDocumentInStorage(activeProjectId, activeDocumentId, { content: formattedContent });
-        console.log('💾 Template content saved to localStorage');
+        logger.log('💾 Template content saved to localStorage');
       }
       
-      console.log('✅ Template generation successful');
+      logger.log('✅ Template generation successful');
       
       // Show success state
       setGenerationSuccess(true);
@@ -342,7 +343,7 @@ export function TemplateGenerator({
         : 'An unexpected error occurred';
       
       setGenerationError(errorMessage);
-      console.error('❌ Template generation error:', errorMessage);
+      logger.error('❌ Template generation error:', errorMessage);
     } finally {
       setIsGenerating(false);
     }

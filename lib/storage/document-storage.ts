@@ -16,6 +16,7 @@ import {
   logError,
   logWarning
 } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Helper Functions
@@ -268,7 +269,7 @@ export function getDocument(
     const document = documents.find(doc => doc.id === docId);
     
     if (!document) {
-      console.warn(`⚠️ Document not found: ${docId} in project ${projectId}`);
+      logger.warn(`⚠️ Document not found: ${docId} in project ${projectId}`);
       return null;
     }
     
@@ -301,7 +302,7 @@ export function getDocumentVersions(
     // Sort by version number (ascending)
     const sorted = [...versions].sort((a, b) => a.version - b.version);
     
-    console.log(`📚 Found ${sorted.length} version(s) for "${baseTitle}"`);
+    logger.log(`📚 Found ${sorted.length} version(s) for "${baseTitle}"`);
     
     return sorted;
   } catch (error) {
@@ -493,7 +494,7 @@ export function renameDocument(
   // Update project (persists to localStorage)
   updateProject(projectId, { documents: updatedDocuments });
   
-  console.log('✅ Document renamed to new family:', {
+  logger.log('✅ Document renamed to new family:', {
     id: renamedDoc.id,
     oldBaseTitle: existingDoc.baseTitle,
     newBaseTitle: sanitizedTitle,

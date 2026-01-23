@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateTextLength, validateNotEmpty, logError } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Type Definitions
@@ -242,7 +243,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ToneShift
     const apiKey = process.env.ANTHROPIC_API_KEY;
     
     if (!apiKey) {
-      console.error('❌ ANTHROPIC_API_KEY not found in environment variables');
+      logger.error('❌ ANTHROPIC_API_KEY not found in environment variables');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'Server configuration error',
@@ -293,7 +294,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ToneShift
       : '';
 
     if (!rewrittenText) {
-      console.error('❌ Claude returned empty response');
+      logger.error('❌ Claude returned empty response');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI processing error',
@@ -340,7 +341,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ToneShift
 
     // Handle Anthropic-specific errors
     if (error instanceof Anthropic.APIError) {
-      console.error('Anthropic API Error:', {
+      logger.error('Anthropic API Error:', {
         status: error.status,
         message: error.message,
       });

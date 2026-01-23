@@ -18,6 +18,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 import { 
   Volume2,
   Save,
@@ -113,7 +114,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
       setForbiddenWords('');
       setBrandValues('');
       setMissionStatement('');
-      console.log('⚠️ No active project');
+      logger.log('⚠️ No active project');
       return;
     }
 
@@ -129,7 +130,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
       setBrandValues(brandVoice.brandValues.join('\n'));
       setMissionStatement(brandVoice.missionStatement);
       
-      console.log('✅ Loaded brand voice from project:', currentProject.name);
+      logger.log('✅ Loaded brand voice from project:', currentProject.name);
     } else {
       // No brand voice in project - clear form
       setBrandName('');
@@ -139,7 +140,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
       setBrandValues('');
       setMissionStatement('');
       
-      console.log('ℹ️ No brand voice set for project:', currentProject.name);
+      logger.log('ℹ️ No brand voice set for project:', currentProject.name);
     }
   }, [activeProjectId]); // Only depend on primitive ID, not derived objects
 
@@ -192,7 +193,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
       
       setSaveSuccess(true);
       
-      console.log('✅ Brand voice saved to project:', activeProject.name);
+      logger.log('✅ Brand voice saved to project:', activeProject.name);
       
       // Clear success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -201,7 +202,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
         ? error.message 
         : 'Failed to save brand voice. Please try again.';
       setSaveError(errorMessage);
-      console.error('❌ Failed to save brand voice:', error);
+      logger.error('❌ Failed to save brand voice:', error);
     }
   };
 

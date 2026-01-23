@@ -19,6 +19,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { logger } from '@/lib/utils/logger';
 import { 
   Repeat,
   Linkedin,
@@ -163,7 +164,7 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
     const contentToRewrite = selectedHTML || selectedText;
     if (!contentToRewrite) return;
     
-    console.log('📝 Rewriting for channel with formatting:', {
+    logger.log('📝 Rewriting for channel with formatting:', {
       hasHTML: !!selectedHTML,
       textLength: selectedText?.length || 0,
       htmlLength: selectedHTML?.length || 0,
@@ -188,7 +189,7 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
     if (success) {
       // Clear the result after replacing
       clearRewriteChannelResult();
-      console.log('✅ Rewritten content inserted with formatting preserved');
+      logger.log('✅ Rewritten content inserted with formatting preserved');
     }
   };
 
@@ -200,9 +201,9 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
     
     try {
       await navigator.clipboard.writeText(rewriteChannelResult);
-      console.log('✅ Copied to clipboard');
+      logger.log('✅ Copied to clipboard');
     } catch (error) {
-      console.error('❌ Failed to copy:', error);
+      logger.error('❌ Failed to copy:', error);
     }
   };
 

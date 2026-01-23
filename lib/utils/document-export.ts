@@ -18,6 +18,7 @@
 
 import type { Editor } from '@tiptap/react';
 import TurndownService from 'turndown';
+import { logger } from './logger';
 
 // ============================================================================
 // Types
@@ -297,7 +298,7 @@ export function htmlToMarkdown(html: string): string {
       .replace(/\n{3,}/g, '\n\n')
       .trim();
   } catch (error) {
-    console.error('❌ Error converting HTML to Markdown:', error);
+    logger.error('❌ Error converting HTML to Markdown:', error);
     throw new Error('Failed to convert document to Markdown format');
   }
 }
@@ -359,7 +360,7 @@ ${html}
     
     return docxBlob;
   } catch (error) {
-    console.error('❌ Error converting HTML to DOCX:', error);
+    logger.error('❌ Error converting HTML to DOCX:', error);
     throw new Error('Failed to create Word document. Please try again.');
   }
 }
@@ -400,7 +401,7 @@ export async function exportToPlainText(
     // Download file
     downloadTextFile(plainText, filename, 'text/plain');
 
-    console.log('✅ Exported to Plain Text:', filename);
+    logger.log('✅ Exported to Plain Text:', filename);
     
     return {
       success: true,
@@ -411,7 +412,7 @@ export async function exportToPlainText(
       ? error.message 
       : 'Failed to export as Plain Text';
     
-    console.error('❌ Plain Text export error:', error);
+    logger.error('❌ Plain Text export error:', error);
     
     return {
       success: false,
@@ -453,7 +454,7 @@ export async function exportToMarkdown(
     // Download file
     downloadTextFile(markdown, filename, 'text/markdown');
 
-    console.log('✅ Exported to Markdown:', filename);
+    logger.log('✅ Exported to Markdown:', filename);
     
     return {
       success: true,
@@ -464,7 +465,7 @@ export async function exportToMarkdown(
       ? error.message 
       : 'Failed to export as Markdown';
     
-    console.error('❌ Markdown export error:', error);
+    logger.error('❌ Markdown export error:', error);
     
     return {
       success: false,
@@ -508,7 +509,7 @@ export async function exportToDocx(
     // Download file
     downloadBlob(docxBlob, filename);
 
-    console.log('✅ Exported to Word Document:', filename);
+    logger.log('✅ Exported to Word Document:', filename);
     
     return {
       success: true,
@@ -519,7 +520,7 @@ export async function exportToDocx(
       ? error.message 
       : 'Failed to export as Word Document';
     
-    console.error('❌ DOCX export error:', error);
+    logger.error('❌ DOCX export error:', error);
     
     return {
       success: false,

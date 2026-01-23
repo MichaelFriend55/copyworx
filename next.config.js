@@ -15,10 +15,16 @@ const nextConfig = {
   
   // Image optimization configuration
   images: {
-    domains: [],
     formats: ['image/avif', 'image/webp'],
     unoptimized: false,
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   
   // Experimental features for App Router optimization

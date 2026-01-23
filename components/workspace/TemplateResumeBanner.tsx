@@ -12,6 +12,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Play,
   ListChecks,
@@ -43,21 +44,21 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
   
   // Check for template progress when document changes
   useEffect(() => {
-    console.log('🎗️ TemplateResumeBanner: Checking for progress...', {
+    logger.log('🎗️ TemplateResumeBanner: Checking for progress...', {
       activeDocumentId,
       activeProjectId,
       selectedTemplateId
     });
     
     if (!activeDocumentId || !activeProjectId) {
-      console.log('⚠️ Banner: No active document or project');
+      logger.log('⚠️ Banner: No active document or project');
       setTemplateProgress(null);
       setIsDismissed(false);
       return;
     }
     
     const doc = getDocument(activeProjectId, activeDocumentId);
-    console.log('📄 Banner: Document loaded', {
+    logger.log('📄 Banner: Document loaded', {
       hasDoc: !!doc,
       hasProgress: !!doc?.templateProgress,
       isComplete: doc?.templateProgress?.isComplete,
@@ -65,11 +66,11 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
     });
     
     if (doc?.templateProgress && !doc.templateProgress.isComplete) {
-      console.log('✅ Banner: Found incomplete progress - SHOWING BANNER');
+      logger.log('✅ Banner: Found incomplete progress - SHOWING BANNER');
       setTemplateProgress(doc.templateProgress);
       setIsDismissed(false);
     } else {
-      console.log('❌ Banner: No incomplete progress found');
+      logger.log('❌ Banner: No incomplete progress found');
       setTemplateProgress(null);
     }
   }, [activeDocumentId, activeProjectId, selectedTemplateId]);
@@ -105,7 +106,7 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
       });
       setTemplateProgress(null);
     } catch (error) {
-      console.error('❌ Failed to clear template progress:', error);
+      logger.error('❌ Failed to clear template progress:', error);
     }
   }, [activeProjectId, activeDocumentId]);
   
@@ -118,7 +119,7 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
   
   // Don't show if no template progress, already complete, dismissed, or template already open
   if (!templateProgress || templateProgress.isComplete || isDismissed || selectedTemplateId) {
-    console.log('🚫 Banner: Hidden because:', {
+    logger.log('🚫 Banner: Hidden because:', {
       noProgress: !templateProgress,
       isComplete: templateProgress?.isComplete,
       isDismissed,
@@ -127,7 +128,7 @@ export function TemplateResumeBanner({ onContinue }: TemplateResumeBannerProps) 
     return null;
   }
   
-  console.log('✨ Banner: RENDERING - showing resume button');
+  logger.log('✨ Banner: RENDERING - showing resume button');
   
   // Get current section info
   const currentSectionIndex = templateProgress.currentSection;

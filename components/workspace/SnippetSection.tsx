@@ -14,6 +14,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Scissors,
   Plus,
@@ -106,7 +107,7 @@ function SnippetRow({ snippet, onSelect, onEdit, onDelete }: SnippetRowProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      logger.error('Failed to copy:', error);
     }
   }, [snippet.content]);
   
@@ -265,7 +266,7 @@ export function SnippetSection({
       // Trigger refresh
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
-      console.error('Failed to delete snippet:', error);
+      logger.error('Failed to delete snippet:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to delete snippet');
     }
   }, [projectId]);

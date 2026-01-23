@@ -31,6 +31,7 @@ import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceSto
 import { createDocument } from '@/lib/storage/document-storage';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { getTemplateById } from '@/lib/data/templates';
+import { logger } from '@/lib/utils/logger';
 
 interface ActionButtonProps {
   icon: React.ReactNode;
@@ -92,7 +93,7 @@ export function SplashPage() {
 
   const handleNewDocument = () => {
     if (!activeProjectId) {
-      console.warn('⚠️ No active project, going to workspace anyway');
+      logger.warn('⚠️ No active project, going to workspace anyway');
       router.push('/copyworx/workspace?action=new');
       return;
     }
@@ -104,17 +105,17 @@ export function SplashPage() {
       // Set active document ID in Zustand
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
       
-      console.log('✅ Created new document:', newDoc.id);
+      logger.log('✅ Created new document:', newDoc.id);
       router.push('/copyworx/workspace?action=new');
     } catch (error) {
-      console.error('❌ Failed to create document:', error);
+      logger.error('❌ Failed to create document:', error);
       // Still navigate to workspace
       router.push('/copyworx/workspace?action=new');
     }
   };
 
   const handleAITemplate = () => {
-    console.log('🎨 Opening Templates Modal from Splash Page');
+    logger.log('🎨 Opening Templates Modal from Splash Page');
     setTemplatesModalOpen(true);
   };
 
@@ -123,18 +124,18 @@ export function SplashPage() {
    * Creates document immediately and navigates to workspace
    */
   const handleTemplateSelect = (templateId: string) => {
-    console.log('🎨 Template selected from splash page:', templateId);
+    logger.log('🎨 Template selected from splash page:', templateId);
     
     // Get template details to use its name for the document
     const template = getTemplateById(templateId);
     if (!template) {
-      console.error('❌ Template not found:', templateId);
+      logger.error('❌ Template not found:', templateId);
       return;
     }
     
     // Check for active project
     if (!activeProjectId) {
-      console.warn('⚠️ No active project, cannot create document');
+      logger.warn('⚠️ No active project, cannot create document');
       router.push('/copyworx/workspace?template=' + templateId);
       return;
     }
@@ -142,7 +143,7 @@ export function SplashPage() {
     try {
       // Create document immediately with template name
       const newDoc = createDocument(activeProjectId, template.name);
-      console.log('✅ Created document for template:', newDoc.id, newDoc.title);
+      logger.log('✅ Created document for template:', newDoc.id, newDoc.title);
       
       // Set as active document in store
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
@@ -150,7 +151,7 @@ export function SplashPage() {
       // Navigate to workspace with both template and document IDs
       router.push(`/copyworx/workspace?template=${templateId}&document=${newDoc.id}`);
     } catch (error) {
-      console.error('❌ Failed to create document for template:', error);
+      logger.error('❌ Failed to create document for template:', error);
       // Still navigate to workspace with just template ID
       router.push('/copyworx/workspace?template=' + templateId);
     }
@@ -176,7 +177,7 @@ export function SplashPage() {
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !activeProjectId) {
-      console.warn('⚠️ No file selected or no active project');
+      logger.warn('⚠️ No file selected or no active project');
       return;
     }
 
@@ -190,7 +191,7 @@ export function SplashPage() {
 
       // Create a new document for the import
       const newDoc = createDocument(activeProjectId, documentTitle);
-      console.log('✅ Created document for import:', newDoc.id, newDoc.title);
+      logger.log('✅ Created document for import:', newDoc.id, newDoc.title);
 
       // Set as active document
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
@@ -228,14 +229,14 @@ export function SplashPage() {
           // Navigate to workspace
           router.push(`/copyworx/workspace?document=${newDoc.id}&import=true`);
         } catch (error) {
-          console.error('❌ Failed to store file:', error);
+          logger.error('❌ Failed to store file:', error);
           // Navigate anyway, document is created
           router.push(`/copyworx/workspace?document=${newDoc.id}`);
         }
       };
 
       reader.onerror = () => {
-        console.error('❌ Failed to read file');
+        logger.error('❌ Failed to read file');
         // Still navigate, workspace can handle empty document
         router.push(`/copyworx/workspace?document=${newDoc.id}`);
       };
@@ -252,7 +253,7 @@ export function SplashPage() {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('❌ Failed to handle file import:', error);
+      logger.error('❌ Failed to handle file import:', error);
     }
   };
 

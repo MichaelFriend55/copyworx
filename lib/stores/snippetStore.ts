@@ -24,6 +24,7 @@ import {
   searchSnippets as searchSnippetsStorage,
 } from '@/lib/storage/snippet-storage';
 import { insertTextAtSelection } from '@/lib/editor-utils';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Types
@@ -120,11 +121,11 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
         isLoading: false,
         searchQuery: '', // Reset search on project change
       });
-      console.log(`📎 Loaded ${snippets.length} snippets for project ${projectId}`);
+      logger.log(`📎 Loaded ${snippets.length} snippets for project ${projectId}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load snippets';
       set({ error: errorMessage, isLoading: false });
-      console.error('❌ Failed to load snippets:', error);
+      logger.error('❌ Failed to load snippets:', error);
     }
   },
   
@@ -142,9 +143,9 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
         : snippets;
       
       set({ snippets, filteredSnippets });
-      console.log('🔄 Snippets refreshed');
+      logger.log('🔄 Snippets refreshed');
     } catch (error) {
-      console.error('❌ Failed to refresh snippets:', error);
+      logger.error('❌ Failed to refresh snippets:', error);
     }
   },
   
@@ -165,13 +166,13 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
       get().refreshSnippets();
       
       set({ isLoading: false, isAddModalOpen: false, isSaveAsSnippetOpen: false });
-      console.log('✅ Snippet created:', newSnippet.name);
+      logger.log('✅ Snippet created:', newSnippet.name);
       
       return newSnippet;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to create snippet';
       set({ error: errorMessage, isLoading: false });
-      console.error('❌ Failed to create snippet:', error);
+      logger.error('❌ Failed to create snippet:', error);
       return null;
     }
   },
@@ -193,13 +194,13 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
       get().refreshSnippets();
       
       set({ isLoading: false, isEditModalOpen: false, editingSnippet: null });
-      console.log('✅ Snippet updated:', updatedSnippet.name);
+      logger.log('✅ Snippet updated:', updatedSnippet.name);
       
       return updatedSnippet;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update snippet';
       set({ error: errorMessage, isLoading: false });
-      console.error('❌ Failed to update snippet:', error);
+      logger.error('❌ Failed to update snippet:', error);
       return null;
     }
   },
@@ -221,13 +222,13 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
       get().refreshSnippets();
       
       set({ isLoading: false });
-      console.log('🗑️ Snippet deleted');
+      logger.log('🗑️ Snippet deleted');
       
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete snippet';
       set({ error: errorMessage, isLoading: false });
-      console.error('❌ Failed to delete snippet:', error);
+      logger.error('❌ Failed to delete snippet:', error);
       return false;
     }
   },
@@ -242,7 +243,7 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
     const { editorRef, currentProjectId } = get();
     
     if (!editorRef) {
-      console.warn('⚠️ No editor reference available for snippet insertion');
+      logger.warn('⚠️ No editor reference available for snippet insertion');
       set({ error: 'Editor not available' });
       return false;
     }
@@ -258,10 +259,10 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
         get().refreshSnippets();
       }
       
-      console.log(success ? '✅ Snippet inserted' : '❌ Failed to insert snippet');
+      logger.log(success ? '✅ Snippet inserted' : '❌ Failed to insert snippet');
       return success;
     } catch (error) {
-      console.error('❌ Error inserting snippet:', error);
+      logger.error('❌ Error inserting snippet:', error);
       set({ error: 'Failed to insert snippet' });
       return false;
     }

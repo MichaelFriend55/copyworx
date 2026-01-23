@@ -27,6 +27,7 @@ import { getTemplateById } from '@/lib/data/templates';
 import { initializeProjectSystem } from '@/lib/utils/project-utils';
 import { createDocument, getDocument } from '@/lib/storage/document-storage';
 import { useProductTour } from '@/lib/hooks/useProductTour';
+import { logger } from '@/lib/utils/logger';
 import type { Editor } from '@tiptap/react';
 import type { ProjectDocument, Project } from '@/lib/types/project';
 
@@ -103,7 +104,7 @@ export default function WorkspacePage() {
     if (!mounted || initRef.current) return;
     initRef.current = true;
     
-    console.log('🚀 Initializing workspace...');
+    logger.log('🚀 Initializing workspace...');
     
     // Initialize project system
     initializeProjectSystem();
@@ -114,22 +115,22 @@ export default function WorkspacePage() {
     
     // Note: Documents are created via DocumentList, not automatically here
     // The activeDocumentId will be restored from Zustand persistence if it exists
-    console.log('✅ Workspace initialized');
+    logger.log('✅ Workspace initialized');
   }, [mounted, action]);
   
   // Handle template parameter from URL (coming from splash page)
   useEffect(() => {
     if (!mounted || !templateParam) return;
     
-    console.log('🎨 Template parameter detected:', templateParam);
-    console.log('📄 Document parameter:', documentParam);
+    logger.log('🎨 Template parameter detected:', templateParam);
+    logger.log('📄 Document parameter:', documentParam);
     
     // Get store state
     const store = useWorkspaceStore.getState();
     
     // Check if we have an active project
     if (!store.activeProjectId) {
-      console.error('❌ No active project found');
+      logger.error('❌ No active project found');
       return;
     }
     
@@ -141,17 +142,17 @@ export default function WorkspacePage() {
         if (existingDoc) {
           // Set as active document
           store.setActiveDocumentId(existingDoc.id);
-          console.log('✅ Loading existing document from splash page:', existingDoc.id, existingDoc.title);
+          logger.log('✅ Loading existing document from splash page:', existingDoc.id, existingDoc.title);
           
           // Load the document into the editor
           if (editorRef.current) {
             editorRef.current.loadDocument(existingDoc);
           }
         } else {
-          console.error('❌ Document not found:', documentParam);
+          logger.error('❌ Document not found:', documentParam);
         }
       } catch (error) {
-        console.error('❌ Failed to load document:', error);
+        logger.error('❌ Failed to load document:', error);
       }
     }
     // Fallback: create new document if no document parameter provided
@@ -159,20 +160,20 @@ export default function WorkspacePage() {
       try {
         const template = getTemplateById(templateParam);
         if (!template) {
-          console.error('❌ Template not found:', templateParam);
+          logger.error('❌ Template not found:', templateParam);
           return;
         }
         
         const newDoc = createDocument(store.activeProjectId, `${template.name}`);
         store.setActiveDocumentId(newDoc.id);
-        console.log('✅ Created new document for template:', newDoc.id, newDoc.title);
+        logger.log('✅ Created new document for template:', newDoc.id, newDoc.title);
         
         // Load the document into the editor
         if (editorRef.current) {
           editorRef.current.loadDocument(newDoc);
         }
       } catch (error) {
-        console.error('❌ Failed to create document for template:', error);
+        logger.error('❌ Failed to create document for template:', error);
       }
     }
     
@@ -186,21 +187,21 @@ export default function WorkspacePage() {
       store.setRightSidebarOpen(true);
     }
     
-    console.log('✅ Template slideout should be visible');
+    logger.log('✅ Template slideout should be visible');
   }, [mounted, templateParam, documentParam]);
   
   // Handle file import from splash page
   useEffect(() => {
     if (!mounted || !importParam || !editor) return;
     
-    console.log('📥 Import parameter detected, checking for pending file...');
+    logger.log('📥 Import parameter detected, checking for pending file...');
     
     // Check for pending file import in localStorage
     const pendingImportStr = localStorage.getItem('pendingFileImport');
     const pendingContent = localStorage.getItem('pendingFileContent');
     
     if (!pendingImportStr || !pendingContent) {
-      console.warn('⚠️ No pending import found');
+      logger.warn('⚠️ No pending import found');
       return;
     }
     
@@ -208,7 +209,7 @@ export default function WorkspacePage() {
       const importData = JSON.parse(pendingImportStr);
       const { fileName, fileType, documentId } = importData;
       
-      console.log('📥 Processing import:', fileName);
+      logger.log('📥 Processing import:', fileName);
       
       // Process the import based on file type
       const processImport = async () => {
@@ -228,14 +229,14 @@ export default function WorkspacePage() {
             const result = await importDocument(editor, file);
             
             if (result.success) {
-              console.log('✅ Successfully imported DOCX file');
+              logger.log('✅ Successfully imported DOCX file');
             } else {
-              console.error('❌ Failed to import DOCX:', result.error);
+              logger.error('❌ Failed to import DOCX:', result.error);
             }
           } else {
             // For text files (txt, md), just set the content directly
             editor.commands.setContent(pendingContent);
-            console.log('✅ Successfully imported text file');
+            logger.log('✅ Successfully imported text file');
           }
           
           // Clear the pending import data
@@ -243,7 +244,7 @@ export default function WorkspacePage() {
           localStorage.removeItem('pendingFileContent');
           
         } catch (error) {
-          console.error('❌ Error processing import:', error);
+          logger.error('❌ Error processing import:', error);
           // Clear the data anyway to prevent retry loop
           localStorage.removeItem('pendingFileImport');
           localStorage.removeItem('pendingFileContent');
@@ -254,7 +255,7 @@ export default function WorkspacePage() {
       processImport();
       
     } catch (error) {
-      console.error('❌ Error parsing pending import:', error);
+      logger.error('❌ Error parsing pending import:', error);
       // Clear corrupted data
       localStorage.removeItem('pendingFileImport');
       localStorage.removeItem('pendingFileContent');
@@ -271,7 +272,7 @@ export default function WorkspacePage() {
    * Loads the selected document into the editor
    */
   const handleDocumentClick = useCallback((doc: ProjectDocument) => {
-    console.log('📄 Document clicked in workspace:', {
+    logger.log('📄 Document clicked in workspace:', {
       id: doc.id,
       title: doc.title,
       version: doc.version,
@@ -280,7 +281,7 @@ export default function WorkspacePage() {
     if (editorRef.current) {
       editorRef.current.loadDocument(doc);
     } else {
-      console.warn('⚠️ Editor ref not ready, cannot load document');
+      logger.warn('⚠️ Editor ref not ready, cannot load document');
     }
   }, []);
   

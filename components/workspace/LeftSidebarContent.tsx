@@ -23,6 +23,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
+import { logger } from '@/lib/utils/logger';
 import Image from 'next/image';
 import { 
   Sparkles, 
@@ -445,7 +446,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                     <button
                       key={tool.id}
                       onClick={() => {
-                        console.log('🖱️ Tool clicked:', tool.id);
+                        logger.log('🖱️ Tool clicked:', tool.id);
                         handleToolClick(tool.id);
                       }}
                       className={cn(

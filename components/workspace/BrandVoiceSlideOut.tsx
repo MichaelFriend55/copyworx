@@ -12,6 +12,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Volume2,
   Save,
@@ -111,7 +112,7 @@ export function BrandVoiceSlideOut({
       setApprovedPhrases(brandVoice.approvedPhrases.join('\n'));
       setForbiddenWords(brandVoice.forbiddenWords.join('\n'));
       setBrandValues(brandVoice.brandValues.join('\n'));
-      console.log('✅ Loaded brand voice from project:', currentProject.name);
+      logger.log('✅ Loaded brand voice from project:', currentProject.name);
     } else {
       // No brand voice - clear form
       setBrandName('');
@@ -171,7 +172,7 @@ export function BrandVoiceSlideOut({
       
       setSaveSuccess(true);
       
-      console.log('✅ Brand voice saved to project:', activeProject.name);
+      logger.log('✅ Brand voice saved to project:', activeProject.name);
       
       // Close slide-out after 1.5 seconds
       setTimeout(() => {
@@ -183,7 +184,7 @@ export function BrandVoiceSlideOut({
         ? error.message 
         : 'Failed to save brand voice. Please try again.';
       setSaveError(errorMessage);
-      console.error('❌ Failed to save brand voice:', error);
+      logger.error('❌ Failed to save brand voice:', error);
     }
   }, [activeProject, activeProjectId, brandName, brandTone, approvedPhrases, forbiddenWords, brandValues, updateProject, onClose]);
   
@@ -222,7 +223,7 @@ export function BrandVoiceSlideOut({
       setForbiddenWords('');
       setBrandValues('');
       
-      console.log('✅ Brand voice deleted');
+      logger.log('✅ Brand voice deleted');
       
       // Close modal and slide-out
       setShowDeleteModal(false);
@@ -230,7 +231,7 @@ export function BrandVoiceSlideOut({
         onClose();
       }, 500);
     } catch (error) {
-      console.error('❌ Failed to delete brand voice:', error);
+      logger.error('❌ Failed to delete brand voice:', error);
       setSaveError(error instanceof Error ? error.message : 'Failed to delete brand voice');
     } finally {
       setIsDeleting(false);

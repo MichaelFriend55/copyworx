@@ -40,6 +40,7 @@ import { formatGeneratedContent } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/utils/logger';
 
 interface ShortenToolProps {
   /** TipTap editor instance */
@@ -75,7 +76,7 @@ export function ShortenTool({ editor, className }: ShortenToolProps) {
     const contentToShorten = selectedHTML || selectedText;
     if (!contentToShorten) return;
     
-    console.log('📝 Shortening with formatting:', {
+    logger.log('📝 Shortening with formatting:', {
       hasHTML: !!selectedHTML,
       textLength: selectedText?.length || 0,
       htmlLength: selectedHTML?.length || 0,
@@ -99,7 +100,7 @@ export function ShortenTool({ editor, className }: ShortenToolProps) {
     if (success) {
       // Clear the result after replacing
       clearShortenResult();
-      console.log('✅ Shortened content inserted with formatting preserved');
+      logger.log('✅ Shortened content inserted with formatting preserved');
     }
   };
 
@@ -120,9 +121,9 @@ export function ShortenTool({ editor, className }: ShortenToolProps) {
     try {
       await navigator.clipboard.writeText(shortenResult);
       // TODO: Show toast notification
-      console.log('✅ Copied to clipboard');
+      logger.log('✅ Copied to clipboard');
     } catch (error) {
-      console.error('❌ Failed to copy:', error);
+      logger.error('❌ Failed to copy:', error);
     }
   };
 

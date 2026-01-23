@@ -14,6 +14,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Search,
   ChevronDown,
@@ -343,13 +344,13 @@ export function TemplatesSlideOut({
   // Handle template selection
   const handleSelectTemplate = useCallback(
     (template: Template) => {
-      console.log('🎨 Selected template:', template.id, template.name);
+      logger.log('🎨 Selected template:', template.id, template.name);
       
       // Set local selected state for visual feedback
       setLocalSelectedTemplateId(template.id);
       
       // Clear all other tool states first
-      console.log('🧹 Clearing all tool states before opening template');
+      logger.log('🧹 Clearing all tool states before opening template');
       clearToneShiftResult();
       clearExpandResult();
       clearShortenResult();
@@ -369,15 +370,15 @@ export function TemplatesSlideOut({
           try {
             const newDoc = createDocument(activeProjectId, template.name);
             store.setActiveDocumentId(newDoc.id);
-            console.log('✅ Created new document for multi-section template:', {
+            logger.log('✅ Created new document for multi-section template:', {
               id: newDoc.id,
               title: newDoc.title
             });
           } catch (error) {
-            console.error('❌ Failed to create document:', error);
+            logger.error('❌ Failed to create document:', error);
           }
         } else {
-          console.error('❌ No active project - cannot create document');
+          logger.error('❌ No active project - cannot create document');
         }
       }
       
@@ -390,11 +391,11 @@ export function TemplatesSlideOut({
       if (isMultiSectionTemplate) {
         // Open right sidebar to show multi-section template component (NOT the slideout)
         setRightSidebarOpen(true);
-        console.log('✅ Multi-section template: Opening right sidebar (NOT slideout)');
+        logger.log('✅ Multi-section template: Opening right sidebar (NOT slideout)');
       } else {
         // Open template form slide-out from right for regular templates
         openSlideOut(TEMPLATE_FORM_PANEL_ID);
-        console.log('✅ Regular template: Opening slideout panel');
+        logger.log('✅ Regular template: Opening slideout panel');
       }
       
       // NOTE: Do NOT close the templates browser - allow both panels to be open

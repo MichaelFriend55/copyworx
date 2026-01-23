@@ -18,6 +18,7 @@
 'use client';
 
 import React from 'react';
+import { logger } from '@/lib/utils/logger';
 import { 
   Maximize2, 
   Check, 
@@ -75,7 +76,7 @@ export function ExpandTool({ editor, className }: ExpandToolProps) {
     const contentToExpand = selectedHTML || selectedText;
     if (!contentToExpand) return;
     
-    console.log('📝 Expanding with formatting:', {
+    logger.log('📝 Expanding with formatting:', {
       hasHTML: !!selectedHTML,
       textLength: selectedText?.length || 0,
       htmlLength: selectedHTML?.length || 0,
@@ -99,7 +100,7 @@ export function ExpandTool({ editor, className }: ExpandToolProps) {
     if (success) {
       // Clear the result after replacing
       clearExpandResult();
-      console.log('✅ Expanded content inserted with formatting preserved');
+      logger.log('✅ Expanded content inserted with formatting preserved');
     }
   };
 
@@ -120,9 +121,9 @@ export function ExpandTool({ editor, className }: ExpandToolProps) {
     try {
       await navigator.clipboard.writeText(expandResult);
       // TODO: Show toast notification
-      console.log('✅ Copied to clipboard');
+      logger.log('✅ Copied to clipboard');
     } catch (error) {
-      console.error('❌ Failed to copy:', error);
+      logger.error('❌ Failed to copy:', error);
     }
   };
 

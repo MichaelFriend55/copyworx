@@ -17,6 +17,7 @@ import {
   logError,
   logWarning
 } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Generate a unique ID for personas
@@ -88,7 +89,7 @@ export function createPersona(
   // Update project (may throw error if quota exceeded)
   updateProject(projectId, { personas: updatedPersonas });
 
-  console.log('✅ Persona created:', {
+  logger.log('✅ Persona created:', {
     projectId,
     personaId: newPersona.id,
     name: newPersona.name,
@@ -105,7 +106,7 @@ export function getProjectPersonas(projectId: string): Persona[] {
 
   const project = getProject(projectId);
   if (!project) {
-    console.warn(`⚠️ Project not found: ${projectId}`);
+    logger.warn(`⚠️ Project not found: ${projectId}`);
     return [];
   }
 
@@ -122,7 +123,7 @@ export function getPersona(projectId: string, personaId: string): Persona | null
   const persona = personas.find((p) => p.id === personaId);
 
   if (!persona) {
-    console.warn(`⚠️ Persona not found: ${personaId}`);
+    logger.warn(`⚠️ Persona not found: ${personaId}`);
     return null;
   }
 
@@ -186,7 +187,7 @@ export function updatePersona(
   // Update project (may throw error if quota exceeded)
   updateProject(projectId, { personas: updatedPersonas });
 
-  console.log('✅ Persona updated:', {
+  logger.log('✅ Persona updated:', {
     projectId,
     personaId,
     name: updatedPersonas[personaIndex].name,
@@ -219,7 +220,7 @@ export function deletePersona(projectId: string, personaId: string): void {
   // Update project
   updateProject(projectId, { personas: updatedPersonas });
 
-  console.log('🗑️ Persona deleted:', {
+  logger.log('🗑️ Persona deleted:', {
     projectId,
     personaId,
   });

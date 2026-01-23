@@ -44,7 +44,7 @@ export interface AppError {
   type: ErrorType;
   message: string;
   userMessage: string;
-  details?: any;
+  details?: unknown;
   retryable: boolean;
 }
 
@@ -252,14 +252,14 @@ export function checkStorageQuota(): number {
     const usagePercent = (totalSize / limitBytes) * 100;
     
     if (usagePercent > STORAGE_WARNING_THRESHOLD * 100) {
-      console.warn(
-        `⚠️ localStorage is ${usagePercent.toFixed(1)}% full (${(totalSize / 1024).toFixed(0)}KB used)`
+      logWarning(
+        `localStorage is ${usagePercent.toFixed(1)}% full (${(totalSize / 1024).toFixed(0)}KB used)`
       );
     }
     
     return usagePercent;
   } catch (error) {
-    console.error('❌ Failed to check storage quota:', error);
+    logError(error, 'checkStorageQuota');
     return 0;
   }
 }
@@ -369,7 +369,7 @@ export async function retryWithBackoff<T>(
       
       // Calculate delay with exponential backoff
       const delay = baseDelay * Math.pow(2, attempt);
-      console.log(`⏳ Retry attempt ${attempt + 1}/${maxRetries} in ${delay}ms...`);
+      logWarning(`Retry attempt ${attempt + 1}/${maxRetries} in ${delay}ms...`);
       
       await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -401,8 +401,10 @@ export function logError(error: unknown, context: string): void {
 /**
  * Log warning to console
  */
-export function logWarning(message: string, details?: any): void {
-  console.warn('⚠️ Warning:', message, details);
+export function logWarning(message: string, details?: unknown): void {
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('⚠️ Warning:', message, details);
+  }
 }
 
 // ============================================================================

@@ -13,6 +13,7 @@ import type { Snippet, CreateSnippetInput, UpdateSnippetInput } from '@/lib/type
 import { validateSnippetName, validateSnippetContent } from '@/lib/types/snippet';
 import { getProject, updateProject } from './project-storage';
 import { logError, logWarning } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Types
@@ -26,8 +27,7 @@ interface ProjectWithSnippets {
   id: string;
   name: string;
   snippets?: Snippet[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // ============================================================================
@@ -131,7 +131,7 @@ export function createSnippet(
   // Save to project
   saveProjectSnippets(projectId, updatedSnippets);
   
-  console.log('✅ Snippet created:', {
+  logger.log('✅ Snippet created:', {
     id: newSnippet.id,
     name: newSnippet.name,
     projectId,
@@ -159,7 +159,7 @@ export function getAllSnippets(projectId: string): Snippet[] {
       return dateB - dateA;
     });
     
-    console.log(`📎 Loaded ${sorted.length} snippet(s) for project ${projectId}`);
+    logger.log(`📎 Loaded ${sorted.length} snippet(s) for project ${projectId}`);
     
     return sorted;
   } catch (error) {
@@ -186,7 +186,7 @@ export function getSnippet(
     const snippet = snippets.find(s => s.id === snippetId);
     
     if (!snippet) {
-      console.warn(`⚠️ Snippet not found: ${snippetId} in project ${projectId}`);
+      logger.warn(`⚠️ Snippet not found: ${snippetId} in project ${projectId}`);
       return null;
     }
     
@@ -254,7 +254,7 @@ export function updateSnippet(
   // Save to project
   saveProjectSnippets(projectId, updatedSnippets);
   
-  console.log('✅ Snippet updated:', {
+  logger.log('✅ Snippet updated:', {
     id: updatedSnippet.id,
     name: updatedSnippet.name,
     projectId,
@@ -291,7 +291,7 @@ export function deleteSnippet(projectId: string, snippetId: string): void {
   // Save to project
   saveProjectSnippets(projectId, updatedSnippets);
   
-  console.log('🗑️ Snippet deleted:', {
+  logger.log('🗑️ Snippet deleted:', {
     id: deletedSnippet.id,
     name: deletedSnippet.name,
     projectId,
@@ -313,7 +313,7 @@ export function incrementSnippetUsage(projectId: string, snippetId: string): voi
     const snippetIndex = snippets.findIndex(s => s.id === snippetId);
     
     if (snippetIndex === -1) {
-      console.warn(`⚠️ Snippet not found for usage increment: ${snippetId}`);
+      logger.warn(`⚠️ Snippet not found for usage increment: ${snippetId}`);
       return;
     }
     
@@ -327,7 +327,7 @@ export function incrementSnippetUsage(projectId: string, snippetId: string): voi
     // Save to project
     saveProjectSnippets(projectId, updatedSnippets);
     
-    console.log('📊 Snippet usage incremented:', {
+    logger.log('📊 Snippet usage incremented:', {
       id: snippetId,
       newCount: updatedSnippets[snippetIndex].usageCount,
     });

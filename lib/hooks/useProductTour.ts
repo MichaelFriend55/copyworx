@@ -12,6 +12,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 
 /** localStorage key for tour completion flag */
 const TOUR_COMPLETED_KEY = 'copyworx_tour_completed';
@@ -90,7 +91,7 @@ export function useProductTour() {
     setRunTour(false);
     setIsInitialized(true);
     
-    console.log('✅ Product tour completed');
+    logger.log('✅ Product tour completed');
   }, []);
 
   /**
@@ -108,7 +109,7 @@ export function useProductTour() {
       setRunTour(true);
     }, 100);
     
-    console.log('🔄 Product tour restarted');
+    logger.log('🔄 Product tour restarted');
   }, []);
 
   /**
@@ -122,7 +123,7 @@ export function useProductTour() {
     localStorage.setItem(TOUR_VERSION_KEY, CURRENT_TOUR_VERSION);
     setRunTour(false);
     
-    console.log('⏭️ Product tour skipped');
+    logger.log('⏭️ Product tour skipped');
   }, []);
 
   /**
@@ -145,7 +146,7 @@ export function useProductTour() {
     localStorage.removeItem(TOUR_VERSION_KEY);
     setRunTour(false);
     
-    console.log('🧪 Tour reset for testing - refresh page to see tour');
+    logger.log('🧪 Tour reset for testing - refresh page to see tour');
   }, []);
 
   return {

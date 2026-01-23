@@ -8,6 +8,8 @@
  * - Handle edge cases
  */
 
+import { logger } from './logger';
+
 /**
  * Sanitize HTML from Claude
  * Removes potentially dangerous content while preserving formatting
@@ -17,7 +19,7 @@
  */
 export function sanitizeGeneratedHTML(html: string): string {
   if (!html || typeof html !== 'string') {
-    console.warn('⚠️ sanitizeGeneratedHTML received invalid input:', html);
+    logger.warn('⚠️ sanitizeGeneratedHTML received invalid input:', html);
     return '<p>Error: No content generated</p>';
   }
   
@@ -43,11 +45,11 @@ export function sanitizeGeneratedHTML(html: string): string {
   
   // Validate it's not empty after sanitization
   if (!cleaned || cleaned.trim().length === 0) {
-    console.error('❌ Content was empty after sanitization');
+    logger.error('❌ Content was empty after sanitization');
     return '<p>Error: Generated content was empty</p>';
   }
   
-  console.log('✅ HTML sanitized:', {
+  logger.log('✅ HTML sanitized:', {
     originalLength: html.length,
     cleanedLength: cleaned.length,
     hasParagraphs: cleaned.includes('<p>'),
@@ -68,7 +70,7 @@ export function sanitizeGeneratedHTML(html: string): string {
  */
 export function processEmailHTML(html: string): string {
   if (!html || typeof html !== 'string') {
-    console.warn('⚠️ processEmailHTML received invalid input:', html);
+    logger.warn('⚠️ processEmailHTML received invalid input:', html);
     return '<p>Error: No content generated</p>';
   }
   
@@ -83,7 +85,7 @@ export function processEmailHTML(html: string): string {
       /^Subject:\s*.+?$/m,
       `<h3>Subject: ${subject}</h3>`
     );
-    console.log('📧 Email subject converted to heading:', subject.substring(0, 50));
+    logger.log('📧 Email subject converted to heading:', subject.substring(0, 50));
   }
   
   return sanitizeGeneratedHTML(processed);
@@ -98,7 +100,7 @@ export function processEmailHTML(html: string): string {
  */
 export function processEmailSequenceHTML(html: string): string {
   if (!html || typeof html !== 'string') {
-    console.warn('⚠️ processEmailSequenceHTML received invalid input:', html);
+    logger.warn('⚠️ processEmailSequenceHTML received invalid input:', html);
     return '<p>Error: No content generated</p>';
   }
   
@@ -106,7 +108,7 @@ export function processEmailSequenceHTML(html: string): string {
   
   // Count emails in the sequence for logging
   const emailCount = (processed.match(/═══\s*EMAIL\s*\d+/gi) || []).length;
-  console.log(`📧 Processing email sequence with ${emailCount} emails`);
+  logger.log(`📧 Processing email sequence with ${emailCount} emails`);
   
   // Ensure horizontal rules are properly formatted for TipTap
   // TipTap uses <hr> tags which render as horizontal dividers
@@ -171,7 +173,7 @@ export function formatGeneratedContent(html: string, isEmail: boolean = false): 
     
     // Auto-detect email sequences (multiple emails in one generation)
     if (isEmailSequence(html)) {
-      console.log('📧 Detected email sequence, using sequence processor');
+      logger.log('📧 Detected email sequence, using sequence processor');
       processed = processEmailSequenceHTML(html);
     } else if (isEmail) {
       processed = processEmailHTML(html);
@@ -187,7 +189,7 @@ export function formatGeneratedContent(html: string, isEmail: boolean = false): 
     return processed;
     
   } catch (error) {
-    console.error('❌ Error processing generated content:', error);
+    logger.error('❌ Error processing generated content:', error);
     
     // Fallback: Basic paragraph wrapping
     const fallback = html

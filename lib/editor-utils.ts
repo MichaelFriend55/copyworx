@@ -10,6 +10,7 @@
 
 import type { Editor } from '@tiptap/react';
 import { DOMSerializer } from '@tiptap/pm/model';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Selection data returned by getEditorSelection
@@ -45,7 +46,7 @@ export interface EditorSelection {
  */
 export function getEditorSelection(editor: Editor | null): EditorSelection | null {
   if (!editor) {
-    console.warn('⚠️ getEditorSelection: No editor instance');
+    logger.warn('⚠️ getEditorSelection: No editor instance');
     return null;
   }
 
@@ -54,7 +55,7 @@ export function getEditorSelection(editor: Editor | null): EditorSelection | nul
     
     // No selection (cursor is just positioned, from === to)
     if (from === to) {
-      console.log('📍 No text selected (cursor only)');
+      logger.log('📍 No text selected (cursor only)');
       return null;
     }
 
@@ -62,7 +63,7 @@ export function getEditorSelection(editor: Editor | null): EditorSelection | nul
     const text = editor.state.doc.textBetween(from, to, ' ');
     
     if (!text || text.trim().length === 0) {
-      console.log('⚠️ Selection is empty');
+      logger.log('⚠️ Selection is empty');
       return null;
     }
 
@@ -81,14 +82,14 @@ export function getEditorSelection(editor: Editor | null): EditorSelection | nul
       div.appendChild(fragment);
       html = div.innerHTML;
       
-      console.log('📋 Selection HTML extracted:', {
+      logger.log('📋 Selection HTML extracted:', {
         textLength: text.length,
         htmlLength: html.length,
         hasFormatting: html.includes('<ul>') || html.includes('<ol>') || html.includes('<h') || html.includes('<strong>'),
       });
     } catch (htmlError) {
       // Fallback: wrap plain text in paragraph tags
-      console.warn('⚠️ Could not extract HTML, falling back to plain text:', htmlError);
+      logger.warn('⚠️ Could not extract HTML, falling back to plain text:', htmlError);
       html = `<p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
     }
 
@@ -98,7 +99,7 @@ export function getEditorSelection(editor: Editor | null): EditorSelection | nul
       range: { from, to },
     };
   } catch (error) {
-    console.error('❌ Error getting editor selection:', error);
+    logger.error('❌ Error getting editor selection:', error);
     return null;
   }
 }
@@ -137,12 +138,12 @@ export function insertTextAtSelection(
   } = {}
 ): boolean {
   if (!editor) {
-    console.error('❌ insertTextAtSelection: No editor instance');
+    logger.error('❌ insertTextAtSelection: No editor instance');
     return false;
   }
 
   if (!text) {
-    console.warn('⚠️ insertTextAtSelection: No text provided');
+    logger.warn('⚠️ insertTextAtSelection: No text provided');
     return false;
   }
 
@@ -152,7 +153,7 @@ export function insertTextAtSelection(
     const { from, to } = editor.state.selection;
     const hasSelection = from !== to;
     
-    console.log('📝 Inserting text at selection:', {
+    logger.log('📝 Inserting text at selection:', {
       from,
       to,
       hasSelection,
@@ -185,10 +186,10 @@ export function insertTextAtSelection(
       editor.commands.setTextSelection({ from, to: newTo });
     }
 
-    console.log('✅ Text inserted successfully');
+    logger.log('✅ Text inserted successfully');
     return true;
   } catch (error) {
-    console.error('❌ Error inserting text at selection:', error);
+    logger.error('❌ Error inserting text at selection:', error);
     return false;
   }
 }
@@ -210,16 +211,16 @@ export function replaceEditorContent(
   content: string
 ): boolean {
   if (!editor) {
-    console.error('❌ replaceEditorContent: No editor instance');
+    logger.error('❌ replaceEditorContent: No editor instance');
     return false;
   }
 
   try {
     editor.commands.setContent(content);
-    console.log('✅ Editor content replaced');
+    logger.log('✅ Editor content replaced');
     return true;
   } catch (error) {
-    console.error('❌ Error replacing editor content:', error);
+    logger.error('❌ Error replacing editor content:', error);
     return false;
   }
 }

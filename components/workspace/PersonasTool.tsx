@@ -17,6 +17,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Users,
   Plus,
@@ -81,7 +82,7 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
     
     const projectPersonas = getProjectPersonas(activeProjectId);
     setPersonas(projectPersonas);
-    console.log(`📋 Loaded ${projectPersonas.length} persona(s)`);
+    logger.log(`📋 Loaded ${projectPersonas.length} persona(s)`);
   };
 
   /**
@@ -113,11 +114,11 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
       if (viewMode === 'edit' && editingPersona) {
         // Update existing persona
         updatePersona(activeProjectId, editingPersona.id, personaData);
-        console.log('✅ Persona updated');
+        logger.log('✅ Persona updated');
       } else {
         // Create new persona
         createPersona(activeProjectId, personaData);
-        console.log('✅ Persona created');
+        logger.log('✅ Persona created');
       }
 
       // Reload personas and return to list
@@ -125,7 +126,7 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
       setViewMode('list');
       setEditingPersona(null);
     } catch (error) {
-      console.error('❌ Failed to save persona:', error);
+      logger.error('❌ Failed to save persona:', error);
       alert(error instanceof Error ? error.message : 'Failed to save persona');
     }
   };
@@ -148,9 +149,9 @@ export function PersonasTool({ editor, className }: PersonasToolProps) {
     try {
       deletePersona(activeProjectId, personaId);
       loadPersonas();
-      console.log('🗑️ Persona deleted');
+      logger.log('🗑️ Persona deleted');
     } catch (error) {
-      console.error('❌ Failed to delete persona:', error);
+      logger.error('❌ Failed to delete persona:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete persona');
     }
   };

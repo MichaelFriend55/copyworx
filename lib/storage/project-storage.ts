@@ -17,6 +17,7 @@ import {
   logError,
   logWarning
 } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 /** localStorage key for projects array */
 const PROJECTS_KEY = 'copyworx_projects';
@@ -51,13 +52,13 @@ function safeParseJSON<T>(json: string | null, fallback: T): T {
     
     // CRITICAL FIX: Validate that parsed data is an array if fallback is an array
     if (Array.isArray(fallback) && !Array.isArray(parsed)) {
-      console.warn('⚠️ localStorage data is not an array, resetting to empty array');
+      logger.warn('⚠️ localStorage data is not an array, resetting to empty array');
       return fallback;
     }
     
     return parsed as T;
   } catch (error) {
-    console.error('❌ Failed to parse JSON from localStorage:', error);
+    logger.error('❌ Failed to parse JSON from localStorage:', error);
     return fallback;
   }
 }
@@ -105,7 +106,7 @@ export function getAllProjects(): Project[] {
     
     // EXTRA SAFETY: Double-check it's an array
     if (!Array.isArray(projects)) {
-      console.error('❌ Projects data corrupted, resetting to empty array');
+      logger.error('❌ Projects data corrupted, resetting to empty array');
       localStorage.setItem(PROJECTS_KEY, JSON.stringify([]));
       return [];
     }
@@ -122,7 +123,7 @@ export function getAllProjects(): Project[] {
     
     return sanitizedProjects;
   } catch (error) {
-    console.error('❌ Failed to get projects:', error);
+    logger.error('❌ Failed to get projects:', error);
     // Reset corrupted data
     try {
       localStorage.setItem(PROJECTS_KEY, JSON.stringify([]));
@@ -143,7 +144,7 @@ function saveProjects(projects: Project[]): boolean {
     const json = JSON.stringify(projects);
     return safeSetItem(PROJECTS_KEY, json);
   } catch (error) {
-    console.error('❌ Failed to save projects:', error);
+    logger.error('❌ Failed to save projects:', error);
     return false;
   }
 }
@@ -202,7 +203,7 @@ export function getProject(id: string): Project | null {
   const project = projects.find((p) => p.id === id);
   
   if (!project) {
-    console.warn(`⚠️ Project not found: ${id}`);
+    logger.warn(`⚠️ Project not found: ${id}`);
     return null;
   }
   
@@ -287,7 +288,7 @@ export function getActiveProjectId(): string | null {
   try {
     return localStorage.getItem(ACTIVE_PROJECT_KEY);
   } catch (error) {
-    console.error('❌ Failed to get active project ID:', error);
+    logger.error('❌ Failed to get active project ID:', error);
     return null;
   }
 }
@@ -310,7 +311,7 @@ export function setActiveProjectId(id: string): void {
   const saved = safeSetItem(ACTIVE_PROJECT_KEY, id);
   
   if (saved) {
-    console.log('✅ Active project set:', {
+    logger.log('✅ Active project set:', {
       id: project.id,
       name: project.name,
     });
@@ -332,7 +333,7 @@ export function saveBrandVoiceToProject(projectId: string, brandVoice: BrandVoic
   // Update project (validation happens in updateProject)
   updateProject(projectId, { brandVoice });
   
-  console.log('✅ Brand voice saved to project:', {
+  logger.log('✅ Brand voice saved to project:', {
     projectId,
     brandName: brandVoice.brandName,
   });
@@ -359,7 +360,7 @@ export function deleteBrandVoiceFromProject(projectId: string): void {
   // Update project with undefined brand voice (removes it)
   updateProject(projectId, { brandVoice: undefined });
   
-  console.log('🗑️ Brand voice deleted from project:', {
+  logger.log('🗑️ Brand voice deleted from project:', {
     projectId,
   });
 }
@@ -374,7 +375,7 @@ export function ensureDefaultProject(): void {
   const projects = getAllProjects();
   
   if (projects.length === 0) {
-    console.log('🆕 No projects found. Creating default project...');
+    logger.log('🆕 No projects found. Creating default project...');
     const defaultProject = createProject(DEFAULT_PROJECT_NAME);
     setActiveProjectId(defaultProject.id);
   }

@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   X,
   Sparkles,
@@ -123,10 +124,10 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
 
   // Handle template selection
   const handleSelectTemplate = (template: Template): void => {
-    console.log('🎨 Selected template:', template.id, template.name);
+    logger.log('🎨 Selected template:', template.id, template.name);
     
     // Clear all other tool states first
-    console.log('🧹 Clearing all tool states before opening template');
+    logger.log('🧹 Clearing all tool states before opening template');
     clearToneShiftResult();
     clearExpandResult();
     clearShortenResult();
@@ -145,15 +146,15 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
           // Always create a new document for multi-section templates
           const newDoc = createDocument(activeProjectId, template.name);
           store.setActiveDocumentId(newDoc.id);
-          console.log('✅ Created new document for multi-section template:', {
+          logger.log('✅ Created new document for multi-section template:', {
             id: newDoc.id,
             title: newDoc.title
           });
         } catch (error) {
-          console.error('❌ Failed to create document:', error);
+          logger.error('❌ Failed to create document:', error);
         }
       } else {
-        console.error('❌ No active project - cannot create document');
+        logger.error('❌ No active project - cannot create document');
       }
     }
     

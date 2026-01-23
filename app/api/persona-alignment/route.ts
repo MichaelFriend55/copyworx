@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateTextLength, validateNotEmpty, logError } from '@/lib/utils/error-handling';
 import type { Persona } from '@/lib/types/project';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Type Definitions
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PersonaAl
     const apiKey = process.env.ANTHROPIC_API_KEY;
     
     if (!apiKey) {
-      console.error('❌ ANTHROPIC_API_KEY not found in environment variables');
+      logger.error('❌ ANTHROPIC_API_KEY not found in environment variables');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'Server configuration error',
@@ -202,7 +203,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PersonaAl
     // 3. Call Claude API to analyze the text
     // ------------------------------------------------------------------------
     
-    console.log('📝 Persona alignment request:', {
+    logger.log('📝 Persona alignment request:', {
       textLength: text.length,
       personaName: persona.name,
       preview: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
@@ -237,7 +238,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PersonaAl
       : '';
 
     if (!responseText) {
-      console.error('❌ Claude returned empty response');
+      logger.error('❌ Claude returned empty response');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI processing error',
@@ -265,8 +266,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<PersonaAl
       result.recommendations = result.recommendations || [];
       
     } catch {
-      console.error('❌ Failed to parse Claude response');
-      console.error('Raw response:', responseText);
+      logger.error('❌ Failed to parse Claude response');
+      logger.error('Raw response:', responseText);
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI processing error',
@@ -276,7 +277,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PersonaAl
       );
     }
 
-    console.log('✅ Persona alignment analysis complete:', {
+    logger.log('✅ Persona alignment analysis complete:', {
       score: result.score,
       strengthsCount: result.strengths.length,
       improvementsCount: result.improvements.length,

@@ -13,6 +13,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Users,
   Plus,
@@ -179,7 +180,7 @@ export function PersonasSlideOut({
     
     const projectPersonas = getProjectPersonas(activeProjectId);
     setPersonas(projectPersonas);
-    console.log(`📋 Loaded ${projectPersonas.length} persona(s)`);
+    logger.log(`📋 Loaded ${projectPersonas.length} persona(s)`);
   }, [activeProjectId]);
   
   /**
@@ -257,11 +258,11 @@ export function PersonasSlideOut({
       if (viewMode === 'edit' && editingPersona) {
         // Update existing persona
         updatePersona(activeProjectId, editingPersona.id, personaData);
-        console.log('✅ Persona updated');
+        logger.log('✅ Persona updated');
       } else {
         // Create new persona
         createPersona(activeProjectId, personaData);
-        console.log('✅ Persona created');
+        logger.log('✅ Persona created');
       }
       
       setSaveSuccess(true);
@@ -276,7 +277,7 @@ export function PersonasSlideOut({
         ? error.message 
         : 'Failed to save persona. Please try again.';
       setSaveError(errorMessage);
-      console.error('❌ Failed to save persona:', error);
+      logger.error('❌ Failed to save persona:', error);
     }
   }, [activeProject, activeProjectId, name, demographics, psychographics, painPoints, languagePatterns, goals, viewMode, editingPersona, loadPersonas, handleBackToList]);
   
@@ -298,12 +299,12 @@ export function PersonasSlideOut({
     try {
       deletePersona(activeProjectId, personaToDelete.id);
       loadPersonas();
-      console.log('✅ Persona deleted');
+      logger.log('✅ Persona deleted');
       
       // Close modal
       setPersonaToDelete(null);
     } catch (error) {
-      console.error('❌ Failed to delete persona:', error);
+      logger.error('❌ Failed to delete persona:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete persona');
     } finally {
       setIsDeleting(false);

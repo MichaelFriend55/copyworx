@@ -11,6 +11,7 @@
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { currentUser } from '@clerk/nextjs/server';
 import { 
   FileText, 
@@ -139,9 +140,11 @@ export default async function DashboardPage() {
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
             {user?.imageUrl ? (
-              <img 
+              <Image 
                 src={user.imageUrl} 
-                alt={firstName}
+                alt={`${firstName}'s profile picture`}
+                width={64}
+                height={64}
                 className="h-16 w-16 rounded-full border-2 border-amber-300"
               />
             ) : (

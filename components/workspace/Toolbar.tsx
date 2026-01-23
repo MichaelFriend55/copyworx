@@ -50,6 +50,7 @@ import { ViewModeSelector } from './ViewModeSelector';
 import { SaveAsSnippetButton } from './SaveAsSnippetButton';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/utils/logger';
 
 interface ToolbarProps {
   /** Optional CSS classes */
@@ -849,9 +850,9 @@ function DocumentMenu({
               detail: { projectId: activeProjectId, documentId: activeDocumentId }
             }));
             
-            console.log('✅ Document title updated to:', newTitle);
+            logger.log('✅ Document title updated to:', newTitle);
           } catch (updateError) {
-            console.warn('⚠️ Could not update document title:', updateError);
+            logger.warn('⚠️ Could not update document title:', updateError);
             // Don't fail the import if title update fails
           }
         }
@@ -860,18 +861,18 @@ function DocumentMenu({
           type: 'success', 
           text: `Imported ${file.name}` 
         });
-        console.log('✅ Import successful:', file.name);
+        logger.log('✅ Import successful:', file.name);
       } else {
         setExportMessage({ 
           type: 'error', 
           text: result.error || 'Import failed' 
         });
-        console.error('❌ Import failed:', result.error);
+        logger.error('❌ Import failed:', result.error);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Import failed';
       setExportMessage({ type: 'error', text: errorMessage });
-      console.error('❌ Import error:', error);
+      logger.error('❌ Import error:', error);
     } finally {
       setIsExporting(false);
       // Reset file input so the same file can be imported again
@@ -907,12 +908,12 @@ function DocumentMenu({
           type: 'error', 
           text: result.error || 'Export failed' 
         });
-        console.error('❌ Export failed:', result.error);
+        logger.error('❌ Export failed:', result.error);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Export failed';
       setExportMessage({ type: 'error', text: errorMessage });
-      console.error('❌ Export error:', error);
+      logger.error('❌ Export error:', error);
     } finally {
       setIsExporting(false);
     }
@@ -1223,7 +1224,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
         setDocumentTitle(undefined);
       }
     } catch (error) {
-      console.error('Error getting document title:', error);
+      logger.error('Error getting document title:', error);
       setDocumentTitle(undefined);
     }
   }, [activeProjectId, activeDocumentId]);

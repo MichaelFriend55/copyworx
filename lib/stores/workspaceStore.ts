@@ -26,6 +26,7 @@ import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
 import type { BrandVoice, BrandAlignmentResult } from '@/lib/types/brand';
 import type { Persona } from '@/lib/types/project';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Insights panel types for the right slide-out
@@ -389,7 +390,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const index = projects.findIndex((p) => p.id === id);
         
         if (index === -1) {
-          console.error('❌ Project not found:', id);
+          logger.error('❌ Project not found:', id);
           return;
         }
         
@@ -416,7 +417,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const updatedProjects = projects.filter((p) => p.id !== id);
           set({ projects: updatedProjects });
         } catch (error) {
-          console.error('❌ Failed to delete project:', error);
+          logger.error('❌ Failed to delete project:', error);
         }
       },
 
@@ -493,7 +494,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       // Tone Shifter actions
       setSelectedTone: (tone: ToneType | null) => {
         set({ selectedTone: tone });
-        console.log('🎨 Selected tone:', tone);
+        logger.log('🎨 Selected tone:', tone);
       },
 
       runToneShift: async (text: string, tone: ToneType) => {
@@ -565,12 +566,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const { toneShiftResult } = get();
         
         if (!toneShiftResult) {
-          console.warn('⚠️ No tone shift result to insert');
+          logger.warn('⚠️ No tone shift result to insert');
           return;
         }
 
         if (!editor) {
-          console.error('❌ No editor instance provided');
+          logger.error('❌ No editor instance provided');
           set({ toneShiftError: 'Editor not available' });
           return;
         }
@@ -581,7 +582,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to insert content';
           set({ toneShiftError: errorMessage });
-          console.error('❌ Failed to insert tone shift result:', errorMessage);
+          logger.error('❌ Failed to insert tone shift result:', errorMessage);
         }
       },
 
@@ -1129,7 +1130,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          console.log('💾 Store rehydrated from localStorage', {
+          logger.log('💾 Store rehydrated from localStorage', {
             activeDocumentId: state.activeDocumentId,
             activeProjectId: state.activeProjectId,
           });
@@ -1364,6 +1365,6 @@ export const useInsightsPanelActions = () => useWorkspaceStore(
  * Returns null always since we no longer store document content in Zustand.
  */
 export const useActiveDocument = () => {
-  console.warn('⚠️ useActiveDocument is deprecated. Use useActiveDocumentId and load from localStorage.');
+  logger.warn('⚠️ useActiveDocument is deprecated. Use useActiveDocumentId and load from localStorage.');
   return null;
 };

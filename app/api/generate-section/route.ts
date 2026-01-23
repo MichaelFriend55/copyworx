@@ -11,6 +11,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { buildSectionPrompt, getSectionById } from '@/lib/templates/brochure-multi-section-config';
 import type { SectionGenerationRequest, SectionGenerationResponse } from '@/lib/types/template-progress';
 import { logError } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Type Definitions
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SectionGe
     const apiKey = process.env.ANTHROPIC_API_KEY;
     
     if (!apiKey) {
-      console.error('❌ ANTHROPIC_API_KEY not found in environment variables');
+      logger.error('❌ ANTHROPIC_API_KEY not found in environment variables');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'Server configuration error',
@@ -218,10 +219,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<SectionGe
       personaInstructions
     );
 
-    console.log(`📄 Generating section: ${section.name} (${sectionId})`);
-    console.log(`📊 Previous content length: ${previousContent?.length || 0} chars`);
-    console.log(`🎨 Brand voice: ${applyBrandVoice ? 'enabled' : 'disabled'}`);
-    console.log(`👤 Persona: ${persona?.name || 'none'}`);
+    logger.log(`📄 Generating section: ${section.name} (${sectionId})`);
+    logger.log(`📊 Previous content length: ${previousContent?.length || 0} chars`);
+    logger.log(`🎨 Brand voice: ${applyBrandVoice ? 'enabled' : 'disabled'}`);
+    logger.log(`👤 Persona: ${persona?.name || 'none'}`);
 
     // ------------------------------------------------------------------------
     // 5. Call Claude API to generate section
@@ -267,7 +268,7 @@ Generate professional, engaging brochure copy that converts.`,
       : '';
 
     if (!generatedContent) {
-      console.error('❌ Claude returned empty response');
+      logger.error('❌ Claude returned empty response');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI processing error',
@@ -277,7 +278,7 @@ Generate professional, engaging brochure copy that converts.`,
       );
     }
 
-    console.log(`✅ Section generated: ${generatedContent.length} chars`);
+    logger.log(`✅ Section generated: ${generatedContent.length} chars`);
 
     // ------------------------------------------------------------------------
     // 7. Return the generated section

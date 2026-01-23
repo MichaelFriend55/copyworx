@@ -25,6 +25,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Search,
   FolderPlus,
@@ -517,7 +518,7 @@ function ProjectSection({
       setDocuments(getAllDocuments(project.id));
       onRefresh();
     } catch (error) {
-      console.error('Failed to rename document:', error);
+      logger.error('Failed to rename document:', error);
     }
     setEditingDocId(null);
     setEditValue('');
@@ -530,7 +531,7 @@ function ProjectSection({
       setDocuments(getAllDocuments(project.id));
       onRefresh();
     } catch (error) {
-      console.error('Failed to delete document:', error);
+      logger.error('Failed to delete document:', error);
     }
   };
 
@@ -550,7 +551,7 @@ function ProjectSection({
       setFolders(getAllFolders(project.id));
       onRefresh();
     } catch (error) {
-      console.error('Failed to rename folder:', error);
+      logger.error('Failed to rename folder:', error);
     }
     setEditingFolderId(null);
     setEditValue('');
@@ -576,7 +577,7 @@ function ProjectSection({
       setDocuments(getAllDocuments(project.id));
       onRefresh();
     } catch (error) {
-      console.error('Failed to create document:', error);
+      logger.error('Failed to create document:', error);
     }
   };
 
@@ -1014,7 +1015,7 @@ export function MyProjectsSlideOut({
       
       // If this is the last project, create a default one first
       if (isLastProject) {
-        console.log('📝 Creating default project before deleting last project...');
+        logger.log('📝 Creating default project before deleting last project...');
         const newProject = createProject('My Project');
         useWorkspaceStore.getState().refreshProjects();
         setActiveProjectId(newProject.id);
@@ -1042,9 +1043,9 @@ export function MyProjectsSlideOut({
       // Force refresh
       setRefreshKey(k => k + 1);
       
-      console.log('✅ Project deleted:', projectToDelete.name);
+      logger.log('✅ Project deleted:', projectToDelete.name);
     } catch (error) {
-      console.error('❌ Failed to delete project:', error);
+      logger.error('❌ Failed to delete project:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to delete project');
     } finally {
       setIsDeleting(false);
@@ -1070,9 +1071,9 @@ export function MyProjectsSlideOut({
       // Force UI refresh
       setRefreshKey(k => k + 1);
       
-      console.log('✅ Project renamed:', { projectId, newName });
+      logger.log('✅ Project renamed:', { projectId, newName });
     } catch (error) {
-      console.error('❌ Failed to rename project:', error);
+      logger.error('❌ Failed to rename project:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to rename project');
     }
   }, []);

@@ -10,6 +10,7 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
+import { logger } from '@/lib/utils/logger';
 import { ArrowUpDown, Focus, FileDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -73,7 +74,7 @@ export function ViewModeSelector({
       
       toast.success('Print dialog opened. Select "Save as PDF" to export.');
     } catch (error) {
-      console.error('Export failed:', error);
+      logger.error('Export failed:', error);
       toast.error('Failed to open print dialog');
     } finally {
       setIsExporting(false);

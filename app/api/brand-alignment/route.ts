@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import type { BrandVoice, BrandAlignmentResult, BrandAlignmentRequest, BrandAlignmentResponse } from '@/lib/types/brand';
 import { validateTextLength, validateNotEmpty, logError } from '@/lib/utils/error-handling';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Type Definitions
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<BrandAlig
     const apiKey = process.env.ANTHROPIC_API_KEY;
     
     if (!apiKey) {
-      console.error('❌ ANTHROPIC_API_KEY not found in environment variables');
+      logger.error('❌ ANTHROPIC_API_KEY not found in environment variables');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'Server configuration error',
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<BrandAlig
     // 3. Call Claude API to analyze the text
     // ------------------------------------------------------------------------
     
-    console.log('📝 Brand alignment request:', {
+    logger.log('📝 Brand alignment request:', {
       textLength: text.length,
       brandName: brandVoice.brandName,
       preview: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
@@ -218,7 +219,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<BrandAlig
       : '';
 
     if (!responseText) {
-      console.error('❌ Claude returned empty response');
+      logger.error('❌ Claude returned empty response');
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI processing error',
@@ -246,8 +247,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<BrandAlig
       result.recommendations = result.recommendations || [];
       
     } catch (error) {
-      console.error('❌ Failed to parse Claude response:', error);
-      console.error('Raw response:', responseText);
+      logger.error('❌ Failed to parse Claude response:', error);
+      logger.error('Raw response:', responseText);
       return NextResponse.json<ErrorResponse>(
         { 
           error: 'AI processing error',
@@ -257,7 +258,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<BrandAlig
       );
     }
 
-    console.log('✅ Brand alignment analysis complete:', {
+    logger.log('✅ Brand alignment analysis complete:', {
       score: result.score,
       matchesCount: result.matches.length,
       violationsCount: result.violations.length,

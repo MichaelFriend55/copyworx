@@ -21,6 +21,7 @@ import {
   getCurrentProject as getStorageCurrentProject,
   saveBrandVoiceToProject,
 } from '@/lib/storage/project-storage';
+import { logger } from './logger';
 
 /** Legacy brand voice localStorage key */
 const LEGACY_BRAND_VOICE_KEY = 'copyworx-brand-voice';
@@ -50,7 +51,7 @@ function markMigrationComplete(): void {
   try {
     localStorage.setItem(MIGRATION_COMPLETE_KEY, 'true');
   } catch (error) {
-    console.error('❌ Failed to mark migration complete:', error);
+    logger.error('❌ Failed to mark migration complete:', error);
   }
 }
 
@@ -68,36 +69,36 @@ function migrateLegacyBrandVoice(): void {
   
   // Skip if migration already complete
   if (isMigrationComplete()) {
-    console.log('✅ Migration already complete');
+    logger.log('✅ Migration already complete');
     return;
   }
   
-  console.log('🔄 Checking for legacy brand voice data...');
+  logger.log('🔄 Checking for legacy brand voice data...');
   
   try {
     // Check for legacy brand voice
     const legacyBrandVoiceJson = localStorage.getItem(LEGACY_BRAND_VOICE_KEY);
     
     if (!legacyBrandVoiceJson) {
-      console.log('ℹ️ No legacy brand voice found');
+      logger.log('ℹ️ No legacy brand voice found');
       markMigrationComplete();
       return;
     }
     
     // Parse legacy brand voice
     const legacyBrandVoice: BrandVoice = JSON.parse(legacyBrandVoiceJson);
-    console.log('📦 Found legacy brand voice:', legacyBrandVoice.brandName);
+    logger.log('📦 Found legacy brand voice:', legacyBrandVoice.brandName);
     
     // Get current projects
     const projects = getAllProjects();
     
     if (projects.length === 0) {
       // No projects exist - create default project with brand voice
-      console.log('🆕 Creating default project with legacy brand voice...');
+      logger.log('🆕 Creating default project with legacy brand voice...');
       const defaultProject = createProject('My First Project');
       saveBrandVoiceToProject(defaultProject.id, legacyBrandVoice);
       setActiveProjectId(defaultProject.id);
-      console.log('✅ Legacy brand voice migrated to new project');
+      logger.log('✅ Legacy brand voice migrated to new project');
     } else {
       // Projects exist - add to active project (or first project if no active)
       const activeId = getActiveProjectId();
@@ -105,21 +106,21 @@ function migrateLegacyBrandVoice(): void {
         ? projects.find(p => p.id === activeId) || projects[0]
         : projects[0];
       
-      console.log(`🔄 Migrating brand voice to project: ${targetProject.name}`);
+      logger.log(`🔄 Migrating brand voice to project: ${targetProject.name}`);
       saveBrandVoiceToProject(targetProject.id, legacyBrandVoice);
-      console.log('✅ Legacy brand voice migrated to existing project');
+      logger.log('✅ Legacy brand voice migrated to existing project');
     }
     
     // Remove legacy key
     localStorage.removeItem(LEGACY_BRAND_VOICE_KEY);
-    console.log('🗑️ Removed legacy brand voice key');
+    logger.log('🗑️ Removed legacy brand voice key');
     
     // Mark migration as complete
     markMigrationComplete();
-    console.log('✅ Migration complete');
+    logger.log('✅ Migration complete');
     
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    logger.error('❌ Migration failed:', error);
     // Mark as complete anyway to prevent infinite retry loops
     markMigrationComplete();
   }
@@ -136,11 +137,11 @@ function migrateLegacyBrandVoice(): void {
  */
 export function initializeProjectSystem(): void {
   if (typeof window === 'undefined') {
-    console.warn('⚠️ Cannot initialize project system on server');
+    logger.warn('⚠️ Cannot initialize project system on server');
     return;
   }
   
-  console.log('🚀 Initializing project system...');
+  logger.log('🚀 Initializing project system...');
   
   try {
     // Ensure at least one project exists
@@ -156,21 +157,21 @@ export function initializeProjectSystem(): void {
     if (!activeId && projects.length > 0) {
       // No active project set - set first project as active
       setActiveProjectId(projects[0].id);
-      console.log('✅ Set first project as active');
+      logger.log('✅ Set first project as active');
     } else if (activeId) {
       // Verify active project exists
       const activeProject = projects.find(p => p.id === activeId);
       if (!activeProject && projects.length > 0) {
         // Active project doesn't exist - set first project as active
         setActiveProjectId(projects[0].id);
-        console.log('⚠️ Active project not found. Switched to first project.');
+        logger.warn('⚠️ Active project not found. Switched to first project.');
       }
     }
     
-    console.log('✅ Project system initialized');
+    logger.log('✅ Project system initialized');
     
   } catch (error) {
-    console.error('❌ Failed to initialize project system:', error);
+    logger.error('❌ Failed to initialize project system:', error);
   }
 }
 
@@ -197,7 +198,7 @@ export function createAndActivateProject(name: string): Project {
   // Set as active
   setActiveProjectId(newProject.id);
   
-  console.log('✅ Created and activated project:', {
+  logger.log('✅ Created and activated project:', {
     id: newProject.id,
     name: newProject.name,
   });

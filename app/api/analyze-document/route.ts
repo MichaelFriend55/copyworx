@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateNotEmpty, logError } from '@/lib/utils/error-handling';
 import type { BrandVoice } from '@/lib/types/brand';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // Type Definitions
@@ -204,7 +205,7 @@ function parseAnalysisResponse(responseText: string): AnalyzeDocumentResponse {
     
     return result;
   } catch (error) {
-    console.error('❌ Failed to parse Claude response:', responseText);
+    logger.error('❌ Failed to parse Claude response:', responseText);
     throw new Error('Failed to parse analysis response');
   }
 }
@@ -299,7 +300,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeDo
     const apiKey = process.env.ANTHROPIC_API_KEY;
     
     if (!apiKey) {
-      console.error('❌ ANTHROPIC_API_KEY not found');
+      logger.error('❌ ANTHROPIC_API_KEY not found');
       return NextResponse.json<ErrorResponse>(
         { error: 'Server configuration error', details: 'API key not configured' },
         { status: 500 }
@@ -318,7 +319,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeDo
       return NextResponse.json<AnalyzeDocumentResponse>({}, { status: 200 });
     }
     
-    console.log('📊 Document analysis request:', {
+    logger.log('📊 Document analysis request:', {
       contentLength: content.length,
       metrics: validMetrics,
       hasBrandVoice: !!brandVoice,
@@ -346,7 +347,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeDo
       : '';
     
     if (!responseText) {
-      console.error('❌ Claude returned empty response');
+      logger.error('❌ Claude returned empty response');
       return NextResponse.json<ErrorResponse>(
         { error: 'Analysis failed', details: 'No response from AI' },
         { status: 500 }
@@ -355,7 +356,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeDo
     
     const result = parseAnalysisResponse(responseText);
     
-    console.log('📊 Document analysis complete:', result);
+    logger.log('📊 Document analysis complete:', result);
     
     return NextResponse.json<AnalyzeDocumentResponse>(result, { status: 200 });
     

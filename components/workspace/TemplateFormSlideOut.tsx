@@ -15,6 +15,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
   Sparkles,
   Clock,
@@ -245,7 +246,7 @@ export function TemplateFormSlideOut({
         // Set as active document in store
         useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
         
-        console.log('📄 Auto-created document for template:', {
+        logger.log('📄 Auto-created document for template:', {
           title: newDoc.title,
           id: newDoc.id,
           templateName: template.name,
@@ -254,7 +255,7 @@ export function TemplateFormSlideOut({
         // Brief delay to allow EditorArea to react to the new activeDocumentId
         await new Promise(resolve => setTimeout(resolve, 150));
       } catch (createError) {
-        console.error('❌ Failed to create document:', createError);
+        logger.error('❌ Failed to create document:', createError);
         setGenerationError('Failed to create document. Please try again.');
         return;
       }
@@ -282,9 +283,9 @@ export function TemplateFormSlideOut({
         ? personas.find((p) => p.id === selectedPersonaId) 
         : undefined;
       
-      console.log('🎨 Generating template copy:', template.name);
-      console.log('🎯 Brand Voice:', applyBrandVoice ? activeProject?.brandVoice?.brandName : 'disabled');
-      console.log('👤 Persona:', selectedPersona?.name || 'none');
+      logger.log('🎨 Generating template copy:', template.name);
+      logger.log('🎯 Brand Voice:', applyBrandVoice ? activeProject?.brandVoice?.brandName : 'disabled');
+      logger.log('👤 Persona:', selectedPersona?.name || 'none');
       
       // Call Claude API - send brand voice and persona data for server-side prompt building
       const response = await fetch('/api/generate-template', {
@@ -307,7 +308,7 @@ export function TemplateFormSlideOut({
       const data = await response.json();
       const generatedCopy = data.generatedCopy;
       
-      console.log('✅ Generated copy length:', generatedCopy.length);
+      logger.log('✅ Generated copy length:', generatedCopy.length);
       
       // Format the generated content
       const formattedContent = formatGeneratedContent(generatedCopy);
@@ -320,9 +321,9 @@ export function TemplateFormSlideOut({
         updateDocumentInStorage(activeProject.id, targetDocumentId, {
           content: formattedContent,
         });
-        console.log('💾 Document saved with generated content');
+        logger.log('💾 Document saved with generated content');
       } catch (storageError) {
-        console.error('⚠️ Failed to save document:', storageError);
+        logger.error('⚠️ Failed to save document:', storageError);
         // Continue anyway - content is in editor
       }
       
@@ -340,7 +341,7 @@ export function TemplateFormSlideOut({
       }, 1500);
       
     } catch (error) {
-      console.error('❌ Template generation error:', error);
+      logger.error('❌ Template generation error:', error);
       setGenerationError(
         error instanceof Error ? error.message : 'Failed to generate copy'
       );

@@ -10,6 +10,8 @@
 
 'use client';
 
+import { logger } from './logger';
+
 /**
  * Maximum file size in bytes (2MB)
  */
@@ -144,7 +146,7 @@ export async function processImageFile(file: File): Promise<string> {
   // Resize if image is large
   const resized = await resizeImage(base64, 400);
 
-  console.log('✅ Image processed:', {
+  logger.log('✅ Image processed:', {
     originalSize: `${(file.size / 1024).toFixed(1)}KB`,
     resizedSize: `${(resized.length / 1024).toFixed(1)}KB`,
   });
