@@ -342,7 +342,7 @@ export function saveBrandVoiceToProject(projectId: string, brandVoice: BrandVoic
     p.id === projectId ? { ...p, brandVoice } : p
   );
   
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
+  localStorage.setItem(PROJECTS_KEY, JSON.stringify(updatedProjects));
   
   logger.log('✅ Brand voice saved to project (localStorage):', {
     projectId,
@@ -374,7 +374,7 @@ export function deleteBrandVoiceFromProject(projectId: string): void {
     p.id === projectId ? { ...p, brandVoice: undefined } : p
   );
   
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
+  localStorage.setItem(PROJECTS_KEY, JSON.stringify(updatedProjects));
   
   logger.log('🗑️ Brand voice deleted from project (localStorage):', {
     projectId,
