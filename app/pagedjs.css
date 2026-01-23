@@ -1,0 +1,415 @@
+/**
+ * @file app/pagedjs.css
+ * @description Paged.js CSS for professional print preview with proper pagination
+ * 
+ * Uses W3C Paged Media CSS specifications for:
+ * - US Letter page size (8.5" x 11")
+ * - 1" margins on all sides
+ * - Automatic page numbering
+ * - Proper page break handling
+ * - Widow and orphan control
+ */
+
+/* =============================================================================
+   PAGE SETUP
+   ============================================================================= */
+
+@page {
+  size: 8.5in 11in;           /* US Letter */
+  margin: 1in;                 /* 1 inch margins */
+  
+  /* Page counter */
+  @bottom-center {
+    content: counter(page);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 10pt;
+    color: #666;
+  }
+}
+
+/* First page - no page number */
+@page :first {
+  @bottom-center {
+    content: none;
+  }
+}
+
+/* Named page for blank pages */
+@page :blank {
+  @bottom-center {
+    content: none;
+  }
+}
+
+/* =============================================================================
+   PAGED.JS CONTAINER STYLES
+   ============================================================================= */
+
+/* Container for all pages in preview */
+.pagedjs_pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  background: #e8e8e8;
+  min-height: 100%;
+}
+
+/* Individual page styling */
+.pagedjs_page {
+  background: white;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Page content area */
+.pagedjs_page_content {
+  position: relative;
+  height: 100%;
+}
+
+/* Page margin boxes */
+.pagedjs_margin {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagedjs_margin-bottom-center {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1in;
+  padding-bottom: 0.25in;
+}
+
+/* Page number styling */
+.pagedjs_margin-bottom-center .pagedjs_margin-content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 10pt;
+  color: #666;
+}
+
+/* =============================================================================
+   TYPOGRAPHY AND CONTENT
+   ============================================================================= */
+
+/* Base typography for paged content */
+.pagedjs_page_content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-size: 12pt;
+  line-height: 1.6;
+  color: #1D1D1F;
+}
+
+/* Headings */
+.pagedjs_page_content h1 {
+  font-size: 24pt;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 12pt;
+  line-height: 1.2;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+.pagedjs_page_content h2 {
+  font-size: 18pt;
+  font-weight: 600;
+  margin-top: 18pt;
+  margin-bottom: 9pt;
+  line-height: 1.3;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+.pagedjs_page_content h3 {
+  font-size: 14pt;
+  font-weight: 600;
+  margin-top: 14pt;
+  margin-bottom: 7pt;
+  line-height: 1.4;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Paragraphs */
+.pagedjs_page_content p {
+  margin-top: 0;
+  margin-bottom: 9pt;
+  text-align: left;
+  orphans: 3;
+  widows: 3;
+}
+
+/* Lists */
+.pagedjs_page_content ul,
+.pagedjs_page_content ol {
+  margin: 9pt 0;
+  padding-left: 24pt;
+}
+
+.pagedjs_page_content li {
+  margin-bottom: 4pt;
+}
+
+/* Prevent breaking inside list items */
+.pagedjs_page_content li {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Blockquotes */
+.pagedjs_page_content blockquote {
+  margin: 12pt 0;
+  padding-left: 18pt;
+  border-left: 3px solid #d2d2d7;
+  font-style: italic;
+  color: #6e6e73;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Links */
+.pagedjs_page_content a {
+  color: #0071E3;
+  text-decoration: underline;
+}
+
+/* Code */
+.pagedjs_page_content code {
+  font-family: 'SF Mono', Monaco, 'Andale Mono', monospace;
+  font-size: 10pt;
+  background-color: #f5f5f7;
+  padding: 2pt 4pt;
+  border-radius: 2pt;
+}
+
+/* Strong and emphasis */
+.pagedjs_page_content strong {
+  font-weight: 600;
+}
+
+.pagedjs_page_content em {
+  font-style: italic;
+}
+
+.pagedjs_page_content u {
+  text-decoration: underline;
+}
+
+/* =============================================================================
+   PAGE BREAK RULES
+   ============================================================================= */
+
+/* Prevent breaking after headings */
+h1, h2, h3, h4, h5, h6 {
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Keep headings with following content */
+h1 + *, h2 + *, h3 + *, h4 + *, h5 + *, h6 + * {
+  page-break-before: avoid;
+  break-before: avoid;
+}
+
+/* Prevent orphans and widows */
+p {
+  orphans: 3;
+  widows: 3;
+}
+
+/* Avoid breaking inside figures and tables */
+figure, table, img {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* =============================================================================
+   IMAGES
+   ============================================================================= */
+
+.pagedjs_page_content img {
+  max-width: 100%;
+  height: auto;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* =============================================================================
+   TABLES
+   ============================================================================= */
+
+.pagedjs_page_content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12pt 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.pagedjs_page_content th,
+.pagedjs_page_content td {
+  border: 1px solid #d2d2d7;
+  padding: 6pt 9pt;
+  text-align: left;
+}
+
+.pagedjs_page_content th {
+  background-color: #f5f5f7;
+  font-weight: 600;
+}
+
+/* =============================================================================
+   LOADING AND PREVIEW STATES
+   ============================================================================= */
+
+/* Loading spinner container */
+.pagedjs-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+.pagedjs-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e8e8e8;
+  border-top-color: #0071E3;
+  border-radius: 50%;
+  animation: pagedjs-spin 1s linear infinite;
+}
+
+@keyframes pagedjs-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pagedjs-loading-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  color: #6e6e73;
+}
+
+/* Error state */
+.pagedjs-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 12px;
+  color: #FF3B30;
+}
+
+.pagedjs-error-icon {
+  font-size: 48px;
+}
+
+.pagedjs-error-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  text-align: center;
+  max-width: 400px;
+}
+
+/* =============================================================================
+   ZOOM CONTROLS OVERLAY
+   ============================================================================= */
+
+.pagedjs-zoom-controls {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e8e8e8;
+}
+
+/* =============================================================================
+   PAGE COUNT BADGE
+   ============================================================================= */
+
+.pagedjs-page-count {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  color: #1D1D1F;
+}
+
+.pagedjs-page-count-number {
+  font-weight: 600;
+}
+
+.pagedjs-page-count-separator {
+  color: #86868B;
+}
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .pagedjs_pages {
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .pagedjs-zoom-controls {
+    padding: 8px;
+    gap: 8px;
+  }
+}
+
+/* =============================================================================
+   PRINT OPTIMIZATION
+   ============================================================================= */
+
+@media print {
+  .pagedjs_pages {
+    padding: 0;
+    gap: 0;
+    background: white;
+  }
+  
+  .pagedjs_page {
+    box-shadow: none;
+    border-radius: 0;
+    page-break-after: always;
+    break-after: page;
+  }
+  
+  .pagedjs-zoom-controls,
+  .pagedjs-page-count {
+    display: none !important;
+  }
+}

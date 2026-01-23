@@ -18,18 +18,15 @@ import {
   Users,
   Plus,
   ArrowLeft,
-  Save,
   Trash2,
-  Edit2,
-  CheckCircle,
   AlertTriangle,
   Folder,
   User,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
-import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { PersonaForm } from '@/components/workspace/PersonaForm';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import {
@@ -146,18 +143,6 @@ export function PersonasSlideOut({
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   
-  // Form state
-  const [name, setName] = useState('');
-  const [demographics, setDemographics] = useState('');
-  const [psychographics, setPsychographics] = useState('');
-  const [painPoints, setPainPoints] = useState('');
-  const [languagePatterns, setLanguagePatterns] = useState('');
-  const [goals, setGoals] = useState('');
-  
-  // UI state
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  
   // Delete confirmation state
   const [personaToDelete, setPersonaToDelete] = useState<Persona | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -188,14 +173,6 @@ export function PersonasSlideOut({
    */
   const handleCreateNew = useCallback(() => {
     setEditingPersona(null);
-    setName('');
-    setDemographics('');
-    setPsychographics('');
-    setPainPoints('');
-    setLanguagePatterns('');
-    setGoals('');
-    setSaveError(null);
-    setSaveSuccess(false);
     setViewMode('create');
   }, []);
   
@@ -204,14 +181,6 @@ export function PersonasSlideOut({
    */
   const handleEdit = useCallback((persona: Persona) => {
     setEditingPersona(persona);
-    setName(persona.name);
-    setDemographics(persona.demographics);
-    setPsychographics(persona.psychographics);
-    setPainPoints(persona.painPoints);
-    setLanguagePatterns(persona.languagePatterns);
-    setGoals(persona.goals);
-    setSaveError(null);
-    setSaveSuccess(false);
     setViewMode('edit');
   }, []);
   
@@ -221,38 +190,17 @@ export function PersonasSlideOut({
   const handleBackToList = useCallback(() => {
     setViewMode('list');
     setEditingPersona(null);
-    setSaveError(null);
-    setSaveSuccess(false);
   }, []);
   
   /**
-   * Handle save persona
+   * Handle save persona from PersonaForm
    */
-  const handleSave = useCallback(() => {
-    setSaveError(null);
-    setSaveSuccess(false);
-    
+  const handleSave = useCallback((personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>) => {
     // Check if project exists
     if (!activeProject || !activeProjectId) {
-      setSaveError('No active project. Please create a project first.');
+      alert('No active project. Please create a project first.');
       return;
     }
-    
-    // Validate required fields
-    if (!name.trim()) {
-      setSaveError('Persona name is required');
-      return;
-    }
-    
-    // Create persona data
-    const personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'> = {
-      name: name.trim(),
-      demographics: demographics.trim(),
-      psychographics: psychographics.trim(),
-      painPoints: painPoints.trim(),
-      languagePatterns: languagePatterns.trim(),
-      goals: goals.trim(),
-    };
     
     try {
       if (viewMode === 'edit' && editingPersona) {
@@ -265,21 +213,17 @@ export function PersonasSlideOut({
         logger.log('✅ Persona created');
       }
       
-      setSaveSuccess(true);
-      
-      // Reload personas and return to list after delay
-      setTimeout(() => {
-        loadPersonas();
-        handleBackToList();
-      }, 1500);
+      // Reload personas and return to list
+      loadPersonas();
+      handleBackToList();
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 
         : 'Failed to save persona. Please try again.';
-      setSaveError(errorMessage);
+      alert(errorMessage);
       logger.error('❌ Failed to save persona:', error);
     }
-  }, [activeProject, activeProjectId, name, demographics, psychographics, painPoints, languagePatterns, goals, viewMode, editingPersona, loadPersonas, handleBackToList]);
+  }, [activeProject, activeProjectId, viewMode, editingPersona, loadPersonas, handleBackToList]);
   
   /**
    * Handle delete persona - show confirmation modal
@@ -330,39 +274,7 @@ export function PersonasSlideOut({
       <Plus className="h-4 w-4 mr-2" />
       Create New Persona
     </Button>
-  ) : (
-    <div className="flex gap-3">
-      <Button
-        variant="outline"
-        size="default"
-        onClick={handleBackToList}
-        disabled={saveSuccess}
-        className="flex-1"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to List
-      </Button>
-      <Button
-        variant="brand"
-        size="default"
-        onClick={handleSave}
-        disabled={!activeProject || saveSuccess}
-        className="flex-1"
-      >
-        {saveSuccess ? (
-          <>
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Saved!
-          </>
-        ) : (
-          <>
-            <Save className="h-4 w-4 mr-2" />
-            Save Persona
-          </>
-        )}
-      </Button>
-    </div>
-  );
+  ) : null;
   
   return (
     <>
@@ -442,186 +354,11 @@ export function PersonasSlideOut({
         
         {/* CREATE/EDIT VIEW */}
         {(viewMode === 'create' || viewMode === 'edit') && (
-          <div className="space-y-6">
-            {/* Success Message */}
-            {saveSuccess && (
-              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <p className="text-sm text-green-700">
-                  Persona saved successfully!
-                </p>
-              </div>
-            )}
-            
-            {/* Error Message */}
-            {saveError && (
-              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-red-900">Error</p>
-                  <p className="text-xs text-red-700 mt-1">{saveError}</p>
-                </div>
-              </div>
-            )}
-            
-            {/* Form Fields */}
-            <div className="space-y-5">
-              {/* Persona Name */}
-              <div className="space-y-2">
-                <label htmlFor="personaName" className="block text-sm font-medium text-gray-900">
-                  Persona Name <span className="text-red-600">*</span>
-                </label>
-                <input
-                  id="personaName"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Sarah, the Enterprise Decision Maker"
-                  disabled={saveSuccess}
-                  className={cn(
-                    'w-full px-3 py-2 rounded-lg border transition-all duration-200',
-                    'text-sm text-gray-900 bg-white',
-                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                    'disabled:bg-gray-50 disabled:opacity-50',
-                    'placeholder:text-gray-400'
-                  )}
-                />
-                <p className="text-xs text-gray-500">
-                  Give this persona a memorable name and title
-                </p>
-              </div>
-              
-              {/* Demographics */}
-              <div className="space-y-2">
-                <label htmlFor="demographics" className="block text-sm font-medium text-gray-900">
-                  Demographics & Role
-                </label>
-                <AutoExpandTextarea
-                  id="demographics"
-                  value={demographics}
-                  onChange={(e) => setDemographics(e.target.value)}
-                  placeholder="e.g., 35-45 years old, VP of Marketing, works at mid-sized B2B SaaS companies, located in major tech hubs"
-                  minHeight={100}
-                  maxHeight={300}
-                  disabled={saveSuccess}
-                  className={cn(
-                    'w-full px-3 py-2 rounded-lg border transition-all duration-200',
-                    'text-sm text-gray-900 bg-white',
-                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                    'disabled:bg-gray-50 disabled:opacity-50',
-                    'placeholder:text-gray-400'
-                  )}
-                />
-                <p className="text-xs text-gray-500">
-                  Age, location, job title, company size, industry
-                </p>
-              </div>
-              
-              {/* Pain Points */}
-              <div className="space-y-2">
-                <label htmlFor="painPoints" className="block text-sm font-medium text-gray-900">
-                  Pain Points & Challenges
-                </label>
-                <AutoExpandTextarea
-                  id="painPoints"
-                  value={painPoints}
-                  onChange={(e) => setPainPoints(e.target.value)}
-                  placeholder="e.g., Struggles to prove ROI of marketing initiatives, limited budget for tools, team is overwhelmed with manual work"
-                  minHeight={100}
-                  maxHeight={300}
-                  disabled={saveSuccess}
-                  className={cn(
-                    'w-full px-3 py-2 rounded-lg border transition-all duration-200',
-                    'text-sm text-gray-900 bg-white',
-                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                    'disabled:bg-gray-50 disabled:opacity-50',
-                    'placeholder:text-gray-400'
-                  )}
-                />
-                <p className="text-xs text-gray-500">
-                  Problems and frustrations they face daily
-                </p>
-              </div>
-              
-              {/* Goals */}
-              <div className="space-y-2">
-                <label htmlFor="goals" className="block text-sm font-medium text-gray-900">
-                  Goals & Aspirations
-                </label>
-                <AutoExpandTextarea
-                  id="goals"
-                  value={goals}
-                  onChange={(e) => setGoals(e.target.value)}
-                  placeholder="e.g., Increase marketing efficiency, reduce campaign creation time, improve content quality, get promoted to CMO"
-                  minHeight={100}
-                  maxHeight={300}
-                  disabled={saveSuccess}
-                  className={cn(
-                    'w-full px-3 py-2 rounded-lg border transition-all duration-200',
-                    'text-sm text-gray-900 bg-white',
-                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                    'disabled:bg-gray-50 disabled:opacity-50',
-                    'placeholder:text-gray-400'
-                  )}
-                />
-                <p className="text-xs text-gray-500">
-                  What they want to achieve professionally and personally
-                </p>
-              </div>
-              
-              {/* Communication Style / Language Patterns */}
-              <div className="space-y-2">
-                <label htmlFor="languagePatterns" className="block text-sm font-medium text-gray-900">
-                  Preferred Communication Style
-                </label>
-                <AutoExpandTextarea
-                  id="languagePatterns"
-                  value={languagePatterns}
-                  onChange={(e) => setLanguagePatterns(e.target.value)}
-                  placeholder="e.g., Prefers data-driven arguments, responds to ROI metrics, values efficiency and practicality, appreciates clear actionable advice"
-                  minHeight={100}
-                  maxHeight={300}
-                  disabled={saveSuccess}
-                  className={cn(
-                    'w-full px-3 py-2 rounded-lg border transition-all duration-200',
-                    'text-sm text-gray-900 bg-white',
-                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                    'disabled:bg-gray-50 disabled:opacity-50',
-                    'placeholder:text-gray-400'
-                  )}
-                />
-                <p className="text-xs text-gray-500">
-                  How they prefer to be communicated with
-                </p>
-              </div>
-              
-              {/* Psychographics (optional, collapsed for simplicity) */}
-              <div className="space-y-2">
-                <label htmlFor="psychographics" className="block text-sm font-medium text-gray-900">
-                  Additional Details (Optional)
-                </label>
-                <AutoExpandTextarea
-                  id="psychographics"
-                  value={psychographics}
-                  onChange={(e) => setPsychographics(e.target.value)}
-                  placeholder="e.g., Values innovation and efficiency, influenced by industry thought leaders, active on LinkedIn, reads marketing blogs"
-                  minHeight={80}
-                  maxHeight={250}
-                  disabled={saveSuccess}
-                  className={cn(
-                    'w-full px-3 py-2 rounded-lg border transition-all duration-200',
-                    'text-sm text-gray-900 bg-white',
-                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                    'disabled:bg-gray-50 disabled:opacity-50',
-                    'placeholder:text-gray-400'
-                  )}
-                />
-                <p className="text-xs text-gray-500">
-                  Values, interests, lifestyle, personality traits
-                </p>
-              </div>
-            </div>
-          </div>
+          <PersonaForm
+            persona={editingPersona}
+            onSave={handleSave}
+            onCancel={handleBackToList}
+          />
         )}
       </div>
     </SlideOutPanel>

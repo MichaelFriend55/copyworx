@@ -21,6 +21,8 @@ interface ViewModeSelectorProps {
   onViewModeChange: (mode: ViewMode) => void;
   disabled?: boolean;
   className?: string;
+  /** Document title for PDF export filename */
+  documentTitle?: string;
 }
 
 /**
@@ -54,12 +56,14 @@ export function ViewModeSelector({
   onViewModeChange,
   disabled = false,
   className,
+  documentTitle,
 }: ViewModeSelectorProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   /**
    * Export to PDF using browser print dialog
    * User can choose "Save as PDF" in the print dialog
+   * Filename will be based on document title
    */
   const handleExportPDF = useCallback(async () => {
     setIsExporting(true);
@@ -68,9 +72,9 @@ export function ViewModeSelector({
       // Small delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Open browser print dialog
-      // User can select "Save as PDF" as the destination
-      window.print();
+      // Import and use PDF export utility
+      const { printWithTitle } = await import('@/lib/utils/pdf-export');
+      printWithTitle(documentTitle);
       
       toast.success('Print dialog opened. Select "Save as PDF" to export.');
     } catch (error) {
@@ -79,7 +83,7 @@ export function ViewModeSelector({
     } finally {
       setIsExporting(false);
     }
-  }, []);
+  }, [documentTitle]);
 
   return (
     <div

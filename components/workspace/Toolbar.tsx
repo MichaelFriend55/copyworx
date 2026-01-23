@@ -921,7 +921,10 @@ function DocumentMenu({
 
   // Handle print
   const handlePrintClick = () => {
-    window.print();
+    // Import print utility dynamically to avoid SSR issues
+    import('@/lib/utils/pdf-export').then(({ printWithTitle }) => {
+      printWithTitle(documentTitle);
+    });
     closeMenu();
   };
 
@@ -1463,6 +1466,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           disabled={!hasActiveDocument}
+          documentTitle={documentTitle}
         />
         
         {/* Product Tour Button */}
