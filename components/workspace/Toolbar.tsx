@@ -837,7 +837,8 @@ function DocumentMenu({
         // Update document title if we have an active document
         if (activeProjectId && activeDocumentId) {
           try {
-            updateDocument(activeProjectId, activeDocumentId, {
+            // FIX: Added await to ensure title update completes before continuing
+            await updateDocument(activeProjectId, activeDocumentId, {
               title: newTitle,
               baseTitle: newTitle
             });

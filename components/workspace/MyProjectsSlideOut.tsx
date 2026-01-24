@@ -509,26 +509,19 @@ function ProjectSection({
       return;
     }
     try {
-      // Direct localStorage update for title
-      const PROJECTS_KEY = 'copyworx_projects';
-      const rawData = localStorage.getItem(PROJECTS_KEY);
-      if (rawData) {
-        const projects = JSON.parse(rawData);
-        const projectIndex = projects.findIndex((p: Project) => p.id === project.id);
-        if (projectIndex !== -1) {
-          const docIndex = projects[projectIndex].documents.findIndex((d: ProjectDocument) => d.id === docId);
-          if (docIndex !== -1) {
-            projects[projectIndex].documents[docIndex].title = editValue.trim();
-            projects[projectIndex].documents[docIndex].modifiedAt = new Date().toISOString();
-            localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
-          }
-        }
-      }
+      logger.log('💾 Saving document rename via unified-storage:', { docId, newTitle: editValue.trim() });
+      
+      // Use unified-storage to update BOTH localStorage AND Supabase
+      await updateDocument(project.id, docId, { title: editValue.trim() });
+      
+      logger.log('✅ Document renamed successfully');
+      
       // Refresh local state
       setDocuments(await getAllDocuments(project.id));
       onRefresh();
     } catch (error) {
-      logger.error('Failed to rename document:', error);
+      logger.error('❌ Failed to rename document:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to rename document');
     }
     setEditingDocId(null);
     setEditValue('');

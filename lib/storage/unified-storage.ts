@@ -162,6 +162,18 @@ export async function getAllProjects(): Promise<Project[]> {
     try {
       const { projects } = await cloudStorage.syncAllProjects();
       logger.log('☁️ Loaded', projects.length, 'projects from cloud');
+      
+      // FIX: Sync projects to localStorage so other storage layers can access them
+      // This prevents "Project not found" errors from snippet-storage, folder-storage, etc.
+      if (typeof window !== 'undefined' && projects.length > 0) {
+        try {
+          localStorage.setItem('copyworx_projects', JSON.stringify(projects));
+          logger.log('💾 Synced projects to localStorage for compatibility');
+        } catch (error) {
+          logger.warn('⚠️ Failed to sync projects to localStorage:', error);
+        }
+      }
+      
       return projects;
     } catch (error) {
       logger.warn('⚠️ Cloud fetch failed, falling back to local:', error);

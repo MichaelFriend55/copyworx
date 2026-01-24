@@ -74,32 +74,21 @@ interface DocumentListProps {
 interface DraggableDocumentRowProps {
   doc: ProjectDocument;
   showConnector?: boolean;
-  renamingId: string | null;
-  renameValue: string;
   selectedDocId: string | null;
-  onStartRename: (doc: ProjectDocument) => void;
-  onSaveRename: (newTitle?: string) => void;
-  onCancelRename: () => void;
-  onRenameChange: (value: string) => void;
+  onSaveRename: (newTitle: string) => void;
   onSelect: (doc: ProjectDocument) => void;
   onDelete: (doc: ProjectDocument) => void;
   onMoveToRoot: (docId: string) => void;
 }
 
 /**
- * Individual draggable document row - extracted as standalone component
- * to prevent input focus loss during rename operations
+ * Individual draggable document row - simplified with window.prompt for rename
  */
 const DraggableDocumentRow = React.memo(({
   doc,
   showConnector = false,
-  renamingId,
-  renameValue,
   selectedDocId,
-  onStartRename,
   onSaveRename,
-  onCancelRename,
-  onRenameChange,
   onSelect,
   onDelete,
   onMoveToRoot,
@@ -109,34 +98,6 @@ const DraggableDocumentRow = React.memo(({
   });
   
   const isSelected = doc.id === selectedDocId;
-  const isEditing = renamingId === doc.id;
-  const inputRef = useRef<HTMLInputElement>(null);
-  const justDoubleClicked = useRef(false);
-  
-  // Handle keyboard events for rename input
-  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const newValue = inputRef.current?.value?.trim() || '';
-      if (!newValue) {
-        onCancelRename();
-        return;
-      }
-      if (newValue !== doc.title) {
-        // Pass new value directly to save, bypassing state closure issue
-        onSaveRename(newValue);
-      } else {
-        onCancelRename();
-      }
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onCancelRename();
-    }
-  };
-  
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
   
   return (
     <div
@@ -151,10 +112,8 @@ const DraggableDocumentRow = React.memo(({
       )}
       onClick={(e) => {
         e.stopPropagation();
-        if (justDoubleClicked.current || isEditing) return;
         onSelect(doc);
       }}
-      onMouseDown={handleMouseDown}
     >
       {/* Horizontal connector line */}
       {showConnector && (
@@ -169,48 +128,43 @@ const DraggableDocumentRow = React.memo(({
         )} />
       </div>
       
-      {/* Title - editable or display */}
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          type="text"
-          defaultValue={doc.title}
-          onKeyDown={handleRenameKeyDown}
-          onFocus={(e) => e.target.select()}
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            'flex-1 text-xs bg-background min-w-0',
-            'border border-primary rounded px-1 py-0.5',
-            'focus:outline-none focus:ring-1 focus:ring-primary'
-          )}
-          autoFocus
-          placeholder="Document name..."
-        />
-      ) : (
-        <span
-          className={cn(
-            'flex-1 text-xs leading-tight line-clamp-2',
-            isSelected ? 'font-medium text-primary' : 'text-foreground'
-          )}
-          onDoubleClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            justDoubleClicked.current = true;
-            onStartRename(doc);
-            setTimeout(() => {
-              justDoubleClicked.current = false;
-            }, 100);
-          }}
-          title={doc.title}
-        >
-          {doc.title}
-        </span>
-      )}
+      {/* Title */}
+      <span
+        className={cn(
+          'flex-1 text-xs leading-tight line-clamp-2',
+          isSelected ? 'font-medium text-primary' : 'text-foreground'
+        )}
+        title={doc.title}
+      >
+        {doc.title}
+      </span>
       
       {/* Action buttons - visible on hover */}
-      {!isEditing && (
-        <>
-          {/* Rename button */}
+      <>
+        {/* Rename button */}
+        <button
+          className={cn(
+            'flex-shrink-0 p-0.5 rounded',
+            'opacity-0 group-hover:opacity-100',
+            'hover:bg-accent',
+            'transition-opacity duration-100'
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('🖊️ PENCIL CLICKED FOR DOC:', doc.id, doc.title);
+            const newTitle = window.prompt('Rename document:', doc.title);
+            if (newTitle && newTitle.trim() && newTitle.trim() !== doc.title) {
+              console.log('🖊️ CALLING onSaveRename with:', newTitle.trim());
+              onSaveRename(newTitle.trim());
+            }
+          }}
+          title="Rename"
+        >
+          <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+        </button>
+        
+        {/* Move to root button - only for docs in folders */}
+        {doc.folderId && (
           <button
             className={cn(
               'flex-shrink-0 p-0.5 rounded',
@@ -220,50 +174,31 @@ const DraggableDocumentRow = React.memo(({
             )}
             onClick={(e) => {
               e.stopPropagation();
-              onStartRename(doc);
+              onMoveToRoot(doc.id);
             }}
-            title="Rename"
+            title="Move to root"
           >
-            <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+            <Home className="h-3 w-3 text-muted-foreground" />
           </button>
-          
-          {/* Move to root button - only for docs in folders */}
-          {doc.folderId && (
-            <button
-              className={cn(
-                'flex-shrink-0 p-0.5 rounded',
-                'opacity-0 group-hover:opacity-100',
-                'hover:bg-accent',
-                'transition-opacity duration-100'
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                onMoveToRoot(doc.id);
-              }}
-              title="Move to root"
-            >
-              <Home className="h-3 w-3 text-muted-foreground" />
-            </button>
+        )}
+        
+        {/* Delete button */}
+        <button
+          className={cn(
+            'flex-shrink-0 p-0.5 rounded',
+            'opacity-0 group-hover:opacity-100',
+            'hover:bg-destructive/10 hover:text-destructive',
+            'transition-opacity duration-100'
           )}
-          
-          {/* Delete button */}
-          <button
-            className={cn(
-              'flex-shrink-0 p-0.5 rounded',
-              'opacity-0 group-hover:opacity-100',
-              'hover:bg-destructive/10 hover:text-destructive',
-              'transition-opacity duration-100'
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(doc);
-            }}
-            title="Delete"
-          >
-            <Trash2 className="h-3 w-3" />
-          </button>
-        </>
-      )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(doc);
+          }}
+          title="Delete"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </>
     </div>
   );
 });
@@ -298,302 +233,6 @@ function groupDocumentsByBaseTitle(
 }
 
 // ============================================================================
-// DocumentRow Component (with inline rename)
-// ============================================================================
-
-interface DocumentRowProps {
-  doc: ProjectDocument;
-  isSelected: boolean;
-  isEditing: boolean;
-  renameValue: string; // FIX: Renamed from editValue
-  onSelect: (doc: ProjectDocument) => void;
-  onDelete: (doc: ProjectDocument) => void;
-  onStartRename: (doc: ProjectDocument) => void;
-  onRenameValueChange: (value: string) => void; // FIX: Renamed from onEditValueChange
-  onSaveRename: (newTitle?: string) => void;
-  onCancelRename: () => void;
-  /** Callback when move button is clicked */
-  onMove: (doc: ProjectDocument) => void;
-  /** Show horizontal connector line */
-  showConnector?: boolean;
-}
-
-function DocumentRow({
-  doc,
-  isSelected,
-  isEditing,
-  renameValue, // FIX: Renamed from editValue
-  onSelect,
-  onDelete,
-  onStartRename,
-  onRenameValueChange, // FIX: Renamed from onEditValueChange
-  onSaveRename,
-  onCancelRename,
-  onMove,
-  showConnector = false,
-}: DocumentRowProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Focus input when entering edit mode
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-  
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      onSaveRename();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onCancelRename();
-    }
-  };
-  
-  return (
-    <div
-      className={cn(
-        'group flex items-start gap-1.5 px-2 py-1.5 rounded cursor-pointer',
-        'transition-colors duration-100',
-        isSelected
-          ? 'bg-primary/10 text-primary'
-          : 'hover:bg-accent/60'
-      )}
-      onClick={() => !isEditing && onSelect(doc)}
-    >
-      {/* Horizontal connector line - dark and visible */}
-      {showConnector && (
-        <div className="w-3 h-px bg-foreground/30 -ml-2 flex-shrink-0 mt-1.5" />
-      )}
-      
-      {/* File icon */}
-      <FileText className={cn(
-        'h-3 w-3 flex-shrink-0 mt-0.5',
-        isSelected ? 'text-primary' : 'text-muted-foreground'
-      )} />
-      
-      {/* Title - editable or display */}
-      {/* FIX: Input appears when isEditing is true (renamingId === doc.id) */}
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          type="text"
-          value={renameValue} // FIX: Using renameValue
-          onChange={(e) => onRenameValueChange(e.target.value)} // FIX: Using onRenameValueChange
-          onKeyDown={handleKeyDown}
-          onBlur={() => onSaveRename()}
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            'flex-1 text-xs bg-background min-w-0',
-            'border border-primary rounded px-1 py-0.5',
-            'focus:outline-none focus:ring-1 focus:ring-primary'
-          )}
-          placeholder="Enter new name..."
-        />
-      ) : (
-        <span
-          className={cn(
-            'flex-1 text-xs leading-tight line-clamp-2',
-            isSelected ? 'font-medium text-primary' : 'text-foreground'
-          )}
-          onDoubleClick={(e) => {
-            e.stopPropagation();
-            onStartRename(doc);
-          }}
-          title={doc.title}
-        >
-          {doc.title}
-        </span>
-      )}
-      
-      {/* Action buttons - visible on hover */}
-      {!isEditing && (
-        <>
-          {/* Rename button */}
-          <button
-            className={cn(
-              'flex-shrink-0 p-0.5 rounded',
-              'opacity-0 group-hover:opacity-100',
-              'hover:bg-accent',
-              'transition-opacity duration-100'
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onStartRename(doc);
-            }}
-            title="Rename (creates new document)"
-          >
-            <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
-          </button>
-          
-          {/* Move button */}
-          <button
-            className={cn(
-              'flex-shrink-0 p-0.5 rounded',
-              'opacity-0 group-hover:opacity-100',
-              'hover:bg-accent',
-              'transition-opacity duration-100'
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onMove(doc);
-            }}
-            title="Move to folder"
-          >
-            <FolderInput className="h-3 w-3 text-muted-foreground" />
-          </button>
-          
-          {/* Delete button */}
-          <button
-            className={cn(
-              'flex-shrink-0 p-0.5 rounded',
-              'opacity-0 group-hover:opacity-100',
-              'hover:bg-destructive/10 hover:text-destructive',
-              'transition-opacity duration-100'
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(doc);
-            }}
-            title="Delete"
-          >
-            <Trash2 className="h-3 w-3" />
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// Document Group Component
-// ============================================================================
-
-interface DocumentGroupProps {
-  baseTitle: string;
-  versions: ProjectDocument[];
-  isExpanded: boolean;
-  selectedDocId: string | null;
-  renamingId: string | null; // FIX: Renamed from editingDocId
-  renameValue: string; // FIX: Renamed from editValue
-  onToggle: () => void;
-  onSelect: (doc: ProjectDocument) => void;
-  onDelete: (doc: ProjectDocument) => void;
-  onStartRename: (doc: ProjectDocument) => void;
-  onRenameValueChange: (value: string) => void; // FIX: Renamed from onEditValueChange
-  onSaveRename: () => void;
-  onCancelRename: () => void;
-  /** Callback when move button is clicked */
-  onMove: (doc: ProjectDocument) => void;
-  /** Show border-left tree line */
-  showTreeLine?: boolean;
-}
-
-function DocumentGroup({
-  baseTitle,
-  versions,
-  isExpanded,
-  selectedDocId,
-  renamingId, // FIX: Renamed from editingDocId
-  renameValue, // FIX: Renamed from editValue
-  onToggle,
-  onSelect,
-  onDelete,
-  onStartRename,
-  onRenameValueChange, // FIX: Renamed from onEditValueChange
-  onSaveRename,
-  onCancelRename,
-  onMove,
-  showTreeLine = false,
-}: DocumentGroupProps) {
-  const latestVersion = versions[versions.length - 1];
-  const hasMultipleVersions = versions.length > 1;
-  
-  // Single version - just show the document
-  if (!hasMultipleVersions) {
-    return (
-      <div className={cn(showTreeLine && 'border-l-2 border-foreground/30 ml-2')}>
-        <DocumentRow
-          doc={latestVersion}
-          isSelected={latestVersion.id === selectedDocId}
-          isEditing={renamingId === latestVersion.id} // FIX: Using renamingId
-          renameValue={renameValue} // FIX: Using renameValue
-          onSelect={onSelect}
-          onDelete={onDelete}
-          onStartRename={onStartRename}
-          onRenameValueChange={onRenameValueChange} // FIX: Using onRenameValueChange
-          onSaveRename={onSaveRename}
-          onCancelRename={onCancelRename}
-          onMove={onMove}
-          showConnector={showTreeLine}
-        />
-      </div>
-    );
-  }
-  
-  // Multiple versions - show group header with expandable versions
-  return (
-    <div className={cn(showTreeLine && 'border-l-2 border-foreground/30 ml-2')}>
-      {/* Group header */}
-      <div
-        className={cn(
-          'flex items-center gap-1 px-2 py-1 rounded',
-          'hover:bg-accent/40 cursor-pointer',
-          'transition-colors duration-100'
-        )}
-        onClick={onToggle}
-      >
-        {/* Horizontal connector - dark and visible */}
-        {showTreeLine && (
-          <div className="w-3 h-px bg-foreground/30 -ml-2 flex-shrink-0" />
-        )}
-        
-        {/* Expand/collapse chevron */}
-        <ChevronRight className={cn(
-          'h-3 w-3 text-muted-foreground transition-transform duration-150',
-          isExpanded && 'rotate-90'
-        )} />
-        
-        {/* Group title - medium weight */}
-        <span className="flex-1 text-xs font-medium truncate text-foreground">
-          {baseTitle}
-        </span>
-        
-        {/* Version count badge */}
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-          {versions.length}v
-        </span>
-      </div>
-      
-      {/* Expanded versions - indented with dark tree line */}
-      {isExpanded && (
-        <div className="pl-4 border-l-2 border-foreground/30 ml-2">
-          {versions.map((doc) => (
-            <DocumentRow
-              key={doc.id}
-              doc={doc}
-              isSelected={doc.id === selectedDocId}
-              isEditing={renamingId === doc.id} // FIX: Using renamingId
-              renameValue={renameValue} // FIX: Using renameValue
-              onSelect={onSelect}
-              onDelete={onDelete}
-              onStartRename={onStartRename}
-              onRenameValueChange={onRenameValueChange} // FIX: Using onRenameValueChange
-              onSaveRename={onSaveRename}
-              onCancelRename={onCancelRename}
-              onMove={onMove}
-              showConnector={true}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -611,11 +250,6 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  
-  // Individual document rename state
-  // FIX: Using renamingId instead of editingDocId for clarity
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
   
   // Folder editing state
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
@@ -867,122 +501,35 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, []);
   
   /** 
-   * Start inline rename for a specific document
-   * FIX: Sets renamingId and renameValue to show input field
+   * Save rename - updates document title using proper storage layer
+   * Now uses window.prompt, so we just need docId and newTitle
    */
-  const startRename = useCallback((doc: ProjectDocument) => {
-    setRenamingId(doc.id);
-    setRenameValue(doc.title); // Use full title, not baseTitle
-  }, []);
-  
-  /** 
-   * Save rename - updates document title in localStorage
-   * FIX: Updated to use correct localStorage structure (copyworx_projects)
-   * 
-   * FLOW:
-   * 1. Validate inputs
-   * 2. Read projects array from localStorage (key: 'copyworx_projects')
-   * 3. Find project and document in the array
-   * 4. Update title and modifiedAt
-   * 5. Save projects array back to localStorage
-   * 6. Refresh UI
-   */
-  const saveRename = useCallback((providedNewTitle?: string) => {
-    // Use provided title if available, otherwise fall back to state
-    const titleToUse = providedNewTitle?.trim() || renameValue.trim();
+  const saveRename = useCallback(async (docId: string, newTitle: string) => {
+    logger.log('💾 saveRename called:', { docId, newTitle, activeProjectId });
     
-    // Validation checks
-    if (!renamingId || !activeProjectId) {
-      setRenamingId(null);
-      setRenameValue('');
-      return;
-    }
-    
-    if (!titleToUse) {
-      setRenamingId(null);
-      setRenameValue('');
-      return;
-    }
-    
-    // Find the document being renamed
-    const doc = documents.find(d => d.id === renamingId);
-    if (!doc) {
-      setRenamingId(null);
-      setRenameValue('');
-      return;
-    }
-    
-    const newTitle = titleToUse;
-    
-    // If title unchanged, just cancel
-    if (newTitle === doc.title) {
-      setRenamingId(null);
-      setRenameValue('');
+    if (!activeProjectId) {
+      logger.log('❌ No activeProjectId');
       return;
     }
     
     try {
-      const PROJECTS_KEY = 'copyworx_projects';
-      const rawData = localStorage.getItem(PROJECTS_KEY);
+      logger.log('🔄 Renaming document:', { docId, newTitle });
       
-      if (!rawData) {
-        throw new Error('No localStorage data found');
-      }
+      // Call updateDocument - this updates BOTH Supabase and localStorage
+      await updateDocument(activeProjectId, docId, { 
+        title: newTitle 
+      });
       
-      const projects = JSON.parse(rawData);
-      
-      if (!Array.isArray(projects)) {
-        throw new Error('Invalid localStorage structure - projects is not an array');
-      }
-      
-      const projectIndex = projects.findIndex((p: Project) => p.id === activeProjectId);
-      
-      if (projectIndex === -1) {
-        throw new Error(`Project not found: ${activeProjectId}`);
-      }
-      
-      const project = projects[projectIndex];
-      
-      if (!Array.isArray(project.documents)) {
-        throw new Error('Project documents is not an array');
-      }
-      
-      const docIndex = project.documents.findIndex((d: ProjectDocument) => d.id === renamingId);
-      
-      if (docIndex === -1) {
-        throw new Error(`Document ${renamingId} not found in project`);
-      }
-      
-      // Update the document title and modifiedAt
-      project.documents[docIndex].title = newTitle;
-      project.documents[docIndex].modifiedAt = new Date().toISOString();
-      
-      // Write back to localStorage
-      localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
-      
-      // Clear rename state
-      setRenamingId(null);
-      setRenameValue('');
+      logger.log('✅ Document renamed successfully:', newTitle);
       
       // Refresh the document list to show new title
-      refreshAll();
+      await refreshAll();
       
     } catch (error) {
-      logger.error('Failed to rename document:', error);
+      logger.error('❌ Failed to rename document:', error);
       window.alert(error instanceof Error ? error.message : 'Failed to rename document');
-      setRenamingId(null);
-      setRenameValue('');
     }
-  }, [renamingId, renameValue, activeProjectId, documents, refreshAll]);
-  
-  /** 
-   * Cancel rename - clears rename state
-   * FIX: Updated to use renamingId/renameValue
-   */
-  const cancelRename = useCallback(() => {
-    setRenamingId(null);
-    setRenameValue('');
-  }, []);
+  }, [activeProjectId, refreshAll]);
   
   /** Create new document */
   const handleCreateDocument = useCallback(async () => {
@@ -1422,13 +969,8 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
           <DraggableDocumentRow
             doc={latestVersion}
             showConnector={showTreeLine}
-            renamingId={renamingId}
-            renameValue={renameValue}
             selectedDocId={selectedDocId}
-            onStartRename={startRename}
-            onSaveRename={saveRename}
-            onCancelRename={cancelRename}
-            onRenameChange={setRenameValue}
+            onSaveRename={(newTitle) => saveRename(latestVersion.id, newTitle)}
             onSelect={handleSelect}
             onDelete={handleDelete}
             onMoveToRoot={handleMoveDocumentToRoot}
@@ -1479,13 +1021,8 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
                 key={doc.id}
                 doc={doc}
                 showConnector={true}
-                renamingId={renamingId}
-                renameValue={renameValue}
                 selectedDocId={selectedDocId}
-                onStartRename={startRename}
-                onSaveRename={saveRename}
-                onCancelRename={cancelRename}
-                onRenameChange={setRenameValue}
+                onSaveRename={(newTitle) => saveRename(doc.id, newTitle)}
                 onSelect={handleSelect}
                 onDelete={handleDelete}
                 onMoveToRoot={handleMoveDocumentToRoot}
@@ -1495,250 +1032,7 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
         )}
       </div>
     );
-  }, [expandedGroups, toggleGroup, renamingId, renameValue, selectedDocId, startRename, saveRename, cancelRename, setRenameValue, handleSelect, handleDelete, handleMoveDocumentToRoot]);
-  
-  // ---------------------------------------------------------------------------
-  // Legacy Folder Tree Item Component (kept for reference)
-  // ---------------------------------------------------------------------------
-  
-  const FolderTreeItem = useCallback(({ 
-    folder, 
-    level,
-  }: { 
-    folder: Folder; 
-    level: number;
-  }) => {
-    const isExpanded = expandedFolders.has(folder.id);
-    const childFolders = folders.filter(f => f.parentFolderId === folder.id);
-    const folderDocs = documents.filter(d => d.folderId === folder.id);
-    const folderGroupedDocs = groupDocumentsByBaseTitle(folderDocs);
-    const isEmpty = childFolders.length === 0 && folderDocs.length === 0;
-    
-    const groupEntries = Array.from(folderGroupedDocs.entries());
-    
-    // Root folders (level 0) have NO border or margin
-    // Nested folders have tree line
-    const isNested = level > 0;
-    
-    const isEditingThisFolder = editingFolderId === folder.id;
-    
-    return (
-      <div className={cn(isNested && 'border-l-2 border-foreground/30 ml-2')}>
-        {/* Folder header */}
-        <div 
-          className={cn(
-            'group flex items-center gap-1 px-2 py-1.5 hover:bg-accent rounded cursor-pointer',
-            'transition-colors duration-100'
-          )}
-          onClick={() => !isEditingThisFolder && toggleFolder(folder.id)}
-        >
-          {/* Horizontal connector for nested folders - dark and visible */}
-          {isNested && (
-            <div className="w-3 h-px bg-foreground/30 -ml-2 flex-shrink-0" />
-          )}
-          
-          {/* Expand/collapse chevron */}
-          <ChevronRight 
-            className={cn(
-              'h-3 w-3 transition-transform duration-150 text-muted-foreground flex-shrink-0',
-              isExpanded && 'rotate-90'
-            )} 
-          />
-          
-          {/* Blue folder icon */}
-          <FolderIcon className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-          
-          {/* Folder name - editable or display */}
-          {isEditingThisFolder ? (
-            <input
-              type="text"
-              value={editingFolderName}
-              onChange={(e) => setEditingFolderName(e.target.value)}
-              onBlur={() => saveFolderRename(folder.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  saveFolderRename(folder.id);
-                } else if (e.key === 'Escape') {
-                  e.preventDefault();
-                  cancelFolderRename();
-                }
-              }}
-              onClick={(e) => e.stopPropagation()}
-              className={cn(
-                'flex-1 text-xs font-semibold bg-background min-w-0',
-                'border border-primary rounded px-1 py-0.5',
-                'focus:outline-none focus:ring-1 focus:ring-primary'
-              )}
-              autoFocus
-              placeholder="Folder name..."
-            />
-          ) : (
-            <span 
-              className="flex-1 truncate text-xs font-semibold text-foreground"
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                startFolderRename(folder);
-              }}
-              title={folder.name}
-            >
-              {folder.name}
-            </span>
-          )}
-          
-          {/* Document count badge */}
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex-shrink-0">
-            {folderDocs.length}
-          </span>
-          
-          {/* Action buttons - visible on hover */}
-          {!isEditingThisFolder && (
-            <>
-              {/* Rename folder button */}
-              <button
-                className={cn(
-                  'flex-shrink-0 p-0.5 rounded',
-                  'opacity-0 group-hover:opacity-100',
-                  'hover:bg-accent',
-                  'transition-opacity duration-100'
-                )}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  startFolderRename(folder);
-                }}
-                title="Rename folder"
-              >
-                <Pencil className="h-3 w-3 text-muted-foreground" />
-              </button>
-              
-              {/* Move folder button */}
-              <button
-                className={cn(
-                  'flex-shrink-0 p-0.5 rounded',
-                  'opacity-0 group-hover:opacity-100',
-                  'hover:bg-accent',
-                  'transition-opacity duration-100'
-                )}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMoveFolder(folder.id);
-                }}
-                title="Move folder"
-              >
-                <FolderInput className="h-3 w-3 text-muted-foreground" />
-              </button>
-              
-              {/* Move to root button - only for nested folders */}
-              {folder.parentFolderId && (
-                <button
-                  className={cn(
-                    'flex-shrink-0 p-0.5 rounded',
-                    'opacity-0 group-hover:opacity-100',
-                    'hover:bg-accent',
-                    'transition-opacity duration-100'
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMoveFolderToRoot(folder.id);
-                  }}
-                  title="Move to root"
-                >
-                  <Home className="h-3 w-3 text-muted-foreground" />
-                </button>
-              )}
-              
-              {/* Delete folder button */}
-              <button
-                className={cn(
-                  'flex-shrink-0 p-0.5 rounded',
-                  'opacity-0 group-hover:opacity-100',
-                  'hover:bg-destructive/10 hover:text-destructive',
-                  'transition-opacity duration-100'
-                )}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteFolder(folder);
-                }}
-                title="Delete folder"
-              >
-                <Trash2 className="h-3 w-3" />
-              </button>
-            </>
-          )}
-        </div>
-        
-        {/* Folder contents (when expanded) */}
-        {isExpanded && (
-          <div className="pl-4">
-            {/* Empty folder message */}
-            {isEmpty && (
-              <div className="border-l-2 border-foreground/30 ml-2">
-                <div className="flex items-center px-2 py-1.5">
-                  <div className="w-3 h-px bg-foreground/30 -ml-2 flex-shrink-0" />
-                  <span className="text-[10px] text-muted-foreground italic ml-1">
-                    No documents in this folder
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            {/* Subfolders */}
-            {childFolders.map((subfolder) => (
-              <FolderTreeItem 
-                key={subfolder.id} 
-                folder={subfolder} 
-                level={level + 1}
-              />
-            ))}
-            
-            {/* Documents in this folder - grouped by baseTitle */}
-            {groupEntries.map(([baseTitle, versions]) => (
-              <DocumentGroup
-                key={baseTitle}
-                baseTitle={baseTitle}
-                versions={versions}
-                isExpanded={expandedGroups.has(baseTitle)}
-                selectedDocId={selectedDocId}
-                renamingId={renamingId} // FIX: Using renamingId
-                renameValue={renameValue} // FIX: Using renameValue
-                onToggle={() => toggleGroup(baseTitle)}
-                onSelect={handleSelect}
-                onDelete={handleDelete}
-                onStartRename={startRename}
-                onRenameValueChange={setRenameValue} // FIX: Using setRenameValue
-                onSaveRename={saveRename}
-                onCancelRename={cancelRename}
-                onMove={(doc) => handleMoveDocument(doc.id)}
-                showTreeLine={true}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }, [
-    expandedFolders, 
-    expandedGroups, 
-    folders, 
-    documents, 
-    selectedDocId, 
-    renamingId, // FIX: Using renamingId
-    renameValue, // FIX: Using renameValue
-    editingFolderId,
-    editingFolderName,
-    toggleFolder, 
-    toggleGroup,
-    handleSelect,
-    handleDelete,
-    handleDeleteFolder,
-    handleMoveFolder,
-    startRename,
-    saveRename,
-    cancelRename,
-    startFolderRename,
-    saveFolderRename,
-    cancelFolderRename,
-  ]);
+  }, [expandedGroups, toggleGroup, selectedDocId, saveRename, handleSelect, handleDelete, handleMoveDocumentToRoot]);
   
   // ---------------------------------------------------------------------------
   // Derived Data for Render

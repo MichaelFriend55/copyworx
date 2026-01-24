@@ -452,6 +452,17 @@ export async function updateDocument(
     updates.baseTitle = validateBaseTitle(updates.baseTitle);
   }
   
+  // FIX: Get existing document BEFORE API call to avoid race condition
+  // If we fetch AFTER the API call, we might get stale cached data
+  const localDocs = getLocalDocuments(projectId);
+  const docIndex = localDocs.findIndex(d => d.id === docId);
+  
+  if (docIndex === -1) {
+    throw new Error(`Document not found: ${docId}`);
+  }
+  
+  const existingDoc = localDocs[docIndex];
+  
   try {
     await apiCall(API_BASE, {
       method: 'PUT',
@@ -463,31 +474,27 @@ export async function updateDocument(
     
     logger.log('☁️ Document updated in cloud:', docId);
     
-    // Update localStorage
-    const existingDoc = await getDocument(projectId, docId);
-    if (existingDoc) {
-      const updatedDoc = { ...existingDoc, ...updates, modifiedAt: new Date().toISOString() };
-      saveLocalDocument(updatedDoc);
-    }
+    // FIX: Update localStorage with known updates, not by re-fetching
+    // This prevents race conditions where the API returns stale data
+    const updatedDoc = { 
+      ...existingDoc, 
+      ...updates, 
+      modifiedAt: new Date().toISOString() 
+    };
+    saveLocalDocument(updatedDoc);
+    logger.log('💾 Document also updated in localStorage:', docId);
   } catch (error) {
     logger.warn('⚠️ API failed, falling back to localStorage:', error);
     
-    // Fallback: update locally
-    const localDocs = getLocalDocuments(projectId);
-    const docIndex = localDocs.findIndex(d => d.id === docId);
-    
-    if (docIndex === -1) {
-      throw new Error(`Document not found: ${docId}`);
-    }
-    
+    // Fallback: update locally only
     const updatedDoc = {
-      ...localDocs[docIndex],
+      ...existingDoc,
       ...updates,
       modifiedAt: new Date().toISOString(),
     };
     
     saveLocalDocument(updatedDoc);
-    logger.log('💾 Document updated locally:', docId);
+    logger.log('💾 Document updated locally (offline mode):', docId);
   }
 }
 
