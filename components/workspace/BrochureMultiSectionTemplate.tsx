@@ -49,7 +49,7 @@ import type {
   TemplateSectionField 
 } from '@/lib/types/template-progress';
 import { createInitialProgress, generateContentHash } from '@/lib/types/template-progress';
-import type { Project } from '@/lib/types/project';
+import type { Project, Persona } from '@/lib/types/project';
 import type { Editor } from '@tiptap/react';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
 
@@ -250,8 +250,9 @@ export function BrochureMultiSectionTemplate({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   
-  // Get personas for current project
-  const personas = activeProject ? getProjectPersonas(activeProject.id) : [];
+  // Personas state
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  
   const hasBrandVoice = activeProject?.brandVoice?.brandName ? true : false;
   
   // Current section
@@ -345,6 +346,28 @@ export function BrochureMultiSectionTemplate({
     
     loadProgress();
   }, [activeDocumentId, activeProjectId]);
+  
+  /**
+   * Load personas for current project
+   */
+  useEffect(() => {
+    const loadPersonas = async () => {
+      if (!activeProject) {
+        setPersonas([]);
+        return;
+      }
+      
+      try {
+        const projectPersonas = await getProjectPersonas(activeProject.id);
+        setPersonas(projectPersonas);
+      } catch (error) {
+        logger.error('❌ Failed to load personas:', error);
+        setPersonas([]);
+      }
+    };
+    
+    loadPersonas();
+  }, [activeProject]);
   
   /**
    * Initialize form data for a section
