@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { cn } from '@/lib/utils';
-import { useWorkspaceStore, useActiveProjectId, useProjects, useProjectActions } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
 import { saveBrandVoiceToProject, deleteBrandVoiceFromProject } from '@/lib/storage/unified-storage';
 import type { BrandVoice } from '@/lib/types/brand';
 
@@ -60,7 +60,6 @@ export function BrandVoiceSlideOut({
   // Store state
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
-  const { updateProject } = useProjectActions();
   
   // Get active project
   const activeProject = React.useMemo(
@@ -167,8 +166,13 @@ export function BrandVoiceSlideOut({
     try {
       await saveBrandVoiceToProject(activeProjectId, brandVoice);
       
-      // Update Zustand store
-      updateProject(activeProjectId, { brandVoice });
+      // Update Zustand store state directly (no storage call needed)
+      // Brand voices are stored in a separate table, so no project update required
+      const { projects } = useWorkspaceStore.getState();
+      const updatedProjects = projects.map(p =>
+        p.id === activeProjectId ? { ...p, brandVoice } : p
+      );
+      useWorkspaceStore.setState({ projects: updatedProjects });
       
       setSaveSuccess(true);
       
@@ -186,7 +190,7 @@ export function BrandVoiceSlideOut({
       setSaveError(errorMessage);
       logger.error('❌ Failed to save brand voice:', error);
     }
-  }, [activeProject, activeProjectId, brandName, brandTone, approvedPhrases, forbiddenWords, brandValues, updateProject, onClose]);
+  }, [activeProject, activeProjectId, brandName, brandTone, approvedPhrases, forbiddenWords, brandValues, onClose]);
   
   /**
    * Handle cancel
@@ -213,8 +217,13 @@ export function BrandVoiceSlideOut({
     try {
       await deleteBrandVoiceFromProject(activeProjectId);
       
-      // Update Zustand store
-      updateProject(activeProjectId, { brandVoice: undefined });
+      // Update Zustand store state directly (no storage call needed)
+      // Brand voices are stored in a separate table, so no project update required
+      const { projects } = useWorkspaceStore.getState();
+      const updatedProjects = projects.map(p =>
+        p.id === activeProjectId ? { ...p, brandVoice: undefined } : p
+      );
+      useWorkspaceStore.setState({ projects: updatedProjects });
       
       // Clear form
       setBrandName('');
@@ -236,7 +245,7 @@ export function BrandVoiceSlideOut({
     } finally {
       setIsDeleting(false);
     }
-  }, [activeProjectId, activeProject, updateProject, onClose]);
+  }, [activeProjectId, activeProject, onClose]);
   
   /**
    * Cancel delete
