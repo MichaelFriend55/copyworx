@@ -91,7 +91,7 @@ export function SplashPage() {
   // File input ref for importing documents
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleNewDocument = () => {
+  const handleNewDocument = async () => {
     if (!activeProjectId) {
       logger.warn('⚠️ No active project, going to workspace anyway');
       router.push('/copyworx/workspace?action=new');
@@ -100,7 +100,7 @@ export function SplashPage() {
     
     try {
       // Create document in localStorage via document-storage
-      const newDoc = createDocument(activeProjectId, 'Untitled Document');
+      const newDoc = await createDocument(activeProjectId, 'Untitled Document');
       
       // Set active document ID in Zustand
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
@@ -123,7 +123,7 @@ export function SplashPage() {
    * Handle template selection from modal
    * Creates document immediately and navigates to workspace
    */
-  const handleTemplateSelect = (templateId: string) => {
+  const handleTemplateSelect = async (templateId: string) => {
     logger.log('🎨 Template selected from splash page:', templateId);
     
     // Get template details to use its name for the document
@@ -142,7 +142,7 @@ export function SplashPage() {
     
     try {
       // Create document immediately with template name
-      const newDoc = createDocument(activeProjectId, template.name);
+      const newDoc = await createDocument(activeProjectId, template.name);
       logger.log('✅ Created document for template:', newDoc.id, newDoc.title);
       
       // Set as active document in store
@@ -190,7 +190,7 @@ export function SplashPage() {
         : fileName.substring(0, lastDotIndex);
 
       // Create a new document for the import
-      const newDoc = createDocument(activeProjectId, documentTitle);
+      const newDoc = await createDocument(activeProjectId, documentTitle);
       logger.log('✅ Created document for import:', newDoc.id, newDoc.title);
 
       // Set as active document
