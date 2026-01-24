@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
             name: project.name,
             created_at: project.createdAt || new Date().toISOString(),
             updated_at: project.updatedAt || new Date().toISOString(),
-          })
+          } as any)
           .select()
           .single();
 
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
                 forbidden_words: project.brandVoice.forbiddenWords || [],
                 brand_values: project.brandVoice.brandValues || [],
                 mission_statement: project.brandVoice.missionStatement || '',
-              });
+              } as any);
 
             if (bvError) {
               result.errors.push(`Brand voice for "${project.name}": ${bvError.message}`);
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
                 parent_folder_id: null, // Will update in second pass
                 created_at: folder.createdAt || new Date().toISOString(),
                 updated_at: folder.updatedAt || new Date().toISOString(),
-              })
+              } as any)
               .select()
               .single();
 
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
                 goals: persona.goals || '',
                 created_at: persona.createdAt || new Date().toISOString(),
                 updated_at: persona.updatedAt || new Date().toISOString(),
-              });
+              } as any);
 
             if (personaError) {
               result.errors.push(`Persona "${persona.name}": ${personaError.message}`);
@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
                 template_progress: doc.templateProgress || null,
                 created_at: doc.createdAt || new Date().toISOString(),
                 modified_at: doc.modifiedAt || new Date().toISOString(),
-              })
+              } as any)
               .select()
               .single();
 
@@ -322,7 +322,7 @@ export async function POST(request: NextRequest) {
                 usage_count: snippet.usageCount || 0,
                 created_at: snippet.createdAt || new Date().toISOString(),
                 modified_at: snippet.modifiedAt || new Date().toISOString(),
-              });
+              } as any);
 
             if (snippetError) {
               result.errors.push(`Snippet "${snippet.name}": ${snippetError.message}`);
@@ -347,7 +347,7 @@ export async function POST(request: NextRequest) {
           user_id: userId,
           active_project_id: result.idMapping[activeProjectId],
           settings: {},
-        }, {
+        } as any, {
           onConflict: 'user_id'
         });
     }
