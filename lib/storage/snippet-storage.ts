@@ -14,24 +14,10 @@ import { validateSnippetName, validateSnippetContent } from '@/lib/types/snippet
 import { getProject, getAllProjects } from './project-storage';
 import { logError, logWarning } from '@/lib/utils/error-handling';
 import { logger } from '@/lib/utils/logger';
+import type { Project } from '@/lib/types/project';
 
 // Storage key for projects (used for direct localStorage updates)
 const STORAGE_KEY = 'copyworx_projects';
-
-// ============================================================================
-// Types
-// ============================================================================
-
-/**
- * Extended Project interface with snippets
- * This extends the base Project type to include snippets array
- */
-interface ProjectWithSnippets {
-  id: string;
-  name: string;
-  snippets?: Snippet[];
-  [key: string]: unknown;
-}
 
 // ============================================================================
 // Helper Functions
@@ -60,13 +46,13 @@ function sanitizeText(text: string): string {
  * Get snippets array from project, initializing if needed
  */
 function getProjectSnippets(projectId: string): Snippet[] {
-  const project = getProject(projectId) as ProjectWithSnippets | null;
+  const project = getProject(projectId);
   if (!project) {
     logWarning(`Project not found when getting snippets: ${projectId}`);
     return [];
   }
   
-  // Ensure snippets array exists
+  // Ensure snippets array exists (for backward compatibility)
   if (!Array.isArray(project.snippets)) {
     return [];
   }
@@ -80,8 +66,8 @@ function getProjectSnippets(projectId: string): Snippet[] {
 function saveProjectSnippets(projectId: string, snippets: Snippet[]): void {
   // Save to localStorage directly (don't call updateProject - it tries to sync to Supabase)
   const projects = getAllProjects();
-  const updatedProjects = projects.map(p =>
-    p.id === projectId ? { ...p, snippets } as ProjectWithSnippets : p as ProjectWithSnippets
+  const updatedProjects: Project[] = projects.map(p =>
+    p.id === projectId ? { ...p, snippets } : p
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProjects));
 }
