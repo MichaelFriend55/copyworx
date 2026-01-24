@@ -239,7 +239,7 @@ export function TemplateFormSlideOut({
     if (!targetDocumentId) {
       try {
         const docTitle = generateDocumentTitle(template.name);
-        const newDoc = createDocument(activeProject.id, docTitle);
+        const newDoc = await createDocument(activeProject.id, docTitle);
         targetDocumentId = newDoc.id;
         
         // Set as active document in store
