@@ -139,16 +139,16 @@ export async function POST(request: NextRequest) {
     for (const project of projects) {
       try {
         // Create project
-        const { data: newProject, error: projectError } = await supabase
-          .from('projects')
+        const { data: newProject, error: projectError } = await (supabase
+          .from('projects') as any)
           .insert({
             user_id: userId,
             name: project.name,
             created_at: project.createdAt || new Date().toISOString(),
             updated_at: project.updatedAt || new Date().toISOString(),
-          } as any)
+          })
           .select()
-          .single() as { data: any; error: any };
+          .single();
 
         if (projectError || !newProject) {
           result.errors.push(`Failed to create project "${project.name}": ${projectError?.message}`);
@@ -163,8 +163,8 @@ export async function POST(request: NextRequest) {
         // Migrate brand voice
         if (project.brandVoice && project.brandVoice.brandName) {
           try {
-            const { error: bvError } = await supabase
-              .from('brand_voices')
+            const { error: bvError } = await (supabase
+              .from('brand_voices') as any)
               .insert({
                 project_id: projectId,
                 user_id: userId,
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
                 forbidden_words: project.brandVoice.forbiddenWords || [],
                 brand_values: project.brandVoice.brandValues || [],
                 mission_statement: project.brandVoice.missionStatement || '',
-              } as any);
+              });
 
             if (bvError) {
               result.errors.push(`Brand voice for "${project.name}": ${bvError.message}`);
@@ -192,8 +192,8 @@ export async function POST(request: NextRequest) {
         // First pass: create all folders without parents
         for (const folder of project.folders || []) {
           try {
-            const { data: newFolder, error: folderError } = await supabase
-              .from('folders')
+            const { data: newFolder, error: folderError } = await (supabase
+              .from('folders') as any)
               .insert({
                 project_id: projectId,
                 user_id: userId,
@@ -201,9 +201,9 @@ export async function POST(request: NextRequest) {
                 parent_folder_id: null, // Will update in second pass
                 created_at: folder.createdAt || new Date().toISOString(),
                 updated_at: folder.updatedAt || new Date().toISOString(),
-              } as any)
+              })
               .select()
-              .single() as { data: any; error: any };
+              .single();
 
             if (folderError || !newFolder) {
               result.errors.push(`Folder "${folder.name}": ${folderError?.message}`);
@@ -221,9 +221,9 @@ export async function POST(request: NextRequest) {
           if (folder.parentFolderId && folderIdMapping[folder.id]) {
             const newParentId = folderIdMapping[folder.parentFolderId];
             if (newParentId) {
-              await supabase
-                .from('folders')
-                .update({ parent_folder_id: newParentId } as any)
+              await (supabase
+                .from('folders') as any)
+                .update({ parent_folder_id: newParentId })
                 .eq('id', folderIdMapping[folder.id]);
             }
           }
@@ -232,8 +232,8 @@ export async function POST(request: NextRequest) {
         // Migrate personas
         for (const persona of project.personas || []) {
           try {
-            const { error: personaError } = await supabase
-              .from('personas')
+            const { error: personaError } = await (supabase
+              .from('personas') as any)
               .insert({
                 project_id: projectId,
                 user_id: userId,
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
                 goals: persona.goals || '',
                 created_at: persona.createdAt || new Date().toISOString(),
                 updated_at: persona.updatedAt || new Date().toISOString(),
-              } as any);
+              });
 
             if (personaError) {
               result.errors.push(`Persona "${persona.name}": ${personaError.message}`);
@@ -264,8 +264,8 @@ export async function POST(request: NextRequest) {
         // First pass: create all documents without parent versions
         for (const doc of project.documents || []) {
           try {
-            const { data: newDoc, error: docError } = await supabase
-              .from('documents')
+            const { data: newDoc, error: docError } = await (supabase
+              .from('documents') as any)
               .insert({
                 project_id: projectId,
                 user_id: userId,
@@ -279,9 +279,9 @@ export async function POST(request: NextRequest) {
                 template_progress: doc.templateProgress || null,
                 created_at: doc.createdAt || new Date().toISOString(),
                 modified_at: doc.modifiedAt || new Date().toISOString(),
-              } as any)
+              })
               .select()
-              .single() as { data: any; error: any };
+              .single();
 
             if (docError || !newDoc) {
               result.errors.push(`Document "${doc.title}": ${docError?.message}`);
@@ -299,9 +299,9 @@ export async function POST(request: NextRequest) {
           if (doc.parentVersionId && documentIdMapping[doc.id]) {
             const newParentId = documentIdMapping[doc.parentVersionId];
             if (newParentId) {
-              await supabase
-                .from('documents')
-                .update({ parent_version_id: newParentId } as any)
+              await (supabase
+                .from('documents') as any)
+                .update({ parent_version_id: newParentId })
                 .eq('id', documentIdMapping[doc.id]);
             }
           }
@@ -310,8 +310,8 @@ export async function POST(request: NextRequest) {
         // Migrate snippets
         for (const snippet of project.snippets || []) {
           try {
-            const { error: snippetError } = await supabase
-              .from('snippets')
+            const { error: snippetError } = await (supabase
+              .from('snippets') as any)
               .insert({
                 project_id: projectId,
                 user_id: userId,
@@ -322,7 +322,7 @@ export async function POST(request: NextRequest) {
                 usage_count: snippet.usageCount || 0,
                 created_at: snippet.createdAt || new Date().toISOString(),
                 modified_at: snippet.modifiedAt || new Date().toISOString(),
-              } as any);
+              });
 
             if (snippetError) {
               result.errors.push(`Snippet "${snippet.name}": ${snippetError.message}`);
@@ -341,13 +341,13 @@ export async function POST(request: NextRequest) {
 
     // Update active project if provided
     if (activeProjectId && result.idMapping[activeProjectId]) {
-      await supabase
-        .from('user_settings')
+      await (supabase
+        .from('user_settings') as any)
         .upsert({
           user_id: userId,
           active_project_id: result.idMapping[activeProjectId],
           settings: {},
-        } as any, {
+        }, {
           onConflict: 'user_id'
         });
     }
