@@ -221,7 +221,7 @@ export function BrandVoiceSlideOut({
       // Brand voices are stored in a separate table, so no project update required
       const { projects } = useWorkspaceStore.getState();
       const updatedProjects = projects.map(p =>
-        p.id === activeProjectId ? { ...p, brandVoice: undefined } : p
+        p.id === activeProjectId ? { ...p, brandVoice: null } : p
       );
       useWorkspaceStore.setState({ projects: updatedProjects });
       
