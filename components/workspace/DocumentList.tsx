@@ -803,11 +803,11 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
   }, []);
   
   /** Move folder to another folder */
-  const handleMoveFolder = useCallback((folderId: string) => {
+  const handleMoveFolder = useCallback(async (folderId: string) => {
     if (!activeProjectId) return;
     
     // Get all folders except the one being moved
-    const allFolders = getAllFolders(activeProjectId).filter(f => f.id !== folderId);
+    const allFolders = (await getAllFolders(activeProjectId)).filter(f => f.id !== folderId);
     
     if (allFolders.length === 0) {
       const moveToRoot = window.confirm('No other folders. Move to root level?');
