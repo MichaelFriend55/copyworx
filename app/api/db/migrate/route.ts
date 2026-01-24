@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
             if (newParentId) {
               await supabase
                 .from('folders')
-                .update({ parent_folder_id: newParentId })
+                .update({ parent_folder_id: newParentId } as any)
                 .eq('id', folderIdMapping[folder.id]);
             }
           }
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
             if (newParentId) {
               await supabase
                 .from('documents')
-                .update({ parent_version_id: newParentId })
+                .update({ parent_version_id: newParentId } as any)
                 .eq('id', documentIdMapping[doc.id]);
             }
           }
