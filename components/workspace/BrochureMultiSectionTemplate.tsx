@@ -261,31 +261,32 @@ export function BrochureMultiSectionTemplate({
    * Load or initialize template progress from document
    */
   useEffect(() => {
-    logger.log('🔄 BrochureMultiSectionTemplate: Checking progress...', {
-      activeDocumentId,
-      activeProjectId,
-      hasProgress: !!progress
-    });
-    
-    if (!activeDocumentId || !activeProjectId) {
-      logger.warn('⚠️ Missing activeDocumentId or activeProjectId', {
+    const loadProgress = async () => {
+      logger.log('🔄 BrochureMultiSectionTemplate: Checking progress...', {
         activeDocumentId,
-        activeProjectId
+        activeProjectId,
+        hasProgress: !!progress
       });
-      return;
-    }
-    
-    const doc = getDocument(activeProjectId, activeDocumentId);
-    if (!doc) {
-      logger.error('❌ Document not found:', activeDocumentId);
-      return;
-    }
-    
-    logger.log('📄 Document loaded:', {
-      id: doc.id,
-      title: doc.title,
-      hasTemplateProgress: !!doc.templateProgress
-    });
+      
+      if (!activeDocumentId || !activeProjectId) {
+        logger.warn('⚠️ Missing activeDocumentId or activeProjectId', {
+          activeDocumentId,
+          activeProjectId
+        });
+        return;
+      }
+      
+      const doc = await getDocument(activeProjectId, activeDocumentId);
+      if (!doc) {
+        logger.error('❌ Document not found:', activeDocumentId);
+        return;
+      }
+      
+      logger.log('📄 Document loaded:', {
+        id: doc.id,
+        title: doc.title,
+        hasTemplateProgress: !!doc.templateProgress
+      });
     
     if (doc.templateProgress && doc.templateProgress.templateId === 'brochure-multi-section') {
       // Resume existing progress
@@ -340,6 +341,9 @@ export function BrochureMultiSectionTemplate({
         setFormData(initialData);
       }
     }
+    };
+    
+    loadProgress();
   }, [activeDocumentId, activeProjectId]);
   
   /**
