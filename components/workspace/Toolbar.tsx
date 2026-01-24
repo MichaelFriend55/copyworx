@@ -1214,22 +1214,26 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
     // Safety check: only run in browser
     if (typeof window === 'undefined') return;
     
-    try {
-      if (activeProjectId && activeDocumentId) {
-        const document = getDocument(activeProjectId, activeDocumentId);
-        if (document) {
-          // Use baseTitle for cleaner filename (without version suffix)
-          setDocumentTitle(document.baseTitle || document.title);
+    const loadDocumentTitle = async () => {
+      try {
+        if (activeProjectId && activeDocumentId) {
+          const document = await getDocument(activeProjectId, activeDocumentId);
+          if (document) {
+            // Use baseTitle for cleaner filename (without version suffix)
+            setDocumentTitle(document.baseTitle || document.title);
+          } else {
+            setDocumentTitle(undefined);
+          }
         } else {
           setDocumentTitle(undefined);
         }
-      } else {
+      } catch (error) {
+        logger.error('Error getting document title:', error);
         setDocumentTitle(undefined);
       }
-    } catch (error) {
-      logger.error('Error getting document title:', error);
-      setDocumentTitle(undefined);
-    }
+    };
+    
+    loadDocumentTitle();
   }, [activeProjectId, activeDocumentId]);
 
 
