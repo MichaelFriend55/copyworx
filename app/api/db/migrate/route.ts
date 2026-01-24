@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
             updated_at: project.updatedAt || new Date().toISOString(),
           } as any)
           .select()
-          .single();
+          .single() as { data: any; error: any };
 
         if (projectError || !newProject) {
           result.errors.push(`Failed to create project "${project.name}": ${projectError?.message}`);
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
                 updated_at: folder.updatedAt || new Date().toISOString(),
               } as any)
               .select()
-              .single();
+              .single() as { data: any; error: any };
 
             if (folderError || !newFolder) {
               result.errors.push(`Folder "${folder.name}": ${folderError?.message}`);
@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
                 modified_at: doc.modifiedAt || new Date().toISOString(),
               } as any)
               .select()
-              .single();
+              .single() as { data: any; error: any };
 
             if (docError || !newDoc) {
               result.errors.push(`Document "${doc.title}": ${docError?.message}`);
