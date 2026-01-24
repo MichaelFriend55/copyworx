@@ -11,7 +11,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
-import type { Database } from '@/lib/types/database';
 import { 
   requireUserId, 
   unauthorizedResponse, 
@@ -19,15 +18,6 @@ import {
   notFoundResponse,
   internalErrorResponse 
 } from '@/lib/utils/api-auth';
-
-type FolderRow = Database['public']['Tables']['folders']['Row'];
-type FolderInsert = Database['public']['Tables']['folders']['Insert'];
-type FolderUpdate = Database['public']['Tables']['folders']['Update'];
-
-// Type-safe helper to bypass TypeScript's overly strict Supabase typing
-function supabaseQuery<T>(query: any): Promise<{ data: T | null; error: any }> {
-  return query as unknown as Promise<{ data: T | null; error: any }>;
-}
 
 // ============================================================================
 // GET - Fetch folders
@@ -51,8 +41,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch single folder by ID
     if (folderId) {
-      const { data: folder, error } = await supabase
-        .from('folders')
+      const { data: folder, error } = await (supabase
+        .from('folders') as any)
         .select('*')
         .eq('id', folderId)
         .eq('user_id', userId)
@@ -73,8 +63,8 @@ export async function GET(request: NextRequest) {
       return badRequestResponse('Project ID is required');
     }
 
-    const { data: folders, error } = await supabase
-      .from('folders')
+    const { data: folders, error } = await (supabase
+      .from('folders') as any)
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
@@ -128,8 +118,8 @@ export async function POST(request: NextRequest) {
 
     // If parent_folder_id provided, verify it exists and belongs to user
     if (parent_folder_id) {
-      const { data: parentFolder, error: parentError } = await supabase
-        .from('folders')
+      const { data: parentFolder, error: parentError } = await (supabase
+        .from('folders') as any)
         .select('id')
         .eq('id', parent_folder_id)
         .eq('user_id', userId)
@@ -148,13 +138,11 @@ export async function POST(request: NextRequest) {
       parent_folder_id: parent_folder_id || null,
     };
 
-    const query = supabase
-      .from('folders')
-      .insert(insertData as any)
+    const { data: folder, error } = await (supabase
+      .from('folders') as any)
+      .insert(insertData)
       .select()
       .single();
-    
-    const { data: folder, error } = await supabaseQuery<FolderRow>(query);
 
     if (error) {
       console.error('Supabase error creating folder:', error);
@@ -194,7 +182,7 @@ export async function PUT(request: NextRequest) {
       return badRequestResponse('Folder ID is required');
     }
 
-    const updates: FolderUpdate = {};
+    const updates: Record<string, unknown> = {};
 
     // Validate and add name update
     if (name !== undefined) {
@@ -216,8 +204,8 @@ export async function PUT(request: NextRequest) {
 
       if (parent_folder_id !== null) {
         // Verify new parent exists and belongs to user
-        const { data: parentFolder, error: parentError } = await supabase
-          .from('folders')
+        const { data: parentFolder, error: parentError } = await (supabase
+          .from('folders') as any)
           .select('id')
           .eq('id', parent_folder_id)
           .eq('user_id', userId)
@@ -238,16 +226,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update the folder
-    const query = supabase
-      .from('folders')
-      // @ts-expect-error - Supabase query builder types resolve to 'never' with strict settings
-      .update(updates as any)
+    const { data: folder, error } = await (supabase
+      .from('folders') as any)
+      .update(updates)
       .eq('id', id)
       .eq('user_id', userId)
       .select()
       .single();
-    
-    const { data: folder, error } = await supabaseQuery<FolderRow>(query);
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -292,8 +277,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check for subfolders
-    const { data: subfolders } = await supabase
-      .from('folders')
+    const { data: subfolders } = await (supabase
+      .from('folders') as any)
       .select('id')
       .eq('parent_folder_id', id)
       .eq('user_id', userId);
@@ -305,8 +290,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check for documents in folder
-    const { data: documents } = await supabase
-      .from('documents')
+    const { data: documents } = await (supabase
+      .from('documents') as any)
       .select('id')
       .eq('folder_id', id)
       .eq('user_id', userId);
@@ -318,8 +303,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // If force=true, delete everything (cascading deletes handle subfolders)
-    const { error } = await supabase
-      .from('folders')
+    const { error } = await (supabase
+      .from('folders') as any)
       .delete()
       .eq('id', id)
       .eq('user_id', userId);

@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch single persona by ID
     if (personaId) {
-      const { data: persona, error } = await supabase
-        .from('personas')
+      const { data: persona, error } = await (supabase
+        .from('personas') as any)
         .select('*')
         .eq('id', personaId)
         .eq('user_id', userId)
@@ -63,8 +63,8 @@ export async function GET(request: NextRequest) {
       return badRequestResponse('Project ID is required');
     }
 
-    const { data: personas, error } = await supabase
-      .from('personas')
+    const { data: personas, error } = await (supabase
+      .from('personas') as any)
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
@@ -135,8 +135,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the persona
-    const { data: persona, error } = await supabase
-      .from('personas')
+    const { data: persona, error } = await (supabase
+      .from('personas') as any)
       .insert({
         project_id,
         user_id: userId,
@@ -231,8 +231,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update the persona
-    const { data: persona, error } = await supabase
-      .from('personas')
+    const { data: persona, error } = await (supabase
+      .from('personas') as any)
       .update(filteredUpdates)
       .eq('id', id)
       .eq('user_id', userId)
@@ -280,8 +280,8 @@ export async function DELETE(request: NextRequest) {
       return badRequestResponse('Persona ID is required');
     }
 
-    const { error } = await supabase
-      .from('personas')
+    const { error } = await (supabase
+      .from('personas') as any)
       .delete()
       .eq('id', id)
       .eq('user_id', userId);

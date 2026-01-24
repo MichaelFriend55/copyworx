@@ -10,7 +10,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
-import type { Database } from '@/lib/types/database';
 import { 
   requireUserId, 
   unauthorizedResponse, 
@@ -18,15 +17,6 @@ import {
   notFoundResponse,
   internalErrorResponse 
 } from '@/lib/utils/api-auth';
-
-type BrandVoiceRow = Database['public']['Tables']['brand_voices']['Row'];
-type BrandVoiceInsert = Database['public']['Tables']['brand_voices']['Insert'];
-type BrandVoiceUpdate = Database['public']['Tables']['brand_voices']['Update'];
-
-// Type-safe helper to bypass TypeScript's overly strict Supabase typing
-function supabaseUpdate<T>(query: any): Promise<{ data: T | null; error: any }> {
-  return query as unknown as Promise<{ data: T | null; error: any }>;
-}
 
 // ============================================================================
 // GET - Fetch brand voice for a project
@@ -51,8 +41,8 @@ export async function GET(request: NextRequest) {
       return badRequestResponse('Project ID is required');
     }
 
-    const { data: brandVoice, error } = await supabase
-      .from('brand_voices')
+    const { data: brandVoice, error } = await (supabase
+      .from('brand_voices') as any)
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
@@ -112,8 +102,8 @@ export async function POST(request: NextRequest) {
       return badRequestResponse('Brand name is required');
     }
 
-    // Prepare typed data object
-    const brandVoiceData: BrandVoiceUpdate = {
+    // Prepare data object
+    const brandVoiceData = {
       brand_name: brand_name.trim(),
       brand_tone: typeof brand_tone === 'string' ? brand_tone : '',
       approved_phrases: Array.isArray(approved_phrases) ? approved_phrases : [],
@@ -124,26 +114,23 @@ export async function POST(request: NextRequest) {
 
     // Check if brand voice already exists for this project
     const { data: existing, error: existingError } = await (supabase
-      .from('brand_voices')
+      .from('brand_voices') as any)
       .select('id')
       .eq('project_id', project_id)
       .eq('user_id', userId)
-      .maybeSingle() as unknown as Promise<{ data: { id: string } | null; error: any }>);
+      .maybeSingle();
 
-    let result: BrandVoiceRow;
+    let result: any;
 
     if (existing && !existingError) {
       // Update existing brand voice
-      const query = supabase
-        .from('brand_voices')
-        // @ts-expect-error - Supabase query builder types resolve to 'never' with strict settings
-        .update(brandVoiceData as any)
+      const { data, error } = await (supabase
+        .from('brand_voices') as any)
+        .update(brandVoiceData)
         .eq('id', existing.id)
         .eq('user_id', userId)
         .select()
         .single();
-      
-      const { data, error } = await supabaseUpdate<BrandVoiceRow>(query);
 
       if (error) {
         console.error('Supabase error updating brand voice:', error);
@@ -163,13 +150,11 @@ export async function POST(request: NextRequest) {
         mission_statement: brandVoiceData.mission_statement,
       };
 
-      const query = supabase
-        .from('brand_voices')
-        .insert(insertData as any)
+      const { data, error } = await (supabase
+        .from('brand_voices') as any)
+        .insert(insertData)
         .select()
         .single();
-      
-      const { data, error } = await supabaseUpdate<BrandVoiceRow>(query);
 
       if (error) {
         console.error('Supabase error creating brand voice:', error);
@@ -211,8 +196,8 @@ export async function DELETE(request: NextRequest) {
       return badRequestResponse('Project ID is required');
     }
 
-    const { error } = await supabase
-      .from('brand_voices')
+    const { error } = await (supabase
+      .from('brand_voices') as any)
       .delete()
       .eq('project_id', projectId)
       .eq('user_id', userId);

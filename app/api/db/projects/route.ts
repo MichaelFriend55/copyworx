@@ -50,8 +50,8 @@ export async function GET() {
     const supabase = getSupabaseAdmin();
 
     // Fetch projects for this user
-    const { data: projects, error } = await supabase
-      .from('projects')
+    const { data: projects, error } = await (supabase
+      .from('projects') as any)
       .select('*')
       .eq('user_id', userId)
       .order('updated_at', { ascending: false });
@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the project
-    const { data: project, error } = await supabase
-      .from('projects')
+    const { data: project, error } = await (supabase
+      .from('projects') as any)
       .insert({
         user_id: userId,
         name: name.trim(),
@@ -172,8 +172,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update the project
-    const { data: project, error } = await supabase
-      .from('projects')
+    const { data: project, error } = await (supabase
+      .from('projects') as any)
       .update(updates)
       .eq('id', id)
       .eq('user_id', userId)
@@ -225,8 +225,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete the project (cascading deletes will handle related data)
-    const { error } = await supabase
-      .from('projects')
+    const { error } = await (supabase
+      .from('projects') as any)
       .delete()
       .eq('id', id)
       .eq('user_id', userId);

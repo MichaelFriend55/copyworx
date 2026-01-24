@@ -32,8 +32,8 @@ export async function GET() {
     const userId = await requireUserId();
     const supabase = getSupabaseAdmin();
 
-    const { data: settings, error } = await supabase
-      .from('user_settings')
+    const { data: settings, error } = await (supabase
+      .from('user_settings') as any)
       .select('*')
       .eq('user_id', userId)
       .single();
@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
     const { active_project_id, settings } = body;
 
     // Check if settings already exist for this user
-    const { data: existing } = await supabase
-      .from('user_settings')
+    const { data: existing } = await (supabase
+      .from('user_settings') as any)
       .select('id, settings')
       .eq('user_id', userId)
       .single();
@@ -108,8 +108,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(existing);
       }
 
-      const { data, error } = await supabase
-        .from('user_settings')
+      const { data, error } = await (supabase
+        .from('user_settings') as any)
         .update(updates)
         .eq('id', existing.id)
         .select()
@@ -122,8 +122,8 @@ export async function POST(request: NextRequest) {
       result = data;
     } else {
       // Create new settings
-      const { data, error } = await supabase
-        .from('user_settings')
+      const { data, error } = await (supabase
+        .from('user_settings') as any)
         .insert({
           user_id: userId,
           active_project_id: active_project_id || null,

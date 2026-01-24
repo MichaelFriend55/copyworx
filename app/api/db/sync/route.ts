@@ -131,35 +131,35 @@ export async function GET(request: NextRequest) {
       snippetsResult,
       settingsResult,
     ] = await Promise.all([
-      supabase
-        .from('projects')
+      (supabase
+        .from('projects') as any)
         .select('*')
         .eq('user_id', userId)
         .order('updated_at', { ascending: false }),
-      supabase
-        .from('brand_voices')
+      (supabase
+        .from('brand_voices') as any)
         .select('*')
         .eq('user_id', userId),
-      supabase
-        .from('personas')
+      (supabase
+        .from('personas') as any)
         .select('*')
         .eq('user_id', userId),
-      supabase
-        .from('folders')
+      (supabase
+        .from('folders') as any)
         .select('*')
         .eq('user_id', userId),
-      supabase
-        .from('documents')
+      (supabase
+        .from('documents') as any)
         .select('*')
         .eq('user_id', userId)
         .order('modified_at', { ascending: false }),
-      supabase
-        .from('snippets')
+      (supabase
+        .from('snippets') as any)
         .select('*')
         .eq('user_id', userId)
         .order('modified_at', { ascending: false }),
-      supabase
-        .from('user_settings')
+      (supabase
+        .from('user_settings') as any)
         .select('active_project_id')
         .eq('user_id', userId)
         .single(),
@@ -180,15 +180,15 @@ export async function GET(request: NextRequest) {
     const activeProjectId = settingsResult.data?.active_project_id || null;
 
     // Build the synced projects with nested data
-    const syncedProjects: SyncedProject[] = projects.map(project => {
+    const syncedProjects: SyncedProject[] = projects.map((project: any) => {
       // Find brand voice for this project
-      const brandVoice = brandVoices.find(bv => bv.project_id === project.id);
+      const brandVoice = brandVoices.find((bv: any) => bv.project_id === project.id);
       
       // Filter related data for this project
-      const projectPersonas = personas.filter(p => p.project_id === project.id);
-      const projectFolders = folders.filter(f => f.project_id === project.id);
-      const projectDocuments = documents.filter(d => d.project_id === project.id);
-      const projectSnippets = snippets.filter(s => s.project_id === project.id);
+      const projectPersonas = personas.filter((p: any) => p.project_id === project.id);
+      const projectFolders = folders.filter((f: any) => f.project_id === project.id);
+      const projectDocuments = documents.filter((d: any) => d.project_id === project.id);
+      const projectSnippets = snippets.filter((s: any) => s.project_id === project.id);
 
       return {
         id: project.id,
@@ -203,7 +203,7 @@ export async function GET(request: NextRequest) {
           missionStatement: brandVoice.mission_statement,
           savedAt: brandVoice.updated_at ? new Date(brandVoice.updated_at) : undefined,
         } : null,
-        personas: projectPersonas.map(p => ({
+        personas: projectPersonas.map((p: any) => ({
           id: p.id,
           name: p.name,
           photoUrl: p.photo_url || undefined,
@@ -215,7 +215,7 @@ export async function GET(request: NextRequest) {
           createdAt: p.created_at,
           updatedAt: p.updated_at,
         })),
-        folders: projectFolders.map(f => ({
+        folders: projectFolders.map((f: any) => ({
           id: f.id,
           name: f.name,
           projectId: f.project_id,
@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
           createdAt: f.created_at,
           updatedAt: f.updated_at,
         })),
-        documents: projectDocuments.map(d => ({
+        documents: projectDocuments.map((d: any) => ({
           id: d.id,
           projectId: d.project_id,
           baseTitle: d.base_title,
@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
           metadata: d.metadata as SyncedDocument['metadata'],
           templateProgress: d.template_progress,
         })),
-        snippets: projectSnippets.map(s => ({
+        snippets: projectSnippets.map((s: any) => ({
           id: s.id,
           projectId: s.project_id,
           name: s.name,

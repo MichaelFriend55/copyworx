@@ -11,7 +11,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
-import type { Database } from '@/lib/types/database';
 import { 
   requireUserId, 
   unauthorizedResponse, 
@@ -19,15 +18,6 @@ import {
   notFoundResponse,
   internalErrorResponse 
 } from '@/lib/utils/api-auth';
-
-type DocumentRow = Database['public']['Tables']['documents']['Row'];
-type DocumentInsert = Database['public']['Tables']['documents']['Insert'];
-type DocumentUpdate = Database['public']['Tables']['documents']['Update'];
-
-// Type-safe helper to bypass TypeScript's overly strict Supabase typing
-function supabaseQuery<T>(query: any): Promise<{ data: T | null; error: any }> {
-  return query as unknown as Promise<{ data: T | null; error: any }>;
-}
 
 // ============================================================================
 // GET - Fetch documents
@@ -52,8 +42,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch single document by ID
     if (documentId) {
-      const { data: document, error } = await supabase
-        .from('documents')
+      const { data: document, error } = await (supabase
+        .from('documents') as any)
         .select('*')
         .eq('id', documentId)
         .eq('user_id', userId)
@@ -76,8 +66,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch document versions by base_title (if provided)
     if (baseTitle) {
-      const { data: documents, error } = await supabase
-        .from('documents')
+      const { data: documents, error } = await (supabase
+        .from('documents') as any)
         .select('*')
         .eq('project_id', projectId)
         .eq('user_id', userId)
@@ -92,8 +82,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all documents for a project (no base_title filter)
-    const { data: documents, error } = await supabase
-      .from('documents')
+    const { data: documents, error } = await (supabase
+      .from('documents') as any)
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId)
@@ -169,13 +159,11 @@ export async function POST(request: NextRequest) {
       template_progress,
     };
 
-    const query = supabase
-      .from('documents')
-      .insert(insertData as any)
+    const { data: document, error } = await (supabase
+      .from('documents') as any)
+      .insert(insertData)
       .select()
       .single();
-    
-    const { data: document, error } = await supabaseQuery<DocumentRow>(query);
 
     if (error) {
       console.error('Supabase error creating document:', error);
@@ -221,10 +209,10 @@ export async function PUT(request: NextRequest) {
       'metadata', 'template_progress'
     ];
     
-    const filteredUpdates: DocumentUpdate = {};
+    const filteredUpdates: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
-        (filteredUpdates as any)[field] = updates[field];
+        filteredUpdates[field] = updates[field];
       }
     }
 
@@ -245,16 +233,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update the document
-    const query = supabase
-      .from('documents')
-      // @ts-expect-error - Supabase query builder types resolve to 'never' with strict settings
-      .update(filteredUpdates as any)
+    const { data: document, error } = await (supabase
+      .from('documents') as any)
+      .update(filteredUpdates)
       .eq('id', id)
       .eq('user_id', userId)
       .select()
       .single();
-    
-    const { data: document, error } = await supabaseQuery<DocumentRow>(query);
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -297,8 +282,8 @@ export async function DELETE(request: NextRequest) {
       return badRequestResponse('Document ID is required');
     }
 
-    const { error } = await supabase
-      .from('documents')
+    const { error } = await (supabase
+      .from('documents') as any)
       .delete()
       .eq('id', id)
       .eq('user_id', userId);

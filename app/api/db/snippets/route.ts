@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch single snippet by ID
     if (snippetId) {
-      const { data: snippet, error } = await supabase
-        .from('snippets')
+      const { data: snippet, error } = await (supabase
+        .from('snippets') as any)
         .select('*')
         .eq('id', snippetId)
         .eq('user_id', userId)
@@ -66,8 +66,8 @@ export async function GET(request: NextRequest) {
       return badRequestResponse('Project ID is required');
     }
 
-    let query = supabase
-      .from('snippets')
+    let query = (supabase
+      .from('snippets') as any)
       .select('*')
       .eq('project_id', projectId)
       .eq('user_id', userId);
@@ -145,8 +145,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the snippet
-    const { data: snippet, error } = await supabase
-      .from('snippets')
+    const { data: snippet, error } = await (supabase
+      .from('snippets') as any)
       .insert({
         project_id,
         user_id: userId,
@@ -235,8 +235,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update the snippet
-    const { data: snippet, error } = await supabase
-      .from('snippets')
+    const { data: snippet, error } = await (supabase
+      .from('snippets') as any)
       .update(filteredUpdates)
       .eq('id', id)
       .eq('user_id', userId)
@@ -284,42 +284,20 @@ export async function PATCH(request: NextRequest) {
       return badRequestResponse('Snippet ID is required');
     }
 
-    // Increment usage count using RPC or raw SQL
-    const { data: snippet, error } = await supabase
-      .from('snippets')
-      .update({
-        usage_count: supabase.rpc ? undefined : 1 // Placeholder - will use RPC
-      })
+    // Get current snippet and increment usage count
+    const { data: currentSnippet } = await (supabase
+      .from('snippets') as any)
+      .select('usage_count')
       .eq('id', id)
       .eq('user_id', userId)
-      .select()
       .single();
 
-    // Alternative: Use raw increment
-    const { error: updateError } = await supabase.rpc('increment_snippet_usage', {
-      snippet_id: id,
-      user_id_param: userId
-    }).catch(() => {
-      // If RPC doesn't exist, do manual increment
-      return { error: null };
-    });
-
-    // Fallback: Manual increment
-    if (snippet || !updateError) {
-      const { data: currentSnippet } = await supabase
-        .from('snippets')
-        .select('usage_count')
+    if (currentSnippet) {
+      await (supabase
+        .from('snippets') as any)
+        .update({ usage_count: (currentSnippet.usage_count || 0) + 1 })
         .eq('id', id)
-        .eq('user_id', userId)
-        .single();
-
-      if (currentSnippet) {
-        await supabase
-          .from('snippets')
-          .update({ usage_count: (currentSnippet.usage_count || 0) + 1 })
-          .eq('id', id)
-          .eq('user_id', userId);
-      }
+        .eq('user_id', userId);
     }
 
     return NextResponse.json({ success: true, id });
@@ -355,8 +333,8 @@ export async function DELETE(request: NextRequest) {
       return badRequestResponse('Snippet ID is required');
     }
 
-    const { error } = await supabase
-      .from('snippets')
+    const { error } = await (supabase
+      .from('snippets') as any)
       .delete()
       .eq('id', id)
       .eq('user_id', userId);
