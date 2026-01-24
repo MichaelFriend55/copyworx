@@ -979,7 +979,7 @@ export function MyProjectsSlideOut({
   }, [activeProjectId]);
 
   // Create new document in active project
-  const handleCreateDocument = useCallback(() => {
+  const handleCreateDocument = useCallback(async () => {
     if (!activeProjectId) {
       window.alert('Please select a project first');
       return;
@@ -989,7 +989,7 @@ export function MyProjectsSlideOut({
     if (!title?.trim()) return;
     
     try {
-      const newDoc = createDocument(activeProjectId, title.trim());
+      const newDoc = await createDocument(activeProjectId, title.trim());
       setRefreshKey(k => k + 1);
       handleDocumentSelect(newDoc);
     } catch (error) {
