@@ -76,8 +76,9 @@ export function TemplateGenerator({
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generationSuccess, setGenerationSuccess] = useState(false);
   
-  // Get personas for current project
-  const personas = activeProject ? getProjectPersonas(activeProject.id) : [];
+  // Personas state
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  
   const hasBrandVoice = activeProject?.brandVoice?.brandName ? true : false;
   
   // Get the icon component from lucide-react
@@ -95,6 +96,26 @@ export function TemplateGenerator({
     });
     setFormData(initialData);
   }, [template]);
+  
+  // Load personas for current project
+  useEffect(() => {
+    const loadPersonas = async () => {
+      if (!activeProject) {
+        setPersonas([]);
+        return;
+      }
+      
+      try {
+        const projectPersonas = await getProjectPersonas(activeProject.id);
+        setPersonas(projectPersonas);
+      } catch (error) {
+        logger.error('❌ Failed to load personas:', error);
+        setPersonas([]);
+      }
+    };
+    
+    loadPersonas();
+  }, [activeProject]);
   
   /**
    * Validate form fields
