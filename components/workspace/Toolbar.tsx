@@ -1180,6 +1180,11 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
   const [documentTitle, setDocumentTitle] = useState<string | undefined>(undefined);
   // Force re-render counter for editor state updates (undo/redo availability)
   const [, forceUpdate] = useState(0);
+  
+  // Scroll indicator states
+  const [isScrolledLeft, setIsScrolledLeft] = useState(false);
+  const [isScrolledRight, setIsScrolledRight] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
 
   // Get editor instance from window (set by EditorArea)
   useEffect(() => {
@@ -1237,6 +1242,38 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
     loadDocumentTitle();
   }, [activeProjectId, activeDocumentId]);
 
+  // Scroll indicator detection
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateScrollIndicators = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = header;
+      
+      // Show left fade when scrolled away from left edge
+      setIsScrolledLeft(scrollLeft > 0);
+      
+      // Show right fade when there's more content to scroll to
+      // Add 1px tolerance to handle subpixel rendering issues
+      setIsScrolledRight(scrollLeft < scrollWidth - clientWidth - 1);
+    };
+
+    // Check on mount
+    updateScrollIndicators();
+
+    // Listen for scroll events
+    header.addEventListener('scroll', updateScrollIndicators);
+
+    // Listen for window resize (affects clientWidth)
+    window.addEventListener('resize', updateScrollIndicators);
+
+    // Cleanup
+    return () => {
+      header.removeEventListener('scroll', updateScrollIndicators);
+      window.removeEventListener('resize', updateScrollIndicators);
+    };
+  }, []);
+
 
   // Insert link handler
   const handleInsertLink = (): void => {
@@ -1254,27 +1291,45 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
   };
 
   return (
-    <header
+    <div 
       className={cn(
-        'w-full bg-white',
-        'flex items-center justify-between',
-        'px-6 gap-8',
+        'relative w-full h-16',
         'sticky top-0 z-50',
-        'border-b border-gray-200',
-        'transition-all duration-300',
-        'h-16',
         className
       )}
-      style={{
-        backdropFilter: 'blur(10px)',
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-      }}
       data-print-hide
     >
-      {/* Left section - File operations */}
+      <header
+        ref={headerRef}
+        className={cn(
+          'w-full bg-white',
+          'px-6',
+          'border-b border-gray-200',
+          'transition-all duration-300',
+          'h-16',
+          // Horizontal scrolling support
+          'overflow-x-auto',
+          'scrollbar-hide' // Hide scrollbar while keeping scroll functionality
+        )}
+        style={{
+          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(255, 255, 255, 0.98)',
+          scrollBehavior: 'smooth', // Smooth scrolling
+        }}
+      >
+      {/* Inner wrapper - forces horizontal scroll on small screens */}
       <div className={cn(
-        'flex items-center gap-2 transition-all duration-300'
+        'flex items-center justify-between',
+        'gap-8',
+        'min-w-[1400px]',
+        'w-full',
+        'h-full'
       )}>
+        {/* Left section - File operations */}
+        <div className={cn(
+          'flex items-center gap-2 transition-all duration-300',
+          'flex-shrink-0' // Prevent shrinking on small screens
+        )}>
         <Link href="/copyworx">
           <button
             className={cn(
@@ -1335,7 +1390,8 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
 
       {/* Center section - Formatting controls */}
       <div className={cn(
-        'flex-1 flex items-center justify-center gap-1 transition-all duration-300'
+        'flex-1 flex items-center justify-center gap-1 transition-all duration-300',
+        'min-w-0' // Allow shrinking but maintain space for content
       )}>
         {hasActiveDocument && editor ? (
           <>
@@ -1465,7 +1521,10 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
       </div>
 
       {/* Right section - View Mode and Tour Button */}
-      <div className="flex items-center gap-3">
+      <div className={cn(
+        'flex items-center gap-3',
+        'flex-shrink-0' // Prevent shrinking on small screens
+      )}>
         {/* View Mode Selector - Always visible */}
         <ViewModeSelector
           viewMode={viewMode}
@@ -1491,6 +1550,40 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
           ?
         </button>
       </div>
-    </header>
+      </div> {/* End inner wrapper */}
+
+        {/* Hide scrollbar CSS while maintaining scroll functionality */}
+        <style jsx>{`
+          header::-webkit-scrollbar {
+            display: none;
+          }
+          header {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+          }
+        `}</style>
+      </header>
+
+      {/* Scroll Indicator Fades - positioned outside scrolling header */}
+      {isScrolledLeft && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none z-10 transition-opacity duration-300"
+          style={{
+            background: 'linear-gradient(to right, rgba(0, 0, 0, 0.15) 0%, transparent 100%)',
+          }}
+          aria-hidden="true"
+        />
+      )}
+      
+      {isScrolledRight && (
+        <div
+          className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none z-10 transition-opacity duration-300"
+          style={{
+            background: 'linear-gradient(to left, rgba(0, 0, 0, 0.15) 0%, transparent 100%)',
+          }}
+          aria-hidden="true"
+        />
+      )}
+    </div>
   );
 }
