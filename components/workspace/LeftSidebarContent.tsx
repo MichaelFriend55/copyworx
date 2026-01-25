@@ -92,9 +92,9 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
     [projects, activeProjectId]
   );
   
-  // Track which sections are expanded (Projects and Optimizer start expanded)
+  // Track which sections are expanded (all start collapsed by default)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['projects', 'optimizer', 'insights'])
+    new Set([])
   );
   
   // NOTE: Project initialization is now handled in the parent WorkspacePage

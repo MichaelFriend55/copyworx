@@ -94,7 +94,7 @@ export function SplashPage() {
   const handleNewDocument = async () => {
     if (!activeProjectId) {
       logger.warn('⚠️ No active project, going to workspace anyway');
-      router.push('/copyworx/workspace?action=new');
+      router.push('/workspace?action=new');
       return;
     }
     
@@ -106,11 +106,11 @@ export function SplashPage() {
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
       
       logger.log('✅ Created new document:', newDoc.id);
-      router.push('/copyworx/workspace?action=new');
+      router.push('/workspace?action=new');
     } catch (error) {
       logger.error('❌ Failed to create document:', error);
       // Still navigate to workspace
-      router.push('/copyworx/workspace?action=new');
+      router.push('/workspace?action=new');
     }
   };
 
@@ -136,7 +136,7 @@ export function SplashPage() {
     // Check for active project
     if (!activeProjectId) {
       logger.warn('⚠️ No active project, cannot create document');
-      router.push('/copyworx/workspace?template=' + templateId);
+      router.push('/workspace?template=' + templateId);
       return;
     }
     
@@ -149,11 +149,11 @@ export function SplashPage() {
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
       
       // Navigate to workspace with both template and document IDs
-      router.push(`/copyworx/workspace?template=${templateId}&document=${newDoc.id}`);
+      router.push(`/workspace?template=${templateId}&document=${newDoc.id}`);
     } catch (error) {
       logger.error('❌ Failed to create document for template:', error);
       // Still navigate to workspace with just template ID
-      router.push('/copyworx/workspace?template=' + templateId);
+      router.push('/workspace?template=' + templateId);
     }
   };
 
@@ -227,18 +227,18 @@ export function SplashPage() {
           }
 
           // Navigate to workspace
-          router.push(`/copyworx/workspace?document=${newDoc.id}&import=true`);
+          router.push(`/workspace?document=${newDoc.id}&import=true`);
         } catch (error) {
           logger.error('❌ Failed to store file:', error);
           // Navigate anyway, document is created
-          router.push(`/copyworx/workspace?document=${newDoc.id}`);
+          router.push(`/workspace?document=${newDoc.id}`);
         }
       };
 
       reader.onerror = () => {
         logger.error('❌ Failed to read file');
         // Still navigate, workspace can handle empty document
-        router.push(`/copyworx/workspace?document=${newDoc.id}`);
+        router.push(`/workspace?document=${newDoc.id}`);
       };
 
       // Read file appropriately based on type

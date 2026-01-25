@@ -74,7 +74,7 @@ export default function SignInPage() {
                 alert: 'border-red-200 bg-red-50 text-red-800',
               },
             }}
-            forceRedirectUrl="/dashboard"
+            forceRedirectUrl="/workspace"
             signUpUrl="/sign-up"
           />
         </div>

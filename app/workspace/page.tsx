@@ -1,6 +1,7 @@
 /**
- * @file app/copyworx/workspace/page.tsx
+ * @file app/workspace/page.tsx
  * @description Main workspace page with document version control
+ * Route: /workspace
  * 
  * Features:
  * - Document list with version grouping

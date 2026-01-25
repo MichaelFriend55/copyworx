@@ -3,8 +3,8 @@
  * @description Dynamic project route that redirects to workspace with specific project loaded
  * 
  * Purpose:
- * - Handles navigation from dashboard project cards
- * - Redirects /projects/[id] → /copyworx/workspace?projectId=[id]
+ * - Handles navigation from project cards
+ * - Redirects /projects/[id] → /workspace?projectId=[id]
  * - Enables direct project linking and bookmarking
  * 
  * Security:
@@ -39,9 +39,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   // Validate projectId exists
   if (!params.projectId) {
     // If no projectId, redirect to workspace without project
-    redirect('/copyworx/workspace');
+    redirect('/workspace');
   }
 
   // Redirect to workspace with project ID as query parameter
-  redirect(`/copyworx/workspace?projectId=${params.projectId}`);
+  redirect(`/workspace?projectId=${params.projectId}`);
 }

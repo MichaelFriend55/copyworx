@@ -332,7 +332,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       // Document Insights initial state
       documentInsights: {
         isActive: true,
-        isExpanded: true,
+        isExpanded: false,
         updateFrequency: 'onPause' as InsightsUpdateFrequency,
         enabledMetrics: {
           readability: true,
@@ -1121,7 +1121,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         viewMode: state.viewMode,
         documentInsights: {
           isActive: state.documentInsights.isActive,
-          isExpanded: state.documentInsights.isExpanded,
+          // isExpanded intentionally NOT persisted - always starts collapsed
           updateFrequency: state.documentInsights.updateFrequency,
           enabledMetrics: state.documentInsights.enabledMetrics,
           // Don't persist transient data

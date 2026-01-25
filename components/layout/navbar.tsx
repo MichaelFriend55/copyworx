@@ -114,7 +114,7 @@ export function Navbar() {
             {/* Show when user IS signed in */}
             <SignedIn>
               <Button variant="ghost" asChild>
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/workspace">Workspace</Link>
               </Button>
               <UserButton 
                 afterSignOutUrl="/"
@@ -186,7 +186,7 @@ export function Navbar() {
               {/* Show when user IS signed in */}
               <SignedIn>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/dashboard">Dashboard</Link>
+                  <Link href="/workspace">Workspace</Link>
                 </Button>
                 <div className="flex items-center justify-center pt-2">
                   <UserButton 

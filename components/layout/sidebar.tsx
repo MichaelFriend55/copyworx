@@ -14,7 +14,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
   FileText,
   FolderOpen,
   Settings,
@@ -30,11 +29,6 @@ import { Button } from '@/components/ui/button';
  * Sidebar navigation items
  */
 const navItems = [
-  {
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    label: 'Dashboard',
-  },
   {
     href: '/templates',
     icon: FileText,
@@ -82,7 +76,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-ink-800">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 shadow-lg shrink-0">
             <Feather className="h-4 w-4 text-ink-900" />
           </div>
@@ -91,7 +85,7 @@ export function Sidebar() {
               CopyWorx
             </span>
           )}
-        </Link>
+        </div>
       </div>
 
       {/* Main Navigation */}

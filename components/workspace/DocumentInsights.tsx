@@ -343,7 +343,7 @@ export function DocumentInsights() {
       >
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <span className="font-semibold text-sm text-gray-900 tracking-wide uppercase">
+          <span className="font-semibold text-xs text-gray-900 tracking-wide uppercase">
             AI@Worx™ Live
           </span>
           <button

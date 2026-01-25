@@ -2,7 +2,7 @@
  * @file middleware.ts
  * @description Clerk authentication middleware for route protection (Clerk 5.x)
  * 
- * Protects all routes under /dashboard, /templates, /projects
+ * Protects all routes under /workspace, /templates, /projects
  * Keeps marketing pages, auth pages, and API routes public
  */
 
@@ -22,6 +22,7 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/about',
   '/pricing',
+  '/copyworx',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api(.*)',
