@@ -1,28 +1,25 @@
 /**
  * @file app/(marketing)/page.tsx
- * @description Homepage for CopyWorx - the main landing page
+ * @description CopyWorx™ Studio landing page - professional marketing homepage
  * 
  * Sections:
- * - Hero with animated headline and CTA
- * - Features grid
- * - Social proof / testimonials
- * - CTA section
+ * - Hero with solid gray background and primary CTA
+ * - The Challenge - problem statement
+ * - The Story - founder narrative with gradient background
+ * - Features - 2x2 grid of key capabilities
+ * - How It Works - 4-step process
+ * - Beta Access - final CTA section
  */
 
-import Link from 'next/link';
+import Image from 'next/image';
 import { 
-  ArrowRight, 
   Sparkles, 
-  Zap, 
-  Target, 
-  PenTool,
-  BarChart3,
-  Users,
-  CheckCircle2
+  Palette, 
+  FileText, 
+  FolderOpen,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 
 /**
  * Features data for the features section
@@ -30,253 +27,316 @@ import { Card, CardContent } from '@/components/ui/card';
 const features = [
   {
     icon: Sparkles,
-    title: 'AI-Powered Templates',
-    description: 'Access 50+ professionally crafted templates powered by AI to generate copy that converts.',
+    title: 'Copy Optimizer Suite',
+    description: 'Refine your copy in real time. Shift tone, expand ideas, tighten language, or completely rewrite for different channels – all while maintaining your unique voice.',
   },
   {
-    icon: Zap,
-    title: 'Lightning Fast',
-    description: 'Generate high-quality copy in seconds, not hours. Save time and boost your productivity.',
+    icon: FileText,
+    title: 'AI@Worx Templates',
+    description: "Strategic templates that ask the right questions to put you in the right direction fast. No more staring at a blank page. Answer a few prompts and get professional copy that's ready to refine.",
   },
   {
-    icon: Target,
-    title: 'Conversion Focused',
-    description: 'Every template is optimized for conversions based on proven copywriting frameworks.',
+    icon: Palette,
+    title: 'Brand Voice System',
+    description: 'Define your brand voice once, and CopyWorx™ Studio ensures everything you write stays on brand. Create detailed personas, set approved phrases and forbidden words, and maintain consistency across every piece of content.',
   },
   {
-    icon: PenTool,
-    title: 'Brand Voice',
-    description: 'Train the AI to match your unique brand voice for consistent messaging across all content.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Performance Insights',
-    description: 'Track and analyze your copy performance with built-in analytics and A/B testing.',
-  },
-  {
-    icon: Users,
-    title: 'Team Collaboration',
-    description: 'Work together seamlessly with real-time collaboration and shared project workspaces.',
+    icon: FolderOpen,
+    title: 'Smart Document Management',
+    description: 'Organize projects by client, track versions, and manage your entire copywriting workflow in one intuitive worxspace. No more scattered Google Docs or lost revisions.',
   },
 ] as const;
 
 /**
- * Testimonials data
+ * How it works steps
  */
-const testimonials = [
+const steps = [
   {
-    quote: "CopyWorx has completely transformed how our team creates marketing content. We're producing 3x more copy with better results.",
-    author: 'Sarah Chen',
-    role: 'Marketing Director',
-    company: 'TechFlow',
+    number: '01',
+    title: 'Define Your Brand',
+    description: 'Define your brand voice and create customer personas (or skip this and start writing)',
   },
   {
-    quote: "The AI templates are incredibly well-crafted. It's like having a senior copywriter on demand 24/7.",
-    author: 'Marcus Johnson',
-    role: 'Founder',
-    company: 'GrowthLab',
+    number: '02',
+    title: 'Choose Your Starting Point',
+    description: 'Choose a template or start from scratch in the editor',
   },
   {
-    quote: "Finally, a copywriting tool that actually understands conversion psychology. Our landing page conversions are up 47%.",
-    author: 'Emily Rodriguez',
-    role: 'Head of Growth',
-    company: 'Scalify',
+    number: '03',
+    title: 'Write & Optimize',
+    description: 'Write, optimize, and refine with AI-powered tools – use as much or as little help as you need',
+  },
+  {
+    number: '04',
+    title: 'Export & Deliver',
+    description: 'Export professional, on-brand copy in minutes',
   },
 ] as const;
 
 /**
- * Homepage component
+ * Homepage component - CopyWorx™ Studio landing page
  */
 export default function HomePage() {
   return (
-    <>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-50/50 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-grid opacity-40" />
+    <div className="scroll-smooth">
+      {/* ========================================================================
+          HERO SECTION
+          Full viewport height with solid gray background
+          ======================================================================== */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#F5F5F7]">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Logo - Large (reduced 10% from previous) */}
+            <div className="flex justify-center mb-14 animate-fade-in">
+              <Image
+                src="/copyworx-studio-logo.png"
+                alt="CopyWorx™ Studio"
+                width={720}
+                height={200}
+                className="h-44 sm:h-56 md:h-[17rem] w-auto"
+                priority
+              />
+            </div>
+            
+            {/* Headline */}
+            <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-ink-900 leading-[1.1] tracking-tight mb-6 animate-fade-in animation-delay-100">
+              Write To Win With
+              <br />
+              <span className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent">CopyWorx™ Studio</span>
+            </h1>
+            
+            {/* Subheadline */}
+            <p className="text-lg sm:text-xl md:text-2xl text-ink-600 max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in animation-delay-200">
+              The first AI-powered platform built by a professional copywriter, for copywriters and marketers.
+            </p>
+            
+            {/* Primary CTA */}
+            <div className="animate-fade-in animation-delay-300">
+              <Button 
+                size="xl" 
+                className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg px-10 py-6 h-auto shadow-2xl transition-all duration-300"
+                asChild
+              >
+                <a href="https://tally.so/r/Xx4yxV">
+                  Request Beta Access
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
         
-        {/* Decorative Elements */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-amber-400/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-ink-400/10 rounded-full blur-3xl" />
-        
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="py-24 md:py-32 lg:py-40">
-            <div className="max-w-4xl mx-auto text-center">
-              {/* Badge */}
-              <div className="animate-fade-in opacity-0">
-                <Badge variant="amber" className="mb-6 px-4 py-1.5">
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                  Now with GPT-4 Turbo
-                </Badge>
-              </div>
-              
-              {/* Headline */}
-              <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-ink-900 leading-[1.1] tracking-tight animate-fade-in opacity-0 animation-delay-100">
-                Write copy that
-                <span className="relative">
-                  <span className="relative z-10 text-gradient-amber"> converts</span>
-                </span>
-              </h1>
-              
-              {/* Subheadline */}
-              <p className="mt-6 text-lg md:text-xl text-ink-600 max-w-2xl mx-auto leading-relaxed animate-fade-in opacity-0 animation-delay-200">
-                CopyWorx helps marketers and copywriters create compelling, 
-                high-converting copy in seconds using AI-powered templates 
-                and proven copywriting frameworks.
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 rounded-full border-2 border-ink-400/50 flex items-start justify-center p-2">
+            <div className="w-1.5 h-3 bg-ink-400/70 rounded-full" />
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          THE CHALLENGE SECTION
+          Problem statement with clean typography
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-8 text-center">
+              Writing Great Copy Shouldn&apos;t Be So Hard
+            </h2>
+            
+            <div className="prose prose-lg md:prose-xl max-w-none text-ink-600 leading-relaxed space-y-6">
+              <p>
+                Whether you&apos;re a seasoned copywriter juggling multiple clients or a marketing team trying to maintain brand consistency across campaigns, the challenge is the same: How do you write professional, strategic copy quickly without sacrificing quality?
               </p>
               
-              {/* CTA Buttons */}
-              <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in opacity-0 animation-delay-300">
-                <Button size="xl" variant="amber" asChild>
-                  <Link href="/sign-up">
-                    Start Writing Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button size="xl" variant="outline" asChild>
-                  <Link href="/templates">
-                    Browse Templates
-                  </Link>
-                </Button>
-              </div>
+              <p>
+                Traditional writing tools aren&apos;t built for copywriters. AI tools promise speed but deliver generic fluff. And hiring out? Expensive and slow.
+              </p>
               
-              {/* Trust Indicators */}
-              <div className="mt-12 flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm text-ink-500 animate-fade-in opacity-0 animation-delay-400">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span>Free to start</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span>No credit card required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span>50+ templates included</span>
-                </div>
-              </div>
+              <p className="text-ink-900 font-semibold text-xl md:text-2xl">
+                CopyWorx™ Studio changes that.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* ========================================================================
+          THE STORY SECTION
+          Founder narrative with gradient background and white text
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-gradient-to-br from-[#006EE6] via-[#4B3F99] to-[#A755F7] relative overflow-hidden">
+        {/* Subtle Pattern Overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 1px)',
+            backgroundSize: '40px 40px'
+          }} />
+        </div>
+        
+        {/* Decorative Glow Elements */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-[#EFBF04]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-8 text-center">
+              Built By A Copywriter Who Gets It
+            </h2>
+            
+            <div className="prose prose-lg md:prose-xl max-w-none text-white/90 leading-relaxed space-y-6">
+              <p>
+                CopyWorx™ Studio leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use — regardless of writing experience — to create professional, high-converting copy in minutes.
+              </p>
+              
+              <p>
+                CopyWorx™ Studio was created by a professional copywriter, creative director, and branding expert with over 40 years of experience. He and his team have packed CopyWorx™ Studio with all of the features and functions a copywriter needs in one, clean, intuitive worxspace.
+              </p>
+              
+              <p>
+                CopyWorx™ Studio utilizes AI in all the ways that are important to writers – inspiring ideas, finessing copy, offering strategic suggestions, checking and changing tone and style, and always reviewing copy through the lens of brand standards and customer personas. And of course, just being a solid writing app with the features, functions and worxflows you expect in today&apos;s writing tools.
+              </p>
+              
+              {/* Highlighted sentence */}
+              <p className="bg-white/10 border-l-4 border-[#EFBF04] pl-6 py-4 rounded-r-lg backdrop-blur-sm">
+                <strong className="text-white text-xl md:text-2xl">
+                  With CopyWorx™ Studio, you can use as much or as little AI as you like.
+                </strong>
+              </p>
+              
+              <p>
+                Start with a template, start with a brand voice, start on your own. The point is, it&apos;s easy to get started with real workflow-aware functionality.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          FEATURES SECTION
+          2x2 grid of key capabilities
+          ======================================================================== */}
       <section className="py-24 md:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Features</Badge>
-            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-bold text-ink-900 mb-6">
-              Everything you need to write better copy
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
+              What Makes CopyWorx™ Studio Different
             </h2>
-            <p className="text-lg text-ink-600">
-              From idea to published content, CopyWorx gives you all the tools 
-              you need to create copy that drives results.
-            </p>
           </div>
           
-          {/* Features Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* Features Grid - 2x2 */}
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
             {features.map((feature, index) => (
-              <Card 
-                key={feature.title} 
-                className="card-hover border-border/50 bg-gradient-to-br from-white to-ink-50/30"
+              <div 
+                key={feature.title}
+                className="group relative bg-white rounded-2xl border border-ink-200 p-8 shadow-sm hover:shadow-xl hover:border-[#006EE6]/30 transition-all duration-300"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <CardContent className="p-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 mb-4">
-                    <feature.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="font-sans text-xl font-semibold text-ink-900 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-ink-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
+                {/* Icon */}
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#006EE6] to-[#A755F7] text-white mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <feature.icon className="h-7 w-7" />
+                </div>
+                
+                {/* Content */}
+                <h3 className="font-sans text-xl md:text-2xl font-semibold text-ink-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-ink-600 leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-24 md:py-32 bg-ink-950 text-white relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-grid-dark opacity-30" />
-        
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+      {/* ========================================================================
+          HOW IT WORKS SECTION
+          4-step process with numbered steps
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-ink-950 text-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-400">
-              Testimonials
-            </Badge>
-            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-              Loved by copywriters worldwide
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+              How It Works
             </h2>
-            <p className="text-lg text-ink-300">
-              Join thousands of marketers and copywriters who are creating 
-              better content faster with CopyWorx.
-            </p>
           </div>
           
-          {/* Testimonials Grid */}
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card 
-                key={testimonial.author}
-                className="bg-ink-900/50 border-ink-800 backdrop-blur-sm"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <CardContent className="p-6">
-                  <p className="text-ink-200 leading-relaxed mb-6 italic">
-                    &quot;{testimonial.quote}&quot;
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600" />
-                    <div>
-                      <p className="font-medium text-white">{testimonial.author}</p>
-                      <p className="text-sm text-ink-400">
-                        {testimonial.role}, {testimonial.company}
-                      </p>
+          {/* Steps */}
+          <div className="max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+              {steps.map((step, index) => (
+                <div 
+                  key={step.number}
+                  className="relative flex gap-6"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {/* Step Number */}
+                  <div className="flex-shrink-0">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#006EE6] to-[#A755F7] text-white font-bold text-xl">
+                      {step.number}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 md:py-32 bg-gradient-to-br from-amber-50 via-white to-ink-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-bold text-ink-900 mb-6">
-              Ready to write copy that converts?
-            </h2>
-            <p className="text-lg text-ink-600 mb-10 max-w-2xl mx-auto">
-              Join over 10,000 marketers and copywriters who trust CopyWorx 
-              to help them create compelling content every day.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="xl" variant="ink" asChild>
-                <Link href="/sign-up">
-                  Get Started for Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button size="xl" variant="outline" asChild>
-                <Link href="/pricing">
-                  View Pricing
-                </Link>
-              </Button>
+                  
+                  {/* Step Content */}
+                  <div className="pt-2">
+                    <h3 className="font-sans text-xl font-semibold text-white mb-2">
+                      {step.title}
+                    </h3>
+                    <p className="text-ink-300 leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
-    </>
+
+      {/* ========================================================================
+          BETA ACCESS SECTION
+          Final CTA with gradient background
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-[#F5F5F7] relative overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
+              Ready To Write To Win?
+            </h2>
+            
+            <div className="text-lg md:text-xl text-ink-600 leading-relaxed space-y-6 mb-10">
+              <p>
+                CopyWorx™ Studio is currently in closed beta. We&apos;re carefully selecting marketing professionals and copywriters to test the platform and help shape its future.
+              </p>
+              
+              <p>
+                Request access below and tell us why you want in. We review every application and send invites to approved beta testers.
+              </p>
+              
+              <p className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent font-semibold text-xl md:text-2xl">
+                Now let&apos;s get to worx!
+              </p>
+            </div>
+            
+            {/* CTA Button */}
+            <Button 
+              size="xl" 
+              className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg px-10 py-6 h-auto shadow-2xl transition-all duration-300"
+              asChild
+            >
+              <a href="https://tally.so/r/Xx4yxV">
+                Request Beta Access
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+    </div>
   );
 }
-

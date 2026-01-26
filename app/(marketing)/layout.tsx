@@ -3,18 +3,23 @@
  * @description Layout for marketing pages (public-facing)
  * 
  * Includes:
- * - Navbar with public navigation
+ * - Minimal auth header (Clerk only, no navigation)
  * - Footer
- * - Proper spacing for fixed navbar
+ * - No navbar - hero starts at top
  */
 
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
+'use client';
+
+import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { MarketingFooter } from '@/components/layout/marketing-footer';
 
 /**
  * Marketing layout component
  * 
- * Wraps all public-facing pages with the marketing navbar and footer.
+ * Wraps all public-facing pages with minimal auth header and footer.
+ * No navigation bar - just Clerk auth components.
  */
 export default function MarketingLayout({
   children,
@@ -23,12 +28,42 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
-      <main className="flex-1 pt-16">
+      {/* Minimal Auth Header - Fixed top right */}
+      <div className="fixed top-0 right-0 z-50 p-4">
+        <div className="flex items-center gap-4">
+          {/* Show when user IS signed in */}
+          <SignedIn>
+            <Button variant="ghost" className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90" asChild>
+              <Link href="/workspace">Worxspace</Link>
+            </Button>
+            <UserButton 
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: 'h-9 w-9 shadow-lg',
+                  userButtonPopoverCard: 'shadow-xl border border-border/50',
+                  userButtonPopoverActionButton: 'hover:bg-ink-50',
+                  userButtonPopoverActionButtonText: 'text-ink-700',
+                  userButtonPopoverActionButtonIcon: 'text-ink-500',
+                  userButtonPopoverFooter: 'hidden',
+                },
+              }}
+            />
+          </SignedIn>
+
+          {/* Show when user is NOT signed in */}
+          <SignedOut>
+            <Button variant="ghost" className="bg-white/80 backdrop-blur-sm hover:bg-white" asChild>
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
+          </SignedOut>
+        </div>
+      </div>
+
+      <main className="flex-1">
         {children}
       </main>
-      <Footer />
+      <MarketingFooter />
     </div>
   );
 }
-
