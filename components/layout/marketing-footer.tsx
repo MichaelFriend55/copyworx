@@ -35,9 +35,9 @@ function XTwitterIcon({ className }: { className?: string }) {
 const socialLinks = [
   { href: '#', icon: Linkedin, label: 'LinkedIn' },
   { href: '#', icon: Facebook, label: 'Facebook' },
-  { href: '#', icon: XTwitterIcon, label: 'X (Twitter)', isCustom: true },
+  { href: '#', icon: XTwitterIcon, label: 'X (Twitter)' },
   { href: '#', icon: Mail, label: 'Email' },
-] as const;
+];
 
 /**
  * MarketingFooter component
@@ -81,11 +81,7 @@ export function MarketingFooter() {
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-80 transition-all duration-300"
                 aria-label={social.label}
               >
-                {social.isCustom ? (
-                  <XTwitterIcon className="h-5 w-5" />
-                ) : (
-                  <social.icon className="h-5 w-5" />
-                )}
+                <social.icon className="h-5 w-5" />
               </a>
             ))}
           </div>
