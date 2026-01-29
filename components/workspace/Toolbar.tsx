@@ -49,6 +49,7 @@ import { getDocument, updateDocument } from '@/lib/storage/unified-storage';
 import { ViewModeSelector } from './ViewModeSelector';
 import { SaveAsSnippetButton } from './SaveAsSnippetButton';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { ApiUsageDisplay } from '@/components/ApiUsageDisplay';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
 
@@ -1525,6 +1526,11 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
         'flex items-center gap-3',
         'flex-shrink-0' // Prevent shrinking on small screens
       )}>
+        {/* API Usage Display - Compact variant for toolbar */}
+        <ApiUsageDisplay variant="compact" />
+        
+        <div className="w-px h-6 bg-gray-200" />
+        
         {/* View Mode Selector - Always visible */}
         <ViewModeSelector
           viewMode={viewMode}

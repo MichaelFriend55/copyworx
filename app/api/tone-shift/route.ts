@@ -12,8 +12,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateTextLength, validateNotEmpty, logError } from '@/lib/utils/error-handling';
 import { logger } from '@/lib/utils/logger';
-// ADDED: Imports for usage logging
-import { getUserId } from '@/lib/utils/api-auth';
+// Imports for usage logging and limit checking
+import { getUserId, checkUserWithinLimit, usageLimitExceededResponse } from '@/lib/utils/api-auth';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 // ============================================================================
@@ -233,7 +233,25 @@ function calculateCost(inputTokens: number, outputTokens: number): number {
 export async function POST(request: NextRequest): Promise<NextResponse<ToneShiftResponse | ErrorResponse>> {
   try {
     // ------------------------------------------------------------------------
-    // 1. Parse and validate request body
+    // 1. Check usage limit BEFORE processing request
+    // ------------------------------------------------------------------------
+    
+    const userId = await getUserId();
+    
+    if (userId) {
+      const usageCheck = await checkUserWithinLimit(userId);
+      
+      if (!usageCheck.withinLimit) {
+        logger.log('🚫 User exceeded usage limit:', {
+          userId: userId.substring(0, 8) + '...',
+          totalCost: `$${usageCheck.totalCost.toFixed(4)}`,
+        });
+        return usageLimitExceededResponse(usageCheck.totalCost);
+      }
+    }
+    
+    // ------------------------------------------------------------------------
+    // 2. Parse and validate request body
     // ------------------------------------------------------------------------
     
     let body: Partial<ToneShiftRequest>;
@@ -384,12 +402,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ToneShift
     const newLength = rewrittenText.length;
 
     // ------------------------------------------------------------------------
-    // 5. Log usage to Supabase (ADDED)
+    // 5. Log usage to Supabase
     // ------------------------------------------------------------------------
     
-    // Get user ID from Clerk (non-blocking - if not logged in, skip logging)
-    const userId = await getUserId();
-    
+    // userId was already retrieved at start for limit check
     if (userId) {
       // Extract token usage from Claude's response
       const inputTokens = message.usage.input_tokens;
