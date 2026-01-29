@@ -295,12 +295,121 @@ export interface Database {
           updated_at?: string;
         };
       };
+
+      /**
+       * API usage logs table - Tracks Claude API token usage per user
+       */
+      api_usage_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          timestamp: string;
+          model: string;
+          input_tokens: number;
+          output_tokens: number;
+          total_tokens: number;
+          feature: string;
+          cost_usd: number;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          timestamp?: string;
+          model: string;
+          input_tokens: number;
+          output_tokens: number;
+          feature: string;
+          cost_usd: number;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          timestamp?: string;
+          model?: string;
+          input_tokens?: number;
+          output_tokens?: number;
+          feature?: string;
+          cost_usd?: number;
+        };
+      };
     };
     Views: {
-      [_ in never]: never;
+      /**
+       * User usage summary view - Aggregated usage statistics per user
+       */
+      user_usage_summary: {
+        Row: {
+          user_id: string;
+          total_api_calls: number;
+          total_input_tokens: number;
+          total_output_tokens: number;
+          total_tokens_used: number;
+          total_cost_usd: number;
+          last_api_call: string | null;
+        };
+      };
+      /**
+       * User usage current month view - Monthly usage for limit enforcement
+       */
+      user_usage_current_month: {
+        Row: {
+          user_id: string;
+          api_calls_this_month: number;
+          input_tokens_this_month: number;
+          output_tokens_this_month: number;
+          total_tokens_this_month: number;
+          cost_this_month: number;
+          last_api_call: string | null;
+        };
+      };
+      /**
+       * User usage today view - Daily usage for rate limiting
+       */
+      user_usage_today: {
+        Row: {
+          user_id: string;
+          api_calls_today: number;
+          tokens_today: number;
+          cost_today: number;
+        };
+      };
     };
     Functions: {
-      [_ in never]: never;
+      /**
+       * Get user usage for a specific period
+       */
+      get_user_usage: {
+        Args: {
+          p_user_id: string;
+          p_start_date?: string | null;
+          p_end_date?: string | null;
+        };
+        Returns: {
+          total_api_calls: number;
+          total_input_tokens: number;
+          total_output_tokens: number;
+          total_tokens: number;
+          total_cost: number;
+        }[];
+      };
+      /**
+       * Check if user is within beta limits
+       */
+      check_user_within_limits: {
+        Args: {
+          p_user_id: string;
+          p_monthly_token_limit?: number;
+          p_daily_token_limit?: number;
+        };
+        Returns: {
+          within_monthly_limit: boolean;
+          within_daily_limit: boolean;
+          monthly_tokens_used: number;
+          daily_tokens_used: number;
+          monthly_tokens_remaining: number;
+          daily_tokens_remaining: number;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;

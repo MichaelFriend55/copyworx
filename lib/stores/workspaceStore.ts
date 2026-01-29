@@ -58,11 +58,14 @@ import {
   validateNotEmpty,
   logError
 } from '@/lib/utils/error-handling';
+import {
+  type ToneType,
+  TONE_SHIFTER_SYSTEM_PROMPT,
+  buildToneShifterUserPrompt,
+} from '@/lib/prompts/tone-shifter';
 
-/**
- * Tone types for the Tone Shifter
- */
-export type ToneType = 'professional' | 'casual' | 'urgent' | 'friendly' | 'techy' | 'playful';
+// Re-export ToneType for components that import from this file
+export type { ToneType } from '@/lib/prompts/tone-shifter';
 
 /**
  * Document insights update frequency options
@@ -502,6 +505,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       runToneShift: async (text: string, tone: ToneType) => {
+        // Validate inputs
         try {
           validateNotEmpty(text, 'Text');
           validateTextLength(text, 'Text');
@@ -519,12 +523,22 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           toneShiftError: null,
           toneShiftResult: null 
         });
+
         try {
+          // Build the user prompt with tone-specific instructions
+          const userPrompt = buildToneShifterUserPrompt(text, tone);
+
           const data = await retryWithBackoff(async () => {
-            const response = await fetchWithTimeout('/api/tone-shift', {
+            // Call centralized Claude API with feature tracking
+            const response = await fetchWithTimeout('/api/claude', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text, tone }),
+              body: JSON.stringify({
+                messages: [{ role: 'user', content: userPrompt }],
+                system: TONE_SHIFTER_SYSTEM_PROMPT,
+                feature: 'tone_shifter',
+                maxTokens: 4000,
+              }),
             });
 
             if (!response.ok) {
@@ -536,14 +550,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             }
 
             const data = await response.json();
-            if (!data.rewrittenText) {
+            if (!data.text) {
               throw new Error('No rewritten text received from API');
             }
             return data;
           }, 2);
 
           set({ 
-            toneShiftResult: data.rewrittenText,
+            toneShiftResult: data.text, // Changed from data.rewrittenText
             toneShiftLoading: false,
             toneShiftError: null 
           });
