@@ -5,7 +5,7 @@
  * Features:
  * - Centered CopyWorx Studio logo
  * - Subtitle: "AI-Powered Writing Suite"
- * - Three action buttons in a row
+ * - Four action buttons in a row
  * - Apple-style aesthetic with blue accent
  * - Responsive (stacks on mobile)
  * - Footer with copyright
@@ -18,19 +18,21 @@
 
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
   FilePlus,
   Sparkles,
   Upload,
+  Rocket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
 import { createDocument } from '@/lib/storage/unified-storage';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { getTemplateById } from '@/lib/data/templates';
+import { markDailyVisitComplete, markSplashViewed } from '@/lib/utils/daily-visit-tracker';
 import { logger } from '@/lib/utils/logger';
 
 interface ActionButtonProps {
@@ -91,7 +93,14 @@ export function SplashPage() {
   // File input ref for importing documents
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Mark splash as viewed when page loads (prevents redirect loops)
+  useEffect(() => {
+    markSplashViewed();
+  }, []);
+
   const handleNewDocument = async () => {
+    // Mark daily visit as complete before navigating
+    markDailyVisitComplete();
     if (!activeProjectId) {
       logger.warn('⚠️ No active project, going to workspace anyway');
       router.push('/worxspace?action=new');
@@ -115,6 +124,8 @@ export function SplashPage() {
   };
 
   const handleAITemplate = () => {
+    // Mark daily visit as complete before showing modal
+    markDailyVisitComplete();
     logger.log('🎨 Opening Templates Modal from Splash Page');
     setTemplatesModalOpen(true);
   };
@@ -124,6 +135,9 @@ export function SplashPage() {
    * Creates document immediately and navigates to workspace
    */
   const handleTemplateSelect = async (templateId: string) => {
+    // Mark daily visit as complete before navigating
+    markDailyVisitComplete();
+    
     logger.log('🎨 Template selected from splash page:', templateId);
     
     // Get template details to use its name for the document
@@ -161,6 +175,9 @@ export function SplashPage() {
    * Handle import button click - opens file picker
    */
   const handleImport = () => {
+    // Mark daily visit as complete before opening file picker
+    markDailyVisitComplete();
+    
     // Set accept attribute to allow common document formats
     if (fileInputRef.current) {
       fileInputRef.current.accept = '.docx,.txt,.md';
@@ -168,6 +185,16 @@ export function SplashPage() {
     
     // Trigger the hidden file input
     fileInputRef.current?.click();
+  };
+
+  /**
+   * Handle direct navigation to workspace
+   */
+  const handleGoToWorxspace = () => {
+    // Mark daily visit as complete before navigating
+    markDailyVisitComplete();
+    logger.log('🚀 Navigating directly to Worxspace');
+    router.push('/worxspace');
   };
 
   /**
@@ -309,6 +336,13 @@ export function SplashPage() {
             label="Import"
             description="Open text file"
             onClick={handleImport}
+          />
+
+          <ActionButton
+            icon={<Rocket className="w-8 h-8" strokeWidth={1.5} />}
+            label="Worxspace"
+            description="Take me to my Worxspace"
+            onClick={handleGoToWorxspace}
           />
         </div>
 

@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { WorkspaceLayout } from '@/components/workspace/WorkspaceLayout';
 import { EditorArea, type EditorAreaHandle } from '@/components/workspace/EditorArea';
 import { LeftSidebarContent } from '@/components/workspace/LeftSidebarContent';
@@ -28,6 +28,7 @@ import { getTemplateById } from '@/lib/data/templates';
 import { initializeProjectSystem } from '@/lib/utils/project-utils';
 import { createDocument, getDocument } from '@/lib/storage/unified-storage';
 import { useProductTour } from '@/lib/hooks/useProductTour';
+import { shouldRedirectToSplash } from '@/lib/utils/daily-visit-tracker';
 import { logger } from '@/lib/utils/logger';
 import type { Editor } from '@tiptap/react';
 import type { ProjectDocument, Project } from '@/lib/types/project';
@@ -55,6 +56,7 @@ function LoadingSpinner() {
  * Main workspace page component
  */
 export default function WorkspacePage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const action = searchParams.get('action');
   const templateParam = searchParams.get('template');
@@ -72,6 +74,9 @@ export default function WorkspacePage() {
   
   // Prevent double initialization in StrictMode
   const initRef = useRef(false);
+  
+  // Track if daily redirect check has been performed
+  const dailyCheckRef = useRef(false);
   
   // Product tour state
   const { runTour, completeTour, restartTour } = useProductTour();
@@ -99,6 +104,20 @@ export default function WorkspacePage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+  
+  // Check for first visit of the day - redirect to splash page if needed
+  useEffect(() => {
+    if (!mounted || dailyCheckRef.current) return;
+    dailyCheckRef.current = true;
+    
+    // Check if this is the first visit of the day
+    if (shouldRedirectToSplash()) {
+      logger.log('🌅 First visit of the day - redirecting to splash page');
+      router.push('/home');
+    } else {
+      logger.log('✅ Already visited today - continuing to workspace');
+    }
+  }, [mounted, router]);
   
   // Initialize workspace
   useEffect(() => {
