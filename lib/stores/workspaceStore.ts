@@ -414,13 +414,18 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       setRightSidebarOpen: (open: boolean) => {
+        console.log(`🟢 [Store] setRightSidebarOpen called with: ${open}`);
+        console.log(`🟢 [Store] Current sidebar state: ${get().rightSidebarOpen}`);
         set({ rightSidebarOpen: open });
+        console.log(`🟢 [Store] New sidebar state: ${get().rightSidebarOpen}`);
       },
 
       setActiveTool: (toolId: string | null) => {
+        console.log(`🟡 [Store] setActiveTool called with: ${toolId}`);
         set({ activeToolId: toolId });
         
         if (toolId !== null && !get().rightSidebarOpen) {
+          console.log(`🟡 [Store] RE-OPENING sidebar because tool was set!`);
           set({ rightSidebarOpen: true });
         }
       },
@@ -430,9 +435,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       setAIAnalysisMode: (mode: AIAnalysisMode) => {
+        console.log(`🟠 [Store] setAIAnalysisMode called with: ${mode}`);
         set({ aiAnalysisMode: mode });
         
         if (mode !== null && !get().rightSidebarOpen) {
+          console.log(`🟠 [Store] RE-OPENING sidebar because analysis mode was set!`);
           set({ rightSidebarOpen: true });
         }
       },
@@ -955,6 +962,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }
 
         // Set loading state and store original text
+        // Note: Sidebar should already be closed by the button handler
+        console.log('🔴 [Store] runOptimizeAlignment - Setting loading state');
+        console.log('🔴 [Store] Sidebar state at start of optimization:', get().rightSidebarOpen);
         set({ 
           optimizeAlignmentLoading: true, 
           optimizeAlignmentError: null,
@@ -965,6 +975,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           optimizeAlignmentOriginalText: text,
           optimizeAlignmentModalOpen: false,
         });
+        console.log('🔴 [Store] Sidebar state after setting loading:', get().rightSidebarOpen);
 
         try {
           // Build the request based on type
@@ -1036,6 +1047,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             optimizeAlignmentError: null,
             optimizeAlignmentTargetName: data.targetName,
             optimizeAlignmentModalOpen: true, // Open the comparison modal
+            // rightSidebarOpen already closed at the start, keep it closed
           });
 
         } catch (error) {
@@ -1122,11 +1134,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
       
       openInsightsPanel: (panel: InsightsPanelType) => {
+        console.log(`🟣 [Store] openInsightsPanel called with: ${panel}`);
         set({ activeInsightsPanel: panel });
       },
       
       closeInsightsPanel: () => {
+        console.log(`🟣 [Store] closeInsightsPanel called`);
+        console.log(`🟣 [Store] Current activeInsightsPanel: ${get().activeInsightsPanel}`);
         set({ activeInsightsPanel: null });
+        console.log(`🟣 [Store] New activeInsightsPanel: ${get().activeInsightsPanel}`);
       },
       
       // Pending edit actions

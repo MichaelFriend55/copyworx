@@ -111,12 +111,25 @@ export function BrandAlignmentTool({ editor, className }: BrandAlignmentToolProp
     const textToOptimize = brandAlignmentAnalyzedText;
     if (!textToOptimize) return;
 
+    console.log('🔵 [BrandAlignment] Button clicked - Starting optimization...');
+    console.log('🔵 [BrandAlignment] Sidebar state BEFORE close:', useWorkspaceStore.getState().rightSidebarOpen);
+    
+    // Close sidebar IMMEDIATELY and SYNCHRONOUSLY
+    console.log('🔵 [BrandAlignment] Closing sidebar...');
+    useWorkspaceStore.getState().setRightSidebarOpen(false);
+    
+    console.log('🔵 [BrandAlignment] Sidebar state AFTER close:', useWorkspaceStore.getState().rightSidebarOpen);
+    console.log('🔵 [BrandAlignment] Opening modal and starting optimization...');
+
     await runOptimizeAlignment(
       textToOptimize,
       'brand',
       brandAlignmentResult,
       activeProject.brandVoice
     );
+    
+    console.log('🔵 [BrandAlignment] Optimization complete');
+    console.log('🔵 [BrandAlignment] Sidebar state AFTER optimization:', useWorkspaceStore.getState().rightSidebarOpen);
   };
 
   return (

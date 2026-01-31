@@ -36,6 +36,7 @@ import { Button } from '@/components/ui/button';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import { cn } from '@/lib/utils';
 import {
+  useWorkspaceStore,
   useBrandAlignmentResult,
   useBrandAlignmentLoading,
   useBrandAlignmentError,
@@ -53,6 +54,7 @@ import {
   useOptimizeAlignmentActions,
   useProjects,
   useActiveProjectId,
+  useInsightsPanelActions,
 } from '@/lib/stores/workspaceStore';
 import type { Persona } from '@/lib/types/project';
 import type { BrandVoice } from '@/lib/types/brand';
@@ -209,6 +211,9 @@ function BrandAlignmentContent() {
   const optimizeLoading = useOptimizeAlignmentLoading();
   const { runOptimizeAlignment } = useOptimizeAlignmentActions();
   
+  // Insights panel actions
+  const { closeInsightsPanel } = useInsightsPanelActions();
+  
   // Get active project for brand voice data
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
@@ -222,12 +227,22 @@ function BrandAlignmentContent() {
   const handleRewriteToOptimize = async () => {
     if (!activeProject?.brandVoice || !result || !analyzedText) return;
     
+    console.log('🔵 [InsightsSlideOut-Brand] Button clicked - Starting optimization...');
+    console.log('🔵 [InsightsSlideOut-Brand] Closing InsightsSlideOut panel...');
+    
+    // Close the InsightsSlideOut panel IMMEDIATELY
+    closeInsightsPanel();
+    
+    console.log('🔵 [InsightsSlideOut-Brand] Panel closed, opening modal and starting optimization...');
+    
     await runOptimizeAlignment(
       analyzedText,
       'brand',
       result,
       activeProject.brandVoice
     );
+    
+    console.log('🔵 [InsightsSlideOut-Brand] Optimization complete');
   };
 
   if (isLoading) {
@@ -382,6 +397,9 @@ function PersonaAlignmentContent() {
   const optimizeLoading = useOptimizeAlignmentLoading();
   const { runOptimizeAlignment } = useOptimizeAlignmentActions();
   
+  // Insights panel actions
+  const { closeInsightsPanel } = useInsightsPanelActions();
+  
   // Get active project for persona data
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
@@ -400,12 +418,22 @@ function PersonaAlignmentContent() {
   const handleRewriteToOptimize = async () => {
     if (!selectedPersona || !result || !analyzedText) return;
     
+    console.log('🔵 [InsightsSlideOut-Persona] Button clicked - Starting optimization...');
+    console.log('🔵 [InsightsSlideOut-Persona] Closing InsightsSlideOut panel...');
+    
+    // Close the InsightsSlideOut panel IMMEDIATELY
+    closeInsightsPanel();
+    
+    console.log('🔵 [InsightsSlideOut-Persona] Panel closed, opening modal and starting optimization...');
+    
     await runOptimizeAlignment(
       analyzedText,
       'persona',
       result,
       selectedPersona
     );
+    
+    console.log('🔵 [InsightsSlideOut-Persona] Optimization complete');
   };
 
   if (isLoading) {
