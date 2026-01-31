@@ -313,8 +313,18 @@ export function PersonaAlignmentTool({ editor, className }: PersonaAlignmentTool
       )}
 
       {/* Results Display */}
-      {personaAlignmentResult && (
+      {personaAlignmentResult && selectedPersona && (
         <div className="flex flex-col gap-4">
+          {/* Analyzing Against Banner */}
+          <div className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+            <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-blue-900 truncate">
+                Analyzing against: <span className="font-semibold">{selectedPersona.name}</span>
+              </p>
+            </div>
+          </div>
+
           {/* Overall Score */}
           <div className="flex flex-col gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center justify-between">
