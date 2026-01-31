@@ -693,10 +693,11 @@ function DocumentMenu({
     };
 
     // Add listeners after a small delay to prevent immediate closure
+    // Increased from 0ms to 100ms to ensure click event finishes propagating
     const timeoutId = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleEscapeKey);
-    }, 0);
+    }, 100);
 
     // Cleanup event listeners
     return () => {
@@ -931,9 +932,13 @@ function DocumentMenu({
   };
 
   return (
-    <div ref={menuContainerRef} className="relative">
+    <div ref={menuContainerRef} className="relative z-[200]">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('Document button clicked, isOpen:', isOpen);
+          setIsOpen(!isOpen);
+        }}
         className={cn(
           'px-3 py-2 rounded-lg',
           'flex items-center gap-2',
@@ -1308,8 +1313,8 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
           'border-b border-gray-200',
           'transition-all duration-300',
           'h-16',
-          // Horizontal scrolling support
-          'overflow-x-auto',
+          // Horizontal scrolling support - removed overflow to allow dropdown
+          // 'overflow-x-auto',
           'scrollbar-hide' // Hide scrollbar while keeping scroll functionality
         )}
         style={{
