@@ -196,7 +196,7 @@ export function OptimizeComparisonModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md mx-4">
           <div className="flex flex-col items-center gap-4">
-            <AIWorxLoader size="lg" />
+            <AIWorxLoader message="Optimizing with AI@Worx™" />
             <div className="text-center">
               <h3 className="text-lg font-semibold text-apple-text-dark">
                 Optimizing for {targetName || (type === 'persona' ? 'Persona' : 'Brand')}
