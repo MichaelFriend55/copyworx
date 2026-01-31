@@ -726,20 +726,18 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                 </select>
               )}
               
-              {/* Check Brand Alignment Button */}
+              {/* Check Brand Alignment Button - Shows blue when brand voice selected */}
               <button
                 onClick={handleCheckBrandAlignment}
                 disabled={!selectedBrandVoiceId || allBrandVoices.length === 0}
                 className={cn(
-                  'w-full text-left p-2 rounded-lg',
+                  'w-full text-left p-2.5 rounded-lg',
                   'transition-all duration-200',
                   'flex items-center gap-2',
                   'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
                   !selectedBrandVoiceId || allBrandVoices.length === 0
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : activeInsightsPanel === 'brand-alignment'
-                      ? 'bg-apple-blue text-white shadow-sm'
-                      : 'hover:bg-apple-gray-bg text-apple-text-dark'
+                    : 'bg-[#006EE6] text-white shadow-sm hover:bg-[#7A3991] active:scale-[0.98]'
                 )}
                 title={
                   !selectedBrandVoiceId 
@@ -752,9 +750,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                     'w-4 h-4 flex-shrink-0',
                     !selectedBrandVoiceId || allBrandVoices.length === 0
                       ? 'text-gray-400'
-                      : activeInsightsPanel === 'brand-alignment' 
-                        ? 'text-white' 
-                        : 'text-apple-blue'
+                      : 'text-white'
                   )}
                 />
                 <span className="text-sm font-medium flex-1">Check Brand Alignment</span>
@@ -810,20 +806,18 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                 </select>
               )}
               
-              {/* Check Persona Alignment Button */}
+              {/* Check Persona Alignment Button - Shows blue when persona selected */}
               <button
                 onClick={handleCheckPersonaAlignment}
                 disabled={!selectedPersonaId || allPersonas.length === 0}
                 className={cn(
-                  'w-full text-left p-2 rounded-lg',
+                  'w-full text-left p-2.5 rounded-lg',
                   'transition-all duration-200',
                   'flex items-center gap-2',
                   'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
                   !selectedPersonaId || allPersonas.length === 0
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : activeInsightsPanel === 'persona-alignment'
-                      ? 'bg-apple-blue text-white shadow-sm'
-                      : 'hover:bg-apple-gray-bg text-apple-text-dark'
+                    : 'bg-[#006EE6] text-white shadow-sm hover:bg-[#7A3991] active:scale-[0.98]'
                 )}
                 title={
                   !selectedPersonaId 
@@ -836,9 +830,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                     'w-4 h-4 flex-shrink-0',
                     !selectedPersonaId || allPersonas.length === 0
                       ? 'text-gray-400'
-                      : activeInsightsPanel === 'persona-alignment' 
-                        ? 'text-white' 
-                        : 'text-apple-blue'
+                      : 'text-white'
                   )}
                 />
                 <span className="text-sm font-medium flex-1">Check Persona Alignment</span>

@@ -27,7 +27,8 @@ import {
   Lightbulb,
   Sparkles,
   Folder,
-  Volume2
+  Volume2,
+  Wand2
 } from 'lucide-react';
 import { 
   useWorkspaceStore,
@@ -38,6 +39,9 @@ import {
   useBrandAlignmentLoading,
   useBrandAlignmentError,
   useBrandAlignmentActions,
+  useBrandAlignmentAnalyzedText,
+  useOptimizeAlignmentLoading,
+  useOptimizeAlignmentActions,
 } from '@/lib/stores/workspaceStore';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
@@ -60,7 +64,12 @@ export function BrandAlignmentTool({ editor, className }: BrandAlignmentToolProp
   const brandAlignmentResult = useBrandAlignmentResult();
   const brandAlignmentLoading = useBrandAlignmentLoading();
   const brandAlignmentError = useBrandAlignmentError();
+  const brandAlignmentAnalyzedText = useBrandAlignmentAnalyzedText();
   const { runBrandAlignment, clearBrandAlignmentResult } = useBrandAlignmentActions();
+  
+  // Optimize alignment state
+  const optimizeLoading = useOptimizeAlignmentLoading();
+  const { runOptimizeAlignment } = useOptimizeAlignmentActions();
   
   // Get active project
   const activeProjectId = useActiveProjectId();
@@ -88,6 +97,26 @@ export function BrandAlignmentTool({ editor, className }: BrandAlignmentToolProp
    */
   const handleGoToBrandVoice = () => {
     useWorkspaceStore.getState().setActiveTool('brand-voice');
+  };
+
+  /**
+   * Handle rewrite to optimize for brand voice
+   * Uses the analysis results to guide the rewrite
+   */
+  const handleRewriteToOptimize = async () => {
+    if (!activeProject?.brandVoice || !brandAlignmentResult) return;
+    
+    // Use the stored analyzed text (from when analysis was run)
+    // This allows rewriting even if user has deselected the text
+    const textToOptimize = brandAlignmentAnalyzedText;
+    if (!textToOptimize) return;
+
+    await runOptimizeAlignment(
+      textToOptimize,
+      'brand',
+      brandAlignmentResult,
+      activeProject.brandVoice
+    );
   };
 
   return (
@@ -311,6 +340,28 @@ export function BrandAlignmentTool({ editor, className }: BrandAlignmentToolProp
               </ul>
             </div>
           )}
+
+          {/* Rewrite to Optimize Button - Always show when there's a result */}
+          <button
+            onClick={handleRewriteToOptimize}
+            disabled={optimizeLoading || !brandAlignmentAnalyzedText}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm text-white',
+              'focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2',
+              'flex items-center justify-center gap-2',
+              'transition-all duration-200',
+              optimizeLoading 
+                ? 'aiworx-gradient-animated cursor-wait'
+                : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-sm hover:shadow'
+            )}
+          >
+            <Wand2 className="w-4 h-4" />
+            {optimizeLoading 
+              ? 'Rewriting...' 
+              : `Rewrite to Optimize for ${activeProject?.brandVoice?.brandName}`
+            }
+          </button>
 
           {/* Clear Button */}
           <button

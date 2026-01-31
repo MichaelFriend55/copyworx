@@ -29,9 +29,11 @@ import {
   Target,
   Activity,
   X,
+  Wand2,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
+import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import { cn } from '@/lib/utils';
 import {
   useBrandAlignmentResult,
@@ -39,13 +41,21 @@ import {
   useBrandAlignmentError,
   useBrandAlignmentActions,
   useBrandAlignmentBrandName,
+  useBrandAlignmentAnalyzedText,
   usePersonaAlignmentResult,
   usePersonaAlignmentLoading,
   usePersonaAlignmentError,
   usePersonaAlignmentActions,
   usePersonaAlignmentPersonaName,
+  usePersonaAlignmentAnalyzedText,
   useSelectedText,
+  useOptimizeAlignmentLoading,
+  useOptimizeAlignmentActions,
+  useProjects,
+  useActiveProjectId,
 } from '@/lib/stores/workspaceStore';
+import type { Persona } from '@/lib/types/project';
+import type { BrandVoice } from '@/lib/types/brand';
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -191,10 +201,34 @@ function BrandAlignmentContent() {
   const isLoading = useBrandAlignmentLoading();
   const error = useBrandAlignmentError();
   const brandName = useBrandAlignmentBrandName();
+  const analyzedText = useBrandAlignmentAnalyzedText();
   const { clearBrandAlignmentResult } = useBrandAlignmentActions();
   const selectedText = useSelectedText();
   
+  // Optimize alignment state
+  const optimizeLoading = useOptimizeAlignmentLoading();
+  const { runOptimizeAlignment } = useOptimizeAlignmentActions();
+  
+  // Get active project for brand voice data
+  const activeProjectId = useActiveProjectId();
+  const projects = useProjects();
+  const activeProject = projects.find((p) => p.id === activeProjectId);
+  
   const hasSelection = selectedText && selectedText.trim().length > 0;
+  
+  /**
+   * Handle rewrite to optimize for brand
+   */
+  const handleRewriteToOptimize = async () => {
+    if (!activeProject?.brandVoice || !result || !analyzedText) return;
+    
+    await runOptimizeAlignment(
+      analyzedText,
+      'brand',
+      result,
+      activeProject.brandVoice
+    );
+  };
 
   if (isLoading) {
     return (
@@ -294,6 +328,32 @@ function BrandAlignmentContent() {
         variant="info"
       />
       
+      {/* Rewrite to Optimize Button */}
+      <button
+        onClick={handleRewriteToOptimize}
+        disabled={optimizeLoading || !analyzedText}
+        className={cn(
+          'w-full py-3 px-4 rounded-lg',
+          'font-medium text-sm text-white',
+          'focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2',
+          'flex items-center justify-center gap-2',
+          'transition-all duration-200',
+          optimizeLoading 
+            ? 'aiworx-gradient-animated cursor-wait'
+            : 'bg-[#006EE6] hover:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow',
+          (optimizeLoading || !analyzedText) && !optimizeLoading && 'opacity-50 cursor-not-allowed'
+        )}
+      >
+        {optimizeLoading ? (
+          <AIWorxButtonLoader />
+        ) : (
+          <>
+            <Wand2 className="w-4 h-4" />
+            {`Rewrite to Optimize for ${brandName || 'Brand'}`}
+          </>
+        )}
+      </button>
+      
       {/* Clear Results */}
       <Button
         variant="outline"
@@ -314,10 +374,39 @@ function PersonaAlignmentContent() {
   const isLoading = usePersonaAlignmentLoading();
   const error = usePersonaAlignmentError();
   const personaName = usePersonaAlignmentPersonaName();
+  const analyzedText = usePersonaAlignmentAnalyzedText();
   const { clearPersonaAlignmentResult } = usePersonaAlignmentActions();
   const selectedText = useSelectedText();
   
+  // Optimize alignment state
+  const optimizeLoading = useOptimizeAlignmentLoading();
+  const { runOptimizeAlignment } = useOptimizeAlignmentActions();
+  
+  // Get active project for persona data
+  const activeProjectId = useActiveProjectId();
+  const projects = useProjects();
+  const activeProject = projects.find((p) => p.id === activeProjectId);
+  
+  // Find the persona that was analyzed
+  const selectedPersona = activeProject?.personas?.find(
+    (p: Persona) => p.name === personaName
+  );
+  
   const hasSelection = selectedText && selectedText.trim().length > 0;
+  
+  /**
+   * Handle rewrite to optimize for persona
+   */
+  const handleRewriteToOptimize = async () => {
+    if (!selectedPersona || !result || !analyzedText) return;
+    
+    await runOptimizeAlignment(
+      analyzedText,
+      'persona',
+      result,
+      selectedPersona
+    );
+  };
 
   if (isLoading) {
     return (
@@ -416,6 +505,32 @@ function PersonaAlignmentContent() {
         items={result.recommendations}
         variant="info"
       />
+      
+      {/* Rewrite to Optimize Button */}
+      <button
+        onClick={handleRewriteToOptimize}
+        disabled={optimizeLoading || !analyzedText || !selectedPersona}
+        className={cn(
+          'w-full py-3 px-4 rounded-lg',
+          'font-medium text-sm text-white',
+          'focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2',
+          'flex items-center justify-center gap-2',
+          'transition-all duration-200',
+          optimizeLoading 
+            ? 'aiworx-gradient-animated cursor-wait'
+            : 'bg-[#006EE6] hover:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow',
+          (optimizeLoading || !analyzedText || !selectedPersona) && !optimizeLoading && 'opacity-50 cursor-not-allowed'
+        )}
+      >
+        {optimizeLoading ? (
+          <AIWorxButtonLoader />
+        ) : (
+          <>
+            <Wand2 className="w-4 h-4" />
+            {`Rewrite to Optimize for ${personaName || 'Persona'}`}
+          </>
+        )}
+      </button>
       
       {/* Clear Results */}
       <Button

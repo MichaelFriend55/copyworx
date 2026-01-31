@@ -69,3 +69,83 @@ export interface BrandAlignmentResponse {
   /** Brand name that was analyzed against */
   brandName: string;
 }
+
+// ============================================================================
+// Optimize Alignment Types
+// ============================================================================
+
+/**
+ * Type of alignment optimization
+ */
+export type OptimizeAlignmentType = 'persona' | 'brand';
+
+/**
+ * Analysis results used for optimization context
+ */
+export interface OptimizeAnalysisContext {
+  /** Alignment score from analysis */
+  score: number;
+  /** Assessment summary */
+  assessment: string;
+  /** Strengths/matches to preserve */
+  strengths: string[];
+  /** Issues/violations to fix */
+  issues: string[];
+  /** Recommendations to implement */
+  recommendations: string[];
+}
+
+/**
+ * Persona context for optimization
+ */
+export interface OptimizePersonaContext {
+  name: string;
+  demographics?: string;
+  psychographics?: string;
+  painPoints?: string;
+  goals?: string;
+}
+
+/**
+ * Brand context for optimization
+ */
+export interface OptimizeBrandContext {
+  brandName: string;
+  brandTone?: string;
+  missionStatement?: string;
+  brandValues?: string[];
+  approvedPhrases?: string[];
+  forbiddenWords?: string[];
+}
+
+/**
+ * Request body for optimize alignment API
+ */
+export interface OptimizeAlignmentRequest {
+  /** Original copy text to rewrite */
+  text: string;
+  /** Type of alignment optimization */
+  type: OptimizeAlignmentType;
+  /** Analysis results for context */
+  analysisContext: OptimizeAnalysisContext;
+  /** Persona context (required if type is 'persona') */
+  personaContext?: OptimizePersonaContext;
+  /** Brand context (required if type is 'brand') */
+  brandContext?: OptimizeBrandContext;
+}
+
+/**
+ * Response from optimize alignment API
+ */
+export interface OptimizeAlignmentResponse {
+  /** Rewritten copy optimized for alignment */
+  rewrittenText: string;
+  /** Brief summary of changes made */
+  changesSummary: string[];
+  /** Original text length */
+  originalLength: number;
+  /** New text length */
+  newLength: number;
+  /** Target name (persona or brand) */
+  targetName: string;
+}

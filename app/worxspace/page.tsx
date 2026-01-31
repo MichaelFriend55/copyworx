@@ -22,6 +22,7 @@ import { RightSidebarContent } from '@/components/workspace/RightSidebarContent'
 import { TemplateFormSlideOut, TEMPLATE_FORM_PANEL_ID } from '@/components/workspace/TemplateFormSlideOut';
 import { BrandVoiceSlideOut, BRAND_VOICE_PANEL_ID } from '@/components/workspace/BrandVoiceSlideOut';
 import { PersonasSlideOut, PERSONAS_PANEL_ID } from '@/components/workspace/PersonasSlideOut';
+import { OptimizeComparisonModal } from '@/components/workspace/OptimizeComparisonModal';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { getTemplateById } from '@/lib/data/templates';
@@ -88,6 +89,7 @@ export default function WorkspacePage() {
   const { closeSlideOut } = useSlideOutActions();
   const selectedTemplateId = useWorkspaceStore((state) => state.selectedTemplateId);
   const activeProjectId = useWorkspaceStore((state) => state.activeProjectId);
+  const activeDocumentId = useWorkspaceStore((state) => state.activeDocumentId);
   const projects = useWorkspaceStore((state) => state.projects);
   
   // Get selected template and active project
@@ -371,6 +373,13 @@ export default function WorkspacePage() {
       
       {/* Product Tour - Shows on first visit */}
       <ProductTour run={runTour} onComplete={completeTour} />
+      
+      {/* Optimize Alignment Comparison Modal - Shows after rewrite optimization */}
+      <OptimizeComparisonModal
+        editor={editor}
+        projectId={activeProjectId}
+        documentId={activeDocumentId}
+      />
     </>
   );
 }

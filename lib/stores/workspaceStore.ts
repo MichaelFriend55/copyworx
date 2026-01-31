@@ -120,6 +120,8 @@ interface WorkspaceState {
   brandAlignmentError: string | null;
   /** Brand name that was analyzed against */
   brandAlignmentBrandName: string | null;
+  /** Text that was analyzed (stored for optimization) */
+  brandAlignmentAnalyzedText: string | null;
   
   // Persona Alignment Tool state
   personaAlignmentResult: PersonaAlignmentResult | null;
@@ -127,6 +129,22 @@ interface WorkspaceState {
   personaAlignmentError: string | null;
   /** Persona name that was analyzed against */
   personaAlignmentPersonaName: string | null;
+  /** Text that was analyzed (stored for optimization) */
+  personaAlignmentAnalyzedText: string | null;
+  
+  // Optimize Alignment Tool state (rewrite to optimize)
+  optimizeAlignmentResult: string | null;
+  optimizeAlignmentChangesSummary: string[];
+  optimizeAlignmentLoading: boolean;
+  optimizeAlignmentError: string | null;
+  /** Target name (persona or brand) for optimization */
+  optimizeAlignmentTargetName: string | null;
+  /** Type of optimization (persona or brand) */
+  optimizeAlignmentType: 'persona' | 'brand' | null;
+  /** Original text being optimized */
+  optimizeAlignmentOriginalText: string | null;
+  /** Whether comparison modal is open */
+  optimizeAlignmentModalOpen: boolean;
   
   // Template Generator state
   selectedTemplateId: string | null;
@@ -193,6 +211,17 @@ interface WorkspaceState {
   runPersonaAlignment: (text: string, persona: Persona) => Promise<void>;
   clearPersonaAlignmentResult: () => void;
   
+  // Optimize Alignment Tool actions (rewrite to optimize)
+  runOptimizeAlignment: (
+    text: string,
+    type: 'persona' | 'brand',
+    analysisResult: PersonaAlignmentResult | BrandAlignmentResult,
+    personaOrBrand: Persona | BrandVoice
+  ) => Promise<void>;
+  clearOptimizeAlignmentResult: () => void;
+  setOptimizeAlignmentModalOpen: (open: boolean) => void;
+  acceptOptimizeResult: (editor: Editor) => void;
+  
   // Template Generator actions
   setSelectedTemplateId: (id: string | null) => void;
   setIsGeneratingTemplate: (isGenerating: boolean) => void;
@@ -258,12 +287,24 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       brandAlignmentLoading: false,
       brandAlignmentError: null,
       brandAlignmentBrandName: null,
+      brandAlignmentAnalyzedText: null,
       
       // Persona Alignment Tool initial state
       personaAlignmentResult: null,
       personaAlignmentLoading: false,
       personaAlignmentError: null,
       personaAlignmentPersonaName: null,
+      personaAlignmentAnalyzedText: null,
+      
+      // Optimize Alignment Tool initial state
+      optimizeAlignmentResult: null,
+      optimizeAlignmentChangesSummary: [],
+      optimizeAlignmentLoading: false,
+      optimizeAlignmentError: null,
+      optimizeAlignmentTargetName: null,
+      optimizeAlignmentType: null,
+      optimizeAlignmentOriginalText: null,
+      optimizeAlignmentModalOpen: false,
       
       // Template Generator initial state
       selectedTemplateId: null,
@@ -778,6 +819,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           brandAlignmentError: null,
           brandAlignmentResult: null,
           brandAlignmentBrandName: null,
+          brandAlignmentAnalyzedText: text, // Store the text being analyzed
         });
 
         try {
@@ -808,6 +850,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             brandAlignmentLoading: false,
             brandAlignmentError: null,
             brandAlignmentBrandName: data.brandName || brandVoice.brandName,
+            // Keep brandAlignmentAnalyzedText as set above
           });
 
         } catch (error) {
@@ -816,13 +859,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             brandAlignmentLoading: false,
             brandAlignmentResult: null,
             brandAlignmentBrandName: null,
+            brandAlignmentAnalyzedText: null,
           });
           logError(error, 'Brand alignment');
         }
       },
 
       clearBrandAlignmentResult: () => {
-        set({ brandAlignmentResult: null, brandAlignmentError: null, brandAlignmentBrandName: null });
+        set({ brandAlignmentResult: null, brandAlignmentError: null, brandAlignmentBrandName: null, brandAlignmentAnalyzedText: null });
       },
 
       // Persona Alignment Tool actions
@@ -846,6 +890,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           personaAlignmentError: null,
           personaAlignmentResult: null,
           personaAlignmentPersonaName: null,
+          personaAlignmentAnalyzedText: text, // Store the text being analyzed
         });
 
         try {
@@ -871,6 +916,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             personaAlignmentLoading: false,
             personaAlignmentError: null,
             personaAlignmentPersonaName: data.personaName || persona.name,
+            // Keep personaAlignmentAnalyzedText as set above
           });
         } catch (error) {
           set({ 
@@ -878,13 +924,187 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             personaAlignmentLoading: false,
             personaAlignmentResult: null,
             personaAlignmentPersonaName: null,
+            personaAlignmentAnalyzedText: null,
           });
           logError(error, 'Persona alignment');
         }
       },
 
       clearPersonaAlignmentResult: () => {
-        set({ personaAlignmentResult: null, personaAlignmentError: null, personaAlignmentPersonaName: null });
+        set({ personaAlignmentResult: null, personaAlignmentError: null, personaAlignmentPersonaName: null, personaAlignmentAnalyzedText: null });
+      },
+
+      // Optimize Alignment Tool actions
+      runOptimizeAlignment: async (
+        text: string,
+        type: 'persona' | 'brand',
+        analysisResult: PersonaAlignmentResult | BrandAlignmentResult,
+        personaOrBrand: Persona | BrandVoice
+      ): Promise<void> => {
+        // Validate inputs
+        try {
+          validateNotEmpty(text, 'Text');
+          validateTextLength(text, 'Text');
+        } catch (error) {
+          set({ 
+            optimizeAlignmentError: formatErrorForUser(error, 'Validation'),
+            optimizeAlignmentLoading: false 
+          });
+          logError(error, 'Optimize alignment validation');
+          return;
+        }
+
+        // Set loading state and store original text
+        set({ 
+          optimizeAlignmentLoading: true, 
+          optimizeAlignmentError: null,
+          optimizeAlignmentResult: null,
+          optimizeAlignmentChangesSummary: [],
+          optimizeAlignmentTargetName: null,
+          optimizeAlignmentType: type,
+          optimizeAlignmentOriginalText: text,
+          optimizeAlignmentModalOpen: false,
+        });
+
+        try {
+          // Build the request based on type
+          const analysisContext = {
+            score: analysisResult.score,
+            assessment: analysisResult.assessment,
+            strengths: type === 'persona' 
+              ? (analysisResult as PersonaAlignmentResult).strengths 
+              : (analysisResult as BrandAlignmentResult).matches,
+            issues: type === 'persona'
+              ? (analysisResult as PersonaAlignmentResult).improvements
+              : (analysisResult as BrandAlignmentResult).violations,
+            recommendations: analysisResult.recommendations,
+          };
+
+          const requestBody: Record<string, unknown> = {
+            text,
+            type,
+            analysisContext,
+          };
+
+          if (type === 'persona') {
+            const persona = personaOrBrand as Persona;
+            requestBody.personaContext = {
+              name: persona.name,
+              demographics: persona.demographics,
+              psychographics: persona.psychographics,
+              painPoints: persona.painPoints,
+              goals: persona.goals,
+            };
+          } else {
+            const brand = personaOrBrand as BrandVoice;
+            requestBody.brandContext = {
+              brandName: brand.brandName,
+              brandTone: brand.brandTone,
+              missionStatement: brand.missionStatement,
+              brandValues: brand.brandValues,
+              approvedPhrases: brand.approvedPhrases,
+              forbiddenWords: brand.forbiddenWords,
+            };
+          }
+
+          const data = await retryWithBackoff(async () => {
+            const response = await fetchWithTimeout('/api/optimize-alignment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(requestBody),
+            }, 60000); // 60 second timeout for optimization
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ 
+                error: 'API request failed',
+                details: `Status: ${response.status}` 
+              }));
+              throw new Error(errorData.details || errorData.error || 'Failed to optimize alignment');
+            }
+
+            const responseData = await response.json();
+            if (!responseData.rewrittenText) {
+              throw new Error('No result received from API');
+            }
+            return responseData;
+          }, 2);
+
+          set({ 
+            optimizeAlignmentResult: data.rewrittenText,
+            optimizeAlignmentChangesSummary: data.changesSummary || [],
+            optimizeAlignmentLoading: false,
+            optimizeAlignmentError: null,
+            optimizeAlignmentTargetName: data.targetName,
+            optimizeAlignmentModalOpen: true, // Open the comparison modal
+          });
+
+        } catch (error) {
+          set({ 
+            optimizeAlignmentError: formatErrorForUser(error, 'Optimize alignment'),
+            optimizeAlignmentLoading: false,
+            optimizeAlignmentResult: null,
+            optimizeAlignmentChangesSummary: [],
+            optimizeAlignmentTargetName: null,
+            optimizeAlignmentModalOpen: false,
+          });
+          logError(error, 'Optimize alignment');
+        }
+      },
+
+      clearOptimizeAlignmentResult: () => {
+        set({ 
+          optimizeAlignmentResult: null, 
+          optimizeAlignmentChangesSummary: [],
+          optimizeAlignmentError: null, 
+          optimizeAlignmentTargetName: null,
+          optimizeAlignmentType: null,
+          optimizeAlignmentOriginalText: null,
+          optimizeAlignmentModalOpen: false,
+        });
+      },
+
+      setOptimizeAlignmentModalOpen: (open: boolean) => {
+        set({ optimizeAlignmentModalOpen: open });
+      },
+
+      acceptOptimizeResult: (editor: Editor) => {
+        const { optimizeAlignmentResult, selectionRange } = get();
+        
+        if (!optimizeAlignmentResult) {
+          logger.warn('⚠️ No optimize result to accept');
+          return;
+        }
+
+        try {
+          // Import the insert function dynamically to avoid circular deps
+          const { insertTextAtSelection } = require('@/lib/editor-utils');
+          
+          // If we have a selection range, replace that selection
+          if (selectionRange) {
+            const success = insertTextAtSelection(editor, optimizeAlignmentResult, { isHTML: true });
+            if (success) {
+              logger.log('✅ Optimized content inserted at selection');
+            }
+          } else {
+            // Otherwise replace entire content
+            editor.commands.setContent(optimizeAlignmentResult);
+            logger.log('✅ Optimized content replaced entire document');
+          }
+
+          // Clear the result after inserting
+          set({
+            optimizeAlignmentResult: null,
+            optimizeAlignmentChangesSummary: [],
+            optimizeAlignmentTargetName: null,
+            optimizeAlignmentType: null,
+            optimizeAlignmentOriginalText: null,
+            optimizeAlignmentModalOpen: false,
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to insert content';
+          set({ optimizeAlignmentError: errorMessage });
+          logError(error, 'Accept optimize result');
+        }
       },
       
       // Template Generator actions
@@ -1002,6 +1222,7 @@ export const useBrandAlignmentResult = () => useWorkspaceStore((state) => state.
 export const useBrandAlignmentLoading = () => useWorkspaceStore((state) => state.brandAlignmentLoading);
 export const useBrandAlignmentError = () => useWorkspaceStore((state) => state.brandAlignmentError);
 export const useBrandAlignmentBrandName = () => useWorkspaceStore((state) => state.brandAlignmentBrandName);
+export const useBrandAlignmentAnalyzedText = () => useWorkspaceStore((state) => state.brandAlignmentAnalyzedText);
 
 /**
  * Persona Alignment Tool selector hooks
@@ -1010,6 +1231,7 @@ export const usePersonaAlignmentResult = () => useWorkspaceStore((state) => stat
 export const usePersonaAlignmentLoading = () => useWorkspaceStore((state) => state.personaAlignmentLoading);
 export const usePersonaAlignmentError = () => useWorkspaceStore((state) => state.personaAlignmentError);
 export const usePersonaAlignmentPersonaName = () => useWorkspaceStore((state) => state.personaAlignmentPersonaName);
+export const usePersonaAlignmentAnalyzedText = () => useWorkspaceStore((state) => state.personaAlignmentAnalyzedText);
 
 /**
  * Editor selection selector hooks
@@ -1079,6 +1301,25 @@ export const usePersonaAlignmentActions = () => useWorkspaceStore(
   useShallow((state) => ({
     runPersonaAlignment: state.runPersonaAlignment,
     clearPersonaAlignmentResult: state.clearPersonaAlignmentResult,
+  }))
+);
+
+// Optimize Alignment selectors
+export const useOptimizeAlignmentResult = () => useWorkspaceStore((state) => state.optimizeAlignmentResult);
+export const useOptimizeAlignmentChangesSummary = () => useWorkspaceStore((state) => state.optimizeAlignmentChangesSummary);
+export const useOptimizeAlignmentLoading = () => useWorkspaceStore((state) => state.optimizeAlignmentLoading);
+export const useOptimizeAlignmentError = () => useWorkspaceStore((state) => state.optimizeAlignmentError);
+export const useOptimizeAlignmentTargetName = () => useWorkspaceStore((state) => state.optimizeAlignmentTargetName);
+export const useOptimizeAlignmentType = () => useWorkspaceStore((state) => state.optimizeAlignmentType);
+export const useOptimizeAlignmentOriginalText = () => useWorkspaceStore((state) => state.optimizeAlignmentOriginalText);
+export const useOptimizeAlignmentModalOpen = () => useWorkspaceStore((state) => state.optimizeAlignmentModalOpen);
+
+export const useOptimizeAlignmentActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    runOptimizeAlignment: state.runOptimizeAlignment,
+    clearOptimizeAlignmentResult: state.clearOptimizeAlignmentResult,
+    setOptimizeAlignmentModalOpen: state.setOptimizeAlignmentModalOpen,
+    acceptOptimizeResult: state.acceptOptimizeResult,
   }))
 );
 

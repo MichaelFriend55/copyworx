@@ -29,7 +29,8 @@ import {
   Sparkles,
   Folder,
   Users,
-  ChevronDown
+  ChevronDown,
+  Wand2
 } from 'lucide-react';
 import { 
   useWorkspaceStore,
@@ -40,6 +41,9 @@ import {
   usePersonaAlignmentLoading,
   usePersonaAlignmentError,
   usePersonaAlignmentActions,
+  usePersonaAlignmentAnalyzedText,
+  useOptimizeAlignmentLoading,
+  useOptimizeAlignmentActions,
 } from '@/lib/stores/workspaceStore';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
@@ -63,7 +67,12 @@ export function PersonaAlignmentTool({ editor, className }: PersonaAlignmentTool
   const personaAlignmentResult = usePersonaAlignmentResult();
   const personaAlignmentLoading = usePersonaAlignmentLoading();
   const personaAlignmentError = usePersonaAlignmentError();
+  const personaAlignmentAnalyzedText = usePersonaAlignmentAnalyzedText();
   const { runPersonaAlignment, clearPersonaAlignmentResult } = usePersonaAlignmentActions();
+  
+  // Optimize alignment state
+  const optimizeLoading = useOptimizeAlignmentLoading();
+  const { runOptimizeAlignment } = useOptimizeAlignmentActions();
   
   // Get active project
   const activeProjectId = useActiveProjectId();
@@ -104,6 +113,26 @@ export function PersonaAlignmentTool({ editor, className }: PersonaAlignmentTool
    */
   const handleGoToPersonas = () => {
     useWorkspaceStore.getState().setActiveTool('personas');
+  };
+
+  /**
+   * Handle rewrite to optimize for persona
+   * Uses the analysis results to guide the rewrite
+   */
+  const handleRewriteToOptimize = async () => {
+    if (!selectedPersona || !personaAlignmentResult) return;
+    
+    // Use the stored analyzed text (from when analysis was run)
+    // This allows rewriting even if user has deselected the text
+    const textToOptimize = personaAlignmentAnalyzedText;
+    if (!textToOptimize) return;
+
+    await runOptimizeAlignment(
+      textToOptimize,
+      'persona',
+      personaAlignmentResult,
+      selectedPersona
+    );
   };
 
   return (
@@ -396,6 +425,28 @@ export function PersonaAlignmentTool({ editor, className }: PersonaAlignmentTool
               </ul>
             </div>
           )}
+
+          {/* Rewrite to Optimize Button - Always show when there's a result */}
+          <button
+            onClick={handleRewriteToOptimize}
+            disabled={optimizeLoading || !personaAlignmentAnalyzedText}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm text-white',
+              'focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2',
+              'flex items-center justify-center gap-2',
+              'transition-all duration-200',
+              optimizeLoading 
+                ? 'aiworx-gradient-animated cursor-wait'
+                : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-sm hover:shadow'
+            )}
+          >
+            <Wand2 className="w-4 h-4" />
+            {optimizeLoading 
+              ? 'Rewriting...' 
+              : `Rewrite to Optimize for ${selectedPersona.name}`
+            }
+          </button>
 
           {/* Clear Button */}
           <button
