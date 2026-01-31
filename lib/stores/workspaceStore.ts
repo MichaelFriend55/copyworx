@@ -118,11 +118,15 @@ interface WorkspaceState {
   brandAlignmentResult: BrandAlignmentResult | null;
   brandAlignmentLoading: boolean;
   brandAlignmentError: string | null;
+  /** Brand name that was analyzed against */
+  brandAlignmentBrandName: string | null;
   
   // Persona Alignment Tool state
   personaAlignmentResult: PersonaAlignmentResult | null;
   personaAlignmentLoading: boolean;
   personaAlignmentError: string | null;
+  /** Persona name that was analyzed against */
+  personaAlignmentPersonaName: string | null;
   
   // Template Generator state
   selectedTemplateId: string | null;
@@ -245,11 +249,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       brandAlignmentResult: null,
       brandAlignmentLoading: false,
       brandAlignmentError: null,
+      brandAlignmentBrandName: null,
       
       // Persona Alignment Tool initial state
       personaAlignmentResult: null,
       personaAlignmentLoading: false,
       personaAlignmentError: null,
+      personaAlignmentPersonaName: null,
       
       // Template Generator initial state
       selectedTemplateId: null,
@@ -758,7 +764,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ 
           brandAlignmentLoading: true, 
           brandAlignmentError: null,
-          brandAlignmentResult: null 
+          brandAlignmentResult: null,
+          brandAlignmentBrandName: null,
         });
 
         try {
@@ -787,21 +794,23 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           set({ 
             brandAlignmentResult: data.result,
             brandAlignmentLoading: false,
-            brandAlignmentError: null 
+            brandAlignmentError: null,
+            brandAlignmentBrandName: data.brandName || brandVoice.brandName,
           });
 
         } catch (error) {
           set({ 
             brandAlignmentError: formatErrorForUser(error, 'Brand alignment'),
             brandAlignmentLoading: false,
-            brandAlignmentResult: null 
+            brandAlignmentResult: null,
+            brandAlignmentBrandName: null,
           });
           logError(error, 'Brand alignment');
         }
       },
 
       clearBrandAlignmentResult: () => {
-        set({ brandAlignmentResult: null, brandAlignmentError: null });
+        set({ brandAlignmentResult: null, brandAlignmentError: null, brandAlignmentBrandName: null });
       },
 
       // Persona Alignment Tool actions
@@ -823,7 +832,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ 
           personaAlignmentLoading: true, 
           personaAlignmentError: null,
-          personaAlignmentResult: null 
+          personaAlignmentResult: null,
+          personaAlignmentPersonaName: null,
         });
 
         try {
@@ -847,20 +857,22 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           set({ 
             personaAlignmentResult: data.result,
             personaAlignmentLoading: false,
-            personaAlignmentError: null 
+            personaAlignmentError: null,
+            personaAlignmentPersonaName: data.personaName || persona.name,
           });
         } catch (error) {
           set({ 
             personaAlignmentError: formatErrorForUser(error, 'Persona alignment'),
             personaAlignmentLoading: false,
-            personaAlignmentResult: null 
+            personaAlignmentResult: null,
+            personaAlignmentPersonaName: null,
           });
           logError(error, 'Persona alignment');
         }
       },
 
       clearPersonaAlignmentResult: () => {
-        set({ personaAlignmentResult: null, personaAlignmentError: null });
+        set({ personaAlignmentResult: null, personaAlignmentError: null, personaAlignmentPersonaName: null });
       },
       
       // Template Generator actions
@@ -968,6 +980,7 @@ export const useRewriteChannelError = () => useWorkspaceStore((state) => state.r
 export const useBrandAlignmentResult = () => useWorkspaceStore((state) => state.brandAlignmentResult);
 export const useBrandAlignmentLoading = () => useWorkspaceStore((state) => state.brandAlignmentLoading);
 export const useBrandAlignmentError = () => useWorkspaceStore((state) => state.brandAlignmentError);
+export const useBrandAlignmentBrandName = () => useWorkspaceStore((state) => state.brandAlignmentBrandName);
 
 /**
  * Persona Alignment Tool selector hooks
@@ -975,6 +988,7 @@ export const useBrandAlignmentError = () => useWorkspaceStore((state) => state.b
 export const usePersonaAlignmentResult = () => useWorkspaceStore((state) => state.personaAlignmentResult);
 export const usePersonaAlignmentLoading = () => useWorkspaceStore((state) => state.personaAlignmentLoading);
 export const usePersonaAlignmentError = () => useWorkspaceStore((state) => state.personaAlignmentError);
+export const usePersonaAlignmentPersonaName = () => useWorkspaceStore((state) => state.personaAlignmentPersonaName);
 
 /**
  * Editor selection selector hooks

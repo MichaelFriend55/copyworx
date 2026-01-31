@@ -66,4 +66,6 @@ export interface BrandAlignmentRequest {
 export interface BrandAlignmentResponse {
   result: BrandAlignmentResult;
   textLength: number;
+  /** Brand name that was analyzed against */
+  brandName: string;
 }

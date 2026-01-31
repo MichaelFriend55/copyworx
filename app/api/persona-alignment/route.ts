@@ -41,6 +41,8 @@ interface PersonaAlignmentRequest {
 interface PersonaAlignmentResponse {
   result: PersonaAlignmentResult;
   textLength: number;
+  /** Persona name that was analyzed against */
+  personaName: string;
 }
 
 /**
@@ -292,6 +294,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PersonaAl
       {
         result,
         textLength: text.length,
+        personaName: persona.name,
       },
       { status: 200 }
     );

@@ -273,6 +273,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<BrandAlig
       {
         result,
         textLength: text.length,
+        brandName: brandVoice.brandName,
       },
       { status: 200 }
     );

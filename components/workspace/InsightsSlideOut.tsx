@@ -15,7 +15,7 @@
 
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import {
   Zap,
   UserCheck,
@@ -25,7 +25,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   Lightbulb,
-  RefreshCw,
   Loader2,
   Target,
   Activity,
@@ -35,21 +34,18 @@ import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
-  useWorkspaceStore,
-  useActiveProjectId,
-  useProjects,
   useBrandAlignmentResult,
   useBrandAlignmentLoading,
   useBrandAlignmentError,
   useBrandAlignmentActions,
+  useBrandAlignmentBrandName,
   usePersonaAlignmentResult,
   usePersonaAlignmentLoading,
   usePersonaAlignmentError,
   usePersonaAlignmentActions,
+  usePersonaAlignmentPersonaName,
   useSelectedText,
 } from '@/lib/stores/workspaceStore';
-import type { BrandAlignmentResult } from '@/lib/types/brand';
-import type { PersonaAlignmentResult } from '@/lib/stores/workspaceStore';
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -194,17 +190,10 @@ function BrandAlignmentContent() {
   const result = useBrandAlignmentResult();
   const isLoading = useBrandAlignmentLoading();
   const error = useBrandAlignmentError();
+  const brandName = useBrandAlignmentBrandName();
   const { clearBrandAlignmentResult } = useBrandAlignmentActions();
   const selectedText = useSelectedText();
-  const activeProjectId = useActiveProjectId();
-  const projects = useProjects();
   
-  const activeProject = useMemo(
-    () => projects.find((p) => p.id === activeProjectId),
-    [projects, activeProjectId]
-  );
-  
-  const hasBrandVoice = !!activeProject?.brandVoice;
   const hasSelection = selectedText && selectedText.trim().length > 0;
 
   if (isLoading) {
@@ -234,39 +223,23 @@ function BrandAlignmentContent() {
   if (!result) {
     return (
       <div className="space-y-6">
-        {!hasBrandVoice && (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-yellow-900">No Brand Voice Set Up</p>
-                <p className="text-sm text-yellow-700 mt-1">
-                  Set up your brand voice in the Brand & Audience section to check alignment.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {hasBrandVoice && !hasSelection && (
+        {!hasSelection ? (
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-start gap-3">
               <Sparkles className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium text-blue-900">Select Text to Analyze</p>
                 <p className="text-sm text-blue-700 mt-1">
-                  Highlight text in the editor and click "Check Brand Alignment" to analyze.
+                  Highlight text in the editor and select a brand voice from the dropdown to analyze.
                 </p>
               </div>
             </div>
           </div>
-        )}
-        
-        {hasBrandVoice && hasSelection && (
+        ) : (
           <div className="text-center py-8">
             <Zap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">
-              Click "Check Brand Alignment" to analyze your selected text.
+              Select a brand voice and click "Check Brand Alignment" to analyze your text.
             </p>
           </div>
         )}
@@ -276,6 +249,18 @@ function BrandAlignmentContent() {
   
   return (
     <div className="space-y-6">
+      {/* Brand Name Banner */}
+      {brandName && (
+        <div className="p-3 bg-blue-100 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-blue-600" />
+            <p className="text-sm font-medium text-blue-800">
+              Analyzing against: <span className="font-semibold">{brandName}</span>
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Overall Score */}
       <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
         <div className="flex items-center justify-between mb-4">
@@ -328,17 +313,10 @@ function PersonaAlignmentContent() {
   const result = usePersonaAlignmentResult();
   const isLoading = usePersonaAlignmentLoading();
   const error = usePersonaAlignmentError();
+  const personaName = usePersonaAlignmentPersonaName();
   const { clearPersonaAlignmentResult } = usePersonaAlignmentActions();
   const selectedText = useSelectedText();
-  const activeProjectId = useActiveProjectId();
-  const projects = useProjects();
   
-  const activeProject = useMemo(
-    () => projects.find((p) => p.id === activeProjectId),
-    [projects, activeProjectId]
-  );
-  
-  const hasPersonas = (activeProject?.personas?.length ?? 0) > 0;
   const hasSelection = selectedText && selectedText.trim().length > 0;
 
   if (isLoading) {
@@ -368,39 +346,23 @@ function PersonaAlignmentContent() {
   if (!result) {
     return (
       <div className="space-y-6">
-        {!hasPersonas && (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-yellow-900">No Personas Set Up</p>
-                <p className="text-sm text-yellow-700 mt-1">
-                  Create personas in the Brand & Audience section to check alignment.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {hasPersonas && !hasSelection && (
+        {!hasSelection ? (
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-start gap-3">
               <Sparkles className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium text-blue-900">Select Text to Analyze</p>
                 <p className="text-sm text-blue-700 mt-1">
-                  Highlight text in the editor and click "Check Persona Alignment" to analyze.
+                  Highlight text in the editor and select a persona from the dropdown to analyze.
                 </p>
               </div>
             </div>
           </div>
-        )}
-        
-        {hasPersonas && hasSelection && (
+        ) : (
           <div className="text-center py-8">
             <UserCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">
-              Click "Check Persona Alignment" to analyze your selected text.
+              Select a persona and click "Check Persona Alignment" to analyze your text.
             </p>
           </div>
         )}
@@ -410,6 +372,18 @@ function PersonaAlignmentContent() {
   
   return (
     <div className="space-y-6">
+      {/* Persona Name Banner */}
+      {personaName && (
+        <div className="p-3 bg-purple-100 border border-purple-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <UserCheck className="w-4 h-4 text-purple-600" />
+            <p className="text-sm font-medium text-purple-800">
+              Analyzing against: <span className="font-semibold">{personaName}</span>
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Overall Score */}
       <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl">
         <div className="flex items-center justify-between mb-4">

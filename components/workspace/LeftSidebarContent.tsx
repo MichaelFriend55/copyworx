@@ -19,7 +19,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { logger } from '@/lib/utils/logger';
 import Image from 'next/image';
 import { 
@@ -31,6 +31,8 @@ import {
   Zap,
   UserCheck,
   Target,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
 import { TemplatesSlideOut, TEMPLATES_PANEL_ID } from '@/components/workspace/TemplatesSlideOut';
@@ -51,6 +53,47 @@ import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStor
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
+import type { BrandVoice } from '@/lib/types/brand';
+import type { Persona } from '@/lib/types/project';
+
+// ============================================================================
+// Types for Brand Voice and Persona selectors
+// ============================================================================
+
+/**
+ * Brand voice with project context for display in selectors
+ */
+interface BrandVoiceWithProject {
+  id: string;
+  projectId: string | null;
+  projectName: string | null;
+  brandName: string;
+  brandTone: string;
+  approvedPhrases: string[];
+  forbiddenWords: string[];
+  brandValues: string[];
+  missionStatement: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Persona with project context for display in selectors
+ */
+interface PersonaWithProject {
+  id: string;
+  projectId: string | null;
+  projectName: string | null;
+  name: string;
+  photoUrl?: string;
+  demographics: string;
+  psychographics: string;
+  painPoints: string;
+  languagePatterns: string;
+  goals: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 /**
  * Props for LeftSidebarContent
@@ -79,8 +122,8 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   // Insights panel state
   const activeInsightsPanel = useActiveInsightsPanel();
   const { openInsightsPanel, closeInsightsPanel } = useInsightsPanelActions();
-  const { runBrandAlignment } = useBrandAlignmentActions();
-  const { runPersonaAlignment } = usePersonaAlignmentActions();
+  const { runBrandAlignment, clearBrandAlignmentResult } = useBrandAlignmentActions();
+  const { runPersonaAlignment, clearPersonaAlignmentResult } = usePersonaAlignmentActions();
   
   // Get active project for brand voice and personas
   const activeProject = useMemo(
@@ -92,6 +135,99 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set([])
   );
+  
+  // ============================================================================
+  // Brand Voice & Persona Selector State
+  // ============================================================================
+  
+  // All brand voices for the user (across all projects)
+  const [allBrandVoices, setAllBrandVoices] = useState<BrandVoiceWithProject[]>([]);
+  const [brandVoicesLoading, setBrandVoicesLoading] = useState(true);
+  const [brandVoicesError, setBrandVoicesError] = useState<string | null>(null);
+  
+  // All personas for the user (across all projects)
+  const [allPersonas, setAllPersonas] = useState<PersonaWithProject[]>([]);
+  const [personasLoading, setPersonasLoading] = useState(true);
+  const [personasError, setPersonasError] = useState<string | null>(null);
+  
+  // Selected brand voice and persona IDs for insights analysis
+  const [selectedBrandVoiceId, setSelectedBrandVoiceId] = useState<string | null>(null);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
+  
+  // Get the selected brand voice and persona objects
+  const selectedBrandVoice = useMemo(
+    () => allBrandVoices.find((bv) => bv.id === selectedBrandVoiceId),
+    [allBrandVoices, selectedBrandVoiceId]
+  );
+  
+  const selectedPersona = useMemo(
+    () => allPersonas.find((p) => p.id === selectedPersonaId),
+    [allPersonas, selectedPersonaId]
+  );
+  
+  // ============================================================================
+  // Fetch Brand Voices and Personas
+  // ============================================================================
+  
+  useEffect(() => {
+    const fetchAllBrandVoices = async () => {
+      try {
+        setBrandVoicesLoading(true);
+        setBrandVoicesError(null);
+        
+        const response = await fetch('/api/db/all-brand-voices');
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to fetch brand voices');
+        }
+        
+        const data = await response.json();
+        setAllBrandVoices(data);
+      } catch (error) {
+        logger.error('Failed to fetch brand voices:', error);
+        setBrandVoicesError(error instanceof Error ? error.message : 'Failed to load brand voices');
+      } finally {
+        setBrandVoicesLoading(false);
+      }
+    };
+    
+    const fetchAllPersonas = async () => {
+      try {
+        setPersonasLoading(true);
+        setPersonasError(null);
+        
+        const response = await fetch('/api/db/all-personas');
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to fetch personas');
+        }
+        
+        const data = await response.json();
+        setAllPersonas(data);
+      } catch (error) {
+        logger.error('Failed to fetch personas:', error);
+        setPersonasError(error instanceof Error ? error.message : 'Failed to load personas');
+      } finally {
+        setPersonasLoading(false);
+      }
+    };
+    
+    fetchAllBrandVoices();
+    fetchAllPersonas();
+  }, []);
+  
+  // Clear results when selection changes
+  const handleBrandVoiceChange = useCallback((id: string | null) => {
+    setSelectedBrandVoiceId(id);
+    clearBrandAlignmentResult();
+  }, [clearBrandAlignmentResult]);
+  
+  const handlePersonaChange = useCallback((id: string | null) => {
+    setSelectedPersonaId(id);
+    clearPersonaAlignmentResult();
+  }, [clearPersonaAlignmentResult]);
   
   // NOTE: Project initialization is now handled in the parent WorkspacePage
   // This prevents duplicate refreshProjects() calls that could cause issues
@@ -133,29 +269,53 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   
   /**
    * Handle Check Brand Alignment click
+   * Uses the selected brand voice from the dropdown
    */
   const handleCheckBrandAlignment = useCallback(() => {
     // Open the slide-out panel
     openInsightsPanel('brand-alignment');
     
-    // If we have selected text and brand voice, run the analysis
-    if (selectedText && selectedText.trim() && activeProject?.brandVoice) {
-      runBrandAlignment(selectedText, activeProject.brandVoice);
+    // If we have selected text and a selected brand voice, run the analysis
+    if (selectedText && selectedText.trim() && selectedBrandVoice) {
+      // Convert BrandVoiceWithProject to BrandVoice format for the API
+      const brandVoice: BrandVoice = {
+        brandName: selectedBrandVoice.brandName,
+        brandTone: selectedBrandVoice.brandTone,
+        approvedPhrases: selectedBrandVoice.approvedPhrases,
+        forbiddenWords: selectedBrandVoice.forbiddenWords,
+        brandValues: selectedBrandVoice.brandValues,
+        missionStatement: selectedBrandVoice.missionStatement,
+      };
+      runBrandAlignment(selectedText, brandVoice);
     }
-  }, [openInsightsPanel, selectedText, activeProject, runBrandAlignment]);
+  }, [openInsightsPanel, selectedText, selectedBrandVoice, runBrandAlignment]);
   
   /**
    * Handle Check Persona Alignment click
+   * Uses the selected persona from the dropdown
    */
   const handleCheckPersonaAlignment = useCallback(() => {
     // Open the slide-out panel
     openInsightsPanel('persona-alignment');
     
-    // If we have selected text and a persona, run the analysis with first persona
-    if (selectedText && selectedText.trim() && activeProject?.personas?.length) {
-      runPersonaAlignment(selectedText, activeProject.personas[0]);
+    // If we have selected text and a selected persona, run the analysis
+    if (selectedText && selectedText.trim() && selectedPersona) {
+      // Convert PersonaWithProject to Persona format for the API
+      const persona: Persona = {
+        id: selectedPersona.id,
+        name: selectedPersona.name,
+        photoUrl: selectedPersona.photoUrl,
+        demographics: selectedPersona.demographics,
+        psychographics: selectedPersona.psychographics,
+        painPoints: selectedPersona.painPoints,
+        languagePatterns: selectedPersona.languagePatterns,
+        goals: selectedPersona.goals,
+        createdAt: selectedPersona.createdAt,
+        updatedAt: selectedPersona.updatedAt,
+      };
+      runPersonaAlignment(selectedText, persona);
     }
-  }, [openInsightsPanel, selectedText, activeProject, runPersonaAlignment]);
+  }, [openInsightsPanel, selectedText, selectedPersona, runPersonaAlignment]);
   
   /**
    * Close insights panel
@@ -517,56 +677,173 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           )}
         </button>
 
-        {/* Insights Buttons */}
+        {/* Insights Content */}
         {expandedSections.has('insights') && (
-          <div className="ml-6 space-y-1">
-            {/* Check Brand Alignment Button */}
-            <button
-              onClick={handleCheckBrandAlignment}
-              className={cn(
-                'w-full text-left p-2 rounded-lg',
-                'transition-all duration-200',
-                'flex items-center gap-2',
-                'group',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                activeInsightsPanel === 'brand-alignment'
-                  ? 'bg-apple-blue text-white shadow-sm'
-                  : 'hover:bg-apple-gray-bg text-apple-text-dark'
+          <div className="ml-2 space-y-4 py-2">
+            {/* ============================================================ */}
+            {/* BRAND ALIGNMENT SECTION */}
+            {/* ============================================================ */}
+            <div className="space-y-2">
+              {/* Brand Voice Selector Label */}
+              <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide px-2">
+                Select Brand Voice
+              </label>
+              
+              {/* Brand Voice Selector Dropdown */}
+              {brandVoicesLoading ? (
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Loading brand voices...</span>
+                </div>
+              ) : brandVoicesError ? (
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{brandVoicesError}</span>
+                </div>
+              ) : allBrandVoices.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-amber-600 bg-amber-50 rounded-lg">
+                  <p className="font-medium">Create a brand voice first</p>
+                  <p className="text-xs text-amber-500 mt-1">Go to Brand & Audience to set up your brand voice</p>
+                </div>
+              ) : (
+                <select
+                  value={selectedBrandVoiceId || ''}
+                  onChange={(e) => handleBrandVoiceChange(e.target.value || null)}
+                  className={cn(
+                    'w-full px-3 py-2 rounded-lg border text-sm',
+                    'bg-white text-gray-900',
+                    'border-gray-200 focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20',
+                    'transition-colors duration-200',
+                    'cursor-pointer'
+                  )}
+                >
+                  <option value="">Choose a brand voice...</option>
+                  {allBrandVoices.map((bv) => (
+                    <option key={bv.id} value={bv.id}>
+                      {bv.brandName}{bv.projectName ? ` (${bv.projectName})` : ''}
+                    </option>
+                  ))}
+                </select>
               )}
-              title="Check how well your copy aligns with your brand voice"
-            >
-              <Zap
+              
+              {/* Check Brand Alignment Button */}
+              <button
+                onClick={handleCheckBrandAlignment}
+                disabled={!selectedBrandVoiceId || allBrandVoices.length === 0}
                 className={cn(
-                  'w-4 h-4 flex-shrink-0',
-                  activeInsightsPanel === 'brand-alignment' ? 'text-white' : 'text-apple-blue'
+                  'w-full text-left p-2 rounded-lg',
+                  'transition-all duration-200',
+                  'flex items-center gap-2',
+                  'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                  !selectedBrandVoiceId || allBrandVoices.length === 0
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : activeInsightsPanel === 'brand-alignment'
+                      ? 'bg-apple-blue text-white shadow-sm'
+                      : 'hover:bg-apple-gray-bg text-apple-text-dark'
                 )}
-              />
-              <span className="text-sm font-medium flex-1">Check Brand Alignment</span>
-            </button>
+                title={
+                  !selectedBrandVoiceId 
+                    ? 'Select a brand voice first' 
+                    : 'Check how well your copy aligns with your brand voice'
+                }
+              >
+                <Zap
+                  className={cn(
+                    'w-4 h-4 flex-shrink-0',
+                    !selectedBrandVoiceId || allBrandVoices.length === 0
+                      ? 'text-gray-400'
+                      : activeInsightsPanel === 'brand-alignment' 
+                        ? 'text-white' 
+                        : 'text-apple-blue'
+                  )}
+                />
+                <span className="text-sm font-medium flex-1">Check Brand Alignment</span>
+              </button>
+            </div>
             
-            {/* Check Persona Alignment Button */}
-            <button
-              onClick={handleCheckPersonaAlignment}
-              className={cn(
-                'w-full text-left p-2 rounded-lg',
-                'transition-all duration-200',
-                'flex items-center gap-2',
-                'group',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                activeInsightsPanel === 'persona-alignment'
-                  ? 'bg-apple-blue text-white shadow-sm'
-                  : 'hover:bg-apple-gray-bg text-apple-text-dark'
+            {/* Divider */}
+            <div className="border-t border-gray-200 mx-2" />
+            
+            {/* ============================================================ */}
+            {/* PERSONA ALIGNMENT SECTION */}
+            {/* ============================================================ */}
+            <div className="space-y-2">
+              {/* Persona Selector Label */}
+              <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide px-2">
+                Select Persona
+              </label>
+              
+              {/* Persona Selector Dropdown */}
+              {personasLoading ? (
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Loading personas...</span>
+                </div>
+              ) : personasError ? (
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{personasError}</span>
+                </div>
+              ) : allPersonas.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-amber-600 bg-amber-50 rounded-lg">
+                  <p className="font-medium">Create a persona first</p>
+                  <p className="text-xs text-amber-500 mt-1">Go to Brand & Audience to set up your personas</p>
+                </div>
+              ) : (
+                <select
+                  value={selectedPersonaId || ''}
+                  onChange={(e) => handlePersonaChange(e.target.value || null)}
+                  className={cn(
+                    'w-full px-3 py-2 rounded-lg border text-sm',
+                    'bg-white text-gray-900',
+                    'border-gray-200 focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20',
+                    'transition-colors duration-200',
+                    'cursor-pointer'
+                  )}
+                >
+                  <option value="">Choose a persona...</option>
+                  {allPersonas.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}{p.projectName ? ` (${p.projectName})` : ''}
+                    </option>
+                  ))}
+                </select>
               )}
-              title="Check how well your copy resonates with your target persona"
-            >
-              <UserCheck
+              
+              {/* Check Persona Alignment Button */}
+              <button
+                onClick={handleCheckPersonaAlignment}
+                disabled={!selectedPersonaId || allPersonas.length === 0}
                 className={cn(
-                  'w-4 h-4 flex-shrink-0',
-                  activeInsightsPanel === 'persona-alignment' ? 'text-white' : 'text-apple-blue'
+                  'w-full text-left p-2 rounded-lg',
+                  'transition-all duration-200',
+                  'flex items-center gap-2',
+                  'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                  !selectedPersonaId || allPersonas.length === 0
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : activeInsightsPanel === 'persona-alignment'
+                      ? 'bg-apple-blue text-white shadow-sm'
+                      : 'hover:bg-apple-gray-bg text-apple-text-dark'
                 )}
-              />
-              <span className="text-sm font-medium flex-1">Check Persona Alignment</span>
-            </button>
+                title={
+                  !selectedPersonaId 
+                    ? 'Select a persona first' 
+                    : 'Check how well your copy resonates with your target persona'
+                }
+              >
+                <UserCheck
+                  className={cn(
+                    'w-4 h-4 flex-shrink-0',
+                    !selectedPersonaId || allPersonas.length === 0
+                      ? 'text-gray-400'
+                      : activeInsightsPanel === 'persona-alignment' 
+                        ? 'text-white' 
+                        : 'text-apple-blue'
+                  )}
+                />
+                <span className="text-sm font-medium flex-1">Check Persona Alignment</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
