@@ -43,6 +43,8 @@ import {
   Check,
   X,
   Scissors,
+  Volume2,
+  Users,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
@@ -76,6 +78,8 @@ import { SnippetSection } from './SnippetSection';
 import { SnippetModals } from './SnippetModals';
 import { useSnippetActions, useSnippetStore } from '@/lib/stores/snippetStore';
 import { DeleteProjectModal } from './DeleteProjectModal';
+import { BrandVoiceSection } from './BrandVoiceSection';
+import { PersonaSection } from './PersonaSection';
 
 // ============================================================================
 // Constants
@@ -834,6 +838,20 @@ function ProjectSection({
             onSnippetClick={onSnippetClick}
             onAddSnippet={onAddSnippet}
             onEditSnippet={onEditSnippet}
+          />
+          
+          {/* Brand Voice section */}
+          <BrandVoiceSection
+            project={project}
+            isExpanded={isExpanded}
+            searchQuery={searchQuery}
+          />
+          
+          {/* Personas section */}
+          <PersonaSection
+            project={project}
+            isExpanded={isExpanded}
+            searchQuery={searchQuery}
           />
           
           {/* Empty state */}

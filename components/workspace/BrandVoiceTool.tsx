@@ -337,7 +337,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
               onChange={(e) => setApprovedPhrases(e.target.value)}
               placeholder="One per line"
               minHeight={80}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent font-mono"
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent"
             />
             <p className="text-xs text-gray-500">(one per line)</p>
           </div>
@@ -352,7 +352,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
               onChange={(e) => setForbiddenWords(e.target.value)}
               placeholder="One per line"
               minHeight={80}
-              className="px-3 py-2 text-sm border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono"
+              className="px-3 py-2 text-sm border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
             />
             <p className="text-xs text-gray-500">(one per line)</p>
           </div>
@@ -367,7 +367,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
               onChange={(e) => setBrandValues(e.target.value)}
               placeholder="One per line"
               minHeight={80}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent font-mono"
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent"
             />
             <p className="text-xs text-gray-500">(one per line)</p>
           </div>

@@ -135,6 +135,10 @@ interface WorkspaceState {
   // Active insights panel for right slide-out
   activeInsightsPanel: InsightsPanelType;
   
+  // Pending edit targets for slide-outs
+  pendingBrandVoiceEdit: string | null; // Brand name to edit
+  pendingPersonaEdit: string | null; // Persona ID to edit
+  
   // Project actions
   setProjects: (projects: Project[]) => void;
   setActiveProjectId: (id: string) => Promise<void>;
@@ -197,6 +201,10 @@ interface WorkspaceState {
   setActiveInsightsPanel: (panel: InsightsPanelType) => void;
   openInsightsPanel: (panel: InsightsPanelType) => void;
   closeInsightsPanel: () => void;
+  
+  // Pending edit actions
+  setPendingBrandVoiceEdit: (brandName: string | null) => void;
+  setPendingPersonaEdit: (personaId: string | null) => void;
 }
 
 /**
@@ -263,6 +271,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       
       // Active insights panel - null means closed
       activeInsightsPanel: null,
+      
+      // Pending edit targets - null means no pending edit
+      pendingBrandVoiceEdit: null,
+      pendingPersonaEdit: null,
 
       // Project actions
       setProjects: (projects: Project[]) => {
@@ -896,6 +908,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       closeInsightsPanel: () => {
         set({ activeInsightsPanel: null });
       },
+      
+      // Pending edit actions
+      setPendingBrandVoiceEdit: (brandName: string | null) => {
+        set({ pendingBrandVoiceEdit: brandName });
+      },
+      
+      setPendingPersonaEdit: (personaId: string | null) => {
+        set({ pendingPersonaEdit: personaId });
+      },
     }),
     {
       name: 'copyworx-workspace',
@@ -1112,6 +1133,18 @@ export const useInsightsPanelActions = () => useWorkspaceStore(
     setActiveInsightsPanel: state.setActiveInsightsPanel,
     openInsightsPanel: state.openInsightsPanel,
     closeInsightsPanel: state.closeInsightsPanel,
+  }))
+);
+
+/**
+ * Pending edit selector hooks
+ */
+export const usePendingBrandVoiceEdit = () => useWorkspaceStore((state) => state.pendingBrandVoiceEdit);
+export const usePendingPersonaEdit = () => useWorkspaceStore((state) => state.pendingPersonaEdit);
+export const usePendingEditActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    setPendingBrandVoiceEdit: state.setPendingBrandVoiceEdit,
+    setPendingPersonaEdit: state.setPendingPersonaEdit,
   }))
 );
 

@@ -31,7 +31,7 @@ import { Button } from '@/components/ui/button';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { cn } from '@/lib/utils';
-import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId, useProjects, usePendingBrandVoiceEdit, usePendingEditActions } from '@/lib/stores/workspaceStore';
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -81,6 +81,8 @@ export function BrandVoiceSlideOut({
   // Store state
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
+  const pendingBrandVoiceEdit = usePendingBrandVoiceEdit();
+  const { setPendingBrandVoiceEdit } = usePendingEditActions();
   
   // Get active project
   const activeProject = React.useMemo(
@@ -171,6 +173,22 @@ export function BrandVoiceSlideOut({
       setViewMode('list');
     }
   }, [isOpen, fetchBrandVoices]);
+  
+  // Check for pending brand voice edit and automatically switch to edit mode
+  useEffect(() => {
+    if (isOpen && pendingBrandVoiceEdit && brandVoices.length > 0) {
+      // Find the brand voice by name
+      const brandVoiceToEdit = brandVoices.find(bv => bv.brand_name === pendingBrandVoiceEdit);
+      
+      if (brandVoiceToEdit) {
+        // Load into edit mode
+        handleEdit(brandVoiceToEdit);
+        
+        // Clear the pending edit
+        setPendingBrandVoiceEdit(null);
+      }
+    }
+  }, [isOpen, pendingBrandVoiceEdit, brandVoices, setPendingBrandVoiceEdit]);
   
   // ═══════════════════════════════════════════════════════════
   // FORM HANDLERS
@@ -485,27 +503,31 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
       {/* Brand Voices List */}
       {!isLoading && !loadError && brandVoices.length > 0 && (
         <div className="space-y-2">
-          {brandVoices.map((bv) => (
-            <div
-              key={bv.id}
-              className={cn(
-                'flex items-center justify-between p-3 rounded-lg border',
-                'bg-white hover:bg-gray-50 transition-colors duration-200',
-                bv.project_id === activeProjectId && 'border-apple-blue bg-blue-50'
-              )}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4 text-apple-blue flex-shrink-0" />
-                  <span className="font-medium text-gray-900 truncate">
-                    {bv.brand_name}
-                  </span>
-                  {bv.project_id === activeProjectId && (
-                    <span className="text-xs px-2 py-0.5 bg-apple-blue text-white rounded-full">
-                      Current
+          {brandVoices.map((bv) => {
+            // Check if this brand voice is currently assigned to the active project
+            const isCurrentBrandVoice = activeProject?.brandVoice?.brandName === bv.brand_name;
+            
+            return (
+              <div
+                key={bv.id}
+                className={cn(
+                  'flex items-center justify-between p-3 rounded-lg border',
+                  'bg-white hover:bg-gray-50 transition-colors duration-200',
+                  isCurrentBrandVoice && 'border-apple-blue bg-blue-50'
+                )}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 text-apple-blue flex-shrink-0" />
+                    <span className="font-medium text-gray-900 truncate">
+                      {bv.brand_name}
                     </span>
-                  )}
-                </div>
+                    {isCurrentBrandVoice && (
+                      <span className="text-xs px-2 py-0.5 bg-apple-blue text-white rounded-full">
+                        Current
+                      </span>
+                    )}
+                  </div>
                 {bv.brand_tone && (
                   <p className="text-xs text-gray-500 mt-1 truncate pl-6">
                     {bv.brand_tone.substring(0, 50)}
@@ -531,7 +553,8 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -680,7 +703,7 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
             disabled={isSaving || saveSuccess}
             className={cn(
               'w-full px-3 py-2 rounded-lg border transition-all duration-200',
-              'text-sm text-gray-900 bg-white font-mono',
+              'text-sm text-gray-900 bg-white',
               'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
               'disabled:bg-gray-50 disabled:opacity-50',
               'placeholder:text-gray-400'
@@ -704,7 +727,7 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
             disabled={isSaving || saveSuccess}
             className={cn(
               'w-full px-3 py-2 rounded-lg border border-red-200 transition-all duration-200',
-              'text-sm text-gray-900 bg-white font-mono',
+              'text-sm text-gray-900 bg-white',
               'focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2',
               'disabled:bg-gray-50 disabled:opacity-50',
               'placeholder:text-gray-400'
@@ -728,7 +751,7 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
             disabled={isSaving || saveSuccess}
             className={cn(
               'w-full px-3 py-2 rounded-lg border transition-all duration-200',
-              'text-sm text-gray-900 bg-white font-mono',
+              'text-sm text-gray-900 bg-white',
               'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
               'disabled:bg-gray-50 disabled:opacity-50',
               'placeholder:text-gray-400'

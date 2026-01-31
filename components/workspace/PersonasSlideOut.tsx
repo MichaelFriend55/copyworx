@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { PersonaForm } from '@/components/workspace/PersonaForm';
 import { cn } from '@/lib/utils';
-import { useWorkspaceStore, useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId, useProjects, usePendingPersonaEdit, usePendingEditActions } from '@/lib/stores/workspaceStore';
 import {
   getProjectPersonas,
   createPersona,
@@ -132,6 +132,8 @@ export function PersonasSlideOut({
   // Store state
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
+  const pendingPersonaEdit = usePendingPersonaEdit();
+  const { setPendingPersonaEdit } = usePendingEditActions();
   
   // Get active project
   const activeProject = React.useMemo(
@@ -157,6 +159,22 @@ export function PersonasSlideOut({
     
     loadPersonas();
   }, [isOpen, activeProjectId]);
+  
+  // Check for pending persona edit and automatically switch to edit mode
+  useEffect(() => {
+    if (isOpen && pendingPersonaEdit && personas.length > 0) {
+      // Find the persona by ID
+      const personaToEdit = personas.find(p => p.id === pendingPersonaEdit);
+      
+      if (personaToEdit) {
+        // Load into edit mode
+        handleEdit(personaToEdit);
+        
+        // Clear the pending edit
+        setPendingPersonaEdit(null);
+      }
+    }
+  }, [isOpen, pendingPersonaEdit, personas, setPendingPersonaEdit]);
   
   /**
    * Load personas from storage
