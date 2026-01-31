@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured, getSupabaseAdmin } from '@/lib/supabase';
 import { 
   requireUserId, 
   unauthorizedResponse, 
