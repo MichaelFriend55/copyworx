@@ -92,12 +92,12 @@ function Tooltip({
       {children}
       {isVisible && (
         <div 
-          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs text-white bg-ink-900 dark:bg-ink-700 rounded-lg shadow-lg whitespace-nowrap max-w-[250px] text-center"
+          className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 text-xs text-white bg-ink-900 dark:bg-ink-700 rounded-lg shadow-lg whitespace-nowrap max-w-[250px] text-center"
           role="tooltip"
         >
           {content}
-          {/* Arrow */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-ink-900 dark:border-t-ink-700" />
+          {/* Arrow pointing up */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-ink-900 dark:border-b-ink-700" />
         </div>
       )}
     </div>
@@ -192,12 +192,13 @@ export function ApiUsageDisplay({
       <Tooltip content="Beta users have $5 API credit. Contact support to upgrade.">
         <div 
           className={cn(
-            'flex items-center gap-2 cursor-help',
+            'flex items-center gap-1.5 cursor-help',
+            'min-w-[75px] max-w-[90px]', // Constrain width to prevent overlap
             className
           )}
         >
           {/* Mini progress bar */}
-          <div className="w-16 h-1.5 bg-ink-200 dark:bg-ink-700 rounded-full overflow-hidden">
+          <div className="w-12 sm:w-16 h-1.5 bg-ink-200 dark:bg-ink-700 rounded-full overflow-hidden flex-shrink-0">
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-500',
@@ -209,7 +210,7 @@ export function ApiUsageDisplay({
           
           {/* Cost text */}
           <span className={cn(
-            'text-xs font-medium',
+            'text-xs font-medium whitespace-nowrap',
             getTextColor(percentUsed, isOverLimit)
           )}>
             {formatCurrency(totalCost)}
@@ -217,7 +218,7 @@ export function ApiUsageDisplay({
 
           {/* Warning icon if over limit */}
           {isOverLimit && (
-            <AlertTriangle className="w-3 h-3 text-red-500" />
+            <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
           )}
         </div>
       </Tooltip>

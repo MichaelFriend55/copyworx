@@ -11,7 +11,6 @@
 import { UserButton } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
 import { Sidebar } from '@/components/layout/sidebar';
-import { ApiUsageDisplay } from '@/components/ApiUsageDisplay';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -43,11 +42,6 @@ export default async function AppLayout({
           
           {/* User Section */}
           <div className="flex items-center gap-4">
-            {/* API Usage Display */}
-            <ApiUsageDisplay variant="compact" />
-            
-            <div className="w-px h-6 bg-border" />
-            
             {/* Notifications Button */}
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5 text-ink-600" />

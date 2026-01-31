@@ -49,7 +49,6 @@ import { getDocument, updateDocument } from '@/lib/storage/unified-storage';
 import { ViewModeSelector } from './ViewModeSelector';
 import { SaveAsSnippetButton } from './SaveAsSnippetButton';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { ApiUsageDisplay } from '@/components/ApiUsageDisplay';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
 
@@ -1326,14 +1325,14 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
       {/* Inner wrapper - forces horizontal scroll on small screens */}
       <div className={cn(
         'flex items-center justify-between',
-        'gap-8',
+        'gap-2 sm:gap-4 lg:gap-8',
         'min-w-[1400px]',
         'w-full',
         'h-full'
       )}>
         {/* Left section - File operations */}
         <div className={cn(
-          'flex items-center gap-2 transition-all duration-300',
+          'flex items-center gap-1.5 sm:gap-2 transition-all duration-300',
           'flex-shrink-0' // Prevent shrinking on small screens
         )}>
         <Link href="/home">
@@ -1396,8 +1395,9 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
 
       {/* Center section - Formatting controls */}
       <div className={cn(
-        'flex-1 flex items-center justify-center gap-1 transition-all duration-300',
-        'min-w-0' // Allow shrinking but maintain space for content
+        'flex-1 flex items-center justify-center gap-0.5 sm:gap-1 transition-all duration-300',
+        'min-w-0', // Allow shrinking but maintain space for content
+        'overflow-hidden' // Prevent overflow from pushing other sections
       )}>
         {hasActiveDocument && editor ? (
           <>
@@ -1528,14 +1528,10 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
 
       {/* Right section - View Mode and Tour Button */}
       <div className={cn(
-        'flex items-center gap-3',
-        'flex-shrink-0' // Prevent shrinking on small screens
+        'flex items-center gap-2 sm:gap-3',
+        'flex-shrink-0', // Prevent shrinking on small screens
+        'ml-auto' // Push to right edge
       )}>
-        {/* API Usage Display - Compact variant for toolbar */}
-        <ApiUsageDisplay variant="compact" />
-        
-        <div className="w-px h-6 bg-gray-200" />
-        
         {/* View Mode Selector - Always visible */}
         <ViewModeSelector
           viewMode={viewMode}
@@ -1554,7 +1550,8 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
             'flex items-center justify-center',
             'text-lg font-bold',
             'transition-colors duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-[#006EE6] focus:ring-offset-2'
+            'focus:outline-none focus:ring-2 focus:ring-[#006EE6] focus:ring-offset-2',
+            'flex-shrink-0' // Ensure button doesn't shrink
           )}
           title="Take Product Tour"
         >
