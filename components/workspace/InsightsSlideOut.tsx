@@ -2,10 +2,9 @@
  * @file components/workspace/InsightsSlideOut.tsx
  * @description Right slide-out panel for displaying analysis results
  * 
- * Supports three panel types:
+ * Supports two panel types:
  * - Brand Alignment Analysis
  * - Persona Alignment Analysis
- * - AI@Worx™ Live Analysis
  * 
  * Features:
  * - 550px wide right slide-out panel
@@ -28,10 +27,7 @@ import {
   Lightbulb,
   RefreshCw,
   Loader2,
-  BookOpen,
-  Palette,
   Target,
-  User,
   Activity,
   X,
 } from 'lucide-react';
@@ -50,8 +46,6 @@ import {
   usePersonaAlignmentLoading,
   usePersonaAlignmentError,
   usePersonaAlignmentActions,
-  useDocumentInsights,
-  useDocumentInsightsActions,
   useSelectedText,
 } from '@/lib/stores/workspaceStore';
 import type { BrandAlignmentResult } from '@/lib/types/brand';
@@ -65,7 +59,7 @@ import type { PersonaAlignmentResult } from '@/lib/stores/workspaceStore';
 export const INSIGHTS_PANEL_ID = 'insights-panel';
 
 /** Panel type for insights */
-export type InsightsPanelType = 'brand-alignment' | 'persona-alignment' | 'aiworx-live' | null;
+export type InsightsPanelType = 'brand-alignment' | 'persona-alignment' | null;
 
 // ═══════════════════════════════════════════════════════════
 // TYPES
@@ -86,9 +80,6 @@ interface InsightsSlideOutProps {
   
   /** Callback to trigger persona alignment check */
   onCheckPersonaAlignment?: () => void;
-  
-  /** Callback to refresh AI@Worx Live */
-  onRefreshAIWorx?: () => void;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -188,48 +179,6 @@ function ResultSection({
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-/**
- * AI@Worx Live metric row
- */
-function AIWorxMetricRow({
-  icon: Icon,
-  label,
-  value,
-  score,
-  isLoading,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | null;
-  score?: number | null;
-  isLoading?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-gray-600" />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-900">{label}</p>
-          {isLoading ? (
-            <p className="text-xs text-gray-500">Analyzing...</p>
-          ) : value ? (
-            <p className="text-xs text-gray-600">{value}</p>
-          ) : (
-            <p className="text-xs text-gray-400">Not analyzed yet</p>
-          )}
-        </div>
-      </div>
-      {isLoading ? (
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-      ) : score !== undefined && score !== null ? (
-        <ScoreBadge score={score} maxScore={10} size="small" />
-      ) : null}
     </div>
   );
 }
@@ -506,151 +455,6 @@ function PersonaAlignmentContent() {
   );
 }
 
-/**
- * AI@Worx Live Panel Content
- */
-function AIWorxLiveContent({ onRefresh }: { onRefresh?: () => void }) {
-  const insights = useDocumentInsights();
-  const { clearAIMetrics } = useDocumentInsightsActions();
-  const activeProjectId = useActiveProjectId();
-  const projects = useProjects();
-  
-  const activeProject = useMemo(
-    () => projects.find((p) => p.id === activeProjectId),
-    [projects, activeProjectId]
-  );
-  
-  const hasBrandVoice = !!activeProject?.brandVoice?.brandName;
-  const hasPersona = (activeProject?.personas?.length ?? 0) > 0;
-  
-  const { aiMetrics, aiMetricsLoading, aiMetricsError, enabledMetrics } = insights;
-  
-  return (
-    <div className="space-y-6">
-      {/* Error State */}
-      {aiMetricsError && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-start gap-3">
-            <X className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-red-900">Analysis Error</p>
-              <p className="text-sm text-red-700 mt-1">{aiMetricsError}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* AI Metrics */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">AI Analysis Results</h3>
-        </div>
-        <div className="p-4">
-          {/* Readability */}
-          {enabledMetrics.readability && (
-            <AIWorxMetricRow
-              icon={BookOpen}
-              label="Readability"
-              value={aiMetrics.tone ? 'Analyzed' : null}
-              isLoading={aiMetricsLoading}
-            />
-          )}
-          
-          {/* Tone Detection */}
-          {enabledMetrics.tone && (
-            <AIWorxMetricRow
-              icon={Palette}
-              label="Detected Tone"
-              value={aiMetrics.tone?.label ?? null}
-              score={aiMetrics.tone?.confidence ? Math.round(aiMetrics.tone.confidence / 10) : null}
-              isLoading={aiMetricsLoading}
-            />
-          )}
-          
-          {/* Brand Voice Alignment */}
-          {enabledMetrics.brandVoice && (
-            <AIWorxMetricRow
-              icon={Target}
-              label="Brand Voice Alignment"
-              value={hasBrandVoice 
-                ? (aiMetrics.brandAlignment?.feedback?.split('.')[0] ?? null)
-                : 'No brand voice set'
-              }
-              score={aiMetrics.brandAlignment?.score ?? null}
-              isLoading={aiMetricsLoading && hasBrandVoice}
-            />
-          )}
-          
-          {/* Persona Alignment */}
-          {enabledMetrics.persona && (
-            <AIWorxMetricRow
-              icon={User}
-              label="Persona Alignment"
-              value={hasPersona 
-                ? (aiMetrics.personaAlignment?.feedback?.split('.')[0] ?? null)
-                : 'No personas set'
-              }
-              score={aiMetrics.personaAlignment?.score ?? null}
-              isLoading={aiMetricsLoading && hasPersona}
-            />
-          )}
-        </div>
-      </div>
-      
-      {/* Detailed Feedback Sections */}
-      {aiMetrics.brandAlignment && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-5 h-5 text-blue-600" />
-            <h4 className="font-semibold text-blue-900">Brand Voice Feedback</h4>
-          </div>
-          <p className="text-sm text-blue-700">{aiMetrics.brandAlignment.feedback}</p>
-        </div>
-      )}
-      
-      {aiMetrics.personaAlignment && (
-        <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <User className="w-5 h-5 text-purple-600" />
-            <h4 className="font-semibold text-purple-900">Persona Feedback</h4>
-          </div>
-          <p className="text-sm text-purple-700">{aiMetrics.personaAlignment.feedback}</p>
-        </div>
-      )}
-      
-      {/* Actions */}
-      <div className="flex gap-3">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={clearAIMetrics}
-          disabled={aiMetricsLoading}
-        >
-          Clear Results
-        </Button>
-        <Button
-          variant="default"
-          className="flex-1 bg-apple-blue hover:bg-apple-blue/90"
-          onClick={onRefresh}
-          disabled={aiMetricsLoading}
-        >
-          {aiMetricsLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh Analysis
-            </>
-          )}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 // ═══════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════
@@ -664,7 +468,6 @@ export function InsightsSlideOut({
   panelType,
   onCheckBrandAlignment,
   onCheckPersonaAlignment,
-  onRefreshAIWorx,
 }: InsightsSlideOutProps) {
   // Get panel title and subtitle based on type
   const panelConfig = useMemo(() => {
@@ -680,12 +483,6 @@ export function InsightsSlideOut({
           title: 'Persona Alignment Analysis',
           subtitle: 'See how well your copy resonates with your target audience',
           icon: UserCheck,
-        };
-      case 'aiworx-live':
-        return {
-          title: 'AI@Worx™ Live Analysis',
-          subtitle: 'Real-time document quality insights',
-          icon: Sparkles,
         };
       default:
         return {
@@ -703,8 +500,6 @@ export function InsightsSlideOut({
         return <BrandAlignmentContent />;
       case 'persona-alignment':
         return <PersonaAlignmentContent />;
-      case 'aiworx-live':
-        return <AIWorxLiveContent onRefresh={onRefreshAIWorx} />;
       default:
         return (
           <div className="text-center py-16">

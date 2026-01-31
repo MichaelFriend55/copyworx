@@ -31,7 +31,7 @@ import { logger } from '@/lib/utils/logger';
 /**
  * Insights panel types for the right slide-out
  */
-export type InsightsPanelType = 'brand-alignment' | 'persona-alignment' | 'aiworx-live' | null;
+export type InsightsPanelType = 'brand-alignment' | 'persona-alignment' | null;
 
 /**
  * Persona alignment result from AI analysis
@@ -66,71 +66,6 @@ import {
 
 // Re-export ToneType for components that import from this file
 export type { ToneType } from '@/lib/prompts/tone-shifter';
-
-/**
- * Document insights update frequency options
- */
-export type InsightsUpdateFrequency = 'onPause' | 'onSave' | 'realtime';
-
-/**
- * AI-powered metrics that require API calls
- */
-export interface AIMetrics {
-  /** Detected tone with confidence */
-  tone: {
-    label: string;
-    confidence: number;
-  } | null;
-  
-  /** Brand voice alignment score */
-  brandAlignment: {
-    score: number;
-    feedback: string;
-  } | null;
-  
-  /** Persona alignment score */
-  personaAlignment: {
-    score: number;
-    feedback: string;
-  } | null;
-}
-
-/**
- * Document insights state
- */
-export interface DocumentInsightsState {
-  /** Whether the insights panel is active */
-  isActive: boolean;
-  
-  /** Whether the insights panel is expanded */
-  isExpanded: boolean;
-  
-  /** How often to update metrics */
-  updateFrequency: InsightsUpdateFrequency;
-  
-  /** Which metrics are enabled */
-  enabledMetrics: {
-    readability: boolean;
-    tone: boolean;
-    brandVoice: boolean;
-    persona: boolean;
-  };
-  
-  /** AI-powered metrics (requires API) */
-  aiMetrics: AIMetrics;
-  
-  /** Loading state for AI metrics */
-  aiMetricsLoading: boolean;
-  
-  /** Error state for AI metrics */
-  aiMetricsError: string | null;
-  
-  /** Timestamp of last analysis */
-  lastAnalyzedAt: number | null;
-  
-  /** Cache key for deduplication */
-  lastAnalyzedContent: string | null;
-}
 
 /**
  * Workspace state interface
@@ -193,9 +128,6 @@ interface WorkspaceState {
   selectedTemplateId: string | null;
   isGeneratingTemplate: boolean;
   
-  // Document Insights state
-  documentInsights: DocumentInsightsState;
-  
   // Active insights panel for right slide-out
   activeInsightsPanel: InsightsPanelType;
   
@@ -256,15 +188,6 @@ interface WorkspaceState {
   // Template Generator actions
   setSelectedTemplateId: (id: string | null) => void;
   setIsGeneratingTemplate: (isGenerating: boolean) => void;
-  
-  // Document Insights actions
-  setDocumentInsightsActive: (isActive: boolean) => void;
-  setDocumentInsightsExpanded: (isExpanded: boolean) => void;
-  setInsightsUpdateFrequency: (frequency: InsightsUpdateFrequency) => void;
-  toggleInsightsMetric: (metric: keyof DocumentInsightsState['enabledMetrics']) => void;
-  runAIAnalysis: (content: string, brandVoice?: BrandVoice | null, persona?: { name: string; demographics: string; psychographics: string; painPoints: string; goals: string } | null) => Promise<void>;
-  clearAIMetrics: () => void;
-  setAIMetrics: (metrics: Partial<AIMetrics>) => void;
   
   // Insights panel actions
   setActiveInsightsPanel: (panel: InsightsPanelType) => void;
@@ -331,28 +254,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       // Template Generator initial state
       selectedTemplateId: null,
       isGeneratingTemplate: false,
-      
-      // Document Insights initial state
-      documentInsights: {
-        isActive: true,
-        isExpanded: false,
-        updateFrequency: 'onPause' as InsightsUpdateFrequency,
-        enabledMetrics: {
-          readability: true,
-          tone: true,
-          brandVoice: true,
-          persona: true,
-        },
-        aiMetrics: {
-          tone: null,
-          brandAlignment: null,
-          personaAlignment: null,
-        },
-        aiMetricsLoading: false,
-        aiMetricsError: null,
-        lastAnalyzedAt: null,
-        lastAnalyzedContent: null,
-      },
       
       // Active insights panel - null means closed
       activeInsightsPanel: null,
@@ -971,144 +872,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ isGeneratingTemplate: isGenerating });
       },
       
-      // Document Insights actions
-      setDocumentInsightsActive: (isActive: boolean) => {
-        set((state) => ({
-          documentInsights: { ...state.documentInsights, isActive }
-        }));
-      },
-      
-      setDocumentInsightsExpanded: (isExpanded: boolean) => {
-        set((state) => ({
-          documentInsights: { ...state.documentInsights, isExpanded }
-        }));
-      },
-      
-      setInsightsUpdateFrequency: (frequency: InsightsUpdateFrequency) => {
-        set((state) => ({
-          documentInsights: { ...state.documentInsights, updateFrequency: frequency }
-        }));
-      },
-      
-      toggleInsightsMetric: (metric: keyof DocumentInsightsState['enabledMetrics']) => {
-        set((state) => ({
-          documentInsights: {
-            ...state.documentInsights,
-            enabledMetrics: {
-              ...state.documentInsights.enabledMetrics,
-              [metric]: !state.documentInsights.enabledMetrics[metric]
-            }
-          }
-        }));
-      },
-      
-      runAIAnalysis: async (content: string, brandVoice?: BrandVoice | null, persona?: { name: string; demographics: string; psychographics: string; painPoints: string; goals: string } | null) => {
-        const { documentInsights } = get();
-        
-        const { tone, brandVoice: brandVoiceEnabled, persona: personaEnabled } = documentInsights.enabledMetrics;
-        if (!tone && !brandVoiceEnabled && !personaEnabled) {
-          return;
-        }
-        
-        const contentHash = content.substring(0, 100) + content.length;
-        if (contentHash === documentInsights.lastAnalyzedContent) {
-          return;
-        }
-        
-        const metricsToAnalyze: string[] = [];
-        if (tone) metricsToAnalyze.push('tone');
-        if (brandVoiceEnabled && brandVoice) metricsToAnalyze.push('brand');
-        if (personaEnabled && persona) metricsToAnalyze.push('persona');
-        
-        if (metricsToAnalyze.length === 0) {
-          return;
-        }
-        
-        set((state) => ({
-          documentInsights: {
-            ...state.documentInsights,
-            aiMetricsLoading: true,
-            aiMetricsError: null,
-          }
-        }));
-        
-        try {
-          const response = await fetchWithTimeout('/api/analyze-document', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content,
-              brandVoice: brandVoiceEnabled ? brandVoice : undefined,
-              persona: personaEnabled ? persona : undefined,
-              metricsToAnalyze,
-            }),
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Analysis failed' }));
-            throw new Error(errorData.details || errorData.error || 'Analysis failed');
-          }
-          
-          const data = await response.json();
-          
-          set((state) => ({
-            documentInsights: {
-              ...state.documentInsights,
-              aiMetrics: {
-                tone: data.tone || state.documentInsights.aiMetrics.tone,
-                brandAlignment: data.brandAlignment || state.documentInsights.aiMetrics.brandAlignment,
-                personaAlignment: data.personaAlignment || state.documentInsights.aiMetrics.personaAlignment,
-              },
-              aiMetricsLoading: false,
-              aiMetricsError: null,
-              lastAnalyzedAt: Date.now(),
-              lastAnalyzedContent: contentHash,
-            }
-          }));
-          
-        } catch (error) {
-          const errorMessage = formatErrorForUser(error, 'Document analysis');
-          
-          set((state) => ({
-            documentInsights: {
-              ...state.documentInsights,
-              aiMetricsLoading: false,
-              aiMetricsError: errorMessage,
-            }
-          }));
-          
-          logError(error, 'AI document analysis');
-        }
-      },
-      
-      clearAIMetrics: () => {
-        set((state) => ({
-          documentInsights: {
-            ...state.documentInsights,
-            aiMetrics: {
-              tone: null,
-              brandAlignment: null,
-              personaAlignment: null,
-            },
-            aiMetricsError: null,
-            lastAnalyzedAt: null,
-            lastAnalyzedContent: null,
-          }
-        }));
-      },
-      
-      setAIMetrics: (metrics: Partial<AIMetrics>) => {
-        set((state) => ({
-          documentInsights: {
-            ...state.documentInsights,
-            aiMetrics: {
-              ...state.documentInsights.aiMetrics,
-              ...metrics,
-            }
-          }
-        }));
-      },
-      
       // Insights panel actions
       setActiveInsightsPanel: (panel: InsightsPanelType) => {
         set({ activeInsightsPanel: panel });
@@ -1133,18 +896,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         activeToolId: state.activeToolId,
         aiAnalysisMode: state.aiAnalysisMode,
         viewMode: state.viewMode,
-        documentInsights: {
-          isActive: state.documentInsights.isActive,
-          // isExpanded intentionally NOT persisted - always starts collapsed
-          updateFrequency: state.documentInsights.updateFrequency,
-          enabledMetrics: state.documentInsights.enabledMetrics,
-          // Don't persist transient data
-          aiMetrics: { tone: null, brandAlignment: null, personaAlignment: null },
-          aiMetricsLoading: false,
-          aiMetricsError: null,
-          lastAnalyzedAt: null,
-          lastAnalyzedContent: null,
-        },
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -1335,30 +1086,6 @@ export const useTemplateActions = () => useWorkspaceStore(
     clearShortenResult: state.clearShortenResult,
     clearRewriteChannelResult: state.clearRewriteChannelResult,
     clearBrandAlignmentResult: state.clearBrandAlignmentResult,
-  }))
-);
-
-/**
- * Document Insights selector hooks
- */
-export const useDocumentInsights = () => useWorkspaceStore((state) => state.documentInsights);
-export const useDocumentInsightsActive = () => useWorkspaceStore((state) => state.documentInsights.isActive);
-export const useDocumentInsightsExpanded = () => useWorkspaceStore((state) => state.documentInsights.isExpanded);
-export const useInsightsUpdateFrequency = () => useWorkspaceStore((state) => state.documentInsights.updateFrequency);
-export const useEnabledMetrics = () => useWorkspaceStore((state) => state.documentInsights.enabledMetrics);
-export const useAIMetrics = () => useWorkspaceStore((state) => state.documentInsights.aiMetrics);
-export const useAIMetricsLoading = () => useWorkspaceStore((state) => state.documentInsights.aiMetricsLoading);
-export const useAIMetricsError = () => useWorkspaceStore((state) => state.documentInsights.aiMetricsError);
-
-export const useDocumentInsightsActions = () => useWorkspaceStore(
-  useShallow((state) => ({
-    setDocumentInsightsActive: state.setDocumentInsightsActive,
-    setDocumentInsightsExpanded: state.setDocumentInsightsExpanded,
-    setInsightsUpdateFrequency: state.setInsightsUpdateFrequency,
-    toggleInsightsMetric: state.toggleInsightsMetric,
-    runAIAnalysis: state.runAIAnalysis,
-    clearAIMetrics: state.clearAIMetrics,
-    setAIMetrics: state.setAIMetrics,
   }))
 );
 

@@ -13,11 +13,8 @@
  * - AI@Worx Templates slide-out browser
  * - Collapsible tool sections (My Copy Optimizer, My Brand & Audience)
  * - Active tool highlighting
- * - AI@Worx™ Live document insights panel at bottom
  * - My Projects slide-out for full project navigation
  * - Templates slide-out for browsing and selecting templates
- * 
- * Note: The "My Insights" section has been replaced by the AI@Worx™ Live panel
  */
 
 'use client';
@@ -35,7 +32,6 @@ import {
   UserCheck,
   Target,
 } from 'lucide-react';
-import { DocumentInsights } from '@/components/workspace/DocumentInsights';
 import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
 import { TemplatesSlideOut, TEMPLATES_PANEL_ID } from '@/components/workspace/TemplatesSlideOut';
 import { BRAND_VOICE_PANEL_ID } from '@/components/workspace/BrandVoiceSlideOut';
@@ -574,9 +570,6 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
           </div>
         )}
       </div>
-
-        {/* AI@Worx™ Live - Document Insights Panel */}
-        <DocumentInsights />
       </div>
     </div>
   );
