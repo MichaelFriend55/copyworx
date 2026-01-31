@@ -1,10 +1,10 @@
 /**
  * @file app/(app)/projects/[projectId]/page.tsx
- * @description Dynamic project route that redirects to workspace with specific project loaded
+ * @description Dynamic project route that redirects to worxspace with specific project loaded
  * 
  * Purpose:
  * - Handles navigation from project cards
- * - Redirects /projects/[id] → /workspace?projectId=[id]
+ * - Redirects /projects/[id] → /worxspace?projectId=[id]
  * - Enables direct project linking and bookmarking
  * 
  * Security:
@@ -29,8 +29,8 @@ interface ProjectPageProps {
  * 
  * This is a minimal redirect component that:
  * 1. Receives the projectId from the URL path
- * 2. Redirects to the workspace with the project loaded
- * 3. Allows the workspace to handle all project logic
+ * 2. Redirects to the worxspace with the project loaded
+ * 3. Allows the worxspace to handle all project logic
  * 
  * @param params - Dynamic route parameters containing projectId
  * @returns Never returns - redirects immediately
@@ -38,10 +38,10 @@ interface ProjectPageProps {
 export default function ProjectPage({ params }: ProjectPageProps) {
   // Validate projectId exists
   if (!params.projectId) {
-    // If no projectId, redirect to workspace without project
-    redirect('/workspace');
+    // If no projectId, redirect to worxspace without project
+    redirect('/worxspace');
   }
 
-  // Redirect to workspace with project ID as query parameter
-  redirect(`/workspace?projectId=${params.projectId}`);
+  // Redirect to worxspace with project ID as query parameter
+  redirect(`/worxspace?projectId=${params.projectId}`);
 }

@@ -81,7 +81,7 @@ export function Footer() {
             {/* Brand Section */}
             <div className="col-span-2 md:col-span-6 lg:col-span-4">
               <Link 
-                href="/" 
+                href="/home" 
                 className="inline-flex items-center gap-2 mb-4"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500 shadow-lg">

@@ -34,10 +34,10 @@ export default function MarketingLayout({
           {/* Show when user IS signed in */}
           <SignedIn>
             <Button variant="ghost" className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90" asChild>
-              <Link href="/workspace">Worxspace</Link>
+              <Link href="/worxspace">Worxspace</Link>
             </Button>
             <UserButton 
-              afterSignOutUrl="/"
+              afterSignOutUrl="/home"
               appearance={{
                 elements: {
                   avatarBox: 'h-9 w-9 shadow-lg',

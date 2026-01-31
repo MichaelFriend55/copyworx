@@ -94,10 +94,10 @@ function AccessDenied() {
           You don&apos;t have permission to view this page. This area is restricted to administrators only.
         </p>
         <a 
-          href="/copyworx" 
+          href="/home" 
           className="inline-flex items-center px-4 py-2 bg-ink-900 text-white rounded-lg hover:bg-ink-800 transition-colors"
         >
-          Return to CopyWorx
+          Return to App Home
         </a>
       </div>
     </div>

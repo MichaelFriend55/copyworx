@@ -70,7 +70,7 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link 
-            href="/copyworx" 
+            href="/home" 
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-900 shadow-lg">
@@ -114,10 +114,10 @@ export function Navbar() {
             {/* Show when user IS signed in */}
             <SignedIn>
               <Button variant="ghost" asChild>
-                <Link href="/workspace">Workspace</Link>
+                <Link href="/worxspace">Worxspace</Link>
               </Button>
               <UserButton 
-                afterSignOutUrl="/"
+                afterSignOutUrl="/home"
                 appearance={{
                   elements: {
                     avatarBox: 'h-9 w-9',
@@ -186,11 +186,11 @@ export function Navbar() {
               {/* Show when user IS signed in */}
               <SignedIn>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/workspace">Workspace</Link>
+                  <Link href="/worxspace">Worxspace</Link>
                 </Button>
                 <div className="flex items-center justify-center pt-2">
                   <UserButton 
-                    afterSignOutUrl="/"
+                    afterSignOutUrl="/home"
                     appearance={{
                       elements: {
                         avatarBox: 'h-10 w-10',

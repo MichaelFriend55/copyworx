@@ -2,7 +2,7 @@
  * @file middleware.ts
  * @description Clerk authentication middleware for route protection (Clerk 5.x)
  * 
- * Protects all routes under /workspace, /templates, /projects
+ * Protects all routes under /worxspace, /templates, /projects
  * Keeps marketing pages, auth pages, and API routes public
  */
 
@@ -12,7 +12,8 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
  * Define public routes that don't require authentication
  * 
  * Public routes:
- * - / (homepage)
+ * - / (redirects to /home)
+ * - /home (splash page)
  * - /about
  * - /pricing
  * - /sign-in, /sign-up (auth pages)
@@ -20,9 +21,9 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
  */
 const isPublicRoute = createRouteMatcher([
   '/',
+  '/home',
   '/about',
   '/pricing',
-  '/copyworx',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api(.*)',

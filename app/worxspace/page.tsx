@@ -1,7 +1,7 @@
 /**
- * @file app/workspace/page.tsx
+ * @file app/worxspace/page.tsx
  * @description Main workspace page with document version control
- * Route: /workspace
+ * Route: /worxspace
  * 
  * Features:
  * - Document list with version grouping

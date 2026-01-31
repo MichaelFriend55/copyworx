@@ -94,7 +94,7 @@ export function SplashPage() {
   const handleNewDocument = async () => {
     if (!activeProjectId) {
       logger.warn('⚠️ No active project, going to workspace anyway');
-      router.push('/workspace?action=new');
+      router.push('/worxspace?action=new');
       return;
     }
     
@@ -106,11 +106,11 @@ export function SplashPage() {
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
       
       logger.log('✅ Created new document:', newDoc.id);
-      router.push('/workspace?action=new');
+      router.push('/worxspace?action=new');
     } catch (error) {
       logger.error('❌ Failed to create document:', error);
       // Still navigate to workspace
-      router.push('/workspace?action=new');
+      router.push('/worxspace?action=new');
     }
   };
 
@@ -136,7 +136,7 @@ export function SplashPage() {
     // Check for active project
     if (!activeProjectId) {
       logger.warn('⚠️ No active project, cannot create document');
-      router.push('/workspace?template=' + templateId);
+      router.push('/worxspace?template=' + templateId);
       return;
     }
     
@@ -149,11 +149,11 @@ export function SplashPage() {
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
       
       // Navigate to workspace with both template and document IDs
-      router.push(`/workspace?template=${templateId}&document=${newDoc.id}`);
+      router.push(`/worxspace?template=${templateId}&document=${newDoc.id}`);
     } catch (error) {
       logger.error('❌ Failed to create document for template:', error);
       // Still navigate to workspace with just template ID
-      router.push('/workspace?template=' + templateId);
+      router.push('/worxspace?template=' + templateId);
     }
   };
 
@@ -227,11 +227,11 @@ export function SplashPage() {
           }
 
           // Navigate to workspace
-          router.push(`/workspace?document=${newDoc.id}&import=true`);
+          router.push(`/worxspace?document=${newDoc.id}&import=true`);
         } catch (error) {
           logger.error('❌ Failed to store file:', error);
           // Navigate anyway, document is created
-          router.push(`/workspace?document=${newDoc.id}`);
+          router.push(`/worxspace?document=${newDoc.id}`);
         }
       };
 

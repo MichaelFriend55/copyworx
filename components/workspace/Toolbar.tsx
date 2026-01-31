@@ -1336,7 +1336,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
           'flex items-center gap-2 transition-all duration-300',
           'flex-shrink-0' // Prevent shrinking on small screens
         )}>
-        <Link href="/copyworx">
+        <Link href="/home">
           <button
             className={cn(
               'px-3 py-2 rounded-lg',
@@ -1346,7 +1346,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
               'flex items-center gap-2',
               'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
             )}
-            title="Back to CopyWorx Home"
+            title="Back to App Home"
           >
             <FolderOpen className="w-4 h-4" />
             <span className="hidden sm:inline">Home</span>

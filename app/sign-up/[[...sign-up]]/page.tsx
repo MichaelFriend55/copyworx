@@ -76,7 +76,7 @@ export default function SignUpPage() {
         <div className="w-full max-w-md">
           {/* Back Link */}
           <Link 
-            href="/"
+            href="/home"
             className="inline-flex items-center text-sm text-ink-500 hover:text-ink-700 mb-8 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -118,7 +118,7 @@ export default function SignUpPage() {
                 alert: 'border-red-200 bg-red-50 text-red-800',
               },
             }}
-            forceRedirectUrl="/workspace"
+            forceRedirectUrl="/worxspace"
             signInUrl="/sign-in"
           />
           

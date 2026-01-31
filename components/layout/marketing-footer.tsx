@@ -54,7 +54,7 @@ export function MarketingFooter() {
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Logo - White background version with padding for breathing room */}
             <Link 
-              href="/" 
+              href="/home" 
               className="flex-shrink-0 flex items-center transition-opacity hover:opacity-80 bg-white rounded-md px-4 py-2"
             >
               <Image

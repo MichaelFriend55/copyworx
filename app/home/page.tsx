@@ -1,11 +1,11 @@
 /**
- * @file app/copyworx/page.tsx
- * @description CopyWorx v2 Splash Page
+ * @file app/home/page.tsx
+ * @description CopyWorx App Splash Page
  * 
- * Entry point for CopyWorx v2 workspace.
+ * Entry point for CopyWorx app workspace.
  * Shows 4 action buttons for different workspace entry modes.
  * 
- * Route: /copyworx
+ * Route: /home
  */
 
 import { SplashPage } from '@/components/splash';
