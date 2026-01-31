@@ -23,6 +23,8 @@ interface SaveAsSnippetButtonProps {
   showLabel?: boolean;
   /** Button variant */
   variant?: 'default' | 'toolbar';
+  /** Optional data-tour attribute for product tour */
+  dataTour?: string;
 }
 
 /**
@@ -41,6 +43,7 @@ export function SaveAsSnippetButton({
   className,
   showLabel = false,
   variant = 'default',
+  dataTour,
 }: SaveAsSnippetButtonProps) {
   const selectedText = useSelectedText();
   const activeProjectId = useActiveProjectId();
@@ -101,6 +104,7 @@ export function SaveAsSnippetButton({
       disabled={isDisabled}
       title={title}
       className={cn(buttonStyles, className)}
+      data-tour={dataTour}
     >
       <Scissors className={cn(
         variant === 'toolbar' ? 'w-4 h-4' : 'w-4 h-4',

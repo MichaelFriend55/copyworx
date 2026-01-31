@@ -1516,7 +1516,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
             <div className="w-px h-6 bg-gray-200 mx-2" />
 
             {/* Save as Snippet */}
-            <SaveAsSnippetButton variant="toolbar" />
+            <SaveAsSnippetButton variant="toolbar" dataTour="snippets" />
           </>
         ) : (
           <div className="text-sm text-gray-400 flex items-center gap-2">

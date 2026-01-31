@@ -95,6 +95,40 @@ const tourSteps: Step[] = [
     disableBeacon: true,
   },
   {
+    target: '[data-tour="insights"]',
+    content: (
+      <div>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">My Insights</h3>
+        <p className="text-base mb-2">Write smarter with AI-powered insights:</p>
+        <ul className="text-sm list-disc list-inside space-y-1">
+          <li>Alignment scores</li>
+          <li>Copy strengths</li>
+          <li>Areas to improve</li>
+          <li>Recommendations</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '[data-tour="snippets"]',
+    content: (
+      <div>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Snippets</h3>
+        <p className="text-base mb-2">Save and reuse copy easily:</p>
+        <ul className="text-sm list-disc list-inside space-y-1">
+          <li>Taglines</li>
+          <li>CTAs</li>
+          <li>Copyright info</li>
+          <li>Boilerplate</li>
+        </ul>
+      </div>
+    ),
+    placement: 'bottom',
+    disableBeacon: true,
+  },
+  {
     target: '[data-tour="editor"]',
     content: (
       <div>
@@ -120,9 +154,9 @@ const tourSteps: Step[] = [
     target: 'body',
     content: (
       <div>
-        <h2 className="text-2xl font-bold text-[#7A3991] mb-3">You&apos;re Ready to Rock!</h2>
+        <h2 className="text-2xl font-bold text-[#7A3991] mb-3">You&apos;re Ready to Write to Win!</h2>
         <p className="text-base mb-3">Start by setting up your Brand Voice and Personas, or jump straight into a template.</p>
-        <p className="text-base font-semibold text-[#006EE6]">NOW GET TO WORX with CopyWorx™ Studio!</p>
+        <p className="text-base font-semibold text-[#006EE6]">Now get to worx with CopyWorx™ Studio!</p>
       </div>
     ),
     placement: 'center',

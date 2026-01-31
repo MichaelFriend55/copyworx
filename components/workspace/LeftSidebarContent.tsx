@@ -489,7 +489,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       <div className="border-t border-gray-200 my-2" />
 
       {/* MY INSIGHTS SECTION - Dedicated buttons for alignment checks */}
-      <div className="space-y-1">
+      <div className="space-y-1" data-tour="insights">
         {/* Section Header */}
         <button
           onClick={() => toggleSection('insights')}
