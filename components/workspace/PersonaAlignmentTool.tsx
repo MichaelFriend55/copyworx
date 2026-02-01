@@ -127,25 +127,12 @@ export function PersonaAlignmentTool({ editor, className }: PersonaAlignmentTool
     const textToOptimize = personaAlignmentAnalyzedText;
     if (!textToOptimize) return;
 
-    console.log('🔵 [PersonaAlignment] Button clicked - Starting optimization...');
-    console.log('🔵 [PersonaAlignment] Sidebar state BEFORE close:', useWorkspaceStore.getState().rightSidebarOpen);
-    
-    // Close sidebar IMMEDIATELY
-    console.log('🔵 [PersonaAlignment] Closing sidebar...');
-    useWorkspaceStore.getState().setRightSidebarOpen(false);
-    
-    console.log('🔵 [PersonaAlignment] Sidebar state AFTER close:', useWorkspaceStore.getState().rightSidebarOpen);
-    console.log('🔵 [PersonaAlignment] Opening modal and starting optimization...');
-
     await runOptimizeAlignment(
       textToOptimize,
       'persona',
       personaAlignmentResult,
       selectedPersona
     );
-    
-    console.log('🔵 [PersonaAlignment] Optimization complete');
-    console.log('🔵 [PersonaAlignment] Sidebar state AFTER optimization:', useWorkspaceStore.getState().rightSidebarOpen);
   };
 
   return (

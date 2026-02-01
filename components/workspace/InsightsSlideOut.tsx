@@ -227,13 +227,8 @@ function BrandAlignmentContent() {
   const handleRewriteToOptimize = async () => {
     if (!activeProject?.brandVoice || !result || !analyzedText) return;
     
-    console.log('🔵 [InsightsSlideOut-Brand] Button clicked - Starting optimization...');
-    console.log('🔵 [InsightsSlideOut-Brand] Closing InsightsSlideOut panel...');
-    
-    // Close the InsightsSlideOut panel IMMEDIATELY
+    // Close the InsightsSlideOut panel immediately
     closeInsightsPanel();
-    
-    console.log('🔵 [InsightsSlideOut-Brand] Panel closed, opening modal and starting optimization...');
     
     await runOptimizeAlignment(
       analyzedText,
@@ -241,8 +236,6 @@ function BrandAlignmentContent() {
       result,
       activeProject.brandVoice
     );
-    
-    console.log('🔵 [InsightsSlideOut-Brand] Optimization complete');
   };
 
   if (isLoading) {
@@ -418,13 +411,8 @@ function PersonaAlignmentContent() {
   const handleRewriteToOptimize = async () => {
     if (!selectedPersona || !result || !analyzedText) return;
     
-    console.log('🔵 [InsightsSlideOut-Persona] Button clicked - Starting optimization...');
-    console.log('🔵 [InsightsSlideOut-Persona] Closing InsightsSlideOut panel...');
-    
-    // Close the InsightsSlideOut panel IMMEDIATELY
+    // Close the InsightsSlideOut panel immediately
     closeInsightsPanel();
-    
-    console.log('🔵 [InsightsSlideOut-Persona] Panel closed, opening modal and starting optimization...');
     
     await runOptimizeAlignment(
       analyzedText,
@@ -432,8 +420,6 @@ function PersonaAlignmentContent() {
       result,
       selectedPersona
     );
-    
-    console.log('🔵 [InsightsSlideOut-Persona] Optimization complete');
   };
 
   if (isLoading) {
