@@ -63,6 +63,7 @@ import {
   TONE_SHIFTER_SYSTEM_PROMPT,
   buildToneShifterUserPrompt,
 } from '@/lib/prompts/tone-shifter';
+import type { HeadlineResult, HeadlineFormData } from '@/lib/prompts/headline-generator';
 
 // Re-export ToneType for components that import from this file
 export type { ToneType } from '@/lib/prompts/tone-shifter';
@@ -113,6 +114,12 @@ interface WorkspaceState {
   rewriteChannelResult: string | null;
   rewriteChannelLoading: boolean;
   rewriteChannelError: string | null;
+  
+  // Headline Generator Tool state
+  headlineResults: HeadlineResult[];
+  headlineRawText: string | null;
+  headlineLoading: boolean;
+  headlineError: string | null;
   
   // Brand Alignment Tool state
   brandAlignmentResult: BrandAlignmentResult | null;
@@ -203,6 +210,10 @@ interface WorkspaceState {
   clearRewriteChannelResult: () => void;
   insertRewriteChannelResult: (editor: Editor) => void;
   
+  // Headline Generator Tool actions
+  runHeadlineGenerator: (formData: HeadlineFormData, append?: boolean) => Promise<void>;
+  clearHeadlineResults: () => void;
+  
   // Brand Alignment Tool actions
   runBrandAlignment: (text: string, brandVoice: BrandVoice) => Promise<void>;
   clearBrandAlignmentResult: () => void;
@@ -282,6 +293,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       rewriteChannelLoading: false,
       rewriteChannelError: null,
       
+      // Headline Generator Tool initial state
+      headlineResults: [],
+      headlineRawText: null,
+      headlineLoading: false,
+      headlineError: null,
+      
       // Brand Alignment Tool initial state
       brandAlignmentResult: null,
       brandAlignmentLoading: false,
@@ -340,6 +357,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           shortenError: null,
           rewriteChannelResult: null,
           rewriteChannelError: null,
+          headlineResults: [],
+          headlineRawText: null,
+          headlineError: null,
         });
       },
 
@@ -796,6 +816,69 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }
       },
 
+      // Headline Generator Tool actions
+      runHeadlineGenerator: async (formData: HeadlineFormData, append = false) => {
+        const currentResults = append ? get().headlineResults : [];
+        
+        set({
+          headlineLoading: true,
+          headlineError: null,
+          // Keep existing results if appending, clear if not
+          headlineResults: currentResults,
+          headlineRawText: null,
+        });
+
+        try {
+          const data = await retryWithBackoff(async () => {
+            const response = await fetchWithTimeout('/api/headline-generator', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData),
+            }, 60000); // 60-second timeout
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({
+                error: 'API request failed',
+                details: `Status: ${response.status}`,
+              }));
+              throw new Error(errorData.details || errorData.error || 'Failed to generate headlines');
+            }
+
+            const responseData = await response.json();
+            if (!responseData.headlines && !responseData.rawText) {
+              throw new Error('No headlines received from API');
+            }
+            return responseData;
+          }, 2);
+
+          set({
+            // Append new headlines to existing ones if append=true
+            headlineResults: append 
+              ? [...currentResults, ...(data.headlines || [])]
+              : data.headlines || [],
+            headlineRawText: data.rawText || null,
+            headlineLoading: false,
+            headlineError: null,
+          });
+        } catch (error) {
+          set({
+            headlineError: formatErrorForUser(error, 'Headline generator'),
+            headlineLoading: false,
+            headlineResults: currentResults, // Preserve existing results on error
+            headlineRawText: null,
+          });
+          logError(error, 'Headline generator');
+        }
+      },
+
+      clearHeadlineResults: () => {
+        set({
+          headlineResults: [],
+          headlineRawText: null,
+          headlineError: null,
+        });
+      },
+
       // Brand Alignment Tool actions
       runBrandAlignment: async (text: string, brandVoice: BrandVoice): Promise<void> => {
         try {
@@ -1217,6 +1300,14 @@ export const useRewriteChannelLoading = () => useWorkspaceStore((state) => state
 export const useRewriteChannelError = () => useWorkspaceStore((state) => state.rewriteChannelError);
 
 /**
+ * Headline Generator Tool selector hooks
+ */
+export const useHeadlineResults = () => useWorkspaceStore((state) => state.headlineResults);
+export const useHeadlineRawText = () => useWorkspaceStore((state) => state.headlineRawText);
+export const useHeadlineLoading = () => useWorkspaceStore((state) => state.headlineLoading);
+export const useHeadlineError = () => useWorkspaceStore((state) => state.headlineError);
+
+/**
  * Brand Alignment Tool selector hooks
  */
 export const useBrandAlignmentResult = () => useWorkspaceStore((state) => state.brandAlignmentResult);
@@ -1291,6 +1382,13 @@ export const useRewriteChannelActions = () => useWorkspaceStore(
   }))
 );
 
+export const useHeadlineGeneratorActions = () => useWorkspaceStore(
+  useShallow((state) => ({
+    runHeadlineGenerator: state.runHeadlineGenerator,
+    clearHeadlineResults: state.clearHeadlineResults,
+  }))
+);
+
 export const useBrandAlignmentActions = () => useWorkspaceStore(
   useShallow((state) => ({
     runBrandAlignment: state.runBrandAlignment,
@@ -1362,6 +1460,7 @@ export const useTemplateActions = () => useWorkspaceStore(
     clearExpandResult: state.clearExpandResult,
     clearShortenResult: state.clearShortenResult,
     clearRewriteChannelResult: state.clearRewriteChannelResult,
+    clearHeadlineResults: state.clearHeadlineResults,
     clearBrandAlignmentResult: state.clearBrandAlignmentResult,
   }))
 );

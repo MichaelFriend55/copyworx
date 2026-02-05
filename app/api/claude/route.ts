@@ -57,6 +57,7 @@ export type ClaudeFeature =
   | 'expand'
   | 'shorten'
   | 'rewrite_channel'
+  | 'headline_generator'
   | 'brand_alignment'
   | 'persona_alignment'
   | 'analyze_document'
@@ -90,9 +91,9 @@ export interface ClaudeRequest {
 function isValidFeature(feature: string): feature is ClaudeFeature {
   const validFeatures: ClaudeFeature[] = [
     'tone_shifter', 'expand', 'shorten', 'rewrite_channel',
-    'brand_alignment', 'persona_alignment', 'analyze_document',
-    'generate_template', 'landing_page_hero', 'sales_email',
-    'brochure_section', 'general'
+    'headline_generator', 'brand_alignment', 'persona_alignment',
+    'analyze_document', 'generate_template', 'landing_page_hero',
+    'sales_email', 'brochure_section', 'general'
   ];
   return validFeatures.includes(feature as ClaudeFeature);
 }

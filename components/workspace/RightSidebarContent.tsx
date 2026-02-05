@@ -24,12 +24,14 @@ import { BrochureMultiSectionTemplate } from '@/components/workspace/BrochureMul
 import { ExpandTool } from '@/components/workspace/ExpandTool';
 import { ShortenTool } from '@/components/workspace/ShortenTool';
 import { RewriteChannelTool } from '@/components/workspace/RewriteChannelTool';
+import { HeadlineGeneratorTool } from '@/components/workspace/HeadlineGeneratorTool';
 import { BrandVoiceTool } from '@/components/workspace/BrandVoiceTool';
 import { PersonasTool } from '@/components/workspace/PersonasTool';
 import { BrandAlignmentTool } from '@/components/workspace/BrandAlignmentTool';
 import { PersonaAlignmentTool } from '@/components/workspace/PersonaAlignmentTool';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getTemplateById } from '@/lib/data/templates';
+import { toolRequiresDocument } from '@/lib/tools/toolRegistry';
 
 /**
  * Multi-section template IDs that use special components
@@ -79,6 +81,7 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<{ editor: Editor | nul
   'expand': ExpandTool,
   'shorten': ShortenTool,
   'rewrite-channel': RewriteChannelTool,
+  'headline-generator': HeadlineGeneratorTool,
   
   // MY BRAND & AUDIENCE
   'personas': PersonasTool,
@@ -217,8 +220,8 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
         </div>
 
         {/* Dynamic Tool Rendering */}
-        {!hasActiveDocument ? (
-          // Tool selected but no document open
+        {!hasActiveDocument && activeToolId && toolRequiresDocument(activeToolId) ? (
+          // Tool selected but no document open (only for document-requiring tools)
           <div className="text-center py-16 text-gray-400">
             <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" />
             <p className="text-sm font-medium text-gray-600 mb-1">

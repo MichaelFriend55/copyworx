@@ -16,6 +16,7 @@ import {
   Maximize2,
   Minimize2,
   Repeat,
+  Type,
   Users,
   Volume2,
   Target,
@@ -93,6 +94,15 @@ export const TOOLS: ToolConfig[] = [
     section: 'optimizer',
     description: 'Adapt for different platforms',
     requiresDocument: true,
+  },
+  {
+    id: 'headline-generator',
+    name: 'Headline Generator',
+    icon: Type,
+    section: 'optimizer',
+    description: 'Generate channel-optimized headlines',
+    requiresDocument: false,
+    badge: 'NEW',
   },
   
   // ═══════════════════════════════════════════════════════════
