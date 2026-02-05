@@ -1,0 +1,1254 @@
+================================================================================
+=== BEGINNING OF LAST 25 PAGES ===
+================================================================================
+
+  debug: (...args: unknown[]): void => {
+    if (isDev) {
+      console.debug(...args);
+    }
+  },
+};
+
+/**
+ * Conditional log that executes callback only in development
+ * Useful for complex log formatting
+ */
+export function devOnly(callback: () => void): void {
+  if (isDev) {
+    callback();
+  }
+}
+
+export default logger;
+
+
+=== FILE: lib/utils/pdf-export.ts ===
+
+/**
+ * @file lib/utils/pdf-export.ts
+ * @description PDF export utilities for setting document title and filename
+ * 
+ * When window.print() is called, browsers use the HTML <title> tag
+ * as the default filename for "Save as PDF". This utility helps
+ * set the title dynamically based on document name.
+ */
+
+/**
+ * Sanitize a string for use as a filename
+ * - Removes or replaces invalid filename characters
+ * - Limits length to reasonable size
+ * - Handles edge cases
+ * 
+ * @param title - The document title to sanitize
+ * @returns Sanitized filename (without extension)
+ * 
+ * @example
+ * sanitizeFilename("CoffeeWorx Coffee Brochure") => "CoffeeWorx-Coffee-Brochure"
+ * sanitizeFilename("My Doc (v2)") => "My-Doc-v2"
+ * sanitizeFilename("") => "untitled"
+ */
+export function sanitizeFilename(title: string): string {
+  if (!title || title.trim() === '') {
+    return 'untitled';
+  }
+
+  return title
+    .trim()
+    // Replace special characters with hyphens
+    .replace(/[^a-zA-Z0-9\s-]/g, '-')
+    // Replace multiple spaces with single hyphen
+    .replace(/\s+/g, '-')
+    // Replace multiple hyphens with single hyphen
+    .replace(/-+/g, '-')
+    // Remove leading/trailing hyphens
+    .replace(/^-+|-+$/g, '')
+    // Limit length to 50 characters
+    .substring(0, 50)
+    // Remove trailing hyphen if truncation created one
+    .replace(/-+$/, '')
+    // If empty after sanitization, use fallback
+    || 'untitled';
+}
+
+/**
+ * Set document title for PDF export
+ * Temporarily changes the HTML <title> tag to control PDF filename
+ * 
+ * @param documentTitle - The document title to use for PDF filename
+ * @returns Cleanup function to restore original title
+ * 
+ * @example
+ * const restore = setDocumentTitleForPDF("My Document");
+ * window.print();
+ * restore(); // Call after print dialog opens
+ */
+export function setDocumentTitleForPDF(documentTitle?: string): () => void {
+  // Save original title
+  const originalTitle = document.title;
+  
+  // Set new title (sanitized)
+  const newTitle = documentTitle 
+    ? sanitizeFilename(documentTitle)
+    : 'document';
+  
+  document.title = newTitle;
+  
+  // Return cleanup function to restore original title
+  return () => {
+    document.title = originalTitle;
+  };
+}
+
+/**
+ * Execute window.print() with proper document title
+ * Sets the document title, opens print dialog, then restores original title
+ * 
+ * @param documentTitle - Optional document title for PDF filename
+ * 
+ * @example
+ * printWithTitle("CoffeeWorx Brochure");
+ * // Opens print dialog with filename "CoffeeWorx-Brochure.pdf"
+ */
+export function printWithTitle(documentTitle?: string): void {
+  // Set document title
+  const restore = setDocumentTitleForPDF(documentTitle);
+  
+  // Open print dialog
+  window.print();
+  
+  // Restore original title after a short delay
+  // This allows the browser to capture the new title for the PDF
+  setTimeout(restore, 100);
+}
+
+
+=== FILE: lib/utils/project-utils.ts ===
+
+/**
+ * @file lib/utils/project-utils.ts
+ * @description Project utility functions and system initialization
+ * 
+ * Provides high-level functions for:
+ * - Project system initialization
+ * - Data migration from legacy brand voice storage
+ * - Common project operations
+ */
+
+'use client';
+
+import type { Project } from '@/lib/types/project';
+import type { BrandVoice } from '@/lib/types/brand';
+import {
+  getAllProjects,
+  getActiveProjectId,
+  setActiveProjectId,
+  createProject,
+  saveBrandVoiceToProject,
+} from '@/lib/storage/unified-storage';
+// Use local storage for sync initialization
+import * as localProjectStorage from '@/lib/storage/project-storage';
+import { logger } from './logger';
+
+/** Legacy brand voice localStorage key */
+const LEGACY_BRAND_VOICE_KEY = 'copyworx-brand-voice';
+
+/** Migration flag to ensure migration only runs once */
+const MIGRATION_COMPLETE_KEY = 'copyworx_project_migration_complete';
+
+/**
+ * Check if migration has already been completed
+ */
+function isMigrationComplete(): boolean {
+  if (typeof window === 'undefined') return true;
+  
+  try {
+    return localStorage.getItem(MIGRATION_COMPLETE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Mark migration as complete
+ */
+function markMigrationComplete(): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem(MIGRATION_COMPLETE_KEY, 'true');
+  } catch (error) {
+    logger.error('❌ Failed to mark migration complete:', error);
+  }
+}
+
+/**
+ * Migrate legacy brand voice data to project system
+ * Uses local storage directly for sync operation during initialization
+ * 
+ * This function:
+ * 1. Checks for old brand voice in localStorage
+ * 2. Creates default project if needed
+ * 3. Moves brand voice to that project
+ * 4. Removes old localStorage key
+ */
+function migrateLegacyBrandVoice(): void {
+  if (typeof window === 'undefined') return;
+  
+  // Skip if migration already complete
+  if (isMigrationComplete()) {
+    logger.log('✅ Migration already complete');
+    return;
+  }
+  
+  logger.log('🔄 Checking for legacy brand voice data...');
+  
+  try {
+    // Check for legacy brand voice
+    const legacyBrandVoiceJson = localStorage.getItem(LEGACY_BRAND_VOICE_KEY);
+    
+    if (!legacyBrandVoiceJson) {
+      logger.log('ℹ️ No legacy brand voice found');
+      markMigrationComplete();
+      return;
+    }
+    
+    // Parse legacy brand voice
+    const legacyBrandVoice: BrandVoice = JSON.parse(legacyBrandVoiceJson);
+    logger.log('📦 Found legacy brand voice:', legacyBrandVoice.brandName);
+    
+    // Get current projects (use local storage for sync operation)
+    const projects = localProjectStorage.getAllProjects();
+    
+    if (projects.length === 0) {
+      // No projects exist - create default project with brand voice
+      logger.log('🆕 Creating default project with legacy brand voice...');
+      const defaultProject = localProjectStorage.createProject('My First Project');
+      localProjectStorage.saveBrandVoiceToProject(defaultProject.id, legacyBrandVoice);
+      localProjectStorage.setActiveProjectId(defaultProject.id);
+      logger.log('✅ Legacy brand voice migrated to new project');
+    } else {
+      // Projects exist - add to active project (or first project if no active)
+      const activeId = localProjectStorage.getActiveProjectId();
+      const targetProject = activeId 
+        ? projects.find(p => p.id === activeId) || projects[0]
+        : projects[0];
+      
+      logger.log(`🔄 Migrating brand voice to project: ${targetProject.name}`);
+      localProjectStorage.saveBrandVoiceToProject(targetProject.id, legacyBrandVoice);
+      logger.log('✅ Legacy brand voice migrated to existing project');
+    }
+    
+    // Remove legacy key
+    localStorage.removeItem(LEGACY_BRAND_VOICE_KEY);
+    logger.log('🗑️ Removed legacy brand voice key');
+    
+    // Mark migration as complete
+    markMigrationComplete();
+    logger.log('✅ Migration complete');
+    
+  } catch (error) {
+    logger.error('❌ Migration failed:', error);
+    // Mark as complete anyway to prevent infinite retry loops
+    markMigrationComplete();
+  }
+}
+
+/**
+ * Initialize project system
+ * Uses local storage directly for sync initialization
+ * 
+ * This function should be called once when the app loads.
+ * It:
+ * 1. Ensures at least one project exists
+ * 2. Migrates legacy brand voice data
+ * 3. Verifies active project is valid
+ */
+export function initializeProjectSystem(): void {
+  if (typeof window === 'undefined') {
+    logger.warn('⚠️ Cannot initialize project system on server');
+    return;
+  }
+  
+  logger.log('🚀 Initializing project system...');
+  
+  try {
+    // Ensure at least one project exists (use local storage for sync operation)
+    localProjectStorage.ensureDefaultProject();
+    
+    // Migrate legacy data
+    migrateLegacyBrandVoice();
+    
+    // Verify active project (use local storage for sync operation)
+    const activeId = localProjectStorage.getActiveProjectId();
+    const projects = localProjectStorage.getAllProjects();
+    
+    if (!activeId && projects.length > 0) {
+      // No active project set - set first project as active
+      localProjectStorage.setActiveProjectId(projects[0].id);
+      logger.log('✅ Set first project as active');
+    } else if (activeId) {
+      // Verify active project exists
+      const activeProject = projects.find(p => p.id === activeId);
+      if (!activeProject && projects.length > 0) {
+        // Active project doesn't exist - set first project as active
+        localProjectStorage.setActiveProjectId(projects[0].id);
+        logger.warn('⚠️ Active project not found. Switched to first project.');
+      }
+    }
+    
+    logger.log('✅ Project system initialized');
+    
+  } catch (error) {
+    logger.error('❌ Failed to initialize project system:', error);
+  }
+}
+
+/**
+ * Get current active project (sync - uses local storage)
+ * Returns null if no active project exists
+ */
+export function getCurrentProject(): Project | null {
+  return localProjectStorage.getCurrentProject();
+}
+
+/**
+ * Create new project and set as active
+ * Returns the created project (async for cloud support)
+ */
+export async function createAndActivateProject(name: string): Promise<Project> {
+  if (typeof window === 'undefined') {
+    throw new Error('Cannot create project in non-browser environment');
+  }
+  
+  // Create project
+  const newProject = await createProject(name);
+  
+  // Set as active
+  await setActiveProjectId(newProject.id);
+  
+  logger.log('✅ Created and activated project:', {
+    id: newProject.id,
+    name: newProject.name,
+  });
+  
+  return newProject;
+}
+
+/**
+ * Re-export unified storage functions for convenience
+ */
+export { getAllProjects, getActiveProjectId, setActiveProjectId } from '@/lib/storage/unified-storage';
+
+
+=== FILE: lib/utils/readability.ts ===
+
+/**
+ * @file lib/utils/readability.ts
+ * @description Readability analysis utilities using Flesch-Kincaid formulas
+ * 
+ * Provides text analysis without requiring any API calls:
+ * - Word count
+ * - Character count
+ * - Sentence count
+ * - Syllable count
+ * - Reading time estimation
+ * - Flesch Reading Ease score
+ * - Flesch-Kincaid Grade Level
+ */
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Average reading speed in words per minute */
+const WORDS_PER_MINUTE = 200;
+
+/** Vowels used for syllable counting */
+const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y'];
+
+/** Silent endings that don't add syllables */
+const SILENT_ENDINGS = ['es', 'ed', 'e'];
+
+/** Special suffixes that count as additional syllables */
+const SYLLABLE_SUFFIXES = ['le', 'les', 'tion', 'sion'];
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+/**
+ * Basic text metrics (no API required)
+ */
+export interface BasicMetrics {
+  /** Total word count */
+  wordCount: number;
+  
+  /** Total character count (including spaces) */
+  characterCount: number;
+  
+  /** Total character count (excluding spaces) */
+  characterCountNoSpaces: number;
+  
+  /** Total sentence count */
+  sentenceCount: number;
+  
+  /** Estimated reading time in seconds */
+  readingTimeSeconds: number;
+  
+  /** Formatted reading time string */
+  readingTimeFormatted: string;
+}
+
+/**
+ * Readability metrics
+ */
+export interface ReadabilityMetrics {
+  /** Flesch Reading Ease score (0-100) */
+  fleschReadingEase: number;
+  
+  /** Flesch-Kincaid Grade Level */
+  gradeLevel: number;
+  
+  /** Human-readable grade level string */
+  gradeLevelLabel: string;
+  
+  /** Readability label (Very Easy, Easy, etc.) */
+  readabilityLabel: string;
+  
+  /** Normalized score (1-10 scale) */
+  normalizedScore: number;
+}
+
+/**
+ * Complete document metrics
+ */
+export interface DocumentMetrics extends BasicMetrics, ReadabilityMetrics {}
+
+// ============================================================================
+// Text Extraction
+// ============================================================================
+
+/**
+ * Strip HTML tags and convert to plain text
+ * @param html - HTML content string
+ * @returns Plain text with HTML removed
+ */
+export function stripHtml(html: string): string {
+  if (!html) return '';
+  
+  // Replace block-level elements with newlines for proper sentence detection
+  const blockElements = /<\/(p|div|h[1-6]|li|br|blockquote)>/gi;
+  let text = html.replace(blockElements, '. ');
+  
+  // Remove all remaining HTML tags
+  text = text.replace(/<[^>]*>/g, ' ');
+  
+  // Decode common HTML entities
+  text = text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–');
+  
+  // Normalize whitespace
+  text = text.replace(/\s+/g, ' ').trim();
+  
+  // Clean up multiple periods
+  text = text.replace(/\.+/g, '.');
+  
+  return text;
+}
+
+// ============================================================================
+// Basic Counting Functions
+// ============================================================================
+
+/**
+ * Count words in text
+ * @param text - Plain text string
+ * @returns Number of words
+ */
+export function countWords(text: string): number {
+  if (!text || !text.trim()) return 0;
+  
+  // Split on whitespace and filter empty strings
+  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+  return words.length;
+}
+
+/**
+ * Count sentences in text
+ * Uses sentence-ending punctuation as delimiters
+ * @param text - Plain text string
+ * @returns Number of sentences
+ */
+export function countSentences(text: string): number {
+  if (!text || !text.trim()) return 0;
+  
+  // Match sentence-ending punctuation followed by space or end of string
+  // Also handles abbreviations by requiring at least 2 characters before period
+  const sentenceEndings = text.match(/[.!?]+(?:\s|$)/g);
+  
+  // If no sentence endings found, treat as one sentence if there's content
+  if (!sentenceEndings) {
+    return text.trim().length > 0 ? 1 : 0;
+  }
+  
+  return sentenceEndings.length;
+}
+
+/**
+ * Count syllables in a single word
+ * Uses heuristic approach for English words
+ * @param word - Single word
+ * @returns Number of syllables (minimum 1)
+ */
+export function countSyllables(word: string): number {
+  if (!word) return 0;
+  
+  // Normalize to lowercase, remove non-alphabetic characters
+  const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
+  
+  if (cleanWord.length === 0) return 0;
+  if (cleanWord.length <= 2) return 1;
+  
+  let syllableCount = 0;
+  let previousWasVowel = false;
+  
+  // Count vowel groups
+  for (let i = 0; i < cleanWord.length; i++) {
+    const char = cleanWord[i];
+    const isVowel = VOWELS.includes(char);
+    
+    if (isVowel && !previousWasVowel) {
+      syllableCount++;
+    }
+    
+    previousWasVowel = isVowel;
+  }
+  
+  // Handle silent 'e' at end
+  if (cleanWord.endsWith('e') && !cleanWord.endsWith('le')) {
+    syllableCount--;
+  }
+  
+  // Handle special endings
+  if (cleanWord.endsWith('le') && cleanWord.length > 2) {
+    const charBeforeLe = cleanWord[cleanWord.length - 3];
+    // 'le' adds syllable if preceded by consonant
+    if (!VOWELS.includes(charBeforeLe)) {
+      // Already counted in vowel groups for some words, skip
+    }
+  }
+  
+  // Handle -ed ending
+  if (cleanWord.endsWith('ed') && cleanWord.length > 2) {
+    const charBeforeEd = cleanWord[cleanWord.length - 3];
+    // -ed is usually silent except after t or d
+    if (charBeforeEd !== 't' && charBeforeEd !== 'd') {
+      syllableCount--;
+    }
+  }
+  
+  // Ensure at least one syllable
+  return Math.max(1, syllableCount);
+}
+
+/**
+ * Count total syllables in text
+ * @param text - Plain text string
+ * @returns Total syllable count
+ */
+export function countTotalSyllables(text: string): number {
+  if (!text || !text.trim()) return 0;
+  
+  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+  return words.reduce((total, word) => total + countSyllables(word), 0);
+}
+
+// ============================================================================
+// Reading Time
+// ============================================================================
+
+/**
+ * Calculate estimated reading time
+ * @param wordCount - Number of words
+ * @returns Reading time in seconds
+ */
+export function calculateReadingTime(wordCount: number): number {
+  if (wordCount <= 0) return 0;
+  return Math.ceil((wordCount / WORDS_PER_MINUTE) * 60);
+}
+
+/**
+ * Format reading time as human-readable string
+ * @param seconds - Reading time in seconds
+ * @returns Formatted string (e.g., "~2 min 30 sec")
+ */
+export function formatReadingTime(seconds: number): string {
+  if (seconds <= 0) return '< 1 sec';
+  
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  
+  if (minutes === 0) {
+    return `~${remainingSeconds} sec`;
+  }
+  
+  if (remainingSeconds === 0) {
+    return `~${minutes} min`;
+  }
+  
+  return `~${minutes} min ${remainingSeconds} sec`;
+}
+
+// ============================================================================
+// Readability Calculations
+// ============================================================================
+
+/**
+ * Calculate Flesch Reading Ease score
+ * Formula: 206.835 - 1.015 × (words/sentences) - 84.6 × (syllables/words)
+ * 
+ * Score interpretation:
+ * - 90-100: Very Easy (5th grade)
+ * - 80-89: Easy (6th grade)
+ * - 70-79: Fairly Easy (7th grade)
+ * - 60-69: Standard (8th-9th grade)
+ * - 50-59: Fairly Difficult (10th-12th grade)
+ * - 30-49: Difficult (College)
+ * - 0-29: Very Difficult (College graduate)
+ * 
+ * @param wordCount - Total words
+ * @param sentenceCount - Total sentences
+ * @param syllableCount - Total syllables
+ * @returns Flesch Reading Ease score (clamped to 0-100)
+ */
+export function calculateFleschReadingEase(
+  wordCount: number,
+  sentenceCount: number,
+  syllableCount: number
+): number {
+  if (wordCount === 0 || sentenceCount === 0) return 0;
+  
+  const avgSentenceLength = wordCount / sentenceCount;
+  const avgSyllablesPerWord = syllableCount / wordCount;
+  
+  const score = 206.835 - (1.015 * avgSentenceLength) - (84.6 * avgSyllablesPerWord);
+  
+  // Clamp to 0-100 range
+  return Math.max(0, Math.min(100, Math.round(score * 10) / 10));
+}
+
+/**
+ * Calculate Flesch-Kincaid Grade Level
+ * Formula: 0.39 × (words/sentences) + 11.8 × (syllables/words) - 15.59
+ * 
+ * @param wordCount - Total words
+ * @param sentenceCount - Total sentences
+ * @param syllableCount - Total syllables
+ * @returns Grade level (minimum 1)
+ */
+export function calculateGradeLevel(
+  wordCount: number,
+  sentenceCount: number,
+  syllableCount: number
+): number {
+  if (wordCount === 0 || sentenceCount === 0) return 0;
+  
+  const avgSentenceLength = wordCount / sentenceCount;
+  const avgSyllablesPerWord = syllableCount / wordCount;
+  
+  const gradeLevel = (0.39 * avgSentenceLength) + (11.8 * avgSyllablesPerWord) - 15.59;
+  
+  // Clamp to reasonable range (1-20)
+  return Math.max(1, Math.min(20, Math.round(gradeLevel * 10) / 10));
+}
+
+/**
+ * Get readability label from Flesch Reading Ease score
+ * @param score - Flesch Reading Ease score (0-100)
+ * @returns Human-readable label
+ */
+export function getReadabilityLabel(score: number): string {
+  if (score >= 90) return 'Very Easy';
+  if (score >= 80) return 'Easy';
+  if (score >= 70) return 'Fairly Easy';
+  if (score >= 60) return 'Standard';
+  if (score >= 50) return 'Fairly Difficult';
+  if (score >= 30) return 'Difficult';
+  return 'Very Difficult';
+}
+
+/**
+ * Get grade level label from numeric grade
+ * @param grade - Numeric grade level
+ * @returns Human-readable grade string
+ */
+export function getGradeLevelLabel(grade: number): string {
+  const roundedGrade = Math.round(grade);
+  
+  if (roundedGrade <= 5) return '5th grade';
+  if (roundedGrade === 6) return '6th grade';
+  if (roundedGrade === 7) return '7th grade';
+  if (roundedGrade === 8) return '8th grade';
+  if (roundedGrade === 9) return '9th grade';
+  if (roundedGrade === 10) return '10th grade';
+  if (roundedGrade === 11) return '11th grade';
+  if (roundedGrade === 12) return '12th grade';
+  if (roundedGrade <= 16) return 'College';
+  return 'Graduate';
+}
+
+/**
+ * Convert Flesch Reading Ease to 1-10 normalized score
+ * Higher is better (easier to read)
+ * @param fleschScore - Flesch Reading Ease score (0-100)
+ * @returns Normalized score (1-10)
+ */
+export function normalizeReadabilityScore(fleschScore: number): number {
+  // Map 0-100 to 1-10 scale
+  const normalized = (fleschScore / 100) * 9 + 1;
+  return Math.max(1, Math.min(10, Math.round(normalized * 10) / 10));
+}
+
+// ============================================================================
+// Main Analysis Functions
+// ============================================================================
+
+/**
+ * Calculate basic text metrics
+ * @param text - Plain text (or HTML that will be stripped)
+ * @returns Basic metrics object
+ */
+export function calculateBasicMetrics(text: string): BasicMetrics {
+  // Strip HTML if present
+  const plainText = stripHtml(text);
+  
+  const wordCount = countWords(plainText);
+  const characterCount = plainText.length;
+  const characterCountNoSpaces = plainText.replace(/\s/g, '').length;
+  const sentenceCount = countSentences(plainText);
+  const readingTimeSeconds = calculateReadingTime(wordCount);
+  const readingTimeFormatted = formatReadingTime(readingTimeSeconds);
+  
+  return {
+    wordCount,
+    characterCount,
+    characterCountNoSpaces,
+    sentenceCount,
+    readingTimeSeconds,
+    readingTimeFormatted,
+  };
+}
+
+/**
+ * Calculate readability metrics
+ * @param text - Plain text (or HTML that will be stripped)
+ * @returns Readability metrics object
+ */
+export function calculateReadabilityMetrics(text: string): ReadabilityMetrics {
+  // Strip HTML if present
+  const plainText = stripHtml(text);
+  
+  const wordCount = countWords(plainText);
+  const sentenceCount = countSentences(plainText);
+  const syllableCount = countTotalSyllables(plainText);
+  
+  const fleschReadingEase = calculateFleschReadingEase(wordCount, sentenceCount, syllableCount);
+  const gradeLevel = calculateGradeLevel(wordCount, sentenceCount, syllableCount);
+  const gradeLevelLabel = getGradeLevelLabel(gradeLevel);
+  const readabilityLabel = getReadabilityLabel(fleschReadingEase);
+  const normalizedScore = normalizeReadabilityScore(fleschReadingEase);
+  
+  return {
+    fleschReadingEase,
+    gradeLevel,
+    gradeLevelLabel,
+    readabilityLabel,
+    normalizedScore,
+  };
+}
+
+/**
+ * Calculate all document metrics
+ * @param text - Plain text (or HTML that will be stripped)
+ * @returns Complete metrics object
+ */
+export function analyzeDocument(text: string): DocumentMetrics {
+  // Strip HTML if present
+  const plainText = stripHtml(text);
+  
+  // Basic counts
+  const wordCount = countWords(plainText);
+  const characterCount = plainText.length;
+  const characterCountNoSpaces = plainText.replace(/\s/g, '').length;
+  const sentenceCount = countSentences(plainText);
+  const syllableCount = countTotalSyllables(plainText);
+  
+  // Reading time
+  const readingTimeSeconds = calculateReadingTime(wordCount);
+  const readingTimeFormatted = formatReadingTime(readingTimeSeconds);
+  
+  // Readability
+  const fleschReadingEase = calculateFleschReadingEase(wordCount, sentenceCount, syllableCount);
+  const gradeLevel = calculateGradeLevel(wordCount, sentenceCount, syllableCount);
+  const gradeLevelLabel = getGradeLevelLabel(gradeLevel);
+  const readabilityLabel = getReadabilityLabel(fleschReadingEase);
+  const normalizedScore = normalizeReadabilityScore(fleschReadingEase);
+  
+  return {
+    wordCount,
+    characterCount,
+    characterCountNoSpaces,
+    sentenceCount,
+    readingTimeSeconds,
+    readingTimeFormatted,
+    fleschReadingEase,
+    gradeLevel,
+    gradeLevelLabel,
+    readabilityLabel,
+    normalizedScore,
+  };
+}
+
+
+=== FILE: middleware.ts ===
+
+/**
+ * @file middleware.ts
+ * @description Clerk authentication middleware for route protection (Clerk 5.x)
+ * 
+ * Protects all routes under /worxspace, /templates, /projects
+ * Keeps marketing pages, auth pages, and API routes public
+ */
+
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+
+/**
+ * Define public routes that don't require authentication
+ * 
+ * Public routes:
+ * - / (redirects to /home)
+ * - /home (splash page)
+ * - /about
+ * - /pricing
+ * - /sign-in, /sign-up (auth pages)
+ * - /api/* (API routes - handle their own auth)
+ */
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/home',
+  '/about',
+  '/pricing',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/api(.*)',
+]);
+
+/**
+ * Clerk middleware configuration
+ * 
+ * Uses clerkMiddleware with createRouteMatcher pattern (Clerk 5.x)
+ * Protects all routes except those defined in isPublicRoute
+ */
+export default clerkMiddleware((auth, request) => {
+  // If it's not a public route, require authentication
+  if (!isPublicRoute(request)) {
+    auth().protect();
+  }
+});
+
+/**
+ * Middleware matcher configuration
+ * Specifies which routes the middleware should run on
+ */
+export const config = {
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
+};
+
+
+=== FILE: next-env.d.ts ===
+
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/app/building-your-application/configuring/typescript for more information.
+
+
+=== FILE: next.config.js ===
+
+/**
+ * @file next.config.js
+ * @description Next.js configuration for CopyWorx application
+ */
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Enable React Strict Mode for better development experience
+  reactStrictMode: true,
+  
+  // Disable ESLint during production builds to avoid blocking deployment
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
+  // Image optimization configuration
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    unoptimized: false,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
+  
+  // Experimental features for App Router optimization
+  experimental: {
+    // Enable server actions
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
+};
+
+module.exports = nextConfig;
+
+
+
+=== FILE: postcss.config.js ===
+
+/**
+ * @file postcss.config.js
+ * @description PostCSS configuration for Tailwind CSS processing
+ */
+
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+
+
+
+=== FILE: tailwind.config.ts ===
+
+/**
+ * @file tailwind.config.ts
+ * @description Tailwind CSS configuration with custom CopyWorx theme
+ * 
+ * Design System:
+ * - Primary: Deep ink/navy tones for professional writing aesthetic
+ * - Accent: Warm amber/gold for CTAs and highlights
+ * - Neutrals: Warm grays for text and backgrounds
+ */
+
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  darkMode: ['class'],
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+  ],
+  prefix: '',
+  theme: {
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: {
+        '2xl': '1400px',
+      },
+    },
+    extend: {
+      colors: {
+        // Custom CopyWorx palette
+        ink: {
+          50: '#f6f7f9',
+          100: '#eceef2',
+          200: '#d5d9e2',
+          300: '#b0b8c9',
+          400: '#8592ab',
+          500: '#667591',
+          600: '#515d77',
+          700: '#434c61',
+          800: '#3a4152',
+          900: '#1e2433',
+          950: '#0f1219',
+        },
+        amber: {
+          50: '#fffdf0',
+          100: '#fef9d9',
+          200: '#fef3b3',
+          300: '#fded8c',
+          400: '#fde166',
+          500: '#EFBF04',
+          600: '#d9aa04',
+          700: '#b38c03',
+          800: '#8c6d03',
+          900: '#665002',
+          950: '#403301',
+        },
+        // Apple aesthetic - CopyWorx v2
+        'apple-blue': {
+          DEFAULT: '#0071E3',
+          dark: '#0062CC',
+          light: '#0077ED',
+        },
+        'apple-gray': {
+          DEFAULT: '#86868B',
+          light: '#D2D2D7',
+          bg: '#F5F5F7',
+        },
+        'apple-text': {
+          dark: '#1D1D1F',
+          light: '#6E6E73',
+        },
+        'apple-editor': {
+          bg: '#2F3542',
+          paper: '#FFFFFF',
+        },
+        // shadcn/ui compatible colors
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+      },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+      },
+      fontSize: {
+        '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+        'fade-in': {
+          from: { opacity: '0', transform: 'translateY(10px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in-up': {
+          from: { opacity: '0', transform: 'translateY(20px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'slide-in-right': {
+          from: { opacity: '0', transform: 'translateX(20px)' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
+        shimmer: {
+          '0%': { opacity: '0.5', transform: 'scale(1)' },
+          '50%': { opacity: '1', transform: 'scale(1.1)' },
+          '100%': { opacity: '0.5', transform: 'scale(1)' },
+        },
+        pulse: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
+        'gradient-flow': {
+          '0%, 100%': { 
+            backgroundPosition: '0% 50%',
+          },
+          '50%': { 
+            backgroundPosition: '100% 50%',
+          },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'fade-in': 'fade-in 0.5s ease-out forwards',
+        'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
+        'slide-in-right': 'slide-in-right 0.4s ease-out forwards',
+        shimmer: 'shimmer 2s ease-in-out infinite',
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'gradient-flow': 'gradient-flow 3s ease-in-out infinite',
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'hero-pattern': 'url("/patterns/grid.svg")',
+      },
+    },
+  },
+  plugins: [require('tailwindcss-animate')],
+};
+
+export default config;
+
+
+
+=== FILE: test-tone-shift.js ===
+
+/**
+ * Simple test script for the tone-shift API endpoint
+ * Run with: node test-tone-shift.js
+ */
+
+const API_URL = 'http://localhost:3001/api/tone-shift';
+
+// Test cases covering all four tones
+const tests = [
+  {
+    name: 'Test 1: Professional Tone',
+    body: {
+      text: "Hey! Our sale ends soon so grab it while you can! It's seriously awesome!",
+      tone: 'professional'
+    }
+  },
+  {
+    name: 'Test 2: Casual Tone',
+    body: {
+      text: 'We cordially invite you to attend our annual corporate symposium. Your presence would be greatly appreciated.',
+      tone: 'casual'
+    }
+  },
+  {
+    name: 'Test 3: Urgent Tone',
+    body: {
+      text: 'Our new service is now available for your consideration at your earliest convenience.',
+      tone: 'urgent'
+    }
+  },
+  {
+    name: 'Test 4: Friendly Tone',
+    body: {
+      text: 'Submit your application through our online portal. Processing times may vary.',
+      tone: 'friendly'
+    }
+  },
+  {
+    name: 'Test 5: Error - Missing Text',
+    body: {
+      tone: 'professional'
+    },
+    expectError: true
+  },
+  {
+    name: 'Test 6: Error - Invalid Tone',
+    body: {
+      text: 'Some copy here',
+      tone: 'sarcastic'
+    },
+    expectError: true
+  }
+];
+
+async function runTest(test) {
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`Running: ${test.name}`);
+  console.log(`${'='.repeat(60)}`);
+  console.log('Request body:', JSON.stringify(test.body, null, 2));
+  
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(test.body),
+    });
+
+    const data = await response.json();
+    
+    console.log(`\nStatus: ${response.status} ${response.statusText}`);
+    
+    if (test.expectError) {
+      if (!response.ok) {
+        console.log('✅ Error test passed');
+        console.log('Error response:', JSON.stringify(data, null, 2));
+      } else {
+        console.log('❌ Expected error but got success');
+      }
+    } else {
+      if (response.ok) {
+        console.log('✅ Test passed');
+        console.log(`\nOriginal (${data.originalLength} chars):`);
+        console.log(test.body.text);
+        console.log(`\nRewritten (${data.newLength} chars):`);
+        console.log(data.rewrittenText);
+        console.log(`\nLength change: ${((data.newLength - data.originalLength) / data.originalLength * 100).toFixed(1)}%`);
+      } else {
+        console.log('❌ Test failed');
+        console.log('Error response:', JSON.stringify(data, null, 2));
+      }
+    }
+  } catch (error) {
+    console.log('❌ Request failed:', error.message);
+  }
+}
+
+async function runAllTests() {
+  console.log('🚀 Starting Tone Shift API Tests');
+  console.log(`Testing endpoint: ${API_URL}\n`);
+  
+  for (const test of tests) {
+    await runTest(test);
+    // Add a small delay between tests
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  
+  console.log(`\n${'='.repeat(60)}`);
+  console.log('All tests completed!');
+  console.log(`${'='.repeat(60)}\n`);
+}
+
+// Run tests
+runAllTests().catch(console.error);
+

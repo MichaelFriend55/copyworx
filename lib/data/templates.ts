@@ -1098,6 +1098,351 @@ Target word count: 600-900 words total page copy.`
 };
 
 /**
+ * Press Release Template
+ * Generates AP Style, journalist-friendly press releases
+ */
+export const PRESS_RELEASE_TEMPLATE: Template = {
+  id: 'press-release',
+  name: 'Press Release',
+  category: 'collateral',
+  description: 'Generate a publication-ready press release following AP Style and journalist-friendly best practices.',
+  complexity: 'Intermediate',
+  estimatedTime: '15-25 min',
+  icon: 'Newspaper',
+  fields: [
+    // ── Core News Details ──
+    {
+      id: 'companyName',
+      label: 'Company Name',
+      type: 'text',
+      placeholder: 'e.g., Acme Health Systems',
+      helperText: 'Full legal or trade name of the company issuing the release',
+      required: true,
+      maxLength: 100
+    },
+    {
+      id: 'announcementType',
+      label: 'Announcement Type',
+      type: 'select',
+      helperText: 'What kind of news is this?',
+      required: true,
+      options: [
+        'Product Launch',
+        'Partnership/Alliance',
+        'Acquisition/Merger',
+        'Funding/Investment',
+        'Executive Hire/Promotion',
+        'Expansion (New Market/Office)',
+        'Award/Recognition',
+        'Research/Study Results',
+        'Event/Conference',
+        'Community Initiative',
+        'Milestone/Anniversary',
+        'Policy/Regulatory Update',
+        'Other (specify)'
+      ]
+    },
+    {
+      id: 'headline',
+      label: 'Suggested Headline',
+      type: 'text',
+      placeholder: 'e.g., Acme Health Systems Expands Telehealth Access to Rural Communities',
+      helperText: 'Optional starting point — AI will refine to 8-12 words, AP Style',
+      required: false,
+      maxLength: 150
+    },
+    {
+      id: 'whatHappened',
+      label: 'The News (What Happened)',
+      type: 'textarea',
+      placeholder: 'e.g., We launched a new telehealth platform serving 12 rural counties in partnership with state health departments...',
+      helperText: 'Describe the announcement in plain language. Include who, what, when, where, why.',
+      required: true,
+      maxLength: 800
+    },
+    {
+      id: 'whyNow',
+      label: 'Why Now (Timing/Relevance)',
+      type: 'textarea',
+      placeholder: 'e.g., Rural telehealth access became a federal priority this quarter after new CMS guidelines...',
+      helperText: 'What makes this newsworthy right now? Industry trends, market timing, regulatory changes?',
+      required: true,
+      maxLength: 500
+    },
+    {
+      id: 'whoItAffects',
+      label: 'Who This Affects',
+      type: 'textarea',
+      placeholder: 'e.g., 250,000 residents in underserved rural areas, 40 community health centers, and 3 state health departments...',
+      helperText: 'Identify affected stakeholders — customers, communities, industry, partners',
+      required: true,
+      maxLength: 400
+    },
+    {
+      id: 'keyDetails',
+      label: 'Key Details',
+      type: 'textarea',
+      placeholder: 'e.g., Platform goes live March 1. Covers 12 counties. Zero cost to patients. Backed by $4M state grant...',
+      helperText: 'Specific facts: dates, numbers, locations, terms, scope. Journalists need hard details.',
+      required: true,
+      maxLength: 600
+    },
+    // ── Supporting Context ──
+    {
+      id: 'backgroundContext',
+      label: 'Background Context',
+      type: 'textarea',
+      placeholder: 'e.g., Acme has operated in the telehealth space since 2019 and currently serves 1.2 million patients...',
+      helperText: 'Company history, market context, or prior milestones that frame this news (optional)',
+      required: false,
+      maxLength: 500
+    },
+    {
+      id: 'dataPoints',
+      label: 'Supporting Data',
+      type: 'textarea',
+      placeholder: 'e.g., 73% of rural residents lack adequate telehealth access (CDC, 2025). Telehealth adoption grew 38% YoY...',
+      helperText: 'Statistics, research findings, or metrics that strengthen the story (optional)',
+      required: false,
+      maxLength: 500
+    },
+    // ── Dateline ──
+    {
+      id: 'city',
+      label: 'City',
+      type: 'text',
+      placeholder: 'e.g., Austin',
+      helperText: 'City for the dateline (where the news originates)',
+      required: true,
+      maxLength: 50
+    },
+    {
+      id: 'state',
+      label: 'State',
+      type: 'text',
+      placeholder: 'e.g., Texas',
+      helperText: 'State for the dateline (spell out per AP Style)',
+      required: true,
+      maxLength: 30
+    },
+    // ── Quotes ──
+    {
+      id: 'quote1Speaker',
+      label: 'Quote 1 — Speaker Name & Title',
+      type: 'text',
+      placeholder: 'e.g., Dr. Sarah Chen, CEO of Acme Health Systems',
+      helperText: 'Full name and title of the primary spokesperson',
+      required: true,
+      maxLength: 120
+    },
+    {
+      id: 'quote1Content',
+      label: 'Quote 1 — Direction/Key Point',
+      type: 'textarea',
+      placeholder: 'e.g., Emphasize commitment to health equity and that this is personal for her — grew up in a rural area without access...',
+      helperText: 'What should this quote convey? AI will craft a natural, human-sounding quote — not robotic corporate speak.',
+      required: true,
+      maxLength: 400
+    },
+    {
+      id: 'quote2Speaker',
+      label: 'Quote 2 — Speaker Name & Title',
+      type: 'text',
+      placeholder: 'e.g., James Rodriguez, Director of the Texas Rural Health Initiative',
+      helperText: 'Second spokesperson — a partner, customer, or outside validator (optional)',
+      required: false,
+      maxLength: 120
+    },
+    {
+      id: 'quote2Content',
+      label: 'Quote 2 — Direction/Key Point',
+      type: 'textarea',
+      placeholder: 'e.g., Reinforce measurable community impact and why this partnership model can scale to other states...',
+      helperText: 'What should this quote reinforce? Best when it comes from an external voice.',
+      required: false,
+      maxLength: 400
+    },
+    // ── Boilerplate & Contact ──
+    {
+      id: 'companyBoilerplate',
+      label: 'About Company (Boilerplate)',
+      type: 'textarea',
+      placeholder: 'e.g., Acme Health Systems is a telehealth platform serving 1.2 million patients across 15 states. Founded in 2019, the company...',
+      helperText: 'Standard company description paragraph. Keep to 3-4 sentences.',
+      required: true,
+      maxLength: 500
+    },
+    {
+      id: 'mediaContactName',
+      label: 'Media Contact — Name',
+      type: 'text',
+      placeholder: 'e.g., Maria Gonzalez',
+      helperText: 'Name of the person journalists should contact',
+      required: true,
+      maxLength: 80
+    },
+    {
+      id: 'mediaContactTitle',
+      label: 'Media Contact — Title',
+      type: 'text',
+      placeholder: 'e.g., Director of Communications',
+      helperText: 'Job title of the media contact',
+      required: true,
+      maxLength: 80
+    },
+    {
+      id: 'mediaContactPhone',
+      label: 'Media Contact — Phone',
+      type: 'text',
+      placeholder: 'e.g., (512) 555-0199',
+      helperText: 'Direct phone number for press inquiries',
+      required: true,
+      maxLength: 30
+    },
+    {
+      id: 'mediaContactEmail',
+      label: 'Media Contact — Email',
+      type: 'text',
+      placeholder: 'e.g., press@acmehealth.com',
+      helperText: 'Email address for press inquiries',
+      required: true,
+      maxLength: 80
+    },
+    {
+      id: 'companyWebsite',
+      label: 'Company Website',
+      type: 'text',
+      placeholder: 'e.g., www.acmehealth.com',
+      helperText: 'Company URL to include in media contact block',
+      required: true,
+      maxLength: 100
+    },
+    // ── Optional Metadata ──
+    {
+      id: 'embargoDate',
+      label: 'Embargo Date',
+      type: 'text',
+      placeholder: 'e.g., March 1, 2026 at 9:00 a.m. ET',
+      helperText: 'Leave blank for "FOR IMMEDIATE RELEASE." Fill in to set an embargo.',
+      required: false,
+      maxLength: 80
+    },
+    {
+      id: 'additionalNotes',
+      label: 'Additional Context for AI',
+      type: 'textarea',
+      placeholder: 'e.g., Avoid mentioning competitor names. Emphasize the nonprofit partnership angle. Include the hashtag #RuralHealthAccess if appropriate.',
+      helperText: 'Any extra instructions, constraints, or context for the AI writer (optional)',
+      required: false,
+      maxLength: 400
+    }
+  ],
+  systemPrompt: `You are a seasoned public relations writer with 20 years of experience placing stories in major newsrooms. You write for reporters and editors, NOT for marketing audiences.
+
+Generate a complete, publication-ready press release using these inputs:
+
+COMPANY: {companyName}
+ANNOUNCEMENT TYPE: {announcementType}
+SUGGESTED HEADLINE: {headline}
+
+THE NEWS:
+{whatHappened}
+
+WHY NOW:
+{whyNow}
+
+WHO THIS AFFECTS:
+{whoItAffects}
+
+KEY DETAILS:
+{keyDetails}
+
+BACKGROUND CONTEXT:
+{backgroundContext}
+
+SUPPORTING DATA:
+{dataPoints}
+
+LOCATION: {city}, {state}
+
+QUOTE 1:
+Speaker: {quote1Speaker}
+Direction: {quote1Content}
+
+QUOTE 2:
+Speaker: {quote2Speaker}
+Direction: {quote2Content}
+
+ABOUT {companyName}:
+{companyBoilerplate}
+
+MEDIA CONTACT:
+{mediaContactName}
+{mediaContactTitle}
+{mediaContactPhone}
+{mediaContactEmail}
+{companyWebsite}
+
+EMBARGO: {embargoDate}
+
+ADDITIONAL CONTEXT:
+{additionalNotes}
+
+{brandVoiceInstructions}
+{personaInstructions}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STRICT STRUCTURE (follow this order exactly):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. RELEASE LINE: If an embargo date was provided, output "EMBARGOED UNTIL [date]". Otherwise output "FOR IMMEDIATE RELEASE".
+
+2. MEDIA CONTACT BLOCK: Name, title, phone, email, website — formatted clearly.
+
+3. HEADLINE: 8-12 words maximum. Newsworthy and benefit-driven. ZERO marketing superlatives. Use active voice.
+
+4. SUBHEADLINE: One line that adds context, stakes, or scope. Not a repeat of the headline.
+
+5. DATELINE: Format as "{city}, {state} — [Today's date as Month Day, Year] —" followed by the lede.
+
+6. LEDE PARAGRAPH: Answer who, what, when, where, why in 2-3 sentences. This paragraph must stand alone if a journalist quotes only this.
+
+7. SUPPORTING PARAGRAPHS: 2-3 paragraphs providing context, details, and relevance. Use inverted pyramid — most important facts first.
+
+8. QUOTE 1: A natural, human-sounding quote from the first speaker. Transform the direction into something a real person would actually say. Quotes add insight, emotion, or vision — they do NOT repeat facts from the body copy.
+
+9. IMPACT PARAGRAPH: How this affects customers, community, or industry. Ground the impact in specifics.
+
+10. QUOTE 2 (if provided): A reinforcing quote from the second speaker. Should complement, not repeat, Quote 1.
+
+11. ABOUT SECTION: "About [Company Name]" boilerplate paragraph.
+
+12. END MARK: Three hash marks (###) centered.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL RULES — NO EXCEPTIONS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Use inverted pyramid: most important information first.
+- Write in third person, active voice throughout.
+- NO superlatives: never use "leading," "cutting-edge," "revolutionary," "game-changing," "innovative," "world-class," "best-in-class," or "disruptive."
+- NO promotional language or marketing hype. Write for skeptical journalists.
+- NO exclamation points anywhere in the release.
+- Quotes must sound like real humans talking — conversational, insightful, specific. NOT corporate boilerplate.
+- Quotes should add perspective, emotion, or vision — NOT repeat facts already in the body.
+- Follow AP Style for numbers (spell out one through nine, use numerals for 10+), dates, titles, abbreviations, and punctuation.
+- Use "said" as the attribution verb — not "stated," "shared," "expressed," or "commented."
+- Company name should be referenced in full on first mention, then shortened naturally.
+- Attribute all claims. Do not make unattributed assertions.
+- Keep paragraphs to 2-3 sentences maximum for journalist readability.
+- Make it easy to quote and republish verbatim.
+
+TONE: Authoritative but accessible. Professional but not stuffy. Newsworthy without being breathless.
+
+If optional fields (background context, data points, Quote 2, embargo, additional notes) are blank or say "(not provided)", simply omit those sections — do NOT include placeholder text or mention them.`
+};
+
+/**
  * Multi-Section Brochure Template (Advanced)
  * This is a special template that generates content section by section
  * with context awareness and progress persistence.
@@ -1130,6 +1475,7 @@ export const ALL_TEMPLATES: Template[] = [
   SOCIAL_MEDIA_POST_TEMPLATE,
   PRINT_MEDIA_TEMPLATE,
   WEBSITE_COPY_SEO_TEMPLATE,
+  PRESS_RELEASE_TEMPLATE,
   BROCHURE_MULTI_SECTION_TEMPLATE,
 ];
 

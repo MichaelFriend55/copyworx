@@ -1,0 +1,189 @@
+CopyWorx Studio - Copyright Filing Summary
+Generated on: 2026-02-04 2:12:54 PM
+
+========================================
+SUMMARY STATISTICS
+========================================
+
+Total Files Included: 149
+Total Lines of Code: 47733
+
+File Breakdown:
+  TypeScript (.ts):      76
+  TypeScript JSX (.tsx): 69
+  JavaScript (.js):      4
+  JavaScript JSX (.jsx): 0
+
+========================================
+COMPLETE FILE LIST WITH LINE COUNTS
+========================================
+
+app/(app)/layout.tsx                                                               88 lines
+app/(app)/projects/[projectId]/page.tsx                                            48 lines
+app/(app)/projects/page.tsx                                                       254 lines
+app/(app)/templates/page.tsx                                                      209 lines
+app/(marketing)/about/page.tsx                                                    203 lines
+app/(marketing)/layout.tsx                                                         70 lines
+app/(marketing)/page.tsx                                                          343 lines
+app/(marketing)/pricing/page.tsx                                                  284 lines
+app/admin/usage/page.tsx                                                          693 lines
+app/api/admin/usage/route.ts                                                      191 lines
+app/api/brand-alignment/route.ts                                                  328 lines
+app/api/claude/route.ts                                                           691 lines
+app/api/db/all-brand-voices/route.ts                                              103 lines
+app/api/db/all-personas/route.ts                                                  106 lines
+app/api/db/brand-voices/route.ts                                                  320 lines
+app/api/db/documents/route.ts                                                     305 lines
+app/api/db/folders/route.ts                                                       326 lines
+app/api/db/migrate/route.ts                                                       370 lines
+app/api/db/personas/route.ts                                                      303 lines
+app/api/db/projects/route.ts                                                      248 lines
+app/api/db/run-migration/route.ts                                                 216 lines
+app/api/db/snippets/route.ts                                                      356 lines
+app/api/db/sync/route.ts                                                          271 lines
+app/api/db/user-settings/route.ts                                                 151 lines
+app/api/expand/route.ts                                                           426 lines
+app/api/generate-section/route.ts                                                 348 lines
+app/api/generate-template/route.ts                                                582 lines
+app/api/optimize-alignment/route.ts                                               561 lines
+app/api/persona-alignment/route.ts                                                349 lines
+app/api/rewrite-channel/route.ts                                                  508 lines
+app/api/route.ts                                                                   22 lines
+app/api/shorten/route.ts                                                          437 lines
+app/api/tone-shift/route.ts                                                       552 lines
+app/api/usage/route.ts                                                            150 lines
+app/home/page.tsx                                                                  23 lines
+app/layout.tsx                                                                    157 lines
+app/sign-in/[[...sign-in]]/page.tsx                                               107 lines
+app/sign-up/[[...sign-up]]/page.tsx                                               141 lines
+app/worxspace/page.tsx                                                            386 lines
+collect-source-code.js                                                            237 lines
+components/ApiUsageDisplay.tsx                                                    335 lines
+components/layout/footer.tsx                                                      151 lines
+components/layout/index.ts                                                         10 lines
+components/layout/marketing-footer.tsx                                             86 lines
+components/layout/navbar.tsx                                                      209 lines
+components/layout/sidebar.tsx                                                     160 lines
+components/migration/index.ts                                                       8 lines
+components/migration/MigrationBanner.tsx                                          202 lines
+components/ProductTour.tsx                                                        295 lines
+components/splash/index.ts                                                         10 lines
+components/splash/SplashPage.tsx                                                  388 lines
+components/ui/AIWorxLoader.tsx                                                    132 lines
+components/ui/AutoExpandTextarea.tsx                                              123 lines
+components/ui/badge.tsx                                                            52 lines
+components/ui/button.tsx                                                          122 lines
+components/ui/card.tsx                                                            104 lines
+components/ui/ConfirmationModal.tsx                                               242 lines
+components/ui/index.ts                                                             14 lines
+components/ui/input.tsx                                                            39 lines
+components/ui/SlideOutPanel.tsx                                                   265 lines
+components/ui/slider.tsx                                                           29 lines
+components/workspace/BrandAlignmentTool.tsx                                       378 lines
+components/workspace/BrandVoiceSection.tsx                                        210 lines
+components/workspace/BrandVoiceSlideOut.tsx                                       865 lines
+components/workspace/BrandVoiceTool.tsx                                           618 lines
+components/workspace/BrochureMultiSectionTemplate.tsx                            1175 lines
+components/workspace/DeleteProjectModal.tsx                                       221 lines
+components/workspace/DocumentList.tsx                                            1174 lines
+components/workspace/EditorArea.tsx                                               899 lines
+components/workspace/ExpandTool.tsx                                               283 lines
+components/workspace/index.ts                                                      41 lines
+components/workspace/InsightsSlideOut.tsx                                         630 lines
+components/workspace/LeftSidebarContent.tsx                                       846 lines
+components/workspace/MyProjectsSlideOut.tsx                                      1236 lines
+components/workspace/OptimizeComparisonModal.tsx                                  427 lines
+components/workspace/PagedPreview.tsx                                             696 lines
+components/workspace/PersonaAlignmentTool.tsx                                     463 lines
+components/workspace/PersonaCard.tsx                                              140 lines
+components/workspace/PersonaForm.tsx                                              352 lines
+components/workspace/PersonaSection.tsx                                           211 lines
+components/workspace/PersonasSlideOut.tsx                                         400 lines
+components/workspace/PersonasTool.tsx                                             302 lines
+components/workspace/ProjectSelector.tsx                                          436 lines
+components/workspace/RewriteChannelTool.tsx                                       406 lines
+components/workspace/RightSidebarContent.tsx                                      243 lines
+components/workspace/SaveAsSnippetButton.tsx                                      121 lines
+components/workspace/ShortenTool.tsx                                              283 lines
+components/workspace/Sidebar.tsx                                                  139 lines
+components/workspace/SnippetModals.tsx                                            430 lines
+components/workspace/SnippetSection.tsx                                           365 lines
+components/workspace/TemplateFormField.tsx                                        348 lines
+components/workspace/TemplateFormSlideOut.tsx                                     570 lines
+components/workspace/TemplateGenerator.tsx                                        599 lines
+components/workspace/TemplateResumeBanner.tsx                                     221 lines
+components/workspace/TemplatesModal.tsx                                           394 lines
+components/workspace/TemplatesSlideOut.tsx                                        525 lines
+components/workspace/ToneShifter.tsx                                              397 lines
+components/workspace/Toolbar.tsx                                                 1598 lines
+components/workspace/ViewModeSelector.tsx                                         167 lines
+components/workspace/WorkspaceLayout.tsx                                          118 lines
+lib/data/templates.ts                                                            1162 lines
+lib/editor-utils.ts                                                               270 lines
+lib/hooks/useApiUsage.ts                                                          291 lines
+lib/hooks/useProductTour.ts                                                       175 lines
+lib/prompts/tone-shifter.ts                                                       124 lines
+lib/storage/document-storage.ts                                                   622 lines
+lib/storage/folder-storage.ts                                                     571 lines
+lib/storage/persona-storage.ts                                                    406 lines
+lib/storage/project-storage.ts                                                    410 lines
+lib/storage/snippet-storage.ts                                                    409 lines
+lib/storage/supabase-storage.ts                                                   724 lines
+lib/storage/unified-storage.ts                                                    594 lines
+lib/stores/slideOutStore.ts                                                       160 lines
+lib/stores/snippetStore.ts                                                        394 lines
+lib/stores/workspaceStore.ts                                                     1405 lines
+lib/supabase.ts                                                                    93 lines
+lib/templates/brochure-multi-section-config.ts                                    485 lines
+lib/tiptap/font-size.ts                                                            93 lines
+lib/tools/index.ts                                                                  7 lines
+lib/tools/toolRegistry.ts                                                         256 lines
+lib/types/brand.ts                                                                152 lines
+lib/types/database.ts                                                             437 lines
+lib/types/docshift.d.ts                                                            26 lines
+lib/types/global.d.ts                                                              25 lines
+lib/types/index.ts                                                                185 lines
+lib/types/pagedjs.d.ts                                                            156 lines
+lib/types/project.ts                                                              226 lines
+lib/types/snippet.ts                                                              125 lines
+lib/types/template-progress.ts                                                    277 lines
+lib/types/template.ts                                                             147 lines
+lib/types/workspace.ts                                                             76 lines
+lib/utils.ts                                                                      103 lines
+lib/utils/api-auth.ts                                                             248 lines
+lib/utils/content-formatting.ts                                                   227 lines
+lib/utils/daily-visit-tracker.ts                                                  195 lines
+lib/utils/document-export.ts                                                      567 lines
+lib/utils/document-import.ts                                                      654 lines
+lib/utils/error-handling.ts                                                       443 lines
+lib/utils/image-utils.ts                                                          172 lines
+lib/utils/logger.ts                                                                71 lines
+lib/utils/pdf-export.ts                                                            97 lines
+lib/utils/project-utils.ts                                                        215 lines
+lib/utils/readability.ts                                                          474 lines
+middleware.ts                                                                      57 lines
+next-env.d.ts                                                                       6 lines
+next.config.js                                                                     41 lines
+postcss.config.js                                                                  13 lines
+tailwind.config.ts                                                                185 lines
+test-tone-shift.js                                                                116 lines
+
+========================================
+NOTES FOR COPYRIGHT REGISTRATION
+========================================
+
+This package contains the complete source code for CopyWorx Studio,
+an AI-powered copywriting platform.
+
+Excluded from this filing:
+  - node_modules (third-party dependencies)
+  - .next (build artifacts)
+  - dist, build (compiled output)
+  - .git (version control metadata)
+  - .vercel (deployment configuration)
+  - package-lock.json, yarn.lock (dependency lock files)
+  - .env files (environment configuration)
+
+All source files are included in alphabetical order by path.
+Each file is prefixed with its relative path for easy reference.
+

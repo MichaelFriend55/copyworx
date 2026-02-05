@@ -1,0 +1,1254 @@
+CopyWorx Studio - Complete Source Code
+Generated on: 2026-02-04 14:02:21
+For U.S. Copyright Office Registration
+
+========================================
+
+
+=== FILE: app/(app)/layout.tsx ===
+
+/**
+ * @file app/(app)/layout.tsx
+ * @description Layout for authenticated app pages
+ * 
+ * Includes:
+ * - Sidebar navigation
+ * - Header with user info and UserButton
+ * - Main content area
+ */
+
+import { UserButton } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
+import { Sidebar } from '@/components/layout/sidebar';
+import { Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+/**
+ * App layout component
+ * 
+ * Wraps all authenticated pages with the app sidebar and header.
+ * Protected by Clerk middleware - only accessible to authenticated users.
+ */
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const user = await currentUser();
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-ink-50">
+      {/* Sidebar */}
+      <Sidebar />
+      
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="h-16 border-b border-border bg-white flex items-center justify-between px-6">
+          <div>
+            {/* Breadcrumb or search could go here */}
+          </div>
+          
+          {/* User Section */}
+          <div className="flex items-center gap-4">
+            {/* Notifications Button */}
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5 text-ink-600" />
+              <span className="absolute top-1 right-1 h-2 w-2 bg-amber-500 rounded-full" />
+            </Button>
+            
+            {/* User Info */}
+            <div className="hidden sm:flex items-center gap-3 pr-2 border-r border-border">
+              <div className="text-right">
+                <p className="text-sm font-medium text-ink-900">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs text-ink-500">
+                  {user?.emailAddresses?.[0]?.emailAddress}
+                </p>
+              </div>
+            </div>
+            
+            {/* User Button */}
+            <UserButton 
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: 'h-9 w-9',
+                  userButtonPopoverCard: 'shadow-xl border border-border/50',
+                  userButtonPopoverActionButton: 'hover:bg-ink-50',
+                  userButtonPopoverActionButtonText: 'text-ink-700',
+                  userButtonPopoverActionButtonIcon: 'text-ink-500',
+                  userButtonPopoverFooter: 'hidden',
+                },
+              }}
+            />
+          </div>
+        </header>
+        
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+
+=== FILE: app/(app)/projects/[projectId]/page.tsx ===
+
+/**
+ * @file app/(app)/projects/[projectId]/page.tsx
+ * @description Dynamic project route that redirects to worxspace with specific project loaded
+ * 
+ * Purpose:
+ * - Handles navigation from project cards
+ * - Redirects /projects/[id] → /worxspace?projectId=[id]
+ * - Enables direct project linking and bookmarking
+ * 
+ * Security:
+ * - Server-side redirect (no client-side exposure)
+ * - Project access validated by workspace component
+ * - Uses Next.js native redirect() for proper HTTP status codes
+ */
+
+import { redirect } from 'next/navigation';
+
+/**
+ * Props type for dynamic route params
+ */
+interface ProjectPageProps {
+  params: {
+    projectId: string;
+  };
+}
+
+/**
+ * Project page component
+ * 
+ * This is a minimal redirect component that:
+ * 1. Receives the projectId from the URL path
+ * 2. Redirects to the worxspace with the project loaded
+ * 3. Allows the worxspace to handle all project logic
+ * 
+ * @param params - Dynamic route parameters containing projectId
+ * @returns Never returns - redirects immediately
+ */
+export default function ProjectPage({ params }: ProjectPageProps) {
+  // Validate projectId exists
+  if (!params.projectId) {
+    // If no projectId, redirect to worxspace without project
+    redirect('/worxspace');
+  }
+
+  // Redirect to worxspace with project ID as query parameter
+  redirect(`/worxspace?projectId=${params.projectId}`);
+}
+
+
+=== FILE: app/(app)/projects/page.tsx ===
+
+/**
+ * @file app/(app)/projects/page.tsx
+ * @description Projects page - manage copywriting projects
+ * 
+ * Features:
+ * - Project list with status
+ * - Create new project
+ * - Search and filter
+ */
+
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { 
+  Search, 
+  Plus, 
+  MoreHorizontal, 
+  FileText,
+  Calendar,
+  FolderOpen
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+export const metadata: Metadata = {
+  title: 'Projects',
+  description: 'Manage your copywriting projects.',
+};
+
+/**
+ * Project data (placeholder)
+ */
+const projects: Array<{
+  id: string;
+  name: string;
+  description: string;
+  template: string;
+  status: string;
+  wordCount: number;
+  lastEdited: string;
+  createdAt: string;
+}> = [
+  {
+    id: '1',
+    name: 'Q4 Email Campaign',
+    description: 'Holiday season email marketing campaign for product launch',
+    template: 'Email Sequence',
+    status: 'In Progress',
+    wordCount: 2450,
+    lastEdited: '2 hours ago',
+    createdAt: 'Dec 15, 2025',
+  },
+  {
+    id: '2',
+    name: 'Product Launch Landing Page',
+    description: 'Main landing page for the new premium tier launch',
+    template: 'Landing Page',
+    status: 'Draft',
+    wordCount: 850,
+    lastEdited: '5 hours ago',
+    createdAt: 'Dec 14, 2025',
+  },
+  {
+    id: '3',
+    name: 'Social Media Content Pack',
+    description: 'January content calendar posts for all platforms',
+    template: 'Social Posts',
+    status: 'Completed',
+    wordCount: 1200,
+    lastEdited: '1 day ago',
+    createdAt: 'Dec 10, 2025',
+  },
+  {
+    id: '4',
+    name: 'Blog Post Series',
+    description: 'Educational content series about copywriting tips',
+    template: 'Blog Post',
+    status: 'In Progress',
+    wordCount: 3400,
+    lastEdited: '2 days ago',
+    createdAt: 'Dec 8, 2025',
+  },
+  {
+    id: '5',
+    name: 'LinkedIn Outreach',
+    description: 'Connection request and follow-up message templates',
+    template: 'Cold Outreach',
+    status: 'Completed',
+    wordCount: 450,
+    lastEdited: '3 days ago',
+    createdAt: 'Dec 5, 2025',
+  },
+  {
+    id: '6',
+    name: 'Google Ads Campaign',
+    description: 'PPC ad copy for Q1 marketing campaign',
+    template: 'Google Ads',
+    status: 'Draft',
+    wordCount: 320,
+    lastEdited: '4 days ago',
+    createdAt: 'Dec 3, 2025',
+  },
+] as const;
+
+/**
+ * Get status badge variant
+ */
+function getStatusVariant(status: string): 'amber' | 'secondary' | 'outline' {
+  switch (status) {
+    case 'Completed':
+      return 'amber';
+    case 'In Progress':
+      return 'secondary';
+    default:
+      return 'outline';
+  }
+}
+
+/**
+ * Projects page component
+ */
+export default function ProjectsPage() {
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="font-sans text-3xl font-bold text-ink-900">
+            Projects
+          </h1>
+          <p className="text-ink-600 mt-1">
+            Manage and organize your copywriting projects.
+          </p>
+        </div>
+        <Button variant="amber" asChild>
+          <Link href="/projects/new">
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Link>
+        </Button>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-400" />
+          <Input 
+            placeholder="Search projects..." 
+            className="pl-10"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="default">
+            All Status
+          </Button>
+          <Button variant="outline" size="default">
+            Sort by: Recent
+          </Button>
+        </div>
+      </div>
+
+      {/* Projects List */}
+      <div className="space-y-4">
+        {projects.map((project) => (
+          <Card 
+            key={project.id} 
+            className="border-border/50 hover:shadow-md transition-shadow"
+          >
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                {/* Project Info */}
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="h-12 w-12 rounded-xl bg-ink-100 flex items-center justify-center shrink-0">
+                    <FolderOpen className="h-6 w-6 text-ink-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Link 
+                        href={`/projects/${project.id}`}
+                        className="font-semibold text-ink-900 hover:text-amber-600 transition-colors truncate"
+                      >
+                        {project.name}
+                      </Link>
+                      <Badge variant={getStatusVariant(project.status)}>
+                        {project.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-ink-500 line-clamp-1 mb-2">
+                      {project.description}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-400">
+                      <span className="flex items-center gap-1">
+                        <FileText className="h-3.5 w-3.5" />
+                        {project.template}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {project.createdAt}
+                      </span>
+                      <span>
+                        {project.wordCount.toLocaleString()} words
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 lg:gap-4">
+                  <span className="text-sm text-ink-500 whitespace-nowrap">
+                    Edited {project.lastEdited}
+                  </span>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={`/projects/${project.id}`}>
+                      Open
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Empty State (hidden when projects exist) */}
+      {projects.length === 0 && (
+        <Card className="border-dashed border-2 border-border">
+          <CardContent className="py-12 text-center">
+            <div className="h-16 w-16 rounded-full bg-ink-100 flex items-center justify-center mx-auto mb-4">
+              <FolderOpen className="h-8 w-8 text-ink-400" />
+            </div>
+            <h3 className="font-sans text-lg font-semibold text-ink-900 mb-2">
+              No projects yet
+            </h3>
+            <p className="text-ink-500 mb-6 max-w-sm mx-auto">
+              Get started by creating your first copywriting project.
+            </p>
+            <Button variant="amber" asChild>
+              <Link href="/projects/new">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Project
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+
+
+=== FILE: app/(app)/templates/page.tsx ===
+
+/**
+ * @file app/(app)/templates/page.tsx
+ * @description Templates page - browse and select copywriting templates
+ * 
+ * Features:
+ * - Template categories
+ * - Search and filter
+ * - Template cards with previews
+ */
+
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Search, Filter, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+export const metadata: Metadata = {
+  title: 'Templates',
+  description: 'Browse our collection of AI-powered copywriting templates.',
+};
+
+/**
+ * Template categories
+ */
+const categories = [
+  { id: 'all', name: 'All Templates', count: 50 },
+  { id: 'email', name: 'Email', count: 12 },
+  { id: 'landing', name: 'Landing Pages', count: 8 },
+  { id: 'social', name: 'Social Media', count: 15 },
+  { id: 'ads', name: 'Advertising', count: 10 },
+  { id: 'website', name: 'Website Copy', count: 5 },
+] as const;
+
+/**
+ * Template data (placeholder)
+ */
+const templates = [
+  {
+    id: '1',
+    name: 'Email Welcome Sequence',
+    description: 'A 5-part welcome email series to onboard new subscribers and build trust.',
+    category: 'Email',
+    popular: true,
+    icon: '✉️',
+  },
+  {
+    id: '2',
+    name: 'SaaS Landing Page',
+    description: 'High-converting landing page copy for software products with benefit-driven headlines.',
+    category: 'Landing Pages',
+    popular: true,
+    icon: '🚀',
+  },
+  {
+    id: '3',
+    name: 'Facebook Ad Copy',
+    description: 'Scroll-stopping Facebook ad copy with multiple hook variations.',
+    category: 'Advertising',
+    popular: false,
+    icon: '📢',
+  },
+  {
+    id: '4',
+    name: 'LinkedIn Post Series',
+    description: 'Thought leadership posts optimized for LinkedIn engagement.',
+    category: 'Social Media',
+    popular: true,
+    icon: '💼',
+  },
+  {
+    id: '5',
+    name: 'Product Description',
+    description: 'Compelling product descriptions that highlight benefits and drive purchases.',
+    category: 'Website Copy',
+    popular: false,
+    icon: '🏷️',
+  },
+  {
+    id: '6',
+    name: 'Cold Email Outreach',
+    description: 'Personalized cold email templates with proven open rate optimization.',
+    category: 'Email',
+    popular: true,
+    icon: '🎯',
+  },
+  {
+    id: '7',
+    name: 'Twitter/X Thread',
+    description: 'Viral-worthy Twitter threads that educate and engage your audience.',
+    category: 'Social Media',
+    popular: false,
+    icon: '🐦',
+  },
+  {
+    id: '8',
+    name: 'Google Ads Copy',
+    description: 'High-CTR Google Ads copy with keyword optimization.',
+    category: 'Advertising',
+    popular: false,
+    icon: '🔍',
+  },
+  {
+    id: '9',
+    name: 'About Page',
+    description: 'Tell your brand story with compelling about page copy.',
+    category: 'Website Copy',
+    popular: false,
+    icon: '📖',
+  },
+] as const;
+
+/**
+ * Templates page component
+ */
+export default function TemplatesPage() {
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="font-sans text-3xl font-bold text-ink-900">
+          Templates
+        </h1>
+        <p className="text-ink-600 mt-1">
+          Choose from 50+ AI-powered copywriting templates.
+        </p>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-400" />
+          <Input 
+            placeholder="Search templates..." 
+            className="pl-10"
+          />
+        </div>
+        <Button variant="outline">
+          <Filter className="h-4 w-4 mr-2" />
+          Filter
+        </Button>
+      </div>
+
+      {/* Categories */}
+      <div className="flex flex-wrap gap-2">
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            className={`
+              px-4 py-2 rounded-full text-sm font-medium transition-colors
+              ${category.id === 'all' 
+                ? 'bg-ink-900 text-white' 
+                : 'bg-white border border-border hover:bg-ink-50 text-ink-700'
+              }
+            `}
+          >
+            {category.name}
+            <span className="ml-2 text-xs opacity-60">
+              {category.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Templates Grid */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {templates.map((template) => (
+          <Card 
+            key={template.id} 
+            className="border-border/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+          >
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center text-2xl">
+                  {template.icon}
+                </div>
+                {template.popular && (
+                  <Badge variant="amber">Popular</Badge>
+                )}
+              </div>
+              <CardTitle className="text-lg mt-4">{template.name}</CardTitle>
+              <CardDescription className="line-clamp-2">
+                {template.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Badge variant="secondary">{template.category}</Badge>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                variant="ghost" 
+                className="w-full group-hover:bg-amber-50 group-hover:text-amber-700"
+                asChild
+              >
+                <Link href={`/templates/${template.id}`}>
+                  Use Template
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+
+=== FILE: app/(marketing)/about/page.tsx ===
+
+/**
+ * @file app/(marketing)/about/page.tsx
+ * @description About page for CopyWorx
+ * 
+ * Sections:
+ * - Hero with mission statement
+ * - Company story
+ * - Team values
+ * - Stats section
+ */
+
+import type { Metadata } from 'next';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { 
+  Heart, 
+  Lightbulb, 
+  Users, 
+  Rocket,
+  Target,
+  Shield
+} from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'About',
+  description: 'Learn about CopyWorx and our mission to help copywriters create better content faster.',
+};
+
+/**
+ * Company values data
+ */
+const values = [
+  {
+    icon: Heart,
+    title: 'Customer First',
+    description: 'Everything we build starts with understanding and solving real problems for copywriters.',
+  },
+  {
+    icon: Lightbulb,
+    title: 'Innovation',
+    description: 'We constantly push the boundaries of what AI can do for creative writing.',
+  },
+  {
+    icon: Users,
+    title: 'Community',
+    description: 'We believe in the power of collaboration and learning from each other.',
+  },
+  {
+    icon: Rocket,
+    title: 'Excellence',
+    description: 'We hold ourselves to the highest standards in everything we create.',
+  },
+  {
+    icon: Target,
+    title: 'Results-Driven',
+    description: 'We measure success by the outcomes our users achieve with our tools.',
+  },
+  {
+    icon: Shield,
+    title: 'Trust & Privacy',
+    description: 'Your content is yours. We never use your data to train our models.',
+  },
+] as const;
+
+/**
+ * Company stats data
+ */
+const stats = [
+  { value: '10,000+', label: 'Active Users' },
+  { value: '2M+', label: 'Words Generated' },
+  { value: '50+', label: 'Templates' },
+  { value: '98%', label: 'Customer Satisfaction' },
+] as const;
+
+/**
+ * About page component
+ */
+export default function AboutPage() {
+  return (
+    <>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden py-24 md:py-32">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-ink-50/50 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-dots opacity-30" />
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="max-w-3xl mx-auto text-center">
+            <Badge variant="secondary" className="mb-6">About Us</Badge>
+            <h1 className="font-sans text-4xl md:text-5xl lg:text-6xl font-bold text-ink-900 mb-6">
+              Empowering writers to create their best work
+            </h1>
+            <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
+              CopyWorx was founded with a simple mission: help copywriters and marketers 
+              create compelling content that drives results, without the blank page anxiety.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Story Section */}
+      <section className="py-24 md:py-32 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Image Placeholder */}
+            <div className="relative">
+              <div className="aspect-square rounded-2xl bg-gradient-to-br from-amber-100 via-amber-50 to-ink-50 flex items-center justify-center">
+                <div className="w-3/4 h-3/4 rounded-xl bg-white shadow-2xl flex items-center justify-center">
+                  <span className="font-sans text-6xl text-ink-200">✍️</span>
+                </div>
+              </div>
+              {/* Decorative element */}
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-amber-400 rounded-2xl -z-10" />
+            </div>
+            
+            {/* Content */}
+            <div>
+              <Badge variant="amber" className="mb-4">Our Story</Badge>
+              <h2 className="font-sans text-3xl md:text-4xl font-bold text-ink-900 mb-6">
+                Built by copywriters, for copywriters
+              </h2>
+              <div className="space-y-4 text-ink-600 leading-relaxed">
+                <p>
+                  CopyWorx started in 2023 when our founders—experienced copywriters 
+                  themselves—recognized a gap in the market. While AI writing tools existed, 
+                  none truly understood the craft of copywriting.
+                </p>
+                <p>
+                  We set out to build something different: an AI assistant that understands 
+                  proven copywriting frameworks, conversion psychology, and brand voice. 
+                  Not a replacement for human creativity, but a powerful amplifier of it.
+                </p>
+                <p>
+                  Today, CopyWorx helps thousands of marketers and copywriters create 
+                  better content faster. From startups to Fortune 500 companies, our users 
+                  trust us to help them craft messages that resonate and convert.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 bg-ink-950">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="font-sans text-4xl md:text-5xl font-bold text-amber-400 mb-2">
+                  {stat.value}
+                </div>
+                <div className="text-ink-400 text-sm">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Values Section */}
+      <section className="py-24 md:py-32 bg-gradient-to-b from-white to-ink-50/50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <Badge variant="secondary" className="mb-4">Our Values</Badge>
+            <h2 className="font-sans text-3xl md:text-4xl font-bold text-ink-900 mb-6">
+              What we stand for
+            </h2>
+            <p className="text-lg text-ink-600">
+              These core values guide everything we do at CopyWorx.
+            </p>
+          </div>
+          
+          {/* Values Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {values.map((value) => (
+              <Card 
+                key={value.title}
+                className="border-border/50 bg-white"
+              >
+                <CardContent className="p-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink-100 text-ink-700 mb-4">
+                    <value.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-sans text-xl font-semibold text-ink-900 mb-2">
+                    {value.title}
+                  </h3>
+                  <p className="text-ink-600 leading-relaxed">
+                    {value.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+
+
+=== FILE: app/(marketing)/layout.tsx ===
+
+/**
+ * @file app/(marketing)/layout.tsx
+ * @description Layout for marketing pages (public-facing)
+ * 
+ * Includes:
+ * - Minimal auth header (Clerk only, no navigation)
+ * - Footer
+ * - No navbar - hero starts at top
+ */
+
+'use client';
+
+import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { MarketingFooter } from '@/components/layout/marketing-footer';
+
+/**
+ * Marketing layout component
+ * 
+ * Wraps all public-facing pages with minimal auth header and footer.
+ * No navigation bar - just Clerk auth components.
+ */
+export default function MarketingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      {/* Minimal Auth Header - Fixed top right */}
+      <div className="fixed top-0 right-0 z-50 p-4">
+        <div className="flex items-center gap-4">
+          {/* Show when user IS signed in */}
+          <SignedIn>
+            <Button variant="ghost" className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90" asChild>
+              <Link href="/worxspace">Worxspace</Link>
+            </Button>
+            <UserButton 
+              afterSignOutUrl="/home"
+              appearance={{
+                elements: {
+                  avatarBox: 'h-9 w-9 shadow-lg',
+                  userButtonPopoverCard: 'shadow-xl border border-border/50',
+                  userButtonPopoverActionButton: 'hover:bg-ink-50',
+                  userButtonPopoverActionButtonText: 'text-ink-700',
+                  userButtonPopoverActionButtonIcon: 'text-ink-500',
+                  userButtonPopoverFooter: 'hidden',
+                },
+              }}
+            />
+          </SignedIn>
+
+          {/* Show when user is NOT signed in */}
+          <SignedOut>
+            <Button variant="ghost" className="bg-white/80 backdrop-blur-sm hover:bg-white" asChild>
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
+          </SignedOut>
+        </div>
+      </div>
+
+      <main className="flex-1">
+        {children}
+      </main>
+      <MarketingFooter />
+    </div>
+  );
+}
+
+
+=== FILE: app/(marketing)/page.tsx ===
+
+/**
+ * @file app/(marketing)/page.tsx
+ * @description CopyWorx™ Studio landing page - professional marketing homepage
+ * 
+ * Sections:
+ * - Hero with solid gray background and primary CTA
+ * - The Challenge - problem statement
+ * - The Story - founder narrative with gradient background
+ * - Features - 2x2 grid of key capabilities
+ * - How It Works - 4-step process
+ * - Beta Access - final CTA section
+ */
+
+import Image from 'next/image';
+import { 
+  Sparkles, 
+  Palette, 
+  FileText, 
+  FolderOpen,
+  ArrowRight
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+/**
+ * Features data for the features section
+ */
+const features = [
+  {
+    icon: Sparkles,
+    title: 'Copy Optimizer Suite',
+    description: 'Refine your copy in real time. Shift tone, expand ideas, tighten language, or completely rewrite for different channels – all while maintaining your unique voice.',
+  },
+  {
+    icon: FileText,
+    title: 'AI@Worx Templates',
+    description: "Strategic templates that ask the right questions to put you in the right direction fast. No more staring at a blank page. Answer a few prompts and get professional copy that's ready to refine.",
+  },
+  {
+    icon: Palette,
+    title: 'Brand Voice System',
+    description: 'Define your brand voice once, and CopyWorx™ Studio ensures everything you write stays on brand. Create detailed personas, set approved phrases and forbidden words, and maintain consistency across every piece of content.',
+  },
+  {
+    icon: FolderOpen,
+    title: 'Smart Document Management',
+    description: 'Organize projects by client, track versions, and manage your entire copywriting workflow in one intuitive worxspace. No more scattered Google Docs or lost revisions.',
+  },
+] as const;
+
+/**
+ * How it works steps
+ */
+const steps = [
+  {
+    number: '01',
+    title: 'Define Your Brand',
+    description: 'Define your brand voice and create customer personas (or skip this and start writing)',
+  },
+  {
+    number: '02',
+    title: 'Choose Your Starting Point',
+    description: 'Choose a template or start from scratch in the editor',
+  },
+  {
+    number: '03',
+    title: 'Write & Optimize',
+    description: 'Write, optimize, and refine with AI-powered tools – use as much or as little help as you need',
+  },
+  {
+    number: '04',
+    title: 'Export & Deliver',
+    description: 'Export professional, on-brand copy in minutes',
+  },
+] as const;
+
+/**
+ * Homepage component - CopyWorx™ Studio landing page
+ */
+export default function HomePage() {
+  return (
+    <div className="scroll-smooth">
+      {/* ========================================================================
+          HERO SECTION
+          Full viewport height with solid gray background
+          ======================================================================== */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#F5F5F7]">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Logo - Large (reduced 10% from previous) */}
+            <div className="flex justify-center mb-14 animate-fade-in">
+              <Image
+                src="/copyworx-studio-logo.png"
+                alt="CopyWorx™ Studio"
+                width={720}
+                height={200}
+                className="h-44 sm:h-56 md:h-[17rem] w-auto"
+                priority
+              />
+            </div>
+            
+            {/* Headline */}
+            <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-ink-900 leading-[1.1] tracking-tight mb-6 animate-fade-in animation-delay-100">
+              Write To Win With
+              <br />
+              <span className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent">CopyWorx™ Studio</span>
+            </h1>
+            
+            {/* Subheadline */}
+            <p className="text-lg sm:text-xl md:text-2xl text-ink-600 max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in animation-delay-200">
+              The first AI-powered platform built by a professional copywriter, for copywriters and marketers.
+            </p>
+            
+            {/* Primary CTA */}
+            <div className="animate-fade-in animation-delay-300">
+              <Button 
+                size="xl" 
+                className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg px-10 py-6 h-auto shadow-2xl transition-all duration-300"
+                asChild
+              >
+                <a href="https://tally.so/r/Xx4yxV">
+                  Request Beta Access
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 rounded-full border-2 border-ink-400/50 flex items-start justify-center p-2">
+            <div className="w-1.5 h-3 bg-ink-400/70 rounded-full" />
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          THE CHALLENGE SECTION
+          Problem statement with clean typography
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-8 text-center">
+              Writing Great Copy Shouldn&apos;t Be So Hard
+            </h2>
+            
+            <div className="prose prose-lg md:prose-xl max-w-none text-ink-600 leading-relaxed space-y-6">
+              <p>
+                Whether you&apos;re a seasoned copywriter juggling multiple clients or a marketing team trying to maintain brand consistency across campaigns, the challenge is the same: How do you write professional, strategic copy quickly without sacrificing quality?
+              </p>
+              
+              <p>
+                Traditional writing tools aren&apos;t built for copywriters. AI tools promise speed but deliver generic fluff. And hiring out? Expensive and slow.
+              </p>
+              
+              <p className="text-ink-900 font-semibold text-xl md:text-2xl">
+                CopyWorx™ Studio changes that.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          THE STORY SECTION
+          Founder narrative with gradient background and white text
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-gradient-to-br from-[#006EE6] via-[#4B3F99] to-[#A755F7] relative overflow-hidden">
+        {/* Subtle Pattern Overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 1px)',
+            backgroundSize: '40px 40px'
+          }} />
+        </div>
+        
+        {/* Decorative Glow Elements */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-[#EFBF04]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-8 text-center">
+              Built By A Copywriter Who Gets It
+            </h2>
+            
+            <div className="prose prose-lg md:prose-xl max-w-none text-white/90 leading-relaxed space-y-6">
+              <p>
+                CopyWorx™ Studio leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use — regardless of writing experience — to create professional, high-converting copy in minutes.
+              </p>
+              
+              <p>
+                CopyWorx™ Studio was created by a professional copywriter, creative director, and branding expert with over 40 years of experience. He and his team have packed CopyWorx™ Studio with all of the features and functions a copywriter needs in one, clean, intuitive worxspace.
+              </p>
+              
+              <p>
+                CopyWorx™ Studio utilizes AI in all the ways that are important to writers – inspiring ideas, finessing copy, offering strategic suggestions, checking and changing tone and style, and always reviewing copy through the lens of brand standards and customer personas. And of course, just being a solid writing app with the features, functions and worxflows you expect in today&apos;s writing tools.
+              </p>
+              
+              {/* Highlighted sentence */}
+              <p className="bg-white/10 border-l-4 border-[#EFBF04] pl-6 py-4 rounded-r-lg backdrop-blur-sm">
+                <strong className="text-white text-xl md:text-2xl">
+                  With CopyWorx™ Studio, you can use as much or as little AI as you like.
+                </strong>
+              </p>
+              
+              <p>
+                Start with a template, start with a brand voice, start on your own. The point is, it&apos;s easy to get started with real workflow-aware functionality.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          FEATURES SECTION
+          2x2 grid of key capabilities
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
+              What Makes CopyWorx™ Studio Different
+            </h2>
+          </div>
+          
+          {/* Features Grid - 2x2 */}
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
+            {features.map((feature, index) => (
+              <div 
+                key={feature.title}
+                className="group relative bg-white rounded-2xl border border-ink-200 p-8 shadow-sm hover:shadow-xl hover:border-[#006EE6]/30 transition-all duration-300"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {/* Icon */}
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#006EE6] to-[#A755F7] text-white mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <feature.icon className="h-7 w-7" />
+                </div>
+                
+                {/* Content */}
+                <h3 className="font-sans text-xl md:text-2xl font-semibold text-ink-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-ink-600 leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          HOW IT WORKS SECTION
+          4-step process with numbered steps
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-ink-950 text-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+              How It Works
+            </h2>
+          </div>
+          
+          {/* Steps */}
+          <div className="max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+              {steps.map((step, index) => (
+                <div 
+                  key={step.number}
+                  className="relative flex gap-6"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {/* Step Number */}
+                  <div className="flex-shrink-0">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#006EE6] to-[#A755F7] text-white font-bold text-xl">
+                      {step.number}
+                    </div>
+                  </div>
+                  
+                  {/* Step Content */}
+                  <div className="pt-2">
+                    <h3 className="font-sans text-xl font-semibold text-white mb-2">
+                      {step.title}
+                    </h3>
+                    <p className="text-ink-300 leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          BETA ACCESS SECTION
+          Final CTA with gradient background
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-[#F5F5F7] relative overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
+              Ready To Write To Win?
+            </h2>
+            
+            <div className="text-lg md:text-xl text-ink-600 leading-relaxed space-y-6 mb-10">
+              <p>
+                CopyWorx™ Studio is currently in closed beta. We&apos;re carefully selecting marketing professionals and copywriters to test the platform and help shape its future.
+              </p>
+              
+              <p>
+                Request access below and tell us why you want in. We review every application and send invites to approved beta testers.
+              </p>
+              
+              <p className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent font-semibold text-xl md:text-2xl">
+                Now let&apos;s get to worx!
+              </p>
+            </div>
+            
+            {/* CTA Button */}
+            <Button 
+              size="xl" 
+              className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg px-10 py-6 h-auto shadow-2xl transition-all duration-300"
+              asChild
+            >
+              <a href="https://tally.so/r/Xx4yxV">
+                Request Beta Access
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  );
+}
+
+
+=== FILE: app/(marketing)/pricing/page.tsx ===
+
+/**
+ * @file app/(marketing)/pricing/page.tsx
+ * @description Pricing page for CopyWorx
+ * 
+ * Sections:
+
+================================================================================
+=== END OF FIRST 25 PAGES ===
+================================================================================
