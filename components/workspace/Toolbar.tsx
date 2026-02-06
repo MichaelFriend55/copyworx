@@ -5,7 +5,7 @@
  * Features:
  * - Left: File operations (Home, Undo, Redo)
  * - Center: Rich text formatting controls
- * - Right: View mode selector
+ * - Right: View mode selector, user menu, help button
  * - Apple-style aesthetic with smooth interactions
  * - Keyboard shortcut tooltips
  * 
@@ -44,6 +44,7 @@ import {
   Printer,
   ChevronRight,
 } from 'lucide-react';
+import { UserButton } from '@clerk/nextjs';
 import { useActiveDocumentId, useActiveProjectId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
 import { getDocument, updateDocument } from '@/lib/storage/unified-storage';
 import { ViewModeSelector } from './ViewModeSelector';
@@ -1538,6 +1539,21 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
           onViewModeChange={setViewMode}
           disabled={!hasActiveDocument}
           documentTitle={documentTitle}
+        />
+        
+        {/* User Menu Button */}
+        <UserButton 
+          afterSignOutUrl="/home"
+          appearance={{
+            elements: {
+              avatarBox: 'h-9 w-9 shadow-lg',
+              userButtonPopoverCard: 'shadow-xl border border-border/50',
+              userButtonPopoverActionButton: 'hover:bg-gray-50',
+              userButtonPopoverActionButtonText: 'text-gray-700',
+              userButtonPopoverActionButtonIcon: 'text-gray-500',
+              userButtonPopoverFooter: 'hidden',
+            },
+          }}
         />
         
         {/* Product Tour Button */}
