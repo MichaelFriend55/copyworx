@@ -1127,6 +1127,7 @@ export const PRESS_RELEASE_TEMPLATE: Template = {
       helperText: 'What kind of news is this?',
       required: true,
       options: [
+        'Company Launch',
         'Product Launch',
         'Partnership/Alliance',
         'Acquisition/Merger',
