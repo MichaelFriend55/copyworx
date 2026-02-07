@@ -1377,9 +1377,14 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
       // Refresh projects so sidebar reflects the new document
       useWorkspaceStore.getState().refreshProjects();
 
-      // Show toast notification
+      // Show toast notification (blue with white text for visibility)
       toast.success(`New document created in ${targetProject.name}`, {
         duration: 3000,
+        style: {
+          background: '#0071E3',
+          color: '#ffffff',
+          border: 'none',
+        },
       });
 
       // Focus the editor after a brief delay for render
