@@ -70,12 +70,9 @@ export function MarketingFooter() {
 
         {/* Copyright - Centered */}
         <div className="border-t border-white/10 py-6">
-          <div className="text-center space-y-2">
+          <div className="text-center">
             <p className="text-sm text-white/60">
               © 2026 CopyWorx Studio™ LLC. All rights reserved.
-            </p>
-            <p className="text-xs text-white/40">
-              CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
             </p>
           </div>
         </div>

@@ -36,8 +36,8 @@
 ### 3. ✅ Copyright Updated
 
 **Changed:**
-- **Old**: "CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Corporation."
-- **New**: "CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC."
+- **Old**: Two-line copyright with trademark statement
+- **New**: Simplified single-line copyright: "© 2026 CopyWorx Studio™ LLC. All rights reserved."
 
 **Location:** Footer at bottom of page
 
@@ -51,8 +51,7 @@
 [📄] [✨] [📤]  ← 64px buttons, icon only
 New  AI   Import
 
-© 2026 CopyWorx Studio™. All rights reserved.
-CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Corporation.
+© 2026 CopyWorx Studio™ LLC. All rights reserved.
 ```
 
 ### After:
@@ -70,8 +69,7 @@ CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Corporation.
 └───────────┘  └───────────┘  └───────────┘
      192×192px buttons with full text
 
-© 2026 CopyWorx Studio™. All rights reserved.
-CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
+© 2026 CopyWorx Studio™ LLC. All rights reserved.
 ```
 
 ## Button Specifications

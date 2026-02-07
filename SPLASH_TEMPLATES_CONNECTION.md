@@ -101,7 +101,7 @@ export function SplashPage() {
           © {new Date().getFullYear()} CopyWorx Studio™. All rights reserved.
         </p>
         <p className="mt-1">
-          CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Corporation.
+          © 2026 CopyWorx Studio™ LLC. All rights reserved.
         </p>
       </footer>
     </div>
@@ -117,7 +117,7 @@ export function SplashPage() {
           © {new Date().getFullYear()} CopyWorx Studio™. All rights reserved.
         </p>
         <p className="mt-1">
-          CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Corporation.
+          © 2026 CopyWorx Studio™ LLC. All rights reserved.
         </p>
       </footer>
 

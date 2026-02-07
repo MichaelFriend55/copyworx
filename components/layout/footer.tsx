@@ -134,12 +134,9 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-ink-800 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-center">
             <p className="text-sm text-ink-400">
               © {currentYear} CopyWorx Studio™ LLC. All rights reserved.
-            </p>
-            <p className="text-sm text-ink-500">
-              CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
             </p>
           </div>
         </div>

@@ -361,9 +361,6 @@ export function SplashPage() {
         <p>
           © 2026 CopyWorx Studio™ LLC. All rights reserved.
         </p>
-        <p className="mt-1">
-          CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
-        </p>
       </footer>
 
       {/* Templates Modal */}
