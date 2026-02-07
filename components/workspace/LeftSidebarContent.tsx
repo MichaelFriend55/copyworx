@@ -391,7 +391,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       {/* CopyWorx Logo Header */}
       <div className="bg-gray-200 -mx-2 -mt-6 mb-4 py-4 flex items-center justify-center">
         <Image
-          src="/copyworx-studio-logo.png"
+          src="/copyworx-logo-v2.png"
           alt="CopyWorx Studio"
           width={140}
           height={140}

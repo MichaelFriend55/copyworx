@@ -89,7 +89,7 @@ export default function HomePage() {
             {/* Logo - Large (reduced 10% from previous) */}
             <div className="flex justify-center mb-14 animate-fade-in">
               <Image
-                src="/copyworx-studio-logo.png"
+                src="/copyworx-logo-v2.png"
                 alt="CopyWorx™ Studio"
                 width={720}
                 height={200}

@@ -39,10 +39,10 @@ export function MarketingFooter() {
               className="flex-shrink-0 flex items-center transition-opacity hover:opacity-80 bg-white rounded-md px-4 py-2"
             >
               <Image
-                src="/CopyWorx_2_WB.png"
+                src="/copyworx-logo-v2.png"
                 alt="CopyWorx Studio Logo"
                 width={304}
-                height={85}
+                height={320}
                 className="h-[68px] w-auto"
               />
             </Link>

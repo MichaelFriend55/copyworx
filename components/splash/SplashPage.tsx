@@ -293,7 +293,7 @@ export function SplashPage() {
           {/* CopyWorx Studio Logo */}
           <div className="mb-6 flex justify-center">
             <Image
-              src="/copyworx-studio-logo.png"
+              src="/copyworx-logo-v2.png"
               alt="CopyWorx Studio"
               width={256}
               height={256}
