@@ -72,7 +72,7 @@ const tourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx Templates</h3>
-        <p className="text-base">Professional copywriting templates across 6 categories. Generate strategic copy in minutes, not hours.</p>
+        <p className="text-base">Professional copywriting templates across 5 categories. Generate strategic copy in minutes, not hours.</p>
       </div>
     ),
     placement: 'right',
@@ -88,6 +88,7 @@ const tourSteps: Step[] = [
           <li>Tone Shifter (6 professional tones)</li>
           <li>Expand or Shorten</li>
           <li>Rewrite for Channel (email, social, ads)</li>
+          <li>Headline Generator (channel-optimized variations using proven copywriting formulas)</li>
         </ul>
       </div>
     ),
