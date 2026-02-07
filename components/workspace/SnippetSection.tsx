@@ -27,7 +27,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Snippet } from '@/lib/types/snippet';
-import { getAllSnippets, deleteSnippet } from '@/lib/storage/snippet-storage';
+import { getAllSnippets } from '@/lib/storage/snippet-storage';
+import { deleteSnippet as unifiedDeleteSnippet } from '@/lib/storage/unified-storage';
 import { useSnippetStore } from '@/lib/stores/snippetStore';
 
 // ============================================================================
@@ -259,10 +260,10 @@ export function SnippetSection({
     }
   }, [onEditSnippet]);
   
-  // Handle snippet delete
-  const handleDeleteSnippet = useCallback((snippet: Snippet) => {
+  // Handle snippet delete (uses unified storage for cloud + localStorage persistence)
+  const handleDeleteSnippet = useCallback(async (snippet: Snippet) => {
     try {
-      deleteSnippet(projectId, snippet.id);
+      await unifiedDeleteSnippet(projectId, snippet.id);
       // Trigger refresh
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {

@@ -17,12 +17,14 @@ import type { Editor } from '@tiptap/react';
 import type { Snippet, CreateSnippetInput, UpdateSnippetInput } from '@/lib/types/snippet';
 import {
   getAllSnippets,
-  createSnippet as createSnippetStorage,
-  updateSnippet as updateSnippetStorage,
-  deleteSnippet as deleteSnippetStorage,
-  incrementSnippetUsage,
   searchSnippets as searchSnippetsStorage,
 } from '@/lib/storage/snippet-storage';
+import {
+  createSnippet as unifiedCreateSnippet,
+  updateSnippet as unifiedUpdateSnippet,
+  deleteSnippet as unifiedDeleteSnippet,
+  incrementSnippetUsage as unifiedIncrementSnippetUsage,
+} from '@/lib/storage/unified-storage';
 import { insertTextAtSelection } from '@/lib/editor-utils';
 import { logger } from '@/lib/utils/logger';
 
@@ -149,7 +151,7 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
     }
   },
   
-  // Create a new snippet
+  // Create a new snippet (uses unified storage for cloud + localStorage persistence)
   createSnippet: async (input: CreateSnippetInput): Promise<Snippet | null> => {
     const { currentProjectId } = get();
     if (!currentProjectId) {
@@ -160,9 +162,10 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const newSnippet = createSnippetStorage(currentProjectId, input);
+      // Use unified storage to persist to both Supabase and localStorage
+      const newSnippet = await unifiedCreateSnippet(currentProjectId, input);
       
-      // Refresh snippets list
+      // Refresh snippets list from localStorage (now in sync with cloud)
       get().refreshSnippets();
       
       set({ isLoading: false, isAddModalOpen: false, isSaveAsSnippetOpen: false });
@@ -177,7 +180,7 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
     }
   },
   
-  // Update an existing snippet
+  // Update an existing snippet (uses unified storage for cloud + localStorage persistence)
   updateSnippet: async (snippetId: string, updates: UpdateSnippetInput): Promise<Snippet | null> => {
     const { currentProjectId } = get();
     if (!currentProjectId) {
@@ -188,13 +191,18 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const updatedSnippet = updateSnippetStorage(currentProjectId, snippetId, updates);
+      // Use unified storage to persist to both Supabase and localStorage
+      await unifiedUpdateSnippet(currentProjectId, snippetId, updates);
       
-      // Refresh snippets list
+      // Refresh snippets list from localStorage (now in sync with cloud)
       get().refreshSnippets();
       
+      // Get the updated snippet from the refreshed list for the return value
+      const { snippets } = get();
+      const updatedSnippet = snippets.find(s => s.id === snippetId) || null;
+      
       set({ isLoading: false, isEditModalOpen: false, editingSnippet: null });
-      logger.log('✅ Snippet updated:', updatedSnippet.name);
+      logger.log('✅ Snippet updated:', updatedSnippet?.name ?? snippetId);
       
       return updatedSnippet;
     } catch (error) {
@@ -205,7 +213,7 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
     }
   },
   
-  // Delete a snippet
+  // Delete a snippet (uses unified storage for cloud + localStorage persistence)
   deleteSnippet: async (snippetId: string): Promise<boolean> => {
     const { currentProjectId } = get();
     if (!currentProjectId) {
@@ -216,9 +224,10 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
     set({ isLoading: true, error: null });
     
     try {
-      deleteSnippetStorage(currentProjectId, snippetId);
+      // Use unified storage to delete from both Supabase and localStorage
+      await unifiedDeleteSnippet(currentProjectId, snippetId);
       
-      // Refresh snippets list
+      // Refresh snippets list from localStorage (now in sync with cloud)
       get().refreshSnippets();
       
       set({ isLoading: false });
@@ -248,13 +257,21 @@ export const useSnippetStore = create<SnippetState>()((set, get) => ({
       return false;
     }
     
+    if (!snippet.content || snippet.content.trim().length === 0) {
+      logger.warn('⚠️ Snippet has no content to insert:', snippet.id);
+      set({ error: 'Snippet has no content' });
+      return false;
+    }
+    
     try {
       // Insert the snippet content at cursor position
       const success = insertTextAtSelection(editorRef, snippet.content);
       
       if (success && currentProjectId) {
-        // Increment usage count
-        incrementSnippetUsage(currentProjectId, snippet.id);
+        // Increment usage count via unified storage (cloud + localStorage)
+        unifiedIncrementSnippetUsage(currentProjectId, snippet.id).catch((error) => {
+          logger.warn('⚠️ Failed to increment snippet usage:', error);
+        });
         // Refresh to update usage count in UI
         get().refreshSnippets();
       }

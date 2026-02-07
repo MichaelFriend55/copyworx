@@ -478,7 +478,64 @@ export const deleteBrandVoiceFromProject = deleteBrandVoice;
 // ============================================================================
 
 /**
- * Create a new snippet
+ * Sync a cloud snippet into localStorage for immediate read availability.
+ * This prevents data loss when refreshProjects() overwrites localStorage
+ * with Supabase data before the next full sync includes the new snippet.
+ */
+function syncSnippetToLocalStorage(projectId: string, snippet: Snippet): void {
+  try {
+    const projects = localProjectStorage.getAllProjects();
+    const projectIndex = projects.findIndex(p => p.id === projectId);
+    if (projectIndex === -1) {
+      logger.warn('⚠️ Cannot sync snippet to localStorage: project not found', projectId);
+      return;
+    }
+
+    const project = projects[projectIndex];
+    const existingSnippets: Snippet[] = Array.isArray(project.snippets) ? project.snippets : [];
+
+    // Avoid duplicates - replace if same ID exists, otherwise append
+    const snippetIndex = existingSnippets.findIndex(s => s.id === snippet.id);
+    const updatedSnippets = [...existingSnippets];
+    if (snippetIndex >= 0) {
+      updatedSnippets[snippetIndex] = snippet;
+    } else {
+      updatedSnippets.push(snippet);
+    }
+
+    const updatedProjects = [...projects];
+    updatedProjects[projectIndex] = { ...project, snippets: updatedSnippets };
+    localStorage.setItem('copyworx_projects', JSON.stringify(updatedProjects));
+    logger.log('💾 Snippet synced to localStorage for immediate access:', snippet.id);
+  } catch (error) {
+    logger.warn('⚠️ Failed to sync snippet to localStorage:', error);
+  }
+}
+
+/**
+ * Remove a snippet from localStorage after a cloud delete.
+ */
+function removeSnippetFromLocalStorage(projectId: string, snippetId: string): void {
+  try {
+    const projects = localProjectStorage.getAllProjects();
+    const projectIndex = projects.findIndex(p => p.id === projectId);
+    if (projectIndex === -1) return;
+
+    const project = projects[projectIndex];
+    const existingSnippets: Snippet[] = Array.isArray(project.snippets) ? project.snippets : [];
+    const updatedSnippets = existingSnippets.filter(s => s.id !== snippetId);
+
+    const updatedProjects = [...projects];
+    updatedProjects[projectIndex] = { ...project, snippets: updatedSnippets };
+    localStorage.setItem('copyworx_projects', JSON.stringify(updatedProjects));
+    logger.log('💾 Snippet removed from localStorage:', snippetId);
+  } catch (error) {
+    logger.warn('⚠️ Failed to remove snippet from localStorage:', error);
+  }
+}
+
+/**
+ * Create a new snippet (cloud + localStorage dual write)
  */
 export async function createSnippet(
   projectId: string,
@@ -487,6 +544,8 @@ export async function createSnippet(
   if (isCloudAvailable() && currentMode !== 'local') {
     try {
       const snippet = await cloudStorage.cloudCreateSnippet(projectId, input);
+      // Dual write: also save to localStorage for immediate read availability
+      syncSnippetToLocalStorage(projectId, snippet);
       logger.log('☁️ Snippet created in cloud:', snippet.id);
       return snippet;
     } catch (error) {
@@ -500,7 +559,7 @@ export async function createSnippet(
 }
 
 /**
- * Update a snippet
+ * Update a snippet (cloud + localStorage dual write)
  */
 export async function updateSnippet(
   projectId: string,
@@ -510,7 +569,9 @@ export async function updateSnippet(
   if (isCloudAvailable() && currentMode !== 'local') {
     try {
       await cloudStorage.cloudUpdateSnippet(snippetId, updates);
-      logger.log('☁️ Snippet updated in cloud:', snippetId);
+      // Dual write: also update in localStorage
+      localSnippetStorage.updateSnippet(projectId, snippetId, updates);
+      logger.log('☁️ Snippet updated in cloud + localStorage:', snippetId);
       return;
     } catch (error) {
       logger.warn('⚠️ Cloud update failed, falling back to local:', error);
@@ -522,13 +583,15 @@ export async function updateSnippet(
 }
 
 /**
- * Delete a snippet
+ * Delete a snippet (cloud + localStorage dual delete)
  */
 export async function deleteSnippet(projectId: string, snippetId: string): Promise<void> {
   if (isCloudAvailable() && currentMode !== 'local') {
     try {
       await cloudStorage.cloudDeleteSnippet(snippetId);
-      logger.log('☁️ Snippet deleted from cloud:', snippetId);
+      // Dual write: also remove from localStorage
+      removeSnippetFromLocalStorage(projectId, snippetId);
+      logger.log('☁️ Snippet deleted from cloud + localStorage:', snippetId);
       return;
     } catch (error) {
       logger.warn('⚠️ Cloud delete failed, falling back to local:', error);
@@ -540,12 +603,14 @@ export async function deleteSnippet(projectId: string, snippetId: string): Promi
 }
 
 /**
- * Increment snippet usage
+ * Increment snippet usage (cloud + localStorage dual write)
  */
 export async function incrementSnippetUsage(projectId: string, snippetId: string): Promise<void> {
   if (isCloudAvailable() && currentMode !== 'local') {
     try {
       await cloudStorage.cloudIncrementSnippetUsage(snippetId);
+      // Dual write: also increment in localStorage
+      localSnippetStorage.incrementSnippetUsage(projectId, snippetId);
       return;
     } catch (error) {
       logger.warn('⚠️ Cloud increment failed, falling back to local:', error);
