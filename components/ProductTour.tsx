@@ -36,7 +36,7 @@ const tourSteps: Step[] = [
     target: 'body',
     content: (
       <div>
-        <h2 className="text-2xl font-bold text-[#006EE6] mb-3">Welcome to CopyWorx™ Studio!</h2>
+        <h2 className="text-2xl font-bold text-[#006EE6] mb-3">Welcome to CopyWorx Studio™!</h2>
         <p className="text-base mb-3">Let&apos;s take a quick 60-second tour to show you the key features.</p>
         <p className="text-sm text-gray-600">You can skip this tour anytime by clicking &quot;Skip&quot; or pressing ESC.</p>
       </div>
@@ -156,7 +156,7 @@ const tourSteps: Step[] = [
       <div>
         <h2 className="text-2xl font-bold text-[#7A3991] mb-3">You&apos;re Ready to Write to Win!</h2>
         <p className="text-base mb-3">Start by setting up your Brand Voice and Personas, or jump straight into a template.</p>
-        <p className="text-base font-semibold text-[#006EE6]">Now get to worx with CopyWorx™ Studio!</p>
+        <p className="text-base font-semibold text-[#006EE6]">Now get to worx with CopyWorx Studio™!</p>
       </div>
     ),
     placement: 'center',

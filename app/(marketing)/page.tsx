@@ -1,6 +1,6 @@
 /**
  * @file app/(marketing)/page.tsx
- * @description CopyWorx™ Studio landing page - professional marketing homepage
+ * @description CopyWorx Studio™ landing page - professional marketing homepage
  * 
  * Sections:
  * - Hero with solid gray background and primary CTA
@@ -38,7 +38,7 @@ const features = [
   {
     icon: Palette,
     title: 'Brand Voice System',
-    description: 'Define your brand voice once, and CopyWorx™ Studio ensures everything you write stays on brand. Create detailed personas, set approved phrases and forbidden words, and maintain consistency across every piece of content.',
+    description: 'Define your brand voice once, and CopyWorx Studio™ ensures everything you write stays on brand. Create detailed personas, set approved phrases and forbidden words, and maintain consistency across every piece of content.',
   },
   {
     icon: FolderOpen,
@@ -74,7 +74,7 @@ const steps = [
 ] as const;
 
 /**
- * Homepage component - CopyWorx™ Studio landing page
+ * Homepage component - CopyWorx Studio™ landing page
  */
 export default function HomePage() {
   return (
@@ -90,7 +90,7 @@ export default function HomePage() {
             <div className="flex justify-center mb-14 animate-fade-in">
               <Image
                 src="/copyworx-logo-v2.png"
-                alt="CopyWorx™ Studio"
+                alt="CopyWorx Studio™"
                 width={720}
                 height={200}
                 className="h-44 sm:h-56 md:h-[17rem] w-auto"
@@ -102,7 +102,7 @@ export default function HomePage() {
             <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-ink-900 leading-[1.1] tracking-tight mb-6 animate-fade-in animation-delay-100">
               Write To Win With
               <br />
-              <span className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent">CopyWorx™ Studio</span>
+              <span className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent">CopyWorx Studio™</span>
             </h1>
             
             {/* Subheadline */}
@@ -155,7 +155,7 @@ export default function HomePage() {
               </p>
               
               <p className="text-ink-900 font-semibold text-xl md:text-2xl">
-                CopyWorx™ Studio changes that.
+                CopyWorx Studio™ changes that.
               </p>
             </div>
           </div>
@@ -187,21 +187,21 @@ export default function HomePage() {
             
             <div className="prose prose-lg md:prose-xl max-w-none text-white/90 leading-relaxed space-y-6">
               <p>
-                CopyWorx™ Studio leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use — regardless of writing experience — to create professional, high-converting copy in minutes.
+                CopyWorx Studio™ leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use — regardless of writing experience — to create professional, high-converting copy in minutes.
               </p>
               
               <p>
-                CopyWorx™ Studio was created by a professional copywriter, creative director, and branding expert with over 40 years of experience. He and his team have packed CopyWorx™ Studio with all of the features and functions a copywriter needs in one, clean, intuitive worxspace.
+                CopyWorx Studio™ was created by a professional copywriter, creative director, and branding expert with over 40 years of experience. He and his team have packed CopyWorx Studio™ with all of the features and functions a copywriter needs in one, clean, intuitive worxspace.
               </p>
               
               <p>
-                CopyWorx™ Studio utilizes AI in all the ways that are important to writers – inspiring ideas, finessing copy, offering strategic suggestions, checking and changing tone and style, and always reviewing copy through the lens of brand standards and customer personas. And of course, just being a solid writing app with the features, functions and worxflows you expect in today&apos;s writing tools.
+                CopyWorx Studio™ utilizes AI in all the ways that are important to writers – inspiring ideas, finessing copy, offering strategic suggestions, checking and changing tone and style, and always reviewing copy through the lens of brand standards and customer personas. And of course, just being a solid writing app with the features, functions and worxflows you expect in today&apos;s writing tools.
               </p>
               
               {/* Highlighted sentence */}
               <p className="bg-white/10 border-l-4 border-[#EFBF04] pl-6 py-4 rounded-r-lg backdrop-blur-sm">
                 <strong className="text-white text-xl md:text-2xl">
-                  With CopyWorx™ Studio, you can use as much or as little AI as you like.
+                  With CopyWorx Studio™, you can use as much or as little AI as you like.
                 </strong>
               </p>
               
@@ -222,7 +222,7 @@ export default function HomePage() {
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-16">
             <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
-              What Makes CopyWorx™ Studio Different
+              What Makes CopyWorx Studio™ Different
             </h2>
           </div>
           
@@ -310,7 +310,7 @@ export default function HomePage() {
             
             <div className="text-lg md:text-xl text-ink-600 leading-relaxed space-y-6 mb-10">
               <p>
-                CopyWorx™ Studio is currently in closed beta. We&apos;re carefully selecting marketing professionals and copywriters to test the platform and help shape its future.
+                CopyWorx Studio™ is currently in closed beta. We&apos;re carefully selecting marketing professionals and copywriters to test the platform and help shape its future.
               </p>
               
               <p>

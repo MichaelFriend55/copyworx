@@ -1522,7 +1522,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
         ) : (
           <div className="text-sm text-gray-400 flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            <span>CopyWorx™ Studio</span>
+            <span>CopyWorx Studio™</span>
           </div>
         )}
       </div>

@@ -89,6 +89,6 @@ The splash page now features:
 2. ✅ "AI-Powered Writing Suite" subtitle (dark charcoal #58595b)
 3. ✅ Three 128×128px action buttons with full text
 4. ✅ Buttons centered horizontally
-5. ✅ Updated copyright: "CopyWorx Studio LLC"
+5. ✅ Updated copyright: "CopyWorx Studio™ LLC"
 
 **Ready for production!** 🚀

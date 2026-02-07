@@ -98,7 +98,7 @@ export function SplashPage() {
       {/* Footer */}
       <footer className="py-8 text-center text-sm text-gray-500 border-t border-gray-200">
         <p>
-          © {new Date().getFullYear()} CopyWorx™ Studio. All rights reserved.
+          © {new Date().getFullYear()} CopyWorx Studio™. All rights reserved.
         </p>
         <p className="mt-1">
           CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Corporation.
@@ -114,7 +114,7 @@ export function SplashPage() {
       {/* Footer */}
       <footer className="py-8 text-center text-sm text-gray-500 border-t border-gray-200">
         <p>
-          © {new Date().getFullYear()} CopyWorx™ Studio. All rights reserved.
+          © {new Date().getFullYear()} CopyWorx Studio™. All rights reserved.
         </p>
         <p className="mt-1">
           CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Corporation.
@@ -162,7 +162,7 @@ export function SplashPage() {
 ```
 ┌────────────────────────────────────────────────┐
 │                                                │
-│           ✨ CopyWorx™ Studio                 │
+│           ✨ CopyWorx Studio™                 │
 │         AI-Powered Writing Suite               │
 │                                                │
 │  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐ │

@@ -7,7 +7,7 @@ The splash page has been successfully redesigned with your new logo and compact 
 ## What Was Changed
 
 ### 1. Logo Section ✅
-- **Removed**: Blue star icon and "CopyWorx™ Studio" text heading
+- **Removed**: Blue star icon and "CopyWorx Studio™" text heading
 - **Added**: Your full CopyWorx Studio logo image
 - **Size**: 256px × 256px (w-64 h-64)
 - **Kept**: "AI-Powered Writing Suite" subtitle underneath

@@ -359,10 +359,10 @@ export function SplashPage() {
       {/* Footer */}
       <footer className="py-8 text-center text-sm text-gray-500 border-t border-gray-200">
         <p>
-          © 2026 CopyWorx™ Studio LLC. All rights reserved.
+          © 2026 CopyWorx Studio™ LLC. All rights reserved.
         </p>
         <p className="mt-1">
-          CopyWorx™ and AI@Worx™ are trademarks of CopyWorx™ Studio LLC.
+          CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
         </p>
       </footer>
 

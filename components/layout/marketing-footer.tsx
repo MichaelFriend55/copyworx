@@ -49,7 +49,7 @@ export function MarketingFooter() {
             
             {/* Tagline */}
             <p className="text-xs text-white/80 leading-relaxed max-w-md text-center md:text-left">
-              CopyWorx™ Studio leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use — regardless of writing experience — to create professional, high-converting copy in minutes.
+              CopyWorx Studio™ leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use — regardless of writing experience — to create professional, high-converting copy in minutes.
             </p>
           </div>
 
@@ -72,10 +72,10 @@ export function MarketingFooter() {
         <div className="border-t border-white/10 py-6">
           <div className="text-center space-y-2">
             <p className="text-sm text-white/60">
-              © 2026 CopyWorx™ Studio LLC. All rights reserved.
+              © 2026 CopyWorx Studio™ LLC. All rights reserved.
             </p>
             <p className="text-xs text-white/40">
-              CopyWorx™ and AI@Worx™ are trademarks of CopyWorx™ Studio LLC.
+              CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
             </p>
           </div>
         </div>

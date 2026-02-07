@@ -17,7 +17,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 
 #### Welcome Screen (unchanged)
 - **Target**: Body (center placement)
-- **Headline**: "Welcome to CopyWorx™ Studio!"
+- **Headline**: "Welcome to CopyWorx Studio™!"
 - **Content**: Quick 60-second tour introduction
 
 #### Step 1: My Projects (unchanged)
@@ -85,7 +85,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 - **Target**: Body (center placement)
 - **Headline**: "You're Ready to Write to Win!" (changed from "You're Ready to Rock!")
 - **Body**: "Start by setting up your Brand Voice and Personas, or jump straight into a template."
-- **CTA**: "Now get to work with CopyWorx™ Studio" (styled in blue - changed from "NOW GET TO WORX with CopyWorx™ Studio!")
+- **CTA**: "Now get to work with CopyWorx Studio™" (styled in blue - changed from "NOW GET TO WORX with CopyWorx Studio™!")
 
 ---
 
@@ -155,7 +155,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 
 ```
 ┌─────────────────────────────────────────┐
-│  WELCOME: CopyWorx™ Studio             │
+│  WELCOME: CopyWorx Studio™             │
 │  (Center, body target)                  │
 └─────────────────────────────────────────┘
               ↓
@@ -219,7 +219,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 7. **Verify**: Step 5 (My Insights) highlights the My Insights section in left sidebar
 8. **Verify**: Step 6 (Snippets) requires My Projects to be open to show snippets
 9. **Verify**: Final step shows "You're Ready to Write to Win!" headline
-10. **Verify**: Final CTA is "Now get to work with CopyWorx™ Studio" in blue
+10. **Verify**: Final CTA is "Now get to work with CopyWorx Studio™" in blue
 11. Click "Finish"
 12. **Verify**: Tour closes and localStorage flag is set
 
@@ -286,7 +286,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 - [ ] Centered on screen (body target)
 - [ ] Headline: "You're Ready to Write to Win!" (purple color #7A3991)
 - [ ] Body text unchanged
-- [ ] CTA: "Now get to work with CopyWorx™ Studio" in blue (#006EE6)
+- [ ] CTA: "Now get to work with CopyWorx Studio™" in blue (#006EE6)
 - [ ] Button says "Finish" instead of "Next"
 
 ### Test 5: Responsive Behavior
@@ -343,7 +343,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 ### Updated Steps
 1. **Step 9: Final Message** (UPDATED)
    - Headline: "You're Ready to Rock!" → "You're Ready to Write to Win!"
-   - CTA: "NOW GET TO WORX with CopyWorx™ Studio!" → "Now get to work with CopyWorx™ Studio"
+   - CTA: "NOW GET TO WORX with CopyWorx Studio™!" → "Now get to work with CopyWorx Studio™"
    - Styling: CTA now in blue (#006EE6)
 
 ---
@@ -516,7 +516,7 @@ Added two new tour steps:
 
 Updated final step (Step 9):
 - Headline: "You're Ready to Write to Win!"
-- CTA: "Now get to work with CopyWorx™ Studio" (blue styling)
+- CTA: "Now get to work with CopyWorx Studio™" (blue styling)
 
 Added data-tour attributes:
 - data-tour="insights" to My Insights section

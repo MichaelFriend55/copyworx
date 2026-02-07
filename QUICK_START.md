@@ -23,7 +23,7 @@ Navigate to: **http://localhost:3000/copyworx**
 │                                         │
 │            [Logo Icon]                  │
 │                                         │
-│        CopyWorx™ Studio                 │
+│        CopyWorx Studio™                 │
 │     AI-Powered Writing Suite            │
 │                                         │
 │  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐   │

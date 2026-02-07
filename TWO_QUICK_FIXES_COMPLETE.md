@@ -56,7 +56,7 @@ Integrated the existing `PersonaForm.tsx` component (which already had full phot
 ## FIX #2: PDF Filename Based on Document Title ✅
 
 ### Problem
-When exporting to PDF using `window.print()`, the browser uses the HTML `<title>` tag as the default filename. This was not being set to match the document title, resulting in generic filenames like "CopyWorx™ Studio.pdf".
+When exporting to PDF using `window.print()`, the browser uses the HTML `<title>` tag as the default filename. This was not being set to match the document title, resulting in generic filenames like "CopyWorx Studio™.pdf".
 
 ### Solution Implemented
 Created a PDF export utility that temporarily sets `document.title` before calling `window.print()`, then restores the original title afterward.

@@ -122,7 +122,7 @@ Print Dialog Shows:
 ├────────────────────────────────────┤
 │  Destination: [Save as PDF ▼]     │
 │                                    │
-│  Filename: CopyWorx™ Studio.pdf   │ ❌ GENERIC
+│  Filename: CopyWorx Studio™.pdf   │ ❌ GENERIC
 │                                    │
 │  [Cancel]  [Save]                  │
 └────────────────────────────────────┘

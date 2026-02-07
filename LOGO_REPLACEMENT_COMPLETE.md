@@ -8,7 +8,7 @@
 ## ✅ CHANGES COMPLETED
 
 ### 1. New Logo File Added
-- **Source**: `/Users/experracbo/Desktop/1-CopyWorx™ Studio/1-CopyWorx Logo/1-Final Logo/Final /CopyWorx Logo v2.png`
+- **Source**: `/Users/experracbo/Desktop/1-CopyWorx Studio™/1-CopyWorx Logo/1-Final Logo/Final /CopyWorx Logo v2.png`
 - **Destination**: `/public/copyworx-logo-v2.png`
 - **Dimensions**: 1000 x 1053 pixels (PNG with transparency)
 - **File Size**: 446KB
@@ -35,7 +35,7 @@
 - **Change**: `/copyworx-studio-logo.png` → `/copyworx-logo-v2.png`
 - **Display Size**: Responsive (h-44 sm:h-56 md:h-[17rem] w-auto)
 - **Usage**: Hero section logo on marketing landing page
-- **Alt Text**: "CopyWorx™ Studio" ✓
+- **Alt Text**: "CopyWorx Studio™" ✓
 
 #### D. **MarketingFooter.tsx**
 - **Location**: `components/layout/marketing-footer.tsx` (Line ~42)
