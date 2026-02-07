@@ -43,10 +43,13 @@ import {
   FileUp,
   Printer,
   ChevronRight,
+  FilePlus,
+  Plus,
 } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
-import { useActiveDocumentId, useActiveProjectId, useUIActions, useViewMode } from '@/lib/stores/workspaceStore';
-import { getDocument, updateDocument } from '@/lib/storage/unified-storage';
+import { useActiveDocumentId, useActiveProjectId, useProjects, useUIActions, useViewMode, useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { getDocument, updateDocument, createDocument } from '@/lib/storage/unified-storage';
+import { toast } from 'sonner';
 import { ViewModeSelector } from './ViewModeSelector';
 import { SaveAsSnippetButton } from './SaveAsSnippetButton';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -642,12 +645,15 @@ function DocumentMenu({
   activeProjectId,
   activeDocumentId,
   onTitleUpdate,
+  onNewDocument,
 }: { 
   editor: Editor | null; 
   documentTitle?: string;
   activeProjectId: string | null;
   activeDocumentId: string | null;
   onTitleUpdate: (newTitle: string) => void;
+  /** Callback to create a new document (shared with toolbar "+" button) */
+  onNewDocument: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showImportSubmenu, setShowImportSubmenu] = useState(false);
@@ -958,6 +964,34 @@ function DocumentMenu({
         <>
           {/* Dropdown menu */}
           <div className="absolute top-full left-0 mt-1 z-[100] bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[220px] overflow-visible">
+            {/* New Document */}
+            <button
+              onClick={() => {
+                closeMenu();
+                onNewDocument();
+              }}
+              onMouseEnter={() => {
+                setShowImportSubmenu(false);
+                setShowExportSubmenu(false);
+              }}
+              className={cn(
+                'w-full px-4 py-2 text-left text-sm',
+                'hover:text-apple-blue',
+                'transition-colors duration-150',
+                'text-apple-text-dark',
+                'flex items-center justify-between'
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <FilePlus className="w-4 h-4" />
+                New Document
+              </span>
+              <span className="text-xs text-gray-400">⌘N</span>
+            </button>
+
+            {/* Divider */}
+            <div className="my-1 border-t border-gray-200" />
+
             {/* Import Document */}
             <div className="relative">
               <button
@@ -1176,6 +1210,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
   // Optimized selectors
   const activeDocumentId = useActiveDocumentId();
   const activeProjectId = useActiveProjectId();
+  const projects = useProjects();
   const { toggleRightSidebar, setViewMode } = useUIActions();
   const viewMode = useViewMode();
   
@@ -1186,6 +1221,8 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
   const [documentTitle, setDocumentTitle] = useState<string | undefined>(undefined);
   // Force re-render counter for editor state updates (undo/redo availability)
   const [, forceUpdate] = useState(0);
+  // Track if new document creation is in progress
+  const [isCreatingDocument, setIsCreatingDocument] = useState(false);
   
   // Scroll indicator states
   const [isScrolledLeft, setIsScrolledLeft] = useState(false);
@@ -1281,6 +1318,104 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
   }, []);
 
 
+  /**
+   * Resolve the target project for new document creation.
+   * Priority: activeProjectId > first available project > null
+   */
+  const resolveTargetProject = useCallback((): { id: string; name: string } | null => {
+    // (a) Active project from Zustand (persisted, covers both open doc and last-used)
+    if (activeProjectId) {
+      const project = projects.find(p => p.id === activeProjectId);
+      if (project) {
+        return { id: project.id, name: project.name };
+      }
+    }
+
+    // (b) Fallback to the first available project
+    if (projects.length > 0) {
+      return { id: projects[0].id, name: projects[0].name };
+    }
+
+    // (c) No projects exist at all
+    return null;
+  }, [activeProjectId, projects]);
+
+  /**
+   * Create a new blank document in the currently active project.
+   * Used by both the Document dropdown menu item and the toolbar "+" button.
+   * 
+   * Flow:
+   * 1. Resolve target project
+   * 2. Create "Untitled Document" via unified-storage
+   * 3. Set as active document in Zustand (triggers EditorArea load)
+   * 4. Show toast notification
+   * 5. Focus the editor
+   */
+  const handleNewDocument = useCallback(async () => {
+    if (isCreatingDocument) return;
+
+    const targetProject = resolveTargetProject();
+
+    if (!targetProject) {
+      toast.error('No projects found. Create a project first.');
+      return;
+    }
+
+    setIsCreatingDocument(true);
+
+    try {
+      const newDoc = await createDocument(targetProject.id, 'Untitled Document');
+
+      // Switch to the target project if different from current
+      if (targetProject.id !== activeProjectId) {
+        await useWorkspaceStore.getState().setActiveProjectId(targetProject.id);
+      }
+
+      // Set new document as active (triggers EditorArea to load it)
+      useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
+
+      // Refresh projects so sidebar reflects the new document
+      useWorkspaceStore.getState().refreshProjects();
+
+      // Show toast notification
+      toast.success(`New document created in ${targetProject.name}`, {
+        duration: 3000,
+      });
+
+      // Focus the editor after a brief delay for render
+      setTimeout(() => {
+        const tiptapEditor = (window as unknown as Record<string, unknown>).__tiptapEditor as Editor | undefined;
+        if (tiptapEditor) {
+          tiptapEditor.commands.focus();
+        }
+      }, 300);
+
+      logger.log('✅ New document created:', newDoc.id, 'in project:', targetProject.name);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create document';
+      toast.error(errorMessage);
+      logger.error('❌ Failed to create new document:', error);
+    } finally {
+      setIsCreatingDocument(false);
+    }
+  }, [isCreatingDocument, resolveTargetProject, activeProjectId]);
+
+  /**
+   * Global keyboard shortcut: Cmd/Ctrl+N for new document
+   */
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isMod = event.metaKey || event.ctrlKey;
+      if (isMod && event.key === 'n') {
+        event.preventDefault();
+        handleNewDocument();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleNewDocument]);
+
   // Insert link handler
   const handleInsertLink = (): void => {
     if (!editor) return;
@@ -1359,7 +1494,32 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
           activeProjectId={activeProjectId}
           activeDocumentId={activeDocumentId}
           onTitleUpdate={setDocumentTitle}
+          onNewDocument={handleNewDocument}
         />
+
+        {/* New Document "+" button - fast-access method */}
+        <button
+          onClick={handleNewDocument}
+          disabled={isCreatingDocument}
+          className={cn(
+            'w-7 h-7 rounded-md',
+            'flex items-center justify-center',
+            'bg-apple-blue text-white',
+            'hover:bg-apple-blue/90',
+            'active:scale-95',
+            'transition-all duration-150',
+            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            'shadow-sm'
+          )}
+          title="New Document (⌘N)"
+        >
+          {isCreatingDocument ? (
+            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+          )}
+        </button>
 
         <div className="w-px h-6 bg-gray-200 mx-1" />
 
