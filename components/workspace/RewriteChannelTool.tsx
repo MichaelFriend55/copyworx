@@ -41,7 +41,7 @@ import {
   useRewriteChannelActions,
 } from '@/lib/stores/workspaceStore';
 import { insertTextAtSelection } from '@/lib/editor-utils';
-import { formatGeneratedContent } from '@/lib/utils/content-formatting';
+import { formatGeneratedContent, copyFormattedHtmlToClipboard } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
@@ -195,15 +195,14 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
 
   /**
    * Handle copy result to clipboard
+   * Uses HTML MIME type so pasting into rich text editors preserves formatting
    */
-  const handleCopyResult = async () => {
+  const handleCopyResult = async (): Promise<void> => {
     if (!rewriteChannelResult) return;
     
-    try {
-      await navigator.clipboard.writeText(rewriteChannelResult);
-      logger.log('✅ Copied to clipboard');
-    } catch (error) {
-      logger.error('❌ Failed to copy:', error);
+    const success = await copyFormattedHtmlToClipboard(rewriteChannelResult);
+    if (!success) {
+      logger.error('❌ Failed to copy rewritten result to clipboard');
     }
   };
 

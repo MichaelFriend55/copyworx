@@ -44,7 +44,7 @@ import {
   type ToneType 
 } from '@/lib/stores/workspaceStore';
 import { insertTextAtSelection } from '@/lib/editor-utils';
-import { formatGeneratedContent } from '@/lib/utils/content-formatting';
+import { formatGeneratedContent, copyFormattedHtmlToClipboard } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
@@ -186,16 +186,14 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
 
   /**
    * Handle copy result to clipboard
+   * Uses HTML MIME type so pasting into rich text editors preserves formatting
    */
   const handleCopyResult = async (): Promise<void> => {
     if (!toneShiftResult) return;
     
-    try {
-      // Copy the HTML to clipboard (user can paste into editor or other tools)
-      await navigator.clipboard.writeText(toneShiftResult);
-      logger.log('✅ Copied HTML to clipboard');
-    } catch (error) {
-      logger.error('❌ Failed to copy:', error);
+    const success = await copyFormattedHtmlToClipboard(toneShiftResult);
+    if (!success) {
+      logger.error('❌ Failed to copy tone-shifted result to clipboard');
     }
   };
 

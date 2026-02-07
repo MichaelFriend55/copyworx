@@ -215,6 +215,68 @@ export function stripHtml(html: string): string {
 }
 
 /**
+ * Copy HTML content to clipboard with both text/html and text/plain MIME types
+ * 
+ * This ensures that pasting into rich text editors (like TipTap) renders
+ * proper formatting (bold, headings, bullets, etc.) instead of raw HTML tags.
+ * Plain text editors receive a clean, tag-free fallback.
+ * 
+ * @param html - HTML string to copy (e.g. AI-generated result)
+ * @returns Promise that resolves to true on success, false on failure
+ * 
+ * @example
+ * ```ts
+ * const success = await copyFormattedHtmlToClipboard('<p><strong>Bold text</strong></p>');
+ * if (success) {
+ *   // User can now paste with formatting preserved
+ * }
+ * ```
+ */
+export async function copyFormattedHtmlToClipboard(html: string): Promise<boolean> {
+  if (!html || typeof html !== 'string') {
+    logger.warn('⚠️ copyFormattedHtmlToClipboard: No content to copy');
+    return false;
+  }
+
+  try {
+    // Sanitize the HTML for safe clipboard content
+    const sanitizedHtml = sanitizeGeneratedHTML(html);
+    
+    // Generate plain text fallback by stripping HTML tags
+    const plainText = stripHtml(sanitizedHtml);
+
+    // Use the Clipboard API with both MIME types so rich text editors
+    // pick up text/html and plain text editors fall back to text/plain
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([sanitizedHtml], { type: 'text/html' }),
+        'text/plain': new Blob([plainText], { type: 'text/plain' }),
+      }),
+    ]);
+
+    logger.log('✅ Copied to clipboard with HTML formatting:', {
+      htmlLength: sanitizedHtml.length,
+      plainTextLength: plainText.length,
+    });
+
+    return true;
+  } catch (error) {
+    logger.error('❌ Failed to copy formatted HTML to clipboard:', error);
+
+    // Fallback: try writeText with plain text if ClipboardItem is unsupported
+    try {
+      const plainText = stripHtml(html);
+      await navigator.clipboard.writeText(plainText);
+      logger.warn('⚠️ Fell back to plain text clipboard copy');
+      return true;
+    } catch (fallbackError) {
+      logger.error('❌ Fallback clipboard copy also failed:', fallbackError);
+      return false;
+    }
+  }
+}
+
+/**
  * Count words in text (strips HTML first)
  * 
  * @param text - Text or HTML to count

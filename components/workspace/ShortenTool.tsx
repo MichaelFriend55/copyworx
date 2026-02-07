@@ -36,7 +36,7 @@ import {
   useShortenActions,
 } from '@/lib/stores/workspaceStore';
 import { insertTextAtSelection } from '@/lib/editor-utils';
-import { formatGeneratedContent } from '@/lib/utils/content-formatting';
+import { formatGeneratedContent, copyFormattedHtmlToClipboard } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
@@ -114,16 +114,14 @@ export function ShortenTool({ editor, className }: ShortenToolProps) {
 
   /**
    * Handle copy result to clipboard
+   * Uses HTML MIME type so pasting into rich text editors preserves formatting
    */
   const handleCopyResult = async (): Promise<void> => {
     if (!shortenResult) return;
     
-    try {
-      await navigator.clipboard.writeText(shortenResult);
-      // TODO: Show toast notification
-      logger.log('✅ Copied to clipboard');
-    } catch (error) {
-      logger.error('❌ Failed to copy:', error);
+    const success = await copyFormattedHtmlToClipboard(shortenResult);
+    if (!success) {
+      logger.error('❌ Failed to copy shortened result to clipboard');
     }
   };
 
