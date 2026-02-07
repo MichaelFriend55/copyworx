@@ -62,7 +62,8 @@ export default function WorkspacePage() {
   const action = searchParams.get('action');
   const templateParam = searchParams.get('template');
   const documentParam = searchParams.get('document');
-  const importParam = searchParams.get('import');
+  // Note: 'import' param is no longer used — imports are processed on splash page
+  // before navigation, and content is saved to storage directly.
   
   // Client-side mounting state
   const [mounted, setMounted] = useState(false);
@@ -216,77 +217,19 @@ export default function WorkspacePage() {
     handleTemplateParam();
   }, [mounted, templateParam, documentParam]);
   
-  // Handle file import from splash page
+  // Clean up any stale import data from localStorage (legacy)
+  // File imports are now processed and saved to document storage on the splash page
+  // before navigation, so no localStorage hand-off is needed.
   useEffect(() => {
-    if (!mounted || !importParam || !editor) return;
+    if (!mounted) return;
     
-    logger.log('📥 Import parameter detected, checking for pending file...');
-    
-    // Check for pending file import in localStorage
-    const pendingImportStr = localStorage.getItem('pendingFileImport');
-    const pendingContent = localStorage.getItem('pendingFileContent');
-    
-    if (!pendingImportStr || !pendingContent) {
-      logger.warn('⚠️ No pending import found');
-      return;
-    }
-    
-    try {
-      const importData = JSON.parse(pendingImportStr);
-      const { fileName, fileType, documentId } = importData;
-      
-      logger.log('📥 Processing import:', fileName);
-      
-      // Process the import based on file type
-      const processImport = async () => {
-        try {
-          if (fileName.endsWith('.docx')) {
-            // Decode base64 back to binary
-            const binaryString = atob(pendingContent);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-            const file = new File([blob], fileName, { type: fileType });
-            
-            // Import using the document-import utility
-            const { importDocument } = await import('@/lib/utils/document-import');
-            const result = await importDocument(editor, file);
-            
-            if (result.success) {
-              logger.log('✅ Successfully imported DOCX file');
-            } else {
-              logger.error('❌ Failed to import DOCX:', result.error);
-            }
-          } else {
-            // For text files (txt, md), just set the content directly
-            editor.commands.setContent(pendingContent);
-            logger.log('✅ Successfully imported text file');
-          }
-          
-          // Clear the pending import data
-          localStorage.removeItem('pendingFileImport');
-          localStorage.removeItem('pendingFileContent');
-          
-        } catch (error) {
-          logger.error('❌ Error processing import:', error);
-          // Clear the data anyway to prevent retry loop
-          localStorage.removeItem('pendingFileImport');
-          localStorage.removeItem('pendingFileContent');
-        }
-      };
-      
-      // Execute the import
-      processImport();
-      
-    } catch (error) {
-      logger.error('❌ Error parsing pending import:', error);
-      // Clear corrupted data
+    const pendingImport = localStorage.getItem('pendingFileImport');
+    if (pendingImport) {
       localStorage.removeItem('pendingFileImport');
       localStorage.removeItem('pendingFileContent');
+      logger.log('🧹 Cleaned up stale import data from localStorage');
     }
-  }, [mounted, importParam, editor]);
+  }, [mounted]);
   
   // Handle editor ready
   const handleEditorReady = React.useCallback((editorInstance: Editor | null) => {

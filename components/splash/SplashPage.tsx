@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useActiveProjectId } from '@/lib/stores/workspaceStore';
-import { createDocument } from '@/lib/storage/unified-storage';
+import { createDocument, updateDocument } from '@/lib/storage/unified-storage';
 import { TemplatesModal } from '@/components/workspace/TemplatesModal';
 import { getTemplateById } from '@/lib/data/templates';
 import { markDailyVisitComplete, markSplashViewed } from '@/lib/utils/daily-visit-tracker';
@@ -199,7 +199,9 @@ export function SplashPage() {
 
   /**
    * Handle file selection for import
-   * Creates document and navigates to workspace with file stored temporarily
+   * Creates document, processes file content to HTML, saves to storage,
+   * then navigates to workspace. Content is saved BEFORE navigation to
+   * avoid race conditions with EditorArea's document loading.
    */
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -223,41 +225,46 @@ export function SplashPage() {
       // Set as active document
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
 
-      // Store file data in localStorage temporarily
-      // We'll read it as ArrayBuffer for binary files (docx) or text for txt/md
+      // Read the file, convert to HTML, and save to storage before navigation
       const reader = new FileReader();
       
       reader.onload = async (e) => {
         try {
           const result = e.target?.result;
-          
-          // Store file metadata and content
-          localStorage.setItem('pendingFileImport', JSON.stringify({
-            documentId: newDoc.id,
-            fileName: file.name,
-            fileType: file.type,
-            timestamp: Date.now()
-          }));
-
-          // Store the actual file content separately
-          // For text files, store as text; for binary (docx), store as base64
-          if (file.name.endsWith('.docx')) {
-            // Convert ArrayBuffer to base64
-            const base64 = btoa(
-              new Uint8Array(result as ArrayBuffer)
-                .reduce((data, byte) => data + String.fromCharCode(byte), '')
-            );
-            localStorage.setItem('pendingFileContent', base64);
-          } else {
-            // Store text directly
-            localStorage.setItem('pendingFileContent', result as string);
+          if (!result) {
+            logger.error('❌ FileReader returned no result');
+            router.push(`/worxspace?document=${newDoc.id}`);
+            return;
           }
 
-          // Navigate to workspace
-          router.push(`/worxspace?document=${newDoc.id}&import=true`);
+          let html = '';
+
+          if (fileName.endsWith('.docx')) {
+            // Convert DOCX ArrayBuffer directly to HTML
+            const { docxToHtml } = await import('@/lib/utils/document-import');
+            html = await docxToHtml(result as ArrayBuffer);
+          } else if (fileName.endsWith('.md')) {
+            // Convert Markdown text to HTML
+            const { markdownToHtml } = await import('@/lib/utils/document-import');
+            html = markdownToHtml(result as string);
+          } else {
+            // Convert plain text to HTML with preserved paragraphs/line breaks
+            const { plainTextToHtml } = await import('@/lib/utils/document-import');
+            html = plainTextToHtml(result as string);
+          }
+
+          // Save the converted HTML to the document in storage BEFORE navigating
+          // This eliminates the race condition with EditorArea's document loading
+          if (html) {
+            await updateDocument(activeProjectId, newDoc.id, { content: html });
+            logger.log('✅ Saved imported content to document:', newDoc.id);
+          }
+
+          // Navigate to workspace — document already has content in storage
+          router.push(`/worxspace?document=${newDoc.id}`);
         } catch (error) {
-          logger.error('❌ Failed to store file:', error);
-          // Navigate anyway, document is created
+          logger.error('❌ Failed to process imported file:', error);
+          // Navigate anyway, document exists but will be empty
           router.push(`/worxspace?document=${newDoc.id}`);
         }
       };
@@ -265,11 +272,11 @@ export function SplashPage() {
       reader.onerror = () => {
         logger.error('❌ Failed to read file');
         // Still navigate, workspace can handle empty document
-        router.push(`/workspace?document=${newDoc.id}`);
+        router.push(`/worxspace?document=${newDoc.id}`);
       };
 
       // Read file appropriately based on type
-      if (file.name.endsWith('.docx')) {
+      if (fileName.endsWith('.docx')) {
         reader.readAsArrayBuffer(file);
       } else {
         reader.readAsText(file);
