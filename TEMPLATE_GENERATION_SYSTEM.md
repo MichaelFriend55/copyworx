@@ -111,7 +111,7 @@ A comprehensive template-based copy generation system with AI-powered content cr
 
 ### Selecting a Template
 
-1. Click **"AI@Worx™ Templates"** in left sidebar
+1. Click **"AI@Worx Templates"** in left sidebar
 2. Browse templates by category
 3. Click **"Select Template"** on desired template
 4. Modal closes, right sidebar opens with form

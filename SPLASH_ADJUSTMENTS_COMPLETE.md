@@ -11,7 +11,7 @@
 
 **Text Restored:**
 - ✅ Icon at top (48px × 48px)
-- ✅ Label below icon (e.g., "New", "AI@Worx™", "Import") - `text-xl`
+- ✅ Label below icon (e.g., "New", "AI@Worx", "Import") - `text-xl`
 - ✅ Description below label (e.g., "Start fresh project") - `text-sm`
 
 **Layout:**
@@ -62,7 +62,7 @@ New  AI   Import
 ┌───────────┐  ┌───────────┐  ┌───────────┐
 │    📄     │  │    ✨     │  │    📤     │
 │           │  │           │  │           │
-│   New     │  │ AI@Worx™  │  │  Import   │
+│   New     │  │ AI@Worx  │  │  Import   │
 │           │  │           │  │           │
 │Start fresh│  │Start from │  │Open text  │
 │  project  │  │AI template│  │   file    │

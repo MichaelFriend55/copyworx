@@ -86,7 +86,7 @@ copyworx-v2/
 ### **Right Sidebar:**
 ```typescript
 // Always shows header
-AI@Worx™ Analysis
+AI@Worx Analysis
 
 // Dynamically renders:
 - [Active Tool UI] if tool selected

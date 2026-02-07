@@ -25,7 +25,7 @@ A full-featured modal with:
 Added to `app/copyworx/workspace/page.tsx`:
 - ✅ Positioned between Projects and Optimizer sections
 - ✅ Sparkles icon with blue accent color
-- ✅ "AI@Worx™ Templates" title
+- ✅ "AI@Worx Templates" title
 - ✅ "Create from templates" subtitle
 - ✅ Chevron right indicator
 - ✅ Hover effects
@@ -124,7 +124,7 @@ Added to `app/copyworx/workspace/page.tsx`:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  ✨ AI@Worx™ Templates                              [X] │
+│  ✨ AI@Worx Templates                              [X] │
 │  Select a template to create high-quality content...    │
 ├─────────────────────────────────────────────────────────┤
 │  [All] [Email] [Ads] [Landing] [Social] [Collateral]   │ ← Category Tabs
@@ -320,7 +320,7 @@ useEffect(() => {
   aria-modal="true"
   aria-labelledby="templates-modal-title"
 >
-  <h2 id="templates-modal-title">AI@Worx™ Templates</h2>
+  <h2 id="templates-modal-title">AI@Worx Templates</h2>
 </div>
 ```
 
@@ -345,7 +345,7 @@ focus:ring-offset-2
 
 ### **Opening Templates:**
 ```
-1. User clicks "AI@Worx™ Templates" button in left sidebar
+1. User clicks "AI@Worx Templates" button in left sidebar
    └─ Console: "🎨 Opening Templates Modal"
 
 2. Modal fades in with backdrop blur
@@ -392,7 +392,7 @@ focus:ring-offset-2
 ```
 ┌────────────────────────────────────┐
 │                                    │
-│  ✨  AI@Worx™ Templates        ›  │
+│  ✨  AI@Worx Templates        ›  │
 │      Create from templates         │
 │                                    │
 └────────────────────────────────────┘
@@ -457,7 +457,7 @@ Selected template: sales-email {
 ```
 1. Go to: http://localhost:3003/copyworx/workspace
 2. Look at left sidebar
-3. Find "AI@Worx™ Templates" button
+3. Find "AI@Worx Templates" button
 4. Click it
 5. ✓ Modal should open with all templates
 ```
@@ -604,7 +604,7 @@ The AI@Worx Templates system is fully functional and ready to use:
 ```
 http://localhost:3003/copyworx/workspace
 
-1. Click "AI@Worx™ Templates" in left sidebar
+1. Click "AI@Worx Templates" in left sidebar
 2. Browse templates
 3. Filter by category
 4. Click "Select Template"

@@ -13,7 +13,7 @@ When a user selects a template from the splash page, the app now **immediately c
 ## What Was Fixed
 
 ### Original Problem
-1. User clicks "AI@Worx™" button on splash page
+1. User clicks "AI@Worx" button on splash page
 2. Templates modal opens
 3. User selects a template
 4. User arrives at workspace with template slideout open
@@ -21,7 +21,7 @@ When a user selects a template from the splash page, the app now **immediately c
 
 ### Solution Implemented (v2 - Document Created on Splash Page)
 Now when a template is selected from the splash page:
-1. User clicks "AI@Worx™" button on splash page
+1. User clicks "AI@Worx" button on splash page
 2. Templates modal opens
 3. User selects a template
 4. ✅ **Document is IMMEDIATELY created** on splash page with template name as title
@@ -195,7 +195,7 @@ const handleTemplateSelect = (templateId: string) => {
 
 ```
 1. Splash Page
-   └─> User clicks "AI@Worx™" button
+   └─> User clicks "AI@Worx" button
        
 2. Templates Modal
    └─> User browses templates
@@ -273,7 +273,7 @@ Users can rename the document later via the document list if needed.
 ## Testing Checklist
 
 ### Basic Flow
-- [ ] **Test 1**: Click AI@Worx™ on splash page → modal opens
+- [ ] **Test 1**: Click AI@Worx on splash page → modal opens
 - [ ] **Test 2**: Select a template → navigates to workspace
 - [ ] **Test 3**: Verify new document created with template name
 - [ ] **Test 4**: Verify document loaded in editor (shows in title)

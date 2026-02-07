@@ -299,7 +299,7 @@ spacing.flex      // Flex gaps
 
 ### ✅ **STRENGTHS**
 
-- "AI@Worx™" branding used consistently
+- "AI@Worx" branding used consistently
 - Error messages are user-friendly
 - Loading messages branded
 - Button labels are action-oriented

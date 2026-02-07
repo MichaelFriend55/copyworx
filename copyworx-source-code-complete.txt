@@ -10528,7 +10528,7 @@ export async function GET(): Promise<NextResponse<UsageResponse | ErrorResponse>
  * Entry point for CopyWorx app workspace.
  * Shows 4 action buttons for different workspace entry modes:
  * - New: Start fresh project
- * - AI@Worx™: Start from AI template
+ * - AI@Worx: Start from AI template
  * - Import: Open text file
  * - Worxspace: Navigate directly to workspace
  * 
@@ -12069,7 +12069,7 @@ export function Footer() {
               © {currentYear} CopyWorx™ Studio LLC. All rights reserved.
             </p>
             <p className="text-sm text-ink-500">
-              CopyWorx™ and AI@Worx™ are trademarks of CopyWorx™ Studio LLC.
+              CopyWorx™ and AI@Worx are trademarks of CopyWorx™ Studio LLC.
             </p>
           </div>
         </div>
@@ -12172,7 +12172,7 @@ export function MarketingFooter() {
               © 2026 CopyWorx™ Studio LLC. All rights reserved.
             </p>
             <p className="text-xs text-white/40">
-              CopyWorx™ and AI@Worx™ are trademarks of CopyWorx™ Studio LLC.
+              CopyWorx™ and AI@Worx are trademarks of CopyWorx™ Studio LLC.
             </p>
           </div>
         </div>
@@ -12848,7 +12848,7 @@ const tourSteps: Step[] = [
     target: '[data-tour="templates"]',
     content: (
       <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx™ Templates</h3>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx Templates</h3>
         <p className="text-base">Professional copywriting templates across 6 categories. Generate strategic copy in minutes, not hours.</p>
       </div>
     ),
@@ -12920,7 +12920,7 @@ const tourSteps: Step[] = [
     target: '[data-tour="toolbox"]',
     content: (
       <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx™ Toolbox</h3>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx Toolbox</h3>
         <p className="text-base">Your AI assistant panel. It dynamically changes based on which tool you select.</p>
       </div>
     ),
@@ -13414,7 +13414,7 @@ export function SplashPage() {
 
           <ActionButton
             icon={<Sparkles className="w-8 h-8" strokeWidth={1.5} />}
-            label="AI@Worx™"
+            label="AI@Worx"
             description="Start from AI template"
             onClick={handleAITemplate}
           />
@@ -13450,7 +13450,7 @@ export function SplashPage() {
           © 2026 CopyWorx™ Studio LLC. All rights reserved.
         </p>
         <p className="mt-1">
-          CopyWorx™ and AI@Worx™ are trademarks of CopyWorx™ Studio LLC.
+          CopyWorx™ and AI@Worx are trademarks of CopyWorx™ Studio LLC.
         </p>
       </footer>
 
@@ -13485,7 +13485,7 @@ export function SplashPage() {
  * - Shimmer animation on Sparkles icon
  * - Spinning outer ring
  * - Bouncing dots with staggered timing
- * - Consistent AI@Worx™ branding
+ * - Consistent AI@Worx branding
  * - Button and full-width variants
  * 
  * Design:
@@ -13496,7 +13496,7 @@ export function SplashPage() {
  * @example
  * ```tsx
  * // Full-width loader
- * <AIWorxLoader message="Generating with AI@Worx™..." />
+ * <AIWorxLoader message="Generating with AI@Worx..." />
  * 
  * // Button loader
  * <AIWorxButtonLoader />
@@ -13518,7 +13518,7 @@ interface AIWorxLoaderProps {
  * Use in tool panels when waiting for API responses
  */
 export function AIWorxLoader({ 
-  message = "Generating with AI@Worx™..." 
+  message = "Generating with AI@Worx..." 
 }: AIWorxLoaderProps) {
   return (
     <div 
@@ -13578,7 +13578,7 @@ export function AIWorxButtonLoader() {
       className="flex items-center gap-2"
       role="status"
       aria-live="polite"
-      aria-label="Generating with AI@Worx™"
+      aria-label="Generating with AI@Worx"
     >
       {/* Sparkles icon with shimmer */}
       <Sparkles 
@@ -13588,7 +13588,7 @@ export function AIWorxButtonLoader() {
       />
       
       {/* Text */}
-      <span>Generating with AI@Worx™</span>
+      <span>Generating with AI@Worx</span>
       
       {/* Animated bouncing dots */}
       <span className="flex gap-0.5" aria-hidden="true">
@@ -21696,7 +21696,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
             <Sparkles className="w-5 h-5 text-blue-500 group-hover:text-blue-600 transition-colors" />
             <div className="text-left">
               <div className="font-medium text-sm text-apple-text-dark">
-                AI@Worx™ Templates
+                AI@Worx Templates
               </div>
               <div className="text-xs text-gray-500">
                 Browse templates
@@ -21710,7 +21710,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       {/* Divider */}
       <div className="border-t border-gray-200 my-2" />
 
-      {/* EXISTING TOOL SECTIONS - Exclude 'insights' section (replaced by AI@Worx™ Live) */}
+      {/* EXISTING TOOL SECTIONS - Exclude 'insights' section (replaced by AI@Worx Live) */}
       {SECTIONS.filter(section => section.id !== 'insights').map((section) => {
         // Determine data-tour attribute for specific sections
         const dataTourAttr = section.id === 'optimizer' ? 'copy-optimizer' 
@@ -23442,7 +23442,7 @@ export function OptimizeComparisonModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md mx-4">
           <div className="flex flex-col items-center gap-4">
-            <AIWorxLoader message="Optimizing with AI@Worx™" />
+            <AIWorxLoader message="Optimizing with AI@Worx" />
             <div className="text-center">
               <h3 className="text-lg font-semibold text-apple-text-dark">
                 Optimizing for {targetName || (type === 'persona' ? 'Persona' : 'Brand')}
@@ -27277,7 +27277,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
   if (!ActiveToolComponent && !selectedTemplateId) {
     return (
       <div className="space-y-6">
-        {/* Header - Always Shows "AI@Worx™ ToolBox" */}
+        {/* Header - Always Shows "AI@Worx ToolBox" */}
         <div className={cn(
           'flex items-center gap-2 px-3 py-2.5 rounded-lg',
           'bg-gray-50',
@@ -27288,7 +27288,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
         )}>
           <Sparkles className="w-5 h-5 text-apple-blue" />
           <h2 className="text-sm font-semibold text-apple-text-dark uppercase tracking-wide">
-            AI@Worx™ ToolBox
+            AI@Worx ToolBox
           </h2>
         </div>
 
@@ -27310,7 +27310,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
   if (ActiveToolComponent) {
     return (
       <div className="space-y-6">
-        {/* Header - Always Shows "AI@Worx™ ToolBox" */}
+        {/* Header - Always Shows "AI@Worx ToolBox" */}
         <div className={cn(
           'flex items-center gap-2 px-3 py-2.5 rounded-lg',
           'bg-gray-50',
@@ -27321,7 +27321,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
         )}>
           <Sparkles className="w-5 h-5 text-apple-blue" />
           <h2 className="text-sm font-semibold text-apple-text-dark uppercase tracking-wide">
-            AI@Worx™ ToolBox
+            AI@Worx ToolBox
           </h2>
         </div>
 
@@ -30664,7 +30664,7 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
                     id="templates-modal-title"
                     className="text-xl font-semibold text-[#1d1d1f]"
                   >
-                    AI@Worx™ Templates
+                    AI@Worx Templates
                   </h2>
                 </div>
                 <p className="text-sm text-[#86868b]">
@@ -31274,7 +31274,7 @@ export function TemplatesSlideOut({
       isOpen={isOpen}
       onClose={onClose}
       side="left"
-      title="AI@Worx™ Templates"
+      title="AI@Worx Templates"
       subtitle={`${ALL_TEMPLATES.length} professional templates`}
     >
       <div className="space-y-4">

@@ -6,7 +6,7 @@
  * - Shimmer animation on Sparkles icon
  * - Spinning outer ring
  * - Bouncing dots with staggered timing
- * - Consistent AI@Worx™ branding
+ * - Consistent AI@Worx branding
  * - Button and full-width variants
  * 
  * Design:
@@ -17,7 +17,7 @@
  * @example
  * ```tsx
  * // Full-width loader
- * <AIWorxLoader message="Generating with AI@Worx™..." />
+ * <AIWorxLoader message="Generating with AI@Worx..." />
  * 
  * // Button loader
  * <AIWorxButtonLoader />
@@ -39,7 +39,7 @@ interface AIWorxLoaderProps {
  * Use in tool panels when waiting for API responses
  */
 export function AIWorxLoader({ 
-  message = "Generating with AI@Worx™..." 
+  message = "Generating with AI@Worx..." 
 }: AIWorxLoaderProps) {
   return (
     <div 
@@ -99,7 +99,7 @@ export function AIWorxButtonLoader() {
       className="flex items-center gap-2"
       role="status"
       aria-live="polite"
-      aria-label="Generating with AI@Worx™"
+      aria-label="Generating with AI@Worx"
     >
       {/* Sparkles icon with shimmer */}
       <Sparkles 
@@ -109,7 +109,7 @@ export function AIWorxButtonLoader() {
       />
       
       {/* Text */}
-      <span>Generating with AI@Worx™</span>
+      <span>Generating with AI@Worx</span>
       
       {/* Animated bouncing dots */}
       <span className="flex gap-0.5" aria-hidden="true">

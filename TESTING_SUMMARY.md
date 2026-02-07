@@ -270,7 +270,7 @@ lib/utils/image-utils.ts
 // Loading states
 components/ui/AIWorxLoader.tsx
 // ✅ Branded shimmer animation
-// ✅ "AI@Worx™" messaging
+// ✅ "AI@Worx" messaging
 
 // Design system
 lib/utils/design-system.ts

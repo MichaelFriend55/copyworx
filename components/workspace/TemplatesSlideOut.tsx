@@ -419,7 +419,7 @@ export function TemplatesSlideOut({
       isOpen={isOpen}
       onClose={onClose}
       side="left"
-      title="AI@Worx™ Templates"
+      title="AI@Worx Templates"
       subtitle={`${ALL_TEMPLATES.length} professional templates`}
     >
       <div className="space-y-4">

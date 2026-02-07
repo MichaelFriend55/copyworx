@@ -105,7 +105,7 @@ className={cn(
 - Button displays animated blue-purple-blue gradient
 - Shows `AIWorxButtonLoader` component with:
   - Shimmer sparkles icon
-  - "Generating with AI@Worx™" text
+  - "Generating with AI@Worx" text
   - Animated bouncing dots
 - Cursor changes to wait state
 - Button is disabled

@@ -90,7 +90,7 @@ className={cn(
 - **Animated blue-purple gradient** (`aiworx-gradient-animated`)
 - Wait cursor
 - Shows `<AIWorxButtonLoader />` component
-- Text: "Generating with AI@Worx™"
+- Text: "Generating with AI@Worx"
 
 ### 3. Disabled State
 - Gray background (`bg-apple-gray-light`)

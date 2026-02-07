@@ -10,7 +10,7 @@
 ### All Text Retained ✅
 Despite the size reduction, all text elements are preserved:
 - ✅ **Icon**: 24px × 24px (w-6 h-6)
-- ✅ **Label**: "New", "AI@Worx™", "Import" - text-xs (12px)
+- ✅ **Label**: "New", "AI@Worx", "Import" - text-xs (12px)
 - ✅ **Description**: "Start fresh project", etc. - 10px with tight leading
 
 ### Centered Horizontally ✅

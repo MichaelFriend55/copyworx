@@ -2,7 +2,7 @@
 
 ## 🎉 **Status: AI@Worx Button Connected to Templates Modal**
 
-The AI@Worx™ button on the splash page now opens the Templates Modal instead of navigating to the workspace.
+The AI@Worx button on the splash page now opens the Templates Modal instead of navigating to the workspace.
 
 ---
 
@@ -138,7 +138,7 @@ export function SplashPage() {
 ### **OLD Behavior (Before):**
 ```
 1. User on splash page: http://localhost:3003/copyworx
-2. Clicks "AI@Worx™" button
+2. Clicks "AI@Worx" button
 3. Navigates to: /copyworx/workspace?action=template
 4. Workspace page loads (but template action didn't do anything)
 ```
@@ -146,7 +146,7 @@ export function SplashPage() {
 ### **NEW Behavior (After):**
 ```
 1. User on splash page: http://localhost:3003/copyworx
-2. Clicks "AI@Worx™" button
+2. Clicks "AI@Worx" button
 3. Templates Modal opens (overlay on splash page)
 4. User can browse 8 templates across 6 categories
 5. User can select templates (shows "coming soon" alert)
@@ -186,7 +186,7 @@ export function SplashPage() {
 │  [Dark Backdrop with Blur]                     │
 │                                                │
 │    ╔══════════════════════════════════╗       │
-│    ║  ✨ AI@Worx™ Templates      [X] ║       │
+│    ║  ✨ AI@Worx Templates      [X] ║       │
 │    ║  Select a template...            ║       │
 │    ╠══════════════════════════════════╣       │
 │    ║  [All] [Email] [Ads] [Landing]  ║       │
@@ -227,7 +227,7 @@ Selected template: sales-email {
 ### **Splash Page → Templates:**
 1. User lands on splash page
 2. Sees 4 action buttons
-3. Clicks "AI@Worx™" (2nd button)
+3. Clicks "AI@Worx" (2nd button)
 4. ✅ Modal opens instantly (no navigation)
 5. ✅ Backdrop blurs splash page
 6. ✅ Can browse all 8 templates
@@ -265,7 +265,7 @@ Selected template: sales-email {
 ```
 1. Go to: http://localhost:3003/copyworx
 2. See 4 action buttons
-3. Click "AI@Worx™" (2nd button with Sparkles icon)
+3. Click "AI@Worx" (2nd button with Sparkles icon)
 4. ✓ Modal should open
 5. ✓ Console: "🎨 Opening Templates Modal from Splash Page"
 6. ✓ Splash page blurred behind modal
@@ -320,7 +320,7 @@ Method 3: Click backdrop (outside modal)
 | Button | Icon | Old Behavior | New Behavior | Status |
 |--------|------|--------------|--------------|--------|
 | **New** | FilePlus | Navigate to workspace | Navigate to workspace | ✅ Unchanged |
-| **AI@Worx™** | Sparkles | Navigate to workspace?action=template | **Open Templates Modal** | ✅ **CHANGED** |
+| **AI@Worx** | Sparkles | Navigate to workspace?action=template | **Open Templates Modal** | ✅ **CHANGED** |
 | **Import** | Upload | Navigate to workspace?action=import | Navigate to workspace?action=import | ✅ Unchanged |
 | **Open .cwx** | FolderOpen | Navigate to workspace?action=open | Navigate to workspace?action=open | ✅ Unchanged |
 
@@ -397,18 +397,18 @@ const handleAITemplate = () => {
 ## 🎯 **Connection Points:**
 
 ### **Splash Page:**
-- Button: "AI@Worx™" (2nd of 4 buttons)
+- Button: "AI@Worx" (2nd of 4 buttons)
 - Handler: `handleAITemplate()`
 - Opens: `TemplatesModal`
 
 ### **Workspace:**
-- Button: "AI@Worx™ Templates" (in left sidebar)
+- Button: "AI@Worx Templates" (in left sidebar)
 - Handler: `setTemplatesModalOpen(true)`
 - Opens: `TemplatesModal`
 
 ### **Same Modal, Two Entry Points:**
 ```
-Entry Point 1: Splash Page "AI@Worx™" button
+Entry Point 1: Splash Page "AI@Worx" button
     ↓
 [TemplatesModal Component]
     ↑
@@ -434,11 +434,11 @@ Entry Point 2: Workspace sidebar button
 
 ## 🎉 **Ready to Test:**
 
-The AI@Worx™ button on the splash page now opens the Templates Modal!
+The AI@Worx button on the splash page now opens the Templates Modal!
 
 **Try it:**
 1. Visit: http://localhost:3003/copyworx
-2. Click the "AI@Worx™" button
+2. Click the "AI@Worx" button
 3. Browse templates
 4. Close modal
 5. Stay on splash page

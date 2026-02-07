@@ -161,7 +161,7 @@ npm run dev
 ```
 
 1. Navigate to workspace
-2. Click "AI@Worx™ Templates"
+2. Click "AI@Worx Templates"
 3. Select "Sales Email" template
 4. Fill form and generate
 5. Check editor for proper formatting

@@ -216,7 +216,7 @@ className={cn(
 ```
 ┌─────────────────────────────────────┐
 │  [Blue Background]                  │
-│  ✨ Generating with AI@Worx™ • • • │  ✅ White on blue
+│  ✨ Generating with AI@Worx • • • │  ✅ White on blue
 └─────────────────────────────────────┘
     ↑           ↑              ↑
     Shimmer     Clear text     Bouncing dots
@@ -276,7 +276,7 @@ disabled:cursor-wait        /* Show loading cursor */
 
 ### Visual Improvements:
 - ✅ **Shimmer effect visible** - Sparkles icon shows clearly on blue
-- ✅ **Text readable** - "Generating with AI@Worx™" clearly visible
+- ✅ **Text readable** - "Generating with AI@Worx" clearly visible
 - ✅ **Dots visible** - Bouncing animation shows on blue background
 - ✅ **Consistent branding** - Blue stays blue during loading
 - ✅ **Professional feel** - No jarring gray flash
@@ -301,7 +301,7 @@ disabled:cursor-wait        /* Show loading cursor */
 
 ### Loader Visibility:
 - [ ] Shimmer effect visible on blue background
-- [ ] "Generating with AI@Worx™" text readable
+- [ ] "Generating with AI@Worx" text readable
 - [ ] Three bouncing dots visible
 - [ ] All animations smooth
 

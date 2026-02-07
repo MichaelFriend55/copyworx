@@ -206,7 +206,7 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
                     id="templates-modal-title"
                     className="text-xl font-semibold text-[#1d1d1f]"
                   >
-                    AI@Worx™ Templates
+                    AI@Worx Templates
                   </h2>
                 </div>
                 <p className="text-sm text-[#86868b]">

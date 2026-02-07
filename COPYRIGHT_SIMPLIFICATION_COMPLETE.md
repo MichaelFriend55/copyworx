@@ -13,7 +13,7 @@
 **OLD FORMAT (Two Lines):**
 ```
 © 2026 CopyWorx Studio™ LLC. All rights reserved.
-CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
+CopyWorx™ and AI@Worx are trademarks of CopyWorx Studio™ LLC.
 ```
 
 **NEW FORMAT (Single Line):**
@@ -92,7 +92,7 @@ CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
     © 2026 CopyWorx Studio™ LLC. All rights reserved.
   </p>
   <p className="mt-1">
-    CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
+    CopyWorx™ and AI@Worx are trademarks of CopyWorx Studio™ LLC.
   </p>
 </footer>
 ```
@@ -119,7 +119,7 @@ CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
       © 2026 CopyWorx Studio™ LLC. All rights reserved.
     </p>
     <p className="text-xs text-white/40">
-      CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
+      CopyWorx™ and AI@Worx are trademarks of CopyWorx Studio™ LLC.
     </p>
   </div>
 </div>
@@ -153,7 +153,7 @@ CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
       © {currentYear} CopyWorx Studio™ LLC. All rights reserved.
     </p>
     <p className="text-sm text-ink-500">
-      CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
+      CopyWorx™ and AI@Worx are trademarks of CopyWorx Studio™ LLC.
     </p>
   </div>
 </div>
@@ -267,7 +267,7 @@ CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
 ### Before (Two-Line):
 ```
 © 2026 CopyWorx Studio™ LLC. All rights reserved.
-CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
+CopyWorx™ and AI@Worx are trademarks of CopyWorx Studio™ LLC.
 ```
 - Takes up more vertical space
 - Creates visual clutter
@@ -326,7 +326,7 @@ git checkout HEAD~1 -- components/layout/footer.tsx
 Restore the second line in each footer:
 ```tsx
 <p className="mt-1">
-  CopyWorx™ and AI@Worx™ are trademarks of CopyWorx Studio™ LLC.
+  CopyWorx™ and AI@Worx are trademarks of CopyWorx Studio™ LLC.
 </p>
 ```
 

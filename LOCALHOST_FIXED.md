@@ -246,7 +246,7 @@ npm run dev
   - 🔜 AI Suggestions (NEW)
 
 ### **Right Sidebar:**
-- Header: "AI@Worx™ Analysis"
+- Header: "AI@Worx Analysis"
 - Dynamically shows selected tool
 - Empty states for no tool/no document
 

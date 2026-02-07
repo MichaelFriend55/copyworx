@@ -134,7 +134,7 @@ npm run dev
 # Open browser to:
 http://localhost:3000/copyworx
 
-# Expected: See 4 blue action buttons (New, AI@Worx™, Import, Open .cwx)
+# Expected: See 4 blue action buttons (New, AI@Worx, Import, Open .cwx)
 ```
 
 ### **Test 2: Create New Document**

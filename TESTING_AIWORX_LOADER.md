@@ -1,4 +1,4 @@
-# AI@Worx™ Loader Testing Guide
+# AI@Worx Loader Testing Guide
 
 ## ✅ SETUP COMPLETE
 
@@ -25,7 +25,7 @@ All components compiled successfully with **3795 modules** and **no errors**.
 **Expected Result:**
 - ✨ Button shows `AIWorxButtonLoader` component
 - Sparkles icon shimmers (brightness pulses + scale effect)
-- "Generating with AI@Worx™" text appears
+- "Generating with AI@Worx" text appears
 - Three dots bounce in sequence (wave pattern)
 - After ~2-5 seconds, result appears
 
@@ -154,7 +154,7 @@ All components compiled successfully with **3795 modules** and **no errors**.
 
 ### Overall
 - [ ] **Color consistency**: Matches Apple blue (#0071E3)
-- [ ] **Text legibility**: "AI@Worx™" clearly readable
+- [ ] **Text legibility**: "AI@Worx" clearly readable
 - [ ] **No layout shift**: Button doesn't change size
 - [ ] **Accessibility**: Screen readers announce loading state
 
@@ -201,7 +201,7 @@ All components compiled successfully with **3795 modules** and **no errors**.
 ## ♿ ACCESSIBILITY TESTING
 
 ### Screen Reader (VoiceOver/NVDA)
-- [ ] Announces "Generating with AI@Worx™"
+- [ ] Announces "Generating with AI@Worx"
 - [ ] `role="status"` detected
 - [ ] `aria-live="polite"` doesn't interrupt
 - [ ] Decorative elements hidden with `aria-hidden`
@@ -331,7 +331,7 @@ Quick checklist for acceptance testing:
 - [ ] Spinning ring rotates continuously
 - [ ] Three dots bounce in wave pattern
 - [ ] Apple blue color (#0071E3) matches design
-- [ ] "AI@Worx™" text includes trademark symbol
+- [ ] "AI@Worx" text includes trademark symbol
 
 ### Performance
 - [ ] No lag or stutter

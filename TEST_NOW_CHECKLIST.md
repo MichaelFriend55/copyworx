@@ -206,7 +206,7 @@ http://localhost:3000
 
 **Expected:**
 - [ ] ✅ "Generating copy..." message appears
-- [ ] ✅ AI@Worx™ shimmer animation shows
+- [ ] ✅ AI@Worx shimmer animation shows
 - [ ] ✅ Generation completes in < 30 seconds
 - [ ] ✅ Generated copy appears in preview box
 - [ ] ✅ Copy mentions brand values or uses approved phrases
@@ -707,7 +707,7 @@ Read the generated copy and check:
 ### **5.3 Loading States** ⏱️ 2 minutes
 
 **Check All Loading States:**
-- [ ] Template generation → AI@Worx™ shimmer
+- [ ] Template generation → AI@Worx shimmer
 - [ ] Tone shift → Button spinner
 - [ ] Expand → Button spinner
 - [ ] Shorten → Button spinner

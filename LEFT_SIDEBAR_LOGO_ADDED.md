@@ -65,7 +65,7 @@
 │  ├─ Project 1                   │
 │  └─ Project 2                   │
 ├─────────────────────────────────┤
-│  AI@Worx™ Templates             │
+│  AI@Worx Templates             │
 ├─────────────────────────────────┤
 │  My Copy Optimizer              │
 │  ├─ Tone Shifter                │

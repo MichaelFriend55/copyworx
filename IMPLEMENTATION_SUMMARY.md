@@ -100,7 +100,7 @@ npm run dev
 
 1. **Splash Page**
    - Click "New" → Creates blank document and navigates to workspace
-   - Click "AI@Worx™" → Goes to workspace (template selector future)
+   - Click "AI@Worx" → Goes to workspace (template selector future)
    - Click "Import" → Goes to workspace (file import future)
    - Click "Open .cwx" → Goes to workspace (.cwx opener future)
 

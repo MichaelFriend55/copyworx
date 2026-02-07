@@ -34,7 +34,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 
 #### Step 3: AI@Worx Templates (unchanged)
 - **Target**: `[data-tour="templates"]`
-- **Headline**: "AI@Worx™ Templates"
+- **Headline**: "AI@Worx Templates"
 - **Content**: "Professional copywriting templates across 6 categories. Generate strategic copy in minutes, not hours."
 - **Placement**: Right
 
@@ -77,7 +77,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 
 #### Step 8: AI@Worx Toolbox (unchanged)
 - **Target**: `[data-tour="toolbox"]`
-- **Headline**: "AI@Worx™ Toolbox"
+- **Headline**: "AI@Worx Toolbox"
 - **Content**: "Your AI assistant panel. It dynamically changes based on which tool you select."
 - **Placement**: Left
 
@@ -248,7 +248,7 @@ Updated the onboarding product tour from 7 steps to 9 steps with new content for
 - [ ] Tooltip on right side
 
 **Step 3 - AI@Worx Templates**:
-- [ ] Highlights the "AI@Worx™ Templates" button
+- [ ] Highlights the "AI@Worx Templates" button
 - [ ] Content: "Professional copywriting templates across 6 categories..."
 - [ ] Tooltip on right side
 

@@ -38,7 +38,7 @@ Navigate to: **http://localhost:3000/copyworx**
 
 **What to Do:**
 - Click **"New"** to create a blank document
-- Click **"AI@Worx™"** to see template selector (future)
+- Click **"AI@Worx"** to see template selector (future)
 - Click **"Import"** to import files (future)
 - Click **"Open .cwx"** to open CopyWorx files (future)
 
@@ -48,13 +48,13 @@ Navigate to: **http://localhost:3000/copyworx**
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│ Toolbar: [Projects] [Save] [↶] [↷]  CopyWorx™  [AI@Worx™] [⚙]  │
+│ Toolbar: [Projects] [Save] [↶] [↷]  CopyWorx™  [AI@Worx] [⚙]  │
 ├─────────────┬──────────────────────────────┬────────────────────┤
 │             │                              │                    │
 │ Left        │     Center Editor            │    Right           │
 │ Sidebar     │                              │    Sidebar         │
 │             │  ┌────────────────────────┐  │                    │
-│ Tools:      │  │                        │  │  AI@Worx™          │
+│ Tools:      │  │                        │  │  AI@Worx          │
 │ • Templates │  │   Untitled Document    │  │  Analysis          │
 │ • Optimizer │  │   ─────────────────    │  │                    │
 │ • Brand     │  │                        │  │  • Emotional       │
@@ -84,7 +84,7 @@ Navigate to: **http://localhost:3000/copyworx**
 | Save | Save document | ⌘S |
 | Undo | Undo last change | ⌘Z |
 | Redo | Redo change | ⌘⇧Z |
-| AI@Worx™ | Toggle AI analysis | - |
+| AI@Worx | Toggle AI analysis | - |
 | Settings | Open settings | - |
 
 ### Sidebar Controls
@@ -135,7 +135,7 @@ Navigate to: **http://localhost:3000/copyworx**
 4. State is preserved even if you refresh
 
 ### Test 4: Enable AI Analysis
-1. Click **"AI@Worx™"** button in toolbar (top right)
+1. Click **"AI@Worx"** button in toolbar (top right)
 2. Right sidebar auto-opens
 3. Click **"Emotional"** analysis mode
 4. Button turns blue to show it's active

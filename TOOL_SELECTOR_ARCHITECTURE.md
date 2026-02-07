@@ -139,7 +139,7 @@ export const SECTIONS: SectionConfig[] = [
 │  LEFT SIDEBAR      │   EDITOR AREA     │   RIGHT SIDEBAR        │
 │  (Tool Selector)   │                    │   (Active Tool)        │
 │                    │                    │                        │
-│ ▼ OPTIMIZER        │  [TipTap Editor]  │  AI@Worx™ Analysis    │
+│ ▼ OPTIMIZER        │  [TipTap Editor]  │  AI@Worx Analysis    │
 │  • Tone Shifter ◀──┼────────────────────┼─► [Tone Shifter UI]   │
 │  • Clarity Checker │   Document Title   │                        │
 │  • Grammar Polish  │   Editor Content   │   When user clicks    │
@@ -307,11 +307,11 @@ function RightSidebarContent({ editor }: { editor: Editor | null }) {
   
   return (
     <div className="space-y-6">
-      {/* Header - Always Shows "AI@Worx™ Analysis" */}
+      {/* Header - Always Shows "AI@Worx Analysis" */}
       <div className="flex items-center gap-2">
         <Sparkles className="w-5 h-5 text-apple-blue" />
         <h2 className="text-lg font-semibold text-apple-text-dark">
-          AI@Worx™ Analysis
+          AI@Worx Analysis
         </h2>
       </div>
       
@@ -349,7 +349,7 @@ function RightSidebarContent({ editor }: { editor: Editor | null }) {
 ### State Management:
 - `activeToolId` - Stored in Zustand, persisted to localStorage
 - `expandedSections` - Local state in LeftSidebarContent (not persisted)
-- Right sidebar always shows header "AI@Worx™ Analysis"
+- Right sidebar always shows header "AI@Worx Analysis"
 - Active tool component dynamically rendered based on `activeToolId`
 
 ---

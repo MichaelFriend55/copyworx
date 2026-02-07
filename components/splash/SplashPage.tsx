@@ -326,7 +326,7 @@ export function SplashPage() {
 
           <ActionButton
             icon={<Sparkles className="w-8 h-8" strokeWidth={1.5} />}
-            label="AI@Worx™"
+            label="AI@Worx"
             description="Start from AI template"
             onClick={handleAITemplate}
           />

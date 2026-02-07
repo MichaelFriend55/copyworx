@@ -23,7 +23,7 @@ The splash page has been successfully redesigned with your new logo and compact 
 
 ### 3. Three Buttons
 1. **New** - FilePlus icon - "Start fresh project"
-2. **AI@Worx™** - Sparkles icon - "Start from AI template"
+2. **AI@Worx** - Sparkles icon - "Start from AI template"
 3. **Import** - Upload icon - "Open text file"
 
 ## Visual Layout
@@ -39,7 +39,7 @@ The splash page has been successfully redesigned with your new logo and compact 
 │      [📄]    [✨]    [📤]              │
 │      64×64   64×64   64×64             │
 │                                         │
-│      New   AI@Worx™  Import            │
+│      New   AI@Worx  Import            │
 │                                         │
 └─────────────────────────────────────────┘
 ```

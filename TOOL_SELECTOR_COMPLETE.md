@@ -36,7 +36,7 @@ The complete tool selector architecture has been successfully implemented with z
 - Badges shown for new tools (e.g., "AI Suggestions")
 
 ### **Step 5: Right Sidebar Updated** ✅
-- Header always shows "AI@Worx™ Analysis"
+- Header always shows "AI@Worx Analysis"
 - Dynamically renders active tool component
 - Shows placeholder when no tool selected
 - Shows message when no document open
@@ -84,7 +84,7 @@ The complete tool selector architecture has been successfully implemented with z
 │  LEFT SIDEBAR      │   EDITOR AREA      │   RIGHT SIDEBAR        │
 │  (Tool Selector)   │                     │   (Active Tool)        │
 │                    │                     │                        │
-│ ▼ OPTIMIZER ━━━━━━━┫  [TipTap Editor]   │  AI@Worx™ Analysis    │
+│ ▼ OPTIMIZER ━━━━━━━┫  [TipTap Editor]   │  AI@Worx Analysis    │
 │  • Tone Shifter ◀──┼─────────────────────┼─► [Tone Shifter UI]   │
 │  • Clarity         │   Document Title    │                        │
 │  • Grammar         │   Editor Content    │   When user clicks    │
@@ -167,7 +167,7 @@ The complete tool selector architecture has been successfully implemented with z
 - ✅ Focus rings for accessibility
 
 ### **Right Sidebar:**
-- ✅ Consistent header: "AI@Worx™ Analysis"
+- ✅ Consistent header: "AI@Worx Analysis"
 - ✅ Dynamic tool rendering
 - ✅ Empty states:
   - No document open → Shows Sparkles icon

@@ -71,7 +71,7 @@ const tourSteps: Step[] = [
     target: '[data-tour="templates"]',
     content: (
       <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx™ Templates</h3>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx Templates</h3>
         <p className="text-base">Professional copywriting templates across 6 categories. Generate strategic copy in minutes, not hours.</p>
       </div>
     ),
@@ -143,7 +143,7 @@ const tourSteps: Step[] = [
     target: '[data-tour="toolbox"]',
     content: (
       <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx™ Toolbox</h3>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">AI@Worx Toolbox</h3>
         <p className="text-base">Your AI assistant panel. It dynamically changes based on which tool you select.</p>
       </div>
     ),

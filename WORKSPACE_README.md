@@ -108,7 +108,7 @@ const {
 #### SplashPage.tsx
 Entry point with 4 large action buttons:
 - **New** - Start fresh project
-- **AI@Worx™** - Start from AI template
+- **AI@Worx** - Start from AI template
 - **Import** - Open text file
 - **Open .cwx** - CopyWorx format
 
@@ -144,7 +144,7 @@ Center editor with:
 Top navigation bar:
 - **Left**: Projects, Save, Undo, Redo
 - **Center**: Document title
-- **Right**: AI@Worx™ button, Settings
+- **Right**: AI@Worx button, Settings
 
 ## 🎯 Features Implemented
 

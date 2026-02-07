@@ -171,7 +171,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
   if (!ActiveToolComponent && !selectedTemplateId) {
     return (
       <div className="space-y-6">
-        {/* Header - Always Shows "AI@Worx™ ToolBox" */}
+        {/* Header - Always Shows "AI@Worx ToolBox" */}
         <div className={cn(
           'flex items-center gap-2 px-3 py-2.5 rounded-lg',
           'bg-gray-50',
@@ -182,7 +182,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
         )}>
           <Sparkles className="w-5 h-5 text-apple-blue" />
           <h2 className="text-sm font-semibold text-apple-text-dark uppercase tracking-wide">
-            AI@Worx™ ToolBox
+            AI@Worx ToolBox
           </h2>
         </div>
 
@@ -204,7 +204,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
   if (ActiveToolComponent) {
     return (
       <div className="space-y-6">
-        {/* Header - Always Shows "AI@Worx™ ToolBox" */}
+        {/* Header - Always Shows "AI@Worx ToolBox" */}
         <div className={cn(
           'flex items-center gap-2 px-3 py-2.5 rounded-lg',
           'bg-gray-50',
@@ -215,7 +215,7 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
         )}>
           <Sparkles className="w-5 h-5 text-apple-blue" />
           <h2 className="text-sm font-semibold text-apple-text-dark uppercase tracking-wide">
-            AI@Worx™ ToolBox
+            AI@Worx ToolBox
           </h2>
         </div>
 

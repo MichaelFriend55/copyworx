@@ -538,7 +538,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
             <Sparkles className="w-5 h-5 text-blue-500 group-hover:text-blue-600 transition-colors" />
             <div className="text-left">
               <div className="font-medium text-sm text-apple-text-dark">
-                AI@Worx™ Templates
+                AI@Worx Templates
               </div>
               <div className="text-xs text-gray-500">
                 Browse templates
@@ -552,7 +552,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       {/* Divider */}
       <div className="border-t border-gray-200 my-2" />
 
-      {/* EXISTING TOOL SECTIONS - Exclude 'insights' section (replaced by AI@Worx™ Live) */}
+      {/* EXISTING TOOL SECTIONS - Exclude 'insights' section (replaced by AI@Worx Live) */}
       {SECTIONS.filter(section => section.id !== 'insights').map((section) => {
         // Determine data-tour attribute for specific sections
         const dataTourAttr = section.id === 'optimizer' ? 'copy-optimizer' 

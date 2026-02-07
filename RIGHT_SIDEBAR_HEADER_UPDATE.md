@@ -7,10 +7,10 @@
 **File**: `/components/workspace/RightSidebarContent.tsx`
 
 **Previous Header:**
-- "AI@Worx™ Analysis"
+- "AI@Worx Analysis"
 
 **New Header:**
-- "AI@Worx™ ToolBox"
+- "AI@Worx ToolBox"
 
 ## Details
 
@@ -21,7 +21,7 @@
 <div className="flex items-center gap-2">
   <Sparkles className="w-5 h-5 text-apple-blue" />
   <h2 className="text-lg font-semibold text-apple-text-dark">
-    AI@Worx™ ToolBox
+    AI@Worx ToolBox
   </h2>
 </div>
 ```
@@ -31,7 +31,7 @@
 ```
 Before:                   After:
 ┌─────────────────────┐  ┌─────────────────────┐
-│ ✨ AI@Worx™ Analysis│  │ ✨ AI@Worx™ ToolBox │
+│ ✨ AI@Worx Analysis│  │ ✨ AI@Worx ToolBox │
 ├─────────────────────┤  ├─────────────────────┤
 │                     │  │                     │
 │   [Tool Content]    │  │   [Tool Content]    │
@@ -55,6 +55,6 @@ The header appears at the top of the right sidebar panel and is visible:
 
 ## Context
 
-The right sidebar displays AI-powered tools for working with content. The new header "AI@Worx™ ToolBox" better describes the panel as a collection of tools rather than just analysis features.
+The right sidebar displays AI-powered tools for working with content. The new header "AI@Worx ToolBox" better describes the panel as a collection of tools rather than just analysis features.
 
 **Change complete and ready!** 🎉
