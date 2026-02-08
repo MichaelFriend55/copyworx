@@ -13,7 +13,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { logger } from '@/lib/utils/logger';
 import {
   Search,
@@ -302,9 +302,17 @@ export function TemplatesSlideOut({
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(['marketing-sales', 'website-digital', 'email-marketing']) // Start with popular categories expanded
+    new Set() // Start with all categories closed - clean, predictable UX
   );
   const [selectedTemplateId, setLocalSelectedTemplateId] = useState<string | null>(null);
+
+  // Reset accordion state when panel opens - ensures clean state every time
+  useEffect(() => {
+    if (isOpen) {
+      setExpandedGroups(new Set()); // Close all accordions when opening templates panel
+      setSearchQuery(''); // Clear search too
+    }
+  }, [isOpen]);
 
   // Filter templates by search query
   const filteredTemplates = useMemo(() => {
@@ -328,16 +336,16 @@ export function TemplatesSlideOut({
     }));
   }, [filteredTemplates]);
 
-  // Toggle category expansion
+  // Toggle category expansion - TRUE ACCORDION BEHAVIOR
+  // Opening one category closes all others (only one can be open at a time)
   const toggleGroup = useCallback((groupId: string) => {
     setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(groupId)) {
-        next.delete(groupId);
-      } else {
-        next.add(groupId);
+      // If clicking the currently open group, close it
+      if (prev.has(groupId)) {
+        return new Set(); // Close all
       }
-      return next;
+      // Otherwise, open this group and close all others
+      return new Set([groupId]); // Only this group is open
     });
   }, []);
 
