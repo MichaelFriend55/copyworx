@@ -1444,6 +1444,241 @@ If optional fields (background context, data points, Quote 2, embargo, additiona
 };
 
 /**
+ * Radio Commercial Template
+ * Generates professional radio ad copy optimized for voice talent
+ */
+export const RADIO_COMMERCIAL_TEMPLATE: Template = {
+  id: 'radio-commercial',
+  name: 'Radio Commercial',
+  category: 'advertising',
+  description: 'Create professional radio ad copy optimized for voice talent and broadcast standards.',
+  complexity: 'Intermediate',
+  estimatedTime: '10-15 min',
+  icon: 'Radio',
+  fields: [
+    {
+      id: 'companyBrandName',
+      label: 'Company/Brand Name',
+      type: 'text',
+      placeholder: 'e.g., Joe\'s Auto Repair',
+      helperText: 'Your business name',
+      required: true,
+      maxLength: 100
+    },
+    {
+      id: 'productService',
+      label: 'Product/Service',
+      type: 'textarea',
+      placeholder: 'e.g., Same-day brake repair with lifetime warranty on all parts and labor...',
+      helperText: 'What are you advertising?',
+      required: true,
+      maxLength: 300
+    },
+    {
+      id: 'primaryBenefit',
+      label: 'Primary Benefit',
+      type: 'textarea',
+      placeholder: 'e.g., Get back on the road safely in under 2 hours, guaranteed',
+      helperText: 'The ONE thing listeners should remember (radio is a single-message medium)',
+      required: true,
+      maxLength: 200
+    },
+    {
+      id: 'targetAudience',
+      label: 'Target Audience',
+      type: 'text',
+      placeholder: 'e.g., Busy commuters who need reliable car repairs',
+      helperText: 'Who are you talking to?',
+      required: true,
+      maxLength: 150
+    },
+    {
+      id: 'callToAction',
+      label: 'Call to Action',
+      type: 'text',
+      placeholder: 'e.g., Call now for same-day service',
+      helperText: 'What should listeners do? (visit, call, come in, etc.)',
+      required: true,
+      maxLength: 100
+    },
+    {
+      id: 'contactInfo',
+      label: 'Contact Info',
+      type: 'text',
+      placeholder: 'e.g., 555-BRAKES or JoesAutoRepair.com',
+      helperText: 'Phone, website, or location',
+      required: true,
+      maxLength: 150
+    },
+    {
+      id: 'toneStyle',
+      label: 'Tone/Style',
+      type: 'select',
+      helperText: 'What tone should the ad have?',
+      required: true,
+      options: [
+        'Conversational',
+        'Urgent/Promotional',
+        'Humorous',
+        'Dramatic/Emotional',
+        'Authoritative/Expert',
+        'Other (specify)'
+      ]
+    },
+    {
+      id: 'specialOffer',
+      label: 'Special Offer',
+      type: 'textarea',
+      placeholder: 'e.g., First-time customers get 20% off through Friday only',
+      helperText: 'Any promo, discount, or urgency element (optional)',
+      required: false,
+      maxLength: 200
+    },
+    {
+      id: 'length',
+      label: 'Length',
+      type: 'select',
+      helperText: 'How long should the commercial be?',
+      required: true,
+      options: [
+        '15 seconds (~35 words)',
+        '30 seconds (~75 words)',
+        '60 seconds (~150 words)'
+      ]
+    }
+  ],
+  systemPrompt: `You are an expert radio copywriter with 20 years of experience creating award-winning broadcast commercials. Create a radio commercial script based on the following details:
+
+Company/Brand: {companyBrandName}
+Product/Service: {productService}
+Primary Benefit: {primaryBenefit}
+Target Audience: {targetAudience}
+Call to Action: {callToAction}
+Contact Info: {contactInfo}
+Tone/Style: {toneStyle}
+Special Offer: {specialOffer}
+Length: {length}
+
+{brandVoiceInstructions}
+{personaInstructions}
+
+CRITICAL RADIO COPYWRITING PRINCIPLES:
+
+1. WRITE FOR THE EAR, NOT THE EYE
+   - Use short, punchy sentences (5-10 words maximum)
+   - Write how people actually talk, not how they write
+   - Avoid complex words or jargon
+   - Read it aloud — if you stumble, rewrite it
+
+2. BRAND NAME REPETITION
+   - Mention the company/brand name 2-3 times throughout
+   - Natural placement — don't force it
+   - First mention should be early (within first 10 seconds)
+
+3. SINGLE MESSAGE FOCUS
+   - Radio listeners can only remember ONE thing
+   - Focus entirely on the primary benefit provided
+   - Don't dilute with multiple selling points
+   - Everything should support that one core message
+
+4. RHYTHM AND FLOW
+   - Create a natural cadence for voice talent
+   - Use contractions (we're, you'll, don't)
+   - Vary sentence length for musicality
+   - Build momentum toward the call-to-action
+
+5. ACTIVE VOICE & PRESENT TENSE
+   - Use active verbs (get, save, call, visit)
+   - Present tense creates immediacy
+   - "You get" not "You will receive"
+   - "We solve" not "We can help with"
+
+6. MEMORABLE CALL-TO-ACTION
+   - Make it simple and repeatable
+   - Easy to remember phone number or URL
+   - Repeat contact info if space allows
+   - Create urgency if special offer exists
+
+7. CONVERSATIONAL, NOT CORPORATE
+   - Sound like a friend talking, not a press release
+   - Use "you" and "your" liberally
+   - Avoid marketing buzzwords
+   - Be specific, not vague
+
+STRICT WORD COUNT REQUIREMENTS:
+
+Extract the target from the Length field:
+- If "15 seconds" → TARGET: 35 words (±5 words acceptable)
+- If "30 seconds" → TARGET: 75 words (±5 words acceptable)
+- If "60 seconds" → TARGET: 150 words (±5 words acceptable)
+
+YOU MUST stay within ±5 words of the target. This is non-negotiable.
+Radio is time-sensitive. Over-running kills the buy.
+
+SCRIPT STRUCTURE:
+
+For 15-SECOND spots:
+- Hook (attention grabber): 8-10 words
+- Benefit statement: 12-15 words
+- CTA + Contact: 8-10 words
+
+For 30-SECOND spots:
+- Hook: 10-15 words
+- Problem/Benefit: 25-35 words
+- CTA + Contact: 15-20 words
+- Brand name mention: 2-3 times total
+
+For 60-SECOND spots:
+- Hook: 15-20 words
+- Problem setup: 30-40 words
+- Solution/Benefit: 40-50 words
+- Social proof/Credibility: 15-20 words (if space allows)
+- CTA + Contact: 20-25 words
+- Brand name mention: 3 times total
+
+TONE MATCHING:
+
+If Tone/Style is:
+- "Conversational": Friendly, natural, like talking to a neighbor
+- "Urgent/Promotional": Fast-paced, energetic, time-sensitive
+- "Humorous": Light, fun, memorable (humor must serve the message)
+- "Dramatic/Emotional": Storytelling, emotional connection, serious
+- "Authoritative/Expert": Confident, credible, professional
+
+OUTPUT FORMAT:
+
+You MUST use this EXACT HTML formatting structure with proper paragraph tags:
+
+<p><strong>[Company Name] - [Length] Second Radio Commercial</strong></p>
+<p><strong>TONE:</strong> [Selected Tone]</p>
+<p><strong>WORD COUNT:</strong> [Actual word count]</p>
+
+<p></p>
+<p></p>
+
+<p>[The radio script copy goes here - short, punchy sentences that sound natural when read aloud. Each major thought or sentence group should be its own paragraph. Use <strong> tags for emphasis on key words if needed.]</p>
+
+<p>[Continue script with natural paragraph breaks for readability and pacing guidance.]</p>
+
+<p>[End with strong call to action and contact information.]</p>
+
+<p></p>
+<p></p>
+
+<p><strong>DELIVERY NOTES:</strong> [Direction for voice talent about pacing, emphasis, tone changes, breath marks, or urgency. Be specific about any words that need emphasis or moments that need energy shifts.]</p>
+
+CRITICAL FORMATTING RULES:
+- Use <p> tags for ALL paragraphs (including blank lines)
+- Use <strong> tags for headers and key emphasis
+- Create paragraph breaks between major thoughts in the script
+- Two blank paragraph tags (<p></p><p></p>) before and after the main script
+- Keep sentences SHORT within paragraphs (5-10 words each)
+- Make it easy for voice talent to read and breathe naturally
+
+Remember: A great radio commercial is instantly understandable on first listen, creates a mental image, and makes the listener remember ONE thing: your primary benefit.`
+};
+
+/**
  * Multi-Section Brochure Template (Advanced)
  * This is a special template that generates content section by section
  * with context awareness and progress persistence.
@@ -1477,6 +1712,7 @@ export const ALL_TEMPLATES: Template[] = [
   PRINT_MEDIA_TEMPLATE,
   WEBSITE_COPY_SEO_TEMPLATE,
   PRESS_RELEASE_TEMPLATE,
+  RADIO_COMMERCIAL_TEMPLATE,
   BROCHURE_MULTI_SECTION_TEMPLATE,
 ];
 
