@@ -13,7 +13,7 @@
 
 import Image from 'next/image';
 import { 
-  Sparkles, 
+  Wand2,
   Palette, 
   FileText, 
   FolderOpen,
@@ -26,9 +26,9 @@ import { Button } from '@/components/ui/button';
  */
 const features = [
   {
-    icon: Sparkles,
-    title: 'Copy Optimizer Suite',
-    description: 'Refine your copy in real time. Shift tone, expand ideas, tighten language, or completely rewrite for different channels – all while maintaining your unique voice.',
+    icon: Wand2,
+    title: 'Copy Optimizer Tools',
+    description: 'Refine your copy in real time. Shift tone, expand ideas, tighten language, generate headlines, or completely rewrite for different channels – all while maintaining your unique voice.',
   },
   {
     icon: FileText,
@@ -248,6 +248,34 @@ export default function HomePage() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          VIDEO SECTION
+          Streamable video embed with responsive container
+          ======================================================================== */}
+      <section className="py-24 md:py-32 bg-[#F5F5F7]">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
+              Discover How To Write To Win
+            </h2>
+          </div>
+          
+          {/* Video Container */}
+          <div className="max-w-[800px] mx-auto">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                src="https://streamable.com/e/wy9jxv"
+                frameBorder="0"
+                allowFullScreen
+                className="absolute top-0 left-0 w-full h-full rounded-xl shadow-2xl"
+                allow="autoplay; fullscreen"
+              />
+            </div>
           </div>
         </div>
       </section>
