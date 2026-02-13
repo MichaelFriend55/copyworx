@@ -345,33 +345,40 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
     const isEmailSequence = templateId === 'email-sequence-kickoff';
     const isBrandMessaging = templateId === 'brand-messaging-framework';
     const isCaseStudy = templateId === 'case-study';
+    const isLaunchCampaign = templateId === 'product-launch-campaign';
     const emailCount = isEmailSequence ? getEmailSequenceCount(formData) : 1;
     
     // Dynamic timeout based on template complexity:
+    // - Product launch campaign: 240s (generates 15-25 pieces across channels)
     // - Email sequences: 30s base + 20s per email
     // - Brand messaging framework: 120s (produces ~2000-3000 word strategic doc)
     // - Case study: 90s (detailed format can produce ~1500 words with sections)
     // - Standard templates: 30s
-    const timeoutMs = isBrandMessaging
-      ? 120000
-      : isCaseStudy
-        ? 90000
-        : isEmailSequence 
-          ? 30000 + (emailCount * 20000)
-          : 30000;
+    const timeoutMs = isLaunchCampaign
+      ? 240000
+      : isBrandMessaging
+        ? 120000
+        : isCaseStudy
+          ? 90000
+          : isEmailSequence 
+            ? 30000 + (emailCount * 20000)
+            : 30000;
     
     // Dynamic max tokens based on template output size:
+    // - Product launch campaign: 16000 (15-25 pieces with full body copy)
     // - Email sequences: ~1200 tokens per email, cap at 8000
     // - Brand messaging framework: 8000 (5-layer strategic framework)
     // - Case study: 6000 (detailed format with multiple sections)
     // - Standard templates: 4000
-    const maxTokens = isBrandMessaging
-      ? 8000
-      : isCaseStudy
-        ? 6000
-        : isEmailSequence 
-          ? Math.min(8000, 1200 * emailCount)
-          : 4000;
+    const maxTokens = isLaunchCampaign
+      ? 16000
+      : isBrandMessaging
+        ? 8000
+        : isCaseStudy
+          ? 6000
+          : isEmailSequence 
+            ? Math.min(8000, 1200 * emailCount)
+            : 4000;
     
     logger.log(`📧 Template: ${templateId}, Emails: ${emailCount}, Timeout: ${timeoutMs}ms, MaxTokens: ${maxTokens}`);
 

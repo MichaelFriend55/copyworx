@@ -86,7 +86,7 @@ const DIFFICULTY_COLORS: Record<Template['complexity'], string> = {
  * These include multi-section templates and strategic framework templates.
  */
 function isCustomComponentTemplate(templateId: string): boolean {
-  return templateId === 'brochure-multi-section' || templateId === 'brand-messaging-framework' || templateId === 'linkedin-thought-leadership';
+  return templateId === 'brochure-multi-section' || templateId === 'brand-messaging-framework' || templateId === 'linkedin-thought-leadership' || templateId === 'product-launch-campaign';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -289,7 +289,8 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
                           'flex flex-col',
                           // Highlight custom-component templates
                           isCustomComponentTemplate(template.id) && template.id === 'brochure-multi-section' && 'border-purple-200 bg-purple-50/30',
-                          isCustomComponentTemplate(template.id) && template.id === 'brand-messaging-framework' && 'border-amber-200 bg-amber-50/30'
+                          isCustomComponentTemplate(template.id) && template.id === 'brand-messaging-framework' && 'border-amber-200 bg-amber-50/30',
+                          isCustomComponentTemplate(template.id) && template.id === 'product-launch-campaign' && 'border-orange-200 bg-orange-50/30'
                         )}
                       >
                         {/* Category Badge */}
@@ -302,6 +303,11 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
                           {template.id === 'brand-messaging-framework' && (
                             <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
                               Strategic
+                            </span>
+                          )}
+                          {template.id === 'product-launch-campaign' && (
+                            <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">
+                              Campaign
                             </span>
                           )}
                           <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full capitalize">

@@ -27,6 +27,7 @@ import { BrochureMultiSectionTemplate } from '@/components/workspace/BrochureMul
 import { BrandMessagingTemplate } from '@/components/workspace/BrandMessagingTemplate';
 import { CaseStudyTemplate } from '@/components/workspace/CaseStudyTemplate';
 import { LinkedInThoughtLeadershipTemplate } from '@/components/workspace/LinkedInThoughtLeadershipTemplate';
+import { ProductLaunchCampaignTemplate } from '@/components/workspace/ProductLaunchCampaignTemplate';
 import { CustomTemplateSlideOut } from '@/components/workspace/CustomTemplateSlideOut';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
@@ -301,7 +302,8 @@ export default function WorkspacePage() {
        selectedTemplate.id !== 'brochure-multi-section' && 
        selectedTemplate.id !== 'brand-messaging-framework' && 
        selectedTemplate.id !== 'case-study' && 
-       selectedTemplate.id !== 'linkedin-thought-leadership' && (
+       selectedTemplate.id !== 'linkedin-thought-leadership' && 
+       selectedTemplate.id !== 'product-launch-campaign' && (
         <TemplateFormSlideOut
           isOpen={isTemplateFormOpen}
           onClose={handleCloseTemplateForm}
@@ -364,6 +366,21 @@ export default function WorkspacePage() {
           width={550}
         >
           <LinkedInThoughtLeadershipTemplate
+            onClose={handleCloseTemplateForm}
+            editor={editor}
+            activeProject={activeProject}
+          />
+        </CustomTemplateSlideOut>
+      )}
+      
+      {/* Product Launch Campaign Template - Custom slide-out */}
+      {selectedTemplateId === 'product-launch-campaign' && (
+        <CustomTemplateSlideOut
+          isOpen={isTemplateFormOpen}
+          onClose={handleCloseTemplateForm}
+          width={680}
+        >
+          <ProductLaunchCampaignTemplate
             onClose={handleCloseTemplateForm}
             editor={editor}
             activeProject={activeProject}

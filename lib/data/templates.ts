@@ -2144,6 +2144,28 @@ export const BROCHURE_MULTI_SECTION_TEMPLATE: Template = {
 };
 
 /**
+ * Product Launch Campaign Template
+ * 
+ * Multi-channel coordinated launch messaging across email, social media,
+ * landing pages, and paid advertising for three campaign phases.
+ * 
+ * Note: This template uses a custom component (ProductLaunchCampaignTemplate)
+ * rather than the standard TemplateFormSlideOut. The template definition
+ * here is for display in the TemplatesModal.
+ */
+export const PRODUCT_LAUNCH_CAMPAIGN_TEMPLATE: Template = {
+  id: 'product-launch-campaign',
+  name: 'Product Launch Campaign',
+  category: 'strategy',
+  description: 'Multi-channel coordinated launch messaging — email sequences, social posts, landing pages & ads across pre-launch, launch day, and post-launch phases.',
+  complexity: 'Advanced',
+  estimatedTime: '25-40 min',
+  icon: 'Rocket',
+  fields: [], // Custom component handles its own wizard form
+  systemPrompt: '', // Custom component builds its own prompt
+};
+
+/**
  * All available templates
  * Add new templates to this array to make them available
  */
@@ -2162,6 +2184,7 @@ export const ALL_TEMPLATES: Template[] = [
   CASE_STUDY_TEMPLATE,
   BRAND_MESSAGING_FRAMEWORK_TEMPLATE,
   BROCHURE_MULTI_SECTION_TEMPLATE,
+  PRODUCT_LAUNCH_CAMPAIGN_TEMPLATE,
 ];
 
 /**
