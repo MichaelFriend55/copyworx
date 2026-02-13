@@ -2038,6 +2038,44 @@ TONE MATCHING:
 };
 
 /**
+ * LinkedIn Thought Leadership Post Template (Custom Component / Social)
+ * 
+ * Generates high-engagement LinkedIn posts that build professional credibility.
+ * Supports five structure types optimized for LinkedIn's algorithm and UX:
+ * 
+ * Structures:
+ *   1. Story-Based — Personal experience → insight → application (most popular)
+ *   2. Contrarian Take — Challenge conventional wisdom with evidence
+ *   3. Lesson Learned — Mistake/failure → lesson → practical advice
+ *   4. Framework/System — Results → step-by-step system → engagement
+ *   5. Observation + Insight — Pattern noticed → implications → takeaway
+ * 
+ * Features:
+ *   - Structure selector with descriptions and best-use guidance
+ *   - Hook preview (first 210 characters — LinkedIn "see more" cutoff)
+ *   - Real-time character counter with color-coded thresholds
+ *   - Quality validation (hook length, line breaks, engagement question)
+ *   - LinkedIn-optimized formatting (short paragraphs, scannable rhythm)
+ *   - Copy to clipboard with formatting preserved
+ *   - Brand voice and persona integration
+ * 
+ * Uses a custom component (LinkedInThoughtLeadershipTemplate) rather than
+ * the standard TemplateGenerator for hook preview, character counting,
+ * quality validation, and LinkedIn-specific formatting controls.
+ */
+export const LINKEDIN_THOUGHT_LEADERSHIP_TEMPLATE: Template = {
+  id: 'linkedin-thought-leadership',
+  name: 'LinkedIn Thought Leadership Post',
+  category: 'social',
+  description: 'Create high-engagement LinkedIn posts that build professional credibility, attract clients, and grow your network.',
+  complexity: 'Beginner',
+  estimatedTime: '5-10 min',
+  icon: 'Lightbulb',
+  fields: [], // Fields are defined in the custom component
+  systemPrompt: '', // System prompt is built dynamically by the custom component
+};
+
+/**
  * Case Study Template (Advanced / Collateral)
  * 
  * Generates professional B2B case studies that prove ROI through
@@ -2116,6 +2154,7 @@ export const ALL_TEMPLATES: Template[] = [
   EMAIL_SEQUENCE_KICKOFF_TEMPLATE,
   SOCIAL_MEDIA_AD_COPY_TEMPLATE,
   SOCIAL_MEDIA_POST_TEMPLATE,
+  LINKEDIN_THOUGHT_LEADERSHIP_TEMPLATE,
   PRINT_MEDIA_TEMPLATE,
   WEBSITE_COPY_SEO_TEMPLATE,
   PRESS_RELEASE_TEMPLATE,

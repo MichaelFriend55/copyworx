@@ -77,6 +77,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Newspaper: LucideIcons.Newspaper,
   Radio: LucideIcons.Radio,
   BookOpen: LucideIcons.BookOpen,
+  Lightbulb: LucideIcons.Lightbulb,
   Share2,
 };
 

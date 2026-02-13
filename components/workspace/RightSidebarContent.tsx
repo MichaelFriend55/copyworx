@@ -36,7 +36,7 @@ import { toolRequiresDocument } from '@/lib/tools/toolRegistry';
  * Template IDs that use custom components instead of the standard TemplateGenerator.
  * Each gets its own rendering branch in the component below.
  */
-const CUSTOM_COMPONENT_TEMPLATE_IDS = ['brochure-multi-section', 'brand-messaging-framework', 'case-study'];
+const CUSTOM_COMPONENT_TEMPLATE_IDS = ['brochure-multi-section', 'brand-messaging-framework', 'case-study', 'linkedin-thought-leadership'];
 import { cn } from '@/lib/utils';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';

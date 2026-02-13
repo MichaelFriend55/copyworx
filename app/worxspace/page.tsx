@@ -26,6 +26,7 @@ import { OptimizeComparisonModal } from '@/components/workspace/OptimizeComparis
 import { BrochureMultiSectionTemplate } from '@/components/workspace/BrochureMultiSectionTemplate';
 import { BrandMessagingTemplate } from '@/components/workspace/BrandMessagingTemplate';
 import { CaseStudyTemplate } from '@/components/workspace/CaseStudyTemplate';
+import { LinkedInThoughtLeadershipTemplate } from '@/components/workspace/LinkedInThoughtLeadershipTemplate';
 import { CustomTemplateSlideOut } from '@/components/workspace/CustomTemplateSlideOut';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
@@ -299,7 +300,8 @@ export default function WorkspacePage() {
       {selectedTemplate && 
        selectedTemplate.id !== 'brochure-multi-section' && 
        selectedTemplate.id !== 'brand-messaging-framework' && 
-       selectedTemplate.id !== 'case-study' && (
+       selectedTemplate.id !== 'case-study' && 
+       selectedTemplate.id !== 'linkedin-thought-leadership' && (
         <TemplateFormSlideOut
           isOpen={isTemplateFormOpen}
           onClose={handleCloseTemplateForm}
@@ -347,6 +349,21 @@ export default function WorkspacePage() {
           width={650}
         >
           <CaseStudyTemplate
+            onClose={handleCloseTemplateForm}
+            editor={editor}
+            activeProject={activeProject}
+          />
+        </CustomTemplateSlideOut>
+      )}
+      
+      {/* LinkedIn Thought Leadership Template - Custom slide-out */}
+      {selectedTemplateId === 'linkedin-thought-leadership' && (
+        <CustomTemplateSlideOut
+          isOpen={isTemplateFormOpen}
+          onClose={handleCloseTemplateForm}
+          width={550}
+        >
+          <LinkedInThoughtLeadershipTemplate
             onClose={handleCloseTemplateForm}
             editor={editor}
             activeProject={activeProject}

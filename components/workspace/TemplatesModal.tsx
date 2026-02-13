@@ -86,7 +86,7 @@ const DIFFICULTY_COLORS: Record<Template['complexity'], string> = {
  * These include multi-section templates and strategic framework templates.
  */
 function isCustomComponentTemplate(templateId: string): boolean {
-  return templateId === 'brochure-multi-section' || templateId === 'brand-messaging-framework';
+  return templateId === 'brochure-multi-section' || templateId === 'brand-messaging-framework' || templateId === 'linkedin-thought-leadership';
 }
 
 // ═══════════════════════════════════════════════════════════
