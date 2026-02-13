@@ -1679,6 +1679,281 @@ Remember: A great radio commercial is instantly understandable on first listen, 
 };
 
 /**
+ * Sales Page Template
+ * Generates long-form sales page copy using AIDA, PAS, or FAB framework
+ * 
+ * Framework selection drives fundamentally different output structures:
+ * - AIDA: Attention → Interest → Desire → Action
+ * - PAS: Problem → Agitate → Solution
+ * - FAB: Features → Advantages → Benefits
+ */
+export const SALES_PAGE_TEMPLATE: Template = {
+  id: 'sales-page',
+  name: 'Sales Page',
+  category: 'landing-page',
+  description: 'Generate a long-form sales page using proven copywriting frameworks (AIDA, PAS, or FAB).',
+  complexity: 'Intermediate',
+  estimatedTime: '15-25 min',
+  icon: 'LayoutTemplate',
+  fields: [
+    {
+      id: 'framework',
+      label: 'Copywriting Framework',
+      type: 'select',
+      helperText: 'AIDA = hook then build desire (product launches). PAS = pain-focused persuasion (problem-aware audiences). FAB = feature-to-benefit logic (technical/B2B buyers).',
+      required: true,
+      options: [
+        'AIDA (Attention → Interest → Desire → Action)',
+        'PAS (Problem → Agitate → Solution)',
+        'FAB (Features → Advantages → Benefits)',
+      ],
+    },
+    {
+      id: 'productService',
+      label: 'Product/Service Name',
+      type: 'text',
+      placeholder: 'e.g., CopyWorx Studio',
+      helperText: 'The name of what you are selling',
+      required: true,
+      maxLength: 100,
+    },
+    {
+      id: 'productDescription',
+      label: 'Product/Service Description',
+      type: 'textarea',
+      placeholder: 'e.g., An AI-powered copywriting platform built by a 40-year copywriting veteran, designed specifically for professional copywriters...',
+      helperText: 'Describe what the product or service does (2-3 sentences)',
+      required: true,
+      maxLength: 500,
+    },
+    {
+      id: 'targetAudience',
+      label: 'Target Audience',
+      type: 'textarea',
+      placeholder: 'e.g., Professional copywriters and content strategists who handle multiple clients and need to produce high-quality work faster...',
+      helperText: 'Who is this sales page for? Be specific about their role, situation, and mindset',
+      required: true,
+      maxLength: 400,
+    },
+    {
+      id: 'mainProblem',
+      label: 'Main Problem Solved',
+      type: 'textarea',
+      placeholder: 'e.g., Professional copywriters spend 60% of their time on repetitive first drafts instead of high-value strategic work...',
+      helperText: 'The core pain point your product addresses',
+      required: true,
+      maxLength: 400,
+    },
+    {
+      id: 'keyFeatures',
+      label: 'Key Features (3-5)',
+      type: 'textarea',
+      placeholder: 'e.g.,\n- Framework-based templates (AIDA, PAS, FAB)\n- 8-tone Tone Shifter for selected text\n- Multi-client brand voice management\n- AI Copy Optimizer with professional feedback',
+      helperText: 'List your top features, one per line',
+      required: true,
+      maxLength: 600,
+    },
+    {
+      id: 'mainBenefit',
+      label: 'Main Benefit',
+      type: 'textarea',
+      placeholder: 'e.g., Complete copywriting projects 5x faster while maintaining the professional quality your clients expect',
+      helperText: 'The primary outcome or transformation your customer gets',
+      required: true,
+      maxLength: 300,
+    },
+    {
+      id: 'uniqueValueProp',
+      label: 'Unique Value Proposition',
+      type: 'textarea',
+      placeholder: 'e.g., Built by a 40-year copywriting veteran — not engineers guessing what copywriters need. Professional frameworks, not generic prompts.',
+      helperText: 'What makes you different from competitors?',
+      required: true,
+      maxLength: 400,
+    },
+    {
+      id: 'socialProof',
+      label: 'Social Proof / Stats',
+      type: 'textarea',
+      placeholder: 'e.g., Used by 2,000+ professional copywriters. 5x faster project completion. 4.9/5 satisfaction rating.',
+      helperText: 'Testimonials, stats, client logos, or credibility markers (optional)',
+      required: false,
+      maxLength: 400,
+    },
+    {
+      id: 'callToAction',
+      label: 'Call-to-Action',
+      type: 'text',
+      placeholder: 'e.g., Start Your 7-Day Free Trial',
+      helperText: 'The primary action you want visitors to take',
+      required: true,
+      maxLength: 100,
+    },
+    {
+      id: 'tone',
+      label: 'Tone',
+      type: 'select',
+      helperText: 'What tone should the sales page convey?',
+      required: true,
+      options: [
+        'Professional',
+        'Conversational',
+        'Bold & Confident',
+        'Empathetic',
+        'Authoritative',
+        'Urgent',
+        'Inspirational',
+        'Other (specify)',
+      ],
+    },
+  ],
+  systemPrompt: `You are a world-class direct-response copywriter with 40 years of experience writing high-converting sales pages. You have deep expertise in AIDA, PAS, and FAB frameworks and know exactly how each one structures persuasion differently.
+
+Generate a complete, long-form sales page based on the following details:
+
+FRAMEWORK: {framework}
+PRODUCT/SERVICE: {productService}
+DESCRIPTION: {productDescription}
+TARGET AUDIENCE: {targetAudience}
+MAIN PROBLEM: {mainProblem}
+KEY FEATURES: {keyFeatures}
+MAIN BENEFIT: {mainBenefit}
+UNIQUE VALUE PROPOSITION: {uniqueValueProp}
+SOCIAL PROOF: {socialProof}
+CALL-TO-ACTION: {callToAction}
+TONE: {tone}
+
+{brandVoiceInstructions}
+{personaInstructions}
+
+═══════════════════════════════════════════════════
+FRAMEWORK-SPECIFIC STRUCTURE — FOLLOW EXACTLY:
+═══════════════════════════════════════════════════
+
+IF FRAMEWORK CONTAINS "AIDA":
+
+Write the sales page using the AIDA (Attention → Interest → Desire → Action) framework:
+
+1. ATTENTION — Headline + Subheadline
+   - Write a bold, attention-grabbing headline (8-12 words) that stops the reader cold
+   - Follow with a subheadline that expands the hook and creates curiosity
+   - Use a pattern interrupt, surprising stat, or provocative question
+
+2. INTEREST — Problem + Solution Overview (2-3 paragraphs)
+   - Demonstrate you understand the reader's world — describe their situation vividly
+   - Introduce the problem they face with specific, relatable details
+   - Transition to the solution concept (not the product yet — the idea)
+   - Build engagement by making them nod along
+
+3. DESIRE — Benefits, Proof, and Transformation (3-4 paragraphs + bullet list)
+   - Now introduce the product as the vehicle for transformation
+   - Lead with the main benefit, then expand into supporting benefits
+   - Use the key features as proof points (feature → benefit format)
+   - Weave in social proof, stats, or testimonials naturally
+   - Paint a vivid picture of life AFTER using the product
+   - Use the unique value proposition to differentiate from alternatives
+
+4. ACTION — Clear CTA with Urgency (1-2 paragraphs)
+   - Restate the main benefit in one powerful sentence
+   - Present the call-to-action clearly and confidently
+   - Add a reason to act now (urgency, scarcity, or risk reversal)
+   - Close with a final trust-building statement
+
+---
+
+IF FRAMEWORK CONTAINS "PAS":
+
+Write the sales page using the PAS (Problem → Agitate → Solution) framework:
+
+1. PROBLEM — Identify the Core Pain (2-3 paragraphs)
+   - Open with a headline that names the problem directly — make the reader feel seen
+   - Describe the problem in vivid, specific detail
+   - Use "you" language — put the reader in the center of the problem
+   - Show you understand the REAL problem, not just the surface symptom
+
+2. AGITATE — Amplify the Consequences (2-3 paragraphs)
+   - Make the problem HURT. What happens if they do nothing?
+   - Describe the compounding costs: time, money, reputation, opportunity
+   - Use specific scenarios the reader will recognize from their own experience
+   - Build emotional tension — frustration, fear of falling behind, missed potential
+   - Show how competitors or alternatives make it worse, not better
+   - This section should make the reader desperate for a solution
+
+3. SOLUTION — Present the Product as Relief (3-4 paragraphs + bullet list)
+   - Release the tension. Present your product as the answer they have been looking for
+   - Lead with the transformation, then explain HOW the product delivers it
+   - Use key features as proof that the solution actually works
+   - Differentiate with the unique value proposition — why THIS solution, not others
+   - Include social proof as evidence the solution delivers results
+   - End with a risk reversal or guarantee to eliminate remaining objections
+
+4. CTA — Action-Driven Close (1-2 paragraphs)
+   - Restate the cost of inaction vs. the benefit of acting
+   - Present the call-to-action with clarity and confidence
+   - Make the next step simple and obvious
+
+---
+
+IF FRAMEWORK CONTAINS "FAB":
+
+Write the sales page using the FAB (Features → Advantages → Benefits) framework:
+
+1. HERO SECTION — Lead with Primary Benefit
+   - Write a benefit-driven headline that communicates the end result
+   - Subheadline should reinforce the value proposition
+   - 1-2 paragraphs establishing what the product does and why it matters
+
+2. FEATURES → ADVANTAGES → BENEFITS (structured section)
+   - For EACH key feature, write a FAB chain:
+     * FEATURE: What the product has or does (technical/concrete)
+     * ADVANTAGE: What that feature enables (the "which means...")
+     * BENEFIT: The emotional or business outcome (the "so you can...")
+   - Present 3-5 FAB chains, each as its own mini-section with a heading
+   - Each chain should build on the previous one
+   - Use the unique value proposition to frame WHY these features matter more than competitors'
+
+3. PROOF SECTION — Build Credibility (1-2 paragraphs)
+   - Weave in social proof, stats, or testimonials
+   - Connect proof back to the benefits already established
+   - Address the implicit question: "Does this actually work?"
+
+4. CTA — Value-Focused Close (1-2 paragraphs)
+   - Summarize the total value (features + advantages + benefits in one statement)
+   - Present the call-to-action as the logical next step
+   - Use a confidence-building final line (guarantee, risk reversal, or trust statement)
+
+═══════════════════════════════════════════════════
+CRITICAL WRITING RULES — ALL FRAMEWORKS:
+═══════════════════════════════════════════════════
+
+COPYWRITING QUALITY:
+- Write like a veteran copywriter, NOT like an AI. No generic filler.
+- Every sentence must earn its place — cut anything that does not persuade.
+- Use specific language over vague claims ("5x faster" not "much faster").
+- Vary sentence length for rhythm: short punches. Then longer sentences that build momentum and carry the reader forward.
+- Use active voice. Address the reader as "you." Make it personal.
+- No clichés: avoid "game-changer," "revolutionary," "cutting-edge," "seamless."
+- Match the specified tone throughout — it should feel consistent, not forced.
+
+STRUCTURE:
+- Target 500-800 words total.
+- Use clear section breaks. Each framework section should be visually distinct.
+- Use bullet lists for features/benefits where appropriate.
+- Headings should be compelling, not just descriptive.
+
+IF social proof was not provided, do NOT fabricate testimonials or stats. Instead, use credibility-building language like "built by...", "designed for...", or "trusted by professionals who...".
+
+TONE MATCHING:
+- Professional: Confident, credible, no-nonsense
+- Conversational: Friendly, relatable, like talking to a colleague
+- Bold & Confident: Direct, assertive, unapologetic
+- Empathetic: Understanding, warm, "I have been there" energy
+- Authoritative: Expert-level, data-informed, commanding respect
+- Urgent: Time-sensitive, action-oriented, "act now" pressure
+- Inspirational: Aspirational, possibility-focused, motivating`,
+};
+
+/**
  * Multi-Section Brochure Template (Advanced)
  * This is a special template that generates content section by section
  * with context awareness and progress persistence.
@@ -1706,6 +1981,7 @@ export const BROCHURE_MULTI_SECTION_TEMPLATE: Template = {
 export const ALL_TEMPLATES: Template[] = [
   SALES_EMAIL_TEMPLATE,
   LANDING_PAGE_HERO_TEMPLATE,
+  SALES_PAGE_TEMPLATE,
   EMAIL_SEQUENCE_KICKOFF_TEMPLATE,
   SOCIAL_MEDIA_AD_COPY_TEMPLATE,
   SOCIAL_MEDIA_POST_TEMPLATE,
