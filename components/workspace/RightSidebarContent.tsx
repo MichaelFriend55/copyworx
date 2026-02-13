@@ -20,7 +20,6 @@ import React, { useCallback, useMemo } from 'react';
 import { Sparkles, Layers } from 'lucide-react';
 import { ToneShifter } from '@/components/workspace/ToneShifter';
 import { TemplateGenerator } from '@/components/workspace/TemplateGenerator';
-import { BrochureMultiSectionTemplate } from '@/components/workspace/BrochureMultiSectionTemplate';
 import { ExpandTool } from '@/components/workspace/ExpandTool';
 import { ShortenTool } from '@/components/workspace/ShortenTool';
 import { RewriteChannelTool } from '@/components/workspace/RewriteChannelTool';
@@ -34,9 +33,10 @@ import { getTemplateById } from '@/lib/data/templates';
 import { toolRequiresDocument } from '@/lib/tools/toolRegistry';
 
 /**
- * Multi-section template IDs that use special components
+ * Template IDs that use custom components instead of the standard TemplateGenerator.
+ * Each gets its own rendering branch in the component below.
  */
-const MULTI_SECTION_TEMPLATE_IDS = ['brochure-multi-section'];
+const CUSTOM_COMPONENT_TEMPLATE_IDS = ['brochure-multi-section', 'brand-messaging-framework'];
 import { cn } from '@/lib/utils';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
@@ -133,23 +133,13 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
   // PRIORITY 1: Check for templates FIRST (before showing empty tool state)
   // Check the template ID directly to avoid race conditions with memos
   
-  // Special case: Multi-Section Template (e.g., Brochure)
-  // Check the ID directly - don't rely on memoized values
-  if (selectedTemplateId && MULTI_SECTION_TEMPLATE_IDS.includes(selectedTemplateId)) {
-    return (
-      <div className="h-full">
-        <BrochureMultiSectionTemplate
-          onClose={handleTemplateCancel}
-          editor={editor}
-          activeProject={activeProject}
-        />
-      </div>
-    );
-  }
-
+  // Note: Custom component templates (brochure-multi-section, brand-messaging-framework)
+  // are rendered in dedicated slide-out panels in the workspace page, not in the right sidebar.
+  // This is because they need more width than the 320px right sidebar provides.
+  
   // Special case: Regular Template Generator
-  // Only render if we have a template ID and it's NOT a multi-section template
-  if (selectedTemplateId && !MULTI_SECTION_TEMPLATE_IDS.includes(selectedTemplateId)) {
+  // Only render if we have a template ID and it's NOT a custom-component template
+  if (selectedTemplateId && !CUSTOM_COMPONENT_TEMPLATE_IDS.includes(selectedTemplateId)) {
     const selectedTemplate = getTemplateById(selectedTemplateId);
     if (selectedTemplate) {
       return (

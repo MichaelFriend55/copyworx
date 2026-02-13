@@ -20,6 +20,7 @@ export type TemplateCategory =
   | 'collateral'
   | 'website'
   | 'blog'
+  | 'strategy'
   | 'other';
 
 /**

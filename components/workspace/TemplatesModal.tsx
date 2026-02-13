@@ -19,6 +19,7 @@ import {
   CheckCircle,
   Clock,
   FileEdit,
+  Compass,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
@@ -47,6 +48,7 @@ interface TemplatesModalProps {
 
 const CATEGORIES: { id: ModalTemplateCategory; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'all', label: 'All', icon: Sparkles },
+  { id: 'strategy', label: 'Strategy', icon: Compass },
   { id: 'email', label: 'Email', icon: Mail },
   { id: 'advertising', label: 'Ads', icon: Megaphone },
   { id: 'landing-page', label: 'Landing', icon: Layout },
@@ -66,11 +68,11 @@ const DIFFICULTY_COLORS: Record<Template['complexity'], string> = {
 };
 
 /**
- * Check if a template is a multi-section advanced template
- * These templates use a special component instead of the standard form
+ * Check if a template uses a custom component instead of the standard form.
+ * These include multi-section templates and strategic framework templates.
  */
-function isMultiSectionTemplate(templateId: string): boolean {
-  return templateId === 'brochure-multi-section';
+function isCustomComponentTemplate(templateId: string): boolean {
+  return templateId === 'brochure-multi-section' || templateId === 'brand-messaging-framework';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -135,9 +137,9 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
     clearBrandAlignmentResult();
     setIsGeneratingTemplate(false);
     
-    // For multi-section templates, ALWAYS create a new document
+    // For custom-component templates, ALWAYS create a new document
     // This ensures the template has a clean document to work with
-    if (template.id === 'brochure-multi-section') {
+    if (isCustomComponentTemplate(template.id)) {
       const store = useWorkspaceStore.getState();
       const { activeProjectId } = store;
       
@@ -271,15 +273,21 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
                           'group relative bg-white border border-[#d2d2d7] rounded-xl p-5',
                           'transition-all duration-200 hover:shadow-lg hover:border-[#007AFF]',
                           'flex flex-col',
-                          // Highlight multi-section templates
-                          isMultiSectionTemplate(template.id) && 'border-purple-200 bg-purple-50/30'
+                          // Highlight custom-component templates
+                          isCustomComponentTemplate(template.id) && template.id === 'brochure-multi-section' && 'border-purple-200 bg-purple-50/30',
+                          isCustomComponentTemplate(template.id) && template.id === 'brand-messaging-framework' && 'border-amber-200 bg-amber-50/30'
                         )}
                       >
                         {/* Category Badge */}
                         <div className="absolute top-4 right-4 flex gap-1.5">
-                          {isMultiSectionTemplate(template.id) && (
+                          {template.id === 'brochure-multi-section' && (
                             <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
                               Multi-Section
+                            </span>
+                          )}
+                          {template.id === 'brand-messaging-framework' && (
+                            <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
+                              Strategic
                             </span>
                           )}
                           <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full capitalize">

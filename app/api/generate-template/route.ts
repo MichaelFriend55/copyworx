@@ -325,31 +325,46 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
     // 4. Build prompt from template
     // ------------------------------------------------------------------------
     
-    const prompt = buildPrompt(
-      template.systemPrompt,
-      formData,
-      applyBrandVoice && brandVoice ? brandVoice : undefined,
-      persona || undefined
-    );
+    // Check for system prompt override (used by custom component templates
+    // like Brand Messaging Framework that build their own prompts)
+    const systemPromptOverride = formData._systemPromptOverride;
+    
+    const prompt = systemPromptOverride
+      ? systemPromptOverride
+      : buildPrompt(
+          template.systemPrompt,
+          formData,
+          applyBrandVoice && brandVoice ? brandVoice : undefined,
+          persona || undefined
+        );
 
     // ------------------------------------------------------------------------
     // 5. Calculate dynamic timeout and tokens for email sequences
     // ------------------------------------------------------------------------
     
     const isEmailSequence = templateId === 'email-sequence-kickoff';
+    const isBrandMessaging = templateId === 'brand-messaging-framework';
     const emailCount = isEmailSequence ? getEmailSequenceCount(formData) : 1;
     
-    // Dynamic timeout: 30s base + 20s per email for sequences
-    // 3 emails = 90s, 5 emails = 130s, 7 emails = 170s
-    const timeoutMs = isEmailSequence 
-      ? 30000 + (emailCount * 20000)
-      : 30000;
+    // Dynamic timeout based on template complexity:
+    // - Email sequences: 30s base + 20s per email
+    // - Brand messaging framework: 120s (produces ~2000-3000 word strategic doc)
+    // - Standard templates: 30s
+    const timeoutMs = isBrandMessaging
+      ? 120000
+      : isEmailSequence 
+        ? 30000 + (emailCount * 20000)
+        : 30000;
     
-    // Dynamic max tokens: ~1000 tokens per email (subject + body + formatting)
-    // Base 4000 for single content, scale up for sequences
-    const maxTokens = isEmailSequence 
-      ? Math.min(8000, 1200 * emailCount) // Cap at 8000 tokens
-      : 4000;
+    // Dynamic max tokens based on template output size:
+    // - Email sequences: ~1200 tokens per email, cap at 8000
+    // - Brand messaging framework: 8000 (5-layer strategic framework)
+    // - Standard templates: 4000
+    const maxTokens = isBrandMessaging
+      ? 8000
+      : isEmailSequence 
+        ? Math.min(8000, 1200 * emailCount)
+        : 4000;
     
     logger.log(`📧 Template: ${templateId}, Emails: ${emailCount}, Timeout: ${timeoutMs}ms, MaxTokens: ${maxTokens}`);
 

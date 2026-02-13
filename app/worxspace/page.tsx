@@ -23,6 +23,9 @@ import { TemplateFormSlideOut, TEMPLATE_FORM_PANEL_ID } from '@/components/works
 import { BrandVoiceSlideOut, BRAND_VOICE_PANEL_ID } from '@/components/workspace/BrandVoiceSlideOut';
 import { PersonasSlideOut, PERSONAS_PANEL_ID } from '@/components/workspace/PersonasSlideOut';
 import { OptimizeComparisonModal } from '@/components/workspace/OptimizeComparisonModal';
+import { BrochureMultiSectionTemplate } from '@/components/workspace/BrochureMultiSectionTemplate';
+import { BrandMessagingTemplate } from '@/components/workspace/BrandMessagingTemplate';
+import { CustomTemplateSlideOut } from '@/components/workspace/CustomTemplateSlideOut';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { getTemplateById } from '@/lib/data/templates';
@@ -291,8 +294,10 @@ export default function WorkspacePage() {
       </WorkspaceLayout>
       
       {/* Template Form Slide-Out - Opens from right when template selected */}
-      {/* Only render for non-multi-section templates - multi-section templates use RightSidebarContent */}
-      {selectedTemplate && selectedTemplate.id !== 'brochure-multi-section' && (
+      {/* Only render for regular templates - custom templates have their own slide-outs */}
+      {selectedTemplate && 
+       selectedTemplate.id !== 'brochure-multi-section' && 
+       selectedTemplate.id !== 'brand-messaging-framework' && (
         <TemplateFormSlideOut
           isOpen={isTemplateFormOpen}
           onClose={handleCloseTemplateForm}
@@ -300,6 +305,36 @@ export default function WorkspacePage() {
           editor={editor}
           activeProject={activeProject}
         />
+      )}
+      
+      {/* Brochure Multi-Section Template - Custom slide-out */}
+      {selectedTemplateId === 'brochure-multi-section' && (
+        <CustomTemplateSlideOut
+          isOpen={isTemplateFormOpen}
+          onClose={handleCloseTemplateForm}
+          width={600}
+        >
+          <BrochureMultiSectionTemplate
+            onClose={handleCloseTemplateForm}
+            editor={editor}
+            activeProject={activeProject}
+          />
+        </CustomTemplateSlideOut>
+      )}
+      
+      {/* Brand Messaging Framework Template - Custom slide-out */}
+      {selectedTemplateId === 'brand-messaging-framework' && (
+        <CustomTemplateSlideOut
+          isOpen={isTemplateFormOpen}
+          onClose={handleCloseTemplateForm}
+          width={650}
+        >
+          <BrandMessagingTemplate
+            onClose={handleCloseTemplateForm}
+            editor={editor}
+            activeProject={activeProject}
+          />
+        </CustomTemplateSlideOut>
       )}
       
       {/* Brand Voice Slide-Out - Opens from right when brand voice tool clicked */}

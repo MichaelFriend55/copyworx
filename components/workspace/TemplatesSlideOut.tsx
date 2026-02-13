@@ -27,6 +27,7 @@ import {
   Globe,
   Clock,
   Sparkles,
+  Compass,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -52,6 +53,12 @@ export const TEMPLATES_PANEL_ID = 'templates-browser';
  * Maps user-facing category names to template categories
  */
 const CATEGORY_GROUPS = [
+  {
+    id: 'strategy',
+    name: 'Strategy',
+    icon: Compass,
+    categories: ['strategy' as TemplateCategory],
+  },
   {
     id: 'marketing-sales',
     name: 'Marketing & Sales',
@@ -96,6 +103,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileText: LucideIcons.FileText,
   FileEdit,
   Globe,
+  Compass,
 };
 
 /**
@@ -366,19 +374,22 @@ export function TemplatesSlideOut({
       clearBrandAlignmentResult();
       setIsGeneratingTemplate(false);
       
-      // For multi-section templates, ALWAYS create a new document
-      const isMultiSectionTemplate = template.id === 'brochure-multi-section';
+      // Custom-component templates use their own component in the right sidebar
+      // instead of the standard TemplateFormSlideOut
+      const isCustomComponentTemplate =
+        template.id === 'brochure-multi-section' ||
+        template.id === 'brand-messaging-framework';
       
-      if (isMultiSectionTemplate) {
+      if (isCustomComponentTemplate) {
         const store = useWorkspaceStore.getState();
         const { activeProjectId } = store;
         
-        // Always create a new document for multi-section templates
+        // Always create a new document for custom-component templates
         if (activeProjectId) {
           try {
             const newDoc = await createDocument(activeProjectId, template.name);
             store.setActiveDocumentId(newDoc.id);
-            logger.log('✅ Created new document for multi-section template:', {
+            logger.log('✅ Created new document for custom template:', {
               id: newDoc.id,
               title: newDoc.title
             });
@@ -396,15 +407,10 @@ export function TemplatesSlideOut({
       // Clear active tool (template generator is special - not a tool in the sidebar)
       setActiveTool(null);
       
-      if (isMultiSectionTemplate) {
-        // Open right sidebar to show multi-section template component (NOT the slideout)
-        setRightSidebarOpen(true);
-        logger.log('✅ Multi-section template: Opening right sidebar (NOT slideout)');
-      } else {
-        // Open template form slide-out from right for regular templates
-        openSlideOut(TEMPLATE_FORM_PANEL_ID);
-        logger.log('✅ Regular template: Opening slideout panel');
-      }
+      // Open template form slide-out from right for ALL templates
+      // (custom templates now use dedicated slide-outs instead of right sidebar)
+      openSlideOut(TEMPLATE_FORM_PANEL_ID);
+      logger.log('✅ Opening template slideout panel for', template.id);
       
       // NOTE: Do NOT close the templates browser - allow both panels to be open
     },

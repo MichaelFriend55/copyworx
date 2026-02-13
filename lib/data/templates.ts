@@ -1954,6 +1954,28 @@ TONE MATCHING:
 };
 
 /**
+ * Brand Messaging Framework Template (Advanced / Strategy)
+ * 
+ * Generates a complete strategic messaging framework:
+ * Foundation (Mission/Vision/Values), Positioning, Messaging Pillars,
+ * Audience-Specific Messaging, and Expression Layer (Taglines/Pitches).
+ * 
+ * This is a high-value strategic deliverable ($10k-$50k professional equivalent).
+ * Uses a custom component (BrandMessagingTemplate) with multi-step wizard.
+ */
+export const BRAND_MESSAGING_FRAMEWORK_TEMPLATE: Template = {
+  id: 'brand-messaging-framework',
+  name: 'Brand Messaging Framework',
+  category: 'strategy',
+  description: 'Generate a complete strategic messaging framework — mission, positioning, pillars, audience messaging, taglines & elevator pitches.',
+  complexity: 'Advanced',
+  estimatedTime: '20-30 min',
+  icon: 'Compass',
+  fields: [], // Fields are defined in the custom component wizard
+  systemPrompt: '', // System prompt is built dynamically by the custom component
+};
+
+/**
  * Multi-Section Brochure Template (Advanced)
  * This is a special template that generates content section by section
  * with context awareness and progress persistence.
@@ -1989,6 +2011,7 @@ export const ALL_TEMPLATES: Template[] = [
   WEBSITE_COPY_SEO_TEMPLATE,
   PRESS_RELEASE_TEMPLATE,
   RADIO_COMMERCIAL_TEMPLATE,
+  BRAND_MESSAGING_FRAMEWORK_TEMPLATE,
   BROCHURE_MULTI_SECTION_TEMPLATE,
 ];
 
