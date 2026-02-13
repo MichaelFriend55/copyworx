@@ -22,15 +22,17 @@ export const metadata: Metadata = {
 };
 
 /**
- * Template categories
+ * Template categories — matches professional copywriter taxonomy
+ * Order: Strategy (premium) → Email → Website → Advertising → Social → Collateral
  */
 const categories = [
-  { id: 'all', name: 'All Templates', count: 50 },
-  { id: 'email', name: 'Email', count: 12 },
-  { id: 'landing', name: 'Landing Pages', count: 8 },
-  { id: 'social', name: 'Social Media', count: 15 },
-  { id: 'ads', name: 'Advertising', count: 10 },
-  { id: 'website', name: 'Website Copy', count: 5 },
+  { id: 'all', name: 'All Templates', count: 12 },
+  { id: 'strategy', name: 'Strategy & Foundations', count: 1 },
+  { id: 'email', name: 'Email', count: 2 },
+  { id: 'website', name: 'Website & Landing Pages', count: 3 },
+  { id: 'advertising', name: 'Advertising', count: 3 },
+  { id: 'social', name: 'Social Media', count: 1 },
+  { id: 'collateral', name: 'Collateral & Marketing', count: 2 },
 ] as const;
 
 /**

@@ -11,17 +11,41 @@ import type { Persona } from './project';
 
 /**
  * Template category types
+ * 
+ * 6 clear categories matching professional copywriter taxonomy:
+ * - strategy: Strategic messaging and brand foundation work ($10k+ deliverables)
+ * - email: Email marketing and outreach (sequences, cold email, newsletters)
+ * - website: Web copy and conversion-focused pages (sales pages, landing pages, SEO)
+ * - advertising: Paid media campaigns and ad copy (social ads, Google, print, radio)
+ * - social: Organic social media content only — NOT paid ads
+ * - collateral: Marketing materials and sales enablement (case studies, press releases)
  */
 export type TemplateCategory =
-  | 'email'
-  | 'advertising'
-  | 'landing-page'
-  | 'social'
-  | 'collateral'
-  | 'website'
-  | 'blog'
   | 'strategy'
-  | 'other';
+  | 'email'
+  | 'website'
+  | 'advertising'
+  | 'social'
+  | 'collateral';
+
+/**
+ * Template category configuration
+ * Full metadata for each category used by navigation components
+ */
+export interface TemplateCategoryConfig {
+  /** URL-safe identifier matching TemplateCategory */
+  id: TemplateCategory;
+  /** Human-readable category name */
+  name: string;
+  /** Brief description shown in tooltips/subtitles */
+  description: string;
+  /** Lucide-react icon name */
+  icon: string;
+  /** Display order (1 = first) */
+  order: number;
+  /** Whether this is a premium/strategic category */
+  isPremium?: boolean;
+}
 
 /**
  * Field types for template forms

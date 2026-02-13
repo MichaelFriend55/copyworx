@@ -23,20 +23,21 @@ import {
   Megaphone,
   Target,
   MessageSquare,
-  FileEdit,
+  FileText,
   Globe,
   Clock,
   Sparkles,
-  Compass,
+  Share2,
+  Info,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { ALL_TEMPLATES } from '@/lib/data/templates';
+import { ALL_TEMPLATES, getCategoriesSorted } from '@/lib/data/templates';
 import { createDocument } from '@/lib/storage/unified-storage';
-import type { Template, TemplateCategory } from '@/lib/types/template';
+import type { Template, TemplateCategory, TemplateCategoryConfig } from '@/lib/types/template';
 import { useWorkspaceStore, useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
 import { useSlideOutActions as useGlobalSlideOutActions } from '@/lib/stores/slideOutStore';
 import { TEMPLATE_FORM_PANEL_ID } from './TemplateFormSlideOut';
@@ -49,47 +50,16 @@ import { TEMPLATE_FORM_PANEL_ID } from './TemplateFormSlideOut';
 export const TEMPLATES_PANEL_ID = 'templates-browser';
 
 /**
- * Category grouping configuration
- * Maps user-facing category names to template categories
+ * Icon mapping from category icon names to Lucide components
  */
-const CATEGORY_GROUPS = [
-  {
-    id: 'strategy',
-    name: 'Strategy',
-    icon: Compass,
-    categories: ['strategy' as TemplateCategory],
-  },
-  {
-    id: 'marketing-sales',
-    name: 'Marketing & Sales',
-    icon: Megaphone,
-    categories: ['advertising' as TemplateCategory],
-  },
-  {
-    id: 'website-digital',
-    name: 'Website & Digital',
-    icon: Globe,
-    categories: ['website' as TemplateCategory, 'landing-page' as TemplateCategory],
-  },
-  {
-    id: 'creative-editorial',
-    name: 'Creative & Editorial',
-    icon: FileEdit,
-    categories: ['collateral' as TemplateCategory],
-  },
-  {
-    id: 'social-media',
-    name: 'Social Media',
-    icon: MessageSquare,
-    categories: ['social' as TemplateCategory],
-  },
-  {
-    id: 'email-marketing',
-    name: 'Email Marketing',
-    icon: Mail,
-    categories: ['email' as TemplateCategory],
-  },
-];
+const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
+  Target,
+  Mail,
+  Globe,
+  Megaphone,
+  Share2,
+  FileText,
+};
 
 /**
  * Icon mapping from template icon names to Lucide icons
@@ -100,10 +70,27 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Mail,
   Megaphone,
   MessageSquare,
-  FileText: LucideIcons.FileText,
-  FileEdit,
+  FileText,
   Globe,
-  Compass,
+  Compass: LucideIcons.Compass,
+  LayoutTemplate: LucideIcons.LayoutTemplate,
+  Newspaper: LucideIcons.Newspaper,
+  Radio: LucideIcons.Radio,
+  BookOpen: LucideIcons.BookOpen,
+  Share2,
+};
+
+/**
+ * Category help text for tooltips
+ * Explains the distinction between similar categories
+ */
+const CATEGORY_HELP: Record<TemplateCategory, string> = {
+  strategy: 'Foundation messaging that feeds all other categories',
+  email: 'One-to-one or list-based email communication',
+  website: 'Lives on your domain (sales pages, product pages)',
+  advertising: 'You\'re paying to show this (Facebook Ads, Google Ads)',
+  social: 'Organic posts you publish for free (Instagram, LinkedIn)',
+  collateral: 'Downloadable/printable materials (case studies, one-pagers)',
 };
 
 /**
@@ -128,10 +115,13 @@ interface TemplatesSlideOutProps {
 }
 
 interface TemplateCategoryGroupProps {
-  /** Category group configuration */
-  group: typeof CATEGORY_GROUPS[number];
+  /** Category configuration from TEMPLATE_CATEGORIES */
+  category: TemplateCategoryConfig;
+
+  /** Resolved Lucide icon component for the category */
+  icon: LucideIcon;
   
-  /** Templates in this group */
+  /** Templates in this category */
   templates: Template[];
   
   /** Whether section is expanded */
@@ -229,45 +219,94 @@ function TemplateCard({
 
 /**
  * Template Category Group Component
+ * 
+ * Renders a collapsible category section with:
+ * - Icon + name header with template count badge
+ * - Tooltip description on hover
+ * - Premium accent for Strategy category
+ * - Expandable template card list
  */
 function TemplateCategoryGroup({
-  group,
+  category,
+  icon: GroupIcon,
   templates,
   isExpanded,
   onToggle,
   onSelectTemplate,
   selectedTemplateId,
 }: TemplateCategoryGroupProps) {
-  const GroupIcon = group.icon;
-
   if (templates.length === 0) return null;
+
+  const isPremium = category.isPremium === true;
+  const helpText = CATEGORY_HELP[category.id];
 
   return (
     <div className="space-y-2">
       {/* Section Header */}
       <button
         onClick={onToggle}
+        title={helpText}
         className={cn(
-          'w-full flex items-center justify-between p-2 rounded-lg',
-          'hover:bg-gray-100 transition-colors duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+          'w-full flex items-center justify-between p-2.5 rounded-lg',
+          'transition-colors duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+          isPremium
+            ? 'hover:bg-amber-50 border border-transparent hover:border-amber-200'
+            : 'hover:bg-gray-100'
         )}
       >
-        <div className="flex items-center gap-2">
-          <GroupIcon className="w-4 h-4 text-apple-blue" />
-          <span className="font-semibold text-sm text-gray-900">
-            {group.name}
+        <div className="flex items-center gap-2.5">
+          <GroupIcon
+            className={cn(
+              'w-4.5 h-4.5',
+              isPremium ? 'text-amber-500' : 'text-ink-500'
+            )}
+          />
+          <span
+            className={cn(
+              'font-semibold text-sm uppercase tracking-wide',
+              isPremium ? 'text-amber-700' : 'text-ink-600'
+            )}
+          >
+            {category.name}
           </span>
-          <span className="text-xs text-gray-500">
-            ({templates.length})
+          {/* Template count badge */}
+          <span
+            className={cn(
+              'px-2 py-0.5 text-xs rounded-full font-medium',
+              isPremium
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-ink-100 text-ink-600'
+            )}
+          >
+            {templates.length}
           </span>
+          {/* Premium badge */}
+          {isPremium && (
+            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-white rounded">
+              Pro
+            </span>
+          )}
         </div>
-        {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-gray-400" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-        )}
+        <div className="flex items-center gap-1.5">
+          {/* Info icon for tooltip */}
+          <span title={helpText}>
+            <Info className="w-3.5 h-3.5 text-gray-300 hover:text-gray-500 transition-colors" />
+          </span>
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          )}
+        </div>
       </button>
+
+      {/* Category description (shown when expanded) */}
+      {isExpanded && (
+        <p className="text-[11px] text-gray-400 px-2.5 -mt-1 mb-1 italic">
+          {category.description}
+        </p>
+      )}
 
       {/* Templates List */}
       {isExpanded && (
@@ -334,15 +373,16 @@ export function TemplatesSlideOut({
     );
   }, [searchQuery]);
 
-  // Group templates by category
+  // Get sorted category configs and group templates by category
+  const sortedCategories = useMemo(() => getCategoriesSorted(), []);
+
   const groupedTemplates = useMemo(() => {
-    return CATEGORY_GROUPS.map((group) => ({
-      group,
-      templates: filteredTemplates.filter((template) =>
-        group.categories.includes(template.category)
-      ),
+    return sortedCategories.map((cat) => ({
+      category: cat,
+      icon: CATEGORY_ICON_MAP[cat.icon] || Sparkles,
+      templates: filteredTemplates.filter((t) => t.category === cat.id),
     }));
-  }, [filteredTemplates]);
+  }, [filteredTemplates, sortedCategories]);
 
   // Toggle category expansion - TRUE ACCORDION BEHAVIOR
   // Opening one category closes all others (only one can be open at a time)
@@ -453,19 +493,20 @@ export function TemplatesSlideOut({
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p className="text-xs text-blue-700">
             <strong>Tip:</strong> Select a template to open the form in the right panel.
-            Both panels can be open at the same time!
+            Hover category names for help choosing the right one.
           </p>
         </div>
 
         {/* Category groups */}
         <div className="space-y-3">
-          {groupedTemplates.map(({ group, templates }) => (
+          {groupedTemplates.map(({ category, icon, templates }) => (
             <TemplateCategoryGroup
-              key={group.id}
-              group={group}
+              key={category.id}
+              category={category}
+              icon={icon}
               templates={templates}
-              isExpanded={expandedGroups.has(group.id)}
-              onToggle={() => toggleGroup(group.id)}
+              isExpanded={expandedGroups.has(category.id)}
+              onToggle={() => toggleGroup(category.id)}
               onSelectTemplate={handleSelectTemplate}
               selectedTemplateId={selectedTemplateId}
             />

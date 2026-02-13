@@ -6,7 +6,91 @@
  * To add a new template, simply add it to the ALL_TEMPLATES array.
  */
 
-import { Template, TemplateCategory } from '@/lib/types/template';
+import { Template, TemplateCategory, TemplateCategoryConfig } from '@/lib/types/template';
+
+// ═══════════════════════════════════════════════════════════
+// TEMPLATE CATEGORIES
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Template category configuration
+ * 
+ * Professional copywriter taxonomy with 6 clear categories.
+ * Order reflects value hierarchy: strategic work first, then tactical categories.
+ * 
+ * Key distinctions:
+ * - ADVERTISING = paid media (you pay to show it)
+ * - SOCIAL = organic posts (you publish for free)
+ * - WEBSITE = lives on your domain (sales pages, product pages)
+ * - COLLATERAL = downloadable/printable materials
+ * - STRATEGY = foundation messaging that feeds all other categories
+ */
+export const TEMPLATE_CATEGORIES: Record<string, TemplateCategoryConfig> = {
+  STRATEGY: {
+    id: 'strategy',
+    name: 'Strategy & Foundations',
+    description: 'Strategic messaging and brand foundation work',
+    icon: 'Target',
+    order: 1,
+    isPremium: true,
+  },
+  EMAIL: {
+    id: 'email',
+    name: 'Email',
+    description: 'Email marketing and outreach',
+    icon: 'Mail',
+    order: 2,
+  },
+  WEBSITE: {
+    id: 'website',
+    name: 'Website & Landing Pages',
+    description: 'Web copy and conversion-focused pages',
+    icon: 'Globe',
+    order: 3,
+  },
+  ADVERTISING: {
+    id: 'advertising',
+    name: 'Advertising',
+    description: 'Paid media campaigns and ad copy',
+    icon: 'Megaphone',
+    order: 4,
+  },
+  SOCIAL: {
+    id: 'social',
+    name: 'Social Media',
+    description: 'Organic social content (not paid ads)',
+    icon: 'Share2',
+    order: 5,
+  },
+  COLLATERAL: {
+    id: 'collateral',
+    name: 'Collateral & Marketing',
+    description: 'Marketing materials and sales enablement',
+    icon: 'FileText',
+    order: 6,
+  },
+} as const;
+
+/**
+ * Get all category configs sorted by display order
+ * @returns Array of category configs sorted by order field
+ */
+export function getCategoriesSorted(): TemplateCategoryConfig[] {
+  return Object.values(TEMPLATE_CATEGORIES).sort((a, b) => a.order - b.order);
+}
+
+/**
+ * Get category config by category ID
+ * @param categoryId - TemplateCategory value to look up
+ * @returns Category config if found, undefined otherwise
+ */
+export function getCategoryConfig(categoryId: TemplateCategory): TemplateCategoryConfig | undefined {
+  return Object.values(TEMPLATE_CATEGORIES).find((cat) => cat.id === categoryId);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TEMPLATE DEFINITIONS
+// ═══════════════════════════════════════════════════════════
 
 /**
  * Sales Email Template
@@ -112,7 +196,7 @@ Format as a complete email with subject line.`
 export const LANDING_PAGE_HERO_TEMPLATE: Template = {
   id: 'landing-page-hero',
   name: 'Landing Page Hero',
-  category: 'landing-page',
+  category: 'website',
   description: 'Create a powerful above-the-fold hero section that communicates your value proposition.',
   complexity: 'Intermediate',
   estimatedTime: '15-20 min',
@@ -1690,7 +1774,7 @@ Remember: A great radio commercial is instantly understandable on first listen, 
 export const SALES_PAGE_TEMPLATE: Template = {
   id: 'sales-page',
   name: 'Sales Page',
-  category: 'landing-page',
+  category: 'website',
   description: 'Generate a long-form sales page using proven copywriting frameworks (AIDA, PAS, or FAB).',
   complexity: 'Intermediate',
   estimatedTime: '15-25 min',

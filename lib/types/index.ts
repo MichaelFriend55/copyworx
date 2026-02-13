@@ -25,6 +25,7 @@ export type { BrandVoice, BrandAlignmentResult, BrandAlignmentRequest, BrandAlig
 export type { 
   Template as TemplateDefinition,
   TemplateCategory,
+  TemplateCategoryConfig,
   TemplateField,
   TemplateFormData,
   TemplateGenerationRequest,

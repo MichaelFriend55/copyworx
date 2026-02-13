@@ -12,21 +12,21 @@ import {
   Sparkles,
   Mail,
   Megaphone,
-  Layout,
   MessageSquare,
   FileText,
   Globe,
   CheckCircle,
   Clock,
+  Target,
+  Share2,
   FileEdit,
-  Compass,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore, useUIActions, useTemplateActions } from '@/lib/stores/workspaceStore';
 import { createDocument } from '@/lib/storage/unified-storage';
-import { ALL_TEMPLATES } from '@/lib/data/templates';
+import { ALL_TEMPLATES, getCategoriesSorted } from '@/lib/data/templates';
 import type { Template, TemplateCategory as ImportedTemplateCategory } from '@/lib/types/template';
 
 // ═══════════════════════════════════════════════════════════
@@ -46,15 +46,29 @@ interface TemplatesModalProps {
 // CATEGORY CONFIGURATION
 // ═══════════════════════════════════════════════════════════
 
+/**
+ * Icon mapping for modal category tabs
+ */
+const MODAL_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Target,
+  Mail,
+  Globe,
+  Megaphone,
+  Share2,
+  FileText,
+};
+
+/**
+ * Build modal categories from the canonical TEMPLATE_CATEGORIES source
+ * Prepends an "All" option and maps icons to components
+ */
 const CATEGORIES: { id: ModalTemplateCategory; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'all', label: 'All', icon: Sparkles },
-  { id: 'strategy', label: 'Strategy', icon: Compass },
-  { id: 'email', label: 'Email', icon: Mail },
-  { id: 'advertising', label: 'Ads', icon: Megaphone },
-  { id: 'landing-page', label: 'Landing', icon: Layout },
-  { id: 'social', label: 'Social', icon: MessageSquare },
-  { id: 'collateral', label: 'Collateral', icon: FileText },
-  { id: 'website', label: 'Website', icon: Globe },
+  ...getCategoriesSorted().map((cat) => ({
+    id: cat.id as ModalTemplateCategory,
+    label: cat.name.split('&')[0].trim(), // Short label: "Strategy", "Email", etc.
+    icon: MODAL_ICON_MAP[cat.icon] || Sparkles,
+  })),
 ];
 
 // ═══════════════════════════════════════════════════════════
