@@ -2038,6 +2038,31 @@ TONE MATCHING:
 };
 
 /**
+ * Case Study Template (Advanced / Collateral)
+ * 
+ * Generates professional B2B case studies that prove ROI through
+ * customer success stories. Uses a custom component (CaseStudyTemplate)
+ * with structure selection, format selection, and metric input fields.
+ * 
+ * Structure options: PSR, STAR, Before-After-Bridge, Executive Summary
+ * Format options: One-Page, Detailed, Slide Deck
+ * 
+ * Professional case studies cost $2,000-$5,000 each — this template
+ * delivers client-ready output with minimal editing.
+ */
+export const CASE_STUDY_TEMPLATE: Template = {
+  id: 'case-study',
+  name: 'Case Study',
+  category: 'collateral',
+  description: 'Generate professional B2B case studies that prove ROI through customer success stories — PSR, STAR, Before-After-Bridge, or Executive Summary format.',
+  complexity: 'Advanced',
+  estimatedTime: '15-25 min',
+  icon: 'Award',
+  fields: [], // Fields are defined in the custom component
+  systemPrompt: '', // System prompt is built dynamically by the custom component
+};
+
+/**
  * Brand Messaging Framework Template (Advanced / Strategy)
  * 
  * Generates a complete strategic messaging framework:
@@ -2095,6 +2120,7 @@ export const ALL_TEMPLATES: Template[] = [
   WEBSITE_COPY_SEO_TEMPLATE,
   PRESS_RELEASE_TEMPLATE,
   RADIO_COMMERCIAL_TEMPLATE,
+  CASE_STUDY_TEMPLATE,
   BRAND_MESSAGING_FRAMEWORK_TEMPLATE,
   BROCHURE_MULTI_SECTION_TEMPLATE,
 ];

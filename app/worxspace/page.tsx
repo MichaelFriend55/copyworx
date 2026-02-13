@@ -25,6 +25,7 @@ import { PersonasSlideOut, PERSONAS_PANEL_ID } from '@/components/workspace/Pers
 import { OptimizeComparisonModal } from '@/components/workspace/OptimizeComparisonModal';
 import { BrochureMultiSectionTemplate } from '@/components/workspace/BrochureMultiSectionTemplate';
 import { BrandMessagingTemplate } from '@/components/workspace/BrandMessagingTemplate';
+import { CaseStudyTemplate } from '@/components/workspace/CaseStudyTemplate';
 import { CustomTemplateSlideOut } from '@/components/workspace/CustomTemplateSlideOut';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
@@ -297,7 +298,8 @@ export default function WorkspacePage() {
       {/* Only render for regular templates - custom templates have their own slide-outs */}
       {selectedTemplate && 
        selectedTemplate.id !== 'brochure-multi-section' && 
-       selectedTemplate.id !== 'brand-messaging-framework' && (
+       selectedTemplate.id !== 'brand-messaging-framework' && 
+       selectedTemplate.id !== 'case-study' && (
         <TemplateFormSlideOut
           isOpen={isTemplateFormOpen}
           onClose={handleCloseTemplateForm}
@@ -330,6 +332,21 @@ export default function WorkspacePage() {
           width={650}
         >
           <BrandMessagingTemplate
+            onClose={handleCloseTemplateForm}
+            editor={editor}
+            activeProject={activeProject}
+          />
+        </CustomTemplateSlideOut>
+      )}
+      
+      {/* Case Study Template - Custom slide-out */}
+      {selectedTemplateId === 'case-study' && (
+        <CustomTemplateSlideOut
+          isOpen={isTemplateFormOpen}
+          onClose={handleCloseTemplateForm}
+          width={650}
+        >
+          <CaseStudyTemplate
             onClose={handleCloseTemplateForm}
             editor={editor}
             activeProject={activeProject}
