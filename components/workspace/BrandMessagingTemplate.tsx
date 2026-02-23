@@ -477,7 +477,7 @@ export function BrandMessagingTemplate({
   // Use brand voice name as placeholder (not pre-filled value)
   const brandNamePlaceholder = activeProject?.brandVoice?.brandName 
     ? `e.g., ${activeProject.brandVoice.brandName}`
-    : 'e.g., CopyWorx Studio';
+    : 'e.g., ABC Company Brand Voice';
 
   // ─── Load personas ───
   useEffect(() => {
