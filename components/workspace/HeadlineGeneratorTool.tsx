@@ -467,20 +467,30 @@ export function HeadlineGeneratorTool({ className }: HeadlineGeneratorToolProps)
       {/* ═══ Form Fields (visible once channel is selected) ═══ */}
       {selectedChannel && (
         <>
-          {/* Character Guidance (informational) */}
-          <div className="flex flex-col gap-1.5 px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg">
-            <FieldLabel>Character Guidance</FieldLabel>
-            <p className="text-sm text-gray-700 font-medium">
-              {characterGuidance}
-            </p>
+          {/* Character Guidance (editable — pre-filled for presets, blank for Custom) */}
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel required>Character Guidance</FieldLabel>
+            <input
+              type="text"
+              value={characterGuidance}
+              onChange={(e) => setCharacterGuidance(e.target.value)}
+              disabled={headlineLoading}
+              className="w-full px-3 py-2 text-sm border border-apple-gray-light rounded-lg bg-white text-apple-text-dark placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent disabled:opacity-50"
+              placeholder="e.g. 40-50 characters (mobile preview)"
+            />
           </div>
 
-          {/* Viewing Context (informational) */}
-          <div className="flex flex-col gap-1.5 px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg">
-            <FieldLabel>Viewing Context</FieldLabel>
-            <p className="text-sm text-gray-700 font-medium">
-              {viewingContext}
-            </p>
+          {/* Viewing Context (editable — pre-filled for presets, blank for Custom) */}
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel required>Viewing Context</FieldLabel>
+            <input
+              type="text"
+              value={viewingContext}
+              onChange={(e) => setViewingContext(e.target.value)}
+              disabled={headlineLoading}
+              className="w-full px-3 py-2 text-sm border border-apple-gray-light rounded-lg bg-white text-apple-text-dark placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent disabled:opacity-50"
+              placeholder="e.g. Inbox competition — must stand out in crowded inbox"
+            />
           </div>
 
           {/* What You're Promoting */}
