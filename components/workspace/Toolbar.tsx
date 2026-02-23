@@ -83,6 +83,7 @@ function FormatButton({
 }: FormatButtonProps) {
   return (
     <button
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       disabled={disabled}
       title={title}
@@ -200,7 +201,6 @@ function FontFamilyDropdown({ editor }: { editor: Editor | null }) {
 
   const handleSetFont = (fontFamily: string) => {
     if (fontFamily === '') {
-      // Unset font family to use default
       editor.chain().focus().unsetFontFamily().run();
     } else {
       editor.chain().focus().setFontFamily(fontFamily).run();
@@ -211,6 +211,7 @@ function FontFamilyDropdown({ editor }: { editor: Editor | null }) {
   return (
     <div className="relative">
       <button
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'px-2 h-8 rounded-md',
@@ -232,6 +233,7 @@ function FontFamilyDropdown({ editor }: { editor: Editor | null }) {
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-10"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => setIsOpen(false)}
           />
 
@@ -240,6 +242,7 @@ function FontFamilyDropdown({ editor }: { editor: Editor | null }) {
             {FONT_FAMILIES.map((font) => (
               <button
                 key={font.label}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSetFont(font.value)}
                 className={cn(
                   'w-full px-4 py-2 text-left text-sm',
@@ -275,7 +278,6 @@ function FontSizeDropdown({ editor }: { editor: Editor | null }) {
 
   const handleSetSize = (size: string) => {
     if (size === '16px') {
-      // 16px is the default, so unset to use default
       editor.chain().focus().unsetFontSize().run();
     } else {
       editor.chain().focus().setFontSize(size).run();
@@ -286,6 +288,7 @@ function FontSizeDropdown({ editor }: { editor: Editor | null }) {
   return (
     <div className="relative">
       <button
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'px-2 h-8 rounded-md',
@@ -307,6 +310,7 @@ function FontSizeDropdown({ editor }: { editor: Editor | null }) {
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-10"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => setIsOpen(false)}
           />
 
@@ -315,6 +319,7 @@ function FontSizeDropdown({ editor }: { editor: Editor | null }) {
             {FONT_SIZES.map((size) => (
               <button
                 key={size.value}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSetSize(size.value)}
                 className={cn(
                   'w-full px-4 py-2 text-left text-sm',
@@ -348,29 +353,22 @@ function TextColorDropdown({ editor }: { editor: Editor | null }) {
 
   const handleSetColor = (color: string) => {
     if (color === '#000000') {
-      // Black is default, unset to use default
       editor.chain().focus().unsetColor().run();
     } else {
       editor.chain().focus().setColor(color).run();
     }
     setIsOpen(false);
-    // Use setTimeout to ensure dropdown closes before clearing selection
-    setTimeout(() => {
-      editor.commands.blur();
-    }, 50);
   };
 
   const handleRemoveColor = () => {
     editor.chain().focus().unsetColor().run();
     setIsOpen(false);
-    setTimeout(() => {
-      editor.commands.blur();
-    }, 50);
   };
 
   return (
     <div className="relative">
       <button
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'w-8 h-8 rounded-md',
@@ -395,6 +393,7 @@ function TextColorDropdown({ editor }: { editor: Editor | null }) {
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-10"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => setIsOpen(false)}
           />
 
@@ -407,6 +406,7 @@ function TextColorDropdown({ editor }: { editor: Editor | null }) {
               {TEXT_COLORS.map((color) => (
                 <button
                   key={color.value}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSetColor(color.value)}
                   className={cn(
                     'w-7 h-7 rounded-md',
@@ -423,6 +423,7 @@ function TextColorDropdown({ editor }: { editor: Editor | null }) {
 
             {/* Remove color button */}
             <button
+              onMouseDown={(e) => e.preventDefault()}
               onClick={handleRemoveColor}
               className={cn(
                 'w-full px-2 py-1.5 rounded-md',
@@ -457,23 +458,17 @@ function HighlightColorDropdown({ editor }: { editor: Editor | null }) {
   const handleSetHighlight = (color: string) => {
     editor.chain().focus().setHighlight({ color }).run();
     setIsOpen(false);
-    // Use setTimeout to ensure dropdown closes before clearing selection
-    setTimeout(() => {
-      editor.commands.blur();
-    }, 50);
   };
 
   const handleRemoveHighlight = () => {
     editor.chain().focus().unsetHighlight().run();
     setIsOpen(false);
-    setTimeout(() => {
-      editor.commands.blur();
-    }, 50);
   };
 
   return (
     <div className="relative">
       <button
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'w-8 h-8 rounded-md',
@@ -500,6 +495,7 @@ function HighlightColorDropdown({ editor }: { editor: Editor | null }) {
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-10"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => setIsOpen(false)}
           />
 
@@ -512,6 +508,7 @@ function HighlightColorDropdown({ editor }: { editor: Editor | null }) {
               {HIGHLIGHT_COLORS.map((color) => (
                 <button
                   key={color.value}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSetHighlight(color.value)}
                   className={cn(
                     'w-7 h-7 rounded-md border border-gray-200',
@@ -528,6 +525,7 @@ function HighlightColorDropdown({ editor }: { editor: Editor | null }) {
 
             {/* Remove highlight button */}
             <button
+              onMouseDown={(e) => e.preventDefault()}
               onClick={handleRemoveHighlight}
               className={cn(
                 'w-full px-2 py-1.5 rounded-md',
@@ -585,6 +583,7 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
   return (
     <div className="relative">
       <button
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'px-3 h-8 rounded-md',
@@ -604,6 +603,7 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-10"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => setIsOpen(false)}
           />
 
@@ -612,6 +612,7 @@ function TextStyleDropdown({ editor }: { editor: Editor | null }) {
             {styles.map((style) => (
               <button
                 key={style.label}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   style.action();
                   setIsOpen(false);
@@ -1529,6 +1530,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
         <div className="w-px h-6 bg-gray-200 mx-1" />
 
         <button
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor?.chain().focus().undo().run()}
           disabled={!editor?.can().undo()}
           className={cn(
@@ -1544,6 +1546,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
         </button>
 
         <button
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor?.chain().focus().redo().run()}
           disabled={!editor?.can().redo()}
           className={cn(
@@ -1562,8 +1565,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
       {/* Center section - Formatting controls */}
       <div className={cn(
         'flex-1 flex items-center justify-center gap-0.5 sm:gap-1 transition-all duration-300',
-        'min-w-0', // Allow shrinking but maintain space for content
-        'overflow-hidden' // Prevent overflow from pushing other sections
+        'min-w-0'
       )}>
         {hasActiveDocument && editor ? (
           <>
@@ -1634,9 +1636,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
             <FormatButton
               icon={<AlignLeft className="w-4 h-4" />}
               title="Align Left"
-              onClick={() =>
-                editor.chain().focus().setTextAlign('left').run()
-              }
+              onClick={() => editor.chain().focus().setTextAlign('left').run()}
               isActive={editor.isActive({ textAlign: 'left' })}
             />
 
@@ -1644,9 +1644,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
             <FormatButton
               icon={<AlignCenter className="w-4 h-4" />}
               title="Align Center"
-              onClick={() =>
-                editor.chain().focus().setTextAlign('center').run()
-              }
+              onClick={() => editor.chain().focus().setTextAlign('center').run()}
               isActive={editor.isActive({ textAlign: 'center' })}
             />
 
@@ -1654,9 +1652,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
             <FormatButton
               icon={<AlignRight className="w-4 h-4" />}
               title="Align Right"
-              onClick={() =>
-                editor.chain().focus().setTextAlign('right').run()
-              }
+              onClick={() => editor.chain().focus().setTextAlign('right').run()}
               isActive={editor.isActive({ textAlign: 'right' })}
             />
 
@@ -1674,9 +1670,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
             <FormatButton
               icon={<RemoveFormatting className="w-4 h-4" />}
               title="Clear Formatting"
-              onClick={() =>
-                editor.chain().focus().clearNodes().unsetAllMarks().run()
-              }
+              onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
             />
 
             <div className="w-px h-6 bg-gray-200 mx-2" />

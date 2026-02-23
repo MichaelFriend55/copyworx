@@ -883,6 +883,14 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           position: absolute;
         }
 
+        img.ProseMirror-separator {
+          display: inline !important;
+          border: none !important;
+          margin: 0 !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+
         .editor-zoom-container {
           will-change: transform;
         }
