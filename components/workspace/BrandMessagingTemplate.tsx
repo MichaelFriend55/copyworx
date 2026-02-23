@@ -474,10 +474,7 @@ export function BrandMessagingTemplate({
 
   const hasBrandVoice = Boolean(activeProject?.brandVoice?.brandName);
   
-  // Use brand voice name as placeholder (not pre-filled value)
-  const brandNamePlaceholder = activeProject?.brandVoice?.brandName 
-    ? `e.g., ${activeProject.brandVoice.brandName}`
-    : 'e.g., ABC Company Brand Voice';
+  const brandNamePlaceholder = 'e.g., ABC Company Brand Voice';
 
   // ─── Load personas ───
   useEffect(() => {
