@@ -90,7 +90,7 @@ export default function PricingPage() {
                   CopyWorx Studio™
                 </CardTitle>
                 <CardDescription>
-                  Professional AI copywriting toolkit
+                  Professional AI Copywriting Worxspace
                 </CardDescription>
               </CardHeader>
 
