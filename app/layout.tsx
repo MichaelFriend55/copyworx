@@ -80,7 +80,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://copyworx.app',
+    url: 'https://copyworx.io',
     title: 'CopyWorx - Professional Copywriting Tool',
     description: 'Create compelling copy that converts. AI-powered templates and tools for professional copywriters.',
     siteName: 'CopyWorx',

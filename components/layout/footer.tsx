@@ -61,7 +61,7 @@ const socialLinks = [
   { href: '#twitter', icon: Twitter, label: 'Twitter' },
   { href: '#github', icon: Github, label: 'GitHub' },
   { href: '#linkedin', icon: Linkedin, label: 'LinkedIn' },
-  { href: 'mailto:hello@copyworx.app', icon: Mail, label: 'Email' },
+  { href: 'mailto:hello@copyworx.io', icon: Mail, label: 'Email' },
 ] as const;
 
 /**
