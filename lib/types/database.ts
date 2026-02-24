@@ -267,6 +267,39 @@ export interface Database {
       };
 
       /**
+       * Users table - Stripe subscription data keyed by Clerk user ID
+       */
+      users: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_customer_id: string | null;
+          subscription_status: string;
+          subscription_end_date: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_customer_id?: string | null;
+          subscription_status?: string;
+          subscription_end_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          stripe_customer_id?: string | null;
+          subscription_status?: string;
+          subscription_end_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+
+      /**
        * User settings table - Per-user preferences
        */
       user_settings: {

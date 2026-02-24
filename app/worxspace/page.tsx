@@ -37,6 +37,7 @@ import { createDocument, getDocument } from '@/lib/storage/unified-storage';
 import { useProductTour } from '@/lib/hooks/useProductTour';
 import { shouldRedirectToSplash } from '@/lib/utils/daily-visit-tracker';
 import { logger } from '@/lib/utils/logger';
+import { toast } from 'sonner';
 import type { Editor } from '@tiptap/react';
 import type { ProjectDocument, Project } from '@/lib/types/project';
 
@@ -127,6 +128,15 @@ export default function WorkspacePage() {
       logger.log('✅ Already visited today - continuing to workspace');
     }
   }, [mounted, router]);
+  
+  // Show a welcome toast when the user returns from a successful Stripe checkout
+  useEffect(() => {
+    if (!mounted) return;
+    if (searchParams.get('subscription') === 'success') {
+      toast.success('Subscription active! Welcome to CopyWorx Studio.', { duration: 6000 });
+      router.replace('/worxspace', { scroll: false });
+    }
+  }, [mounted, searchParams, router]);
   
   // Initialize workspace
   useEffect(() => {

@@ -1,23 +1,17 @@
 /**
  * @file middleware.ts
- * @description Clerk authentication middleware for route protection (Clerk 5.x)
- * 
- * Protects all routes under /worxspace, /templates, /projects
- * Keeps marketing pages, auth pages, and API routes public
+ * @description Clerk authentication middleware with subscription gating (Clerk 5.x)
+ *
+ * Protects all routes under /worxspace, /templates, /projects.
+ * Additionally checks subscription status (stored in Clerk publicMetadata)
+ * and redirects inactive users to /pricing.
  */
 
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 /**
- * Define public routes that don't require authentication
- * 
- * Public routes:
- * - / (redirects to /home)
- * - /home (splash page)
- * - /about
- * - /pricing
- * - /sign-in, /sign-up (auth pages)
- * - /api/* (API routes - handle their own auth)
+ * Routes accessible without authentication
  */
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -30,27 +24,43 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 /**
- * Clerk middleware configuration
- * 
- * Uses clerkMiddleware with createRouteMatcher pattern (Clerk 5.x)
- * Protects all routes except those defined in isPublicRoute
+ * Routes that require an active subscription in addition to authentication.
+ * Pricing page is intentionally excluded so users can subscribe.
  */
-export default clerkMiddleware((auth, request) => {
-  // If it's not a public route, require authentication
-  if (!isPublicRoute(request)) {
-    auth().protect();
+const isSubscriptionRoute = createRouteMatcher([
+  '/worxspace(.*)',
+  '/projects(.*)',
+  '/templates(.*)',
+]);
+
+export default clerkMiddleware(async (auth, request) => {
+  if (isPublicRoute(request)) {
+    return;
+  }
+
+  const session = await auth();
+
+  if (!session.userId) {
+    return session.redirectToSignIn();
+  }
+
+  if (isSubscriptionRoute(request)) {
+    const metadata = session.sessionClaims?.metadata as
+      | { subscriptionStatus?: string }
+      | undefined;
+
+    const status = metadata?.subscriptionStatus;
+
+    if (status !== 'active') {
+      const pricingUrl = new URL('/pricing', request.url);
+      return NextResponse.redirect(pricingUrl);
+    }
   }
 });
 
-/**
- * Middleware matcher configuration
- * Specifies which routes the middleware should run on
- */
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
     '/(api|trpc)(.*)',
   ],
 };
