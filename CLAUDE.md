@@ -58,12 +58,28 @@ All AI features call Anthropic Claude via server-side API routes:
 - `/api/tone-shift` - Rewrite copy in a different tone
 - `/api/expand` / `/api/shorten` - Lengthen or condense copy
 - `/api/headline-generator` - Generate headline variations
-- `/api/generate-template` - Multi-section template generation
+- `/api/generate-template` / `/api/generate-section` - Multi-section template generation
 - `/api/brand-alignment` - Score text against brand voice
 - `/api/persona-alignment` - Score text against target persona
 - `/api/rewrite-channel` - Adapt copy for specific channels (email, social, etc.)
+- `/api/optimize-alignment` - Rewrite copy to improve brand/persona alignment
+- `/api/claude` - General Claude API proxy
+
+AI routes follow a consistent pattern: `getUserId()` → `checkUserWithinLimit()` → call Claude → log usage to Supabase. Auth and usage-limit helpers are in `lib/utils/api-auth.ts`.
 
 AI prompt templates live in `lib/prompts/`.
+
+### Database CRUD Routes
+
+`/api/db/*` routes provide Supabase CRUD for all data models:
+- `/api/db/projects`, `/api/db/documents`, `/api/db/folders` - Project data
+- `/api/db/brand-voices`, `/api/db/all-brand-voices` - Brand voice management
+- `/api/db/personas`, `/api/db/all-personas` - Persona management
+- `/api/db/snippets` - Reusable copy snippets
+- `/api/db/sync` - Client-server data sync
+- `/api/db/migrate`, `/api/db/run-migration` - Schema migrations
+
+Database migrations live in `supabase/migrations/`.
 
 ### Authentication
 
@@ -87,6 +103,7 @@ Types are in `lib/types/` with barrel export from `index.ts`:
 - **Icons**: Lucide React exclusively
 - **Toasts**: Sonner (`sonner` package)
 - **Slide-out panels**: Use `slideOutStore` for open/close state, `SlideOutPanel` component
+- **Template definitions**: `lib/data/templates.ts` is the source of truth for all template metadata
 - **Tool registration**: Tools defined in `lib/tools/toolRegistry.ts`
 - **Editor utilities**: `lib/editor-utils.ts` for TipTap helper functions; custom font-size extension in `lib/tiptap/font-size.ts`
 - **Error handling**: `lib/utils/error-handling.ts` provides `retryWithBackoff` and error formatting
