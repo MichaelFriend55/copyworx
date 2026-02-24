@@ -9,7 +9,6 @@
 import { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -69,16 +68,15 @@ export function SubscribeButton() {
   }
 
   return (
-    <Button
-      variant="amber"
-      className="w-full"
-      size="lg"
+    <button
+      type="button"
       onClick={handleSubscribe}
       disabled={loading}
+      className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#006EE6] to-[#A755F7] px-8 py-3 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:opacity-90 hover:shadow-xl active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
     >
       {loading ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" />
           Redirecting to checkout…
         </>
       ) : isSignedIn ? (
@@ -86,6 +84,6 @@ export function SubscribeButton() {
       ) : (
         'Sign up to subscribe'
       )}
-    </Button>
+    </button>
   );
 }

@@ -23,6 +23,8 @@ const badgeVariants = cva(
           'border-transparent bg-amber-100 text-amber-800 hover:bg-amber-200',
         ink:
           'border-transparent bg-ink-100 text-ink-800 hover:bg-ink-200',
+        brand:
+          'border-transparent bg-[#006EE6]/10 text-[#006EE6] hover:bg-[#006EE6]/20',
       },
     },
     defaultVariants: {
