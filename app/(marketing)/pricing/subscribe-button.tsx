@@ -11,6 +11,21 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+/**
+ * Safely parse a fetch response as JSON.
+ * Returns null if the body is not valid JSON (e.g. an HTML 404 page).
+ */
+async function safeJson<T = Record<string, unknown>>(
+  response: Response
+): Promise<T | null> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
 
 export function SubscribeButton() {
   const { isSignedIn } = useAuth();
@@ -31,14 +46,24 @@ export function SubscribeButton() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.details || 'Failed to create checkout session');
+        const data = await safeJson<{ details?: string }>(response);
+        const message =
+          data?.details || `Checkout failed (${response.status})`;
+        throw new Error(message);
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      const data = await safeJson<{ url?: string }>(response);
+
+      if (!data?.url) {
+        throw new Error('No checkout URL returned from server');
+      }
+
+      window.location.href = data.url;
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Something went wrong';
       console.error('Checkout error:', error);
+      toast.error(message);
       setLoading(false);
     }
   }
