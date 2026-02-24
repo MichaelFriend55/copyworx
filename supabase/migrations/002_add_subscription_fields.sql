@@ -38,14 +38,30 @@ CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id ON users(stripe_customer
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- Step 6: Policy — users can only read their own record
-CREATE POLICY IF NOT EXISTS "Users can read own record"
-  ON users FOR SELECT
-  USING (user_id = current_setting('request.jwt.claims', true)::json->>'sub');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'users' AND policyname = 'Users can read own record'
+  ) THEN
+    CREATE POLICY "Users can read own record"
+      ON users FOR SELECT
+      USING (user_id = current_setting('request.jwt.claims', true)::json->>'sub');
+  END IF;
+END
+$$;
 
 -- Step 7: Service role can do anything (for API routes with supabaseAdmin)
-CREATE POLICY IF NOT EXISTS "Service role full access"
-  ON users FOR ALL
-  USING (current_setting('role', true) = 'service_role');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'users' AND policyname = 'Service role full access'
+  ) THEN
+    CREATE POLICY "Service role full access"
+      ON users FOR ALL
+      USING (current_setting('role', true) = 'service_role');
+  END IF;
+END
+$$;
 
 -- ============================================================================
 -- Notes:
