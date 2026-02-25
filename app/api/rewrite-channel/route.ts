@@ -23,7 +23,7 @@ import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 /**
  * Supported channel types for copy rewriting
  */
-type ChannelType = 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'email';
+type ChannelType = 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'email' | 'blog';
 
 /**
  * Request body structure
@@ -55,7 +55,7 @@ interface ErrorResponse {
 // Constants
 // ============================================================================
 
-const VALID_CHANNELS: ChannelType[] = ['linkedin', 'twitter', 'instagram', 'facebook', 'email'];
+const VALID_CHANNELS: ChannelType[] = ['linkedin', 'twitter', 'instagram', 'facebook', 'email', 'blog'];
 
 /**
  * System prompt that establishes Claude's role and expertise
@@ -156,6 +156,22 @@ EMAIL BEST PRACTICES:
 - Strong, clear call-to-action
 - Action-oriented language
 - Remove fluff, be concise
+
+ORIGINAL COPY:`,
+
+  blog: `Transform this copy into a strategic, SEO-aware blog post that educates, engages, and converts. Expand the core ideas into a well-structured long-form article with clear sections, compelling subheadings, and a strong narrative arc. The result should feel authoritative yet accessible — the kind of post that earns bookmarks, backlinks, and shares.
+
+BLOG POST BEST PRACTICES:
+- Start with a strong hook that frames the problem or opportunity the reader cares about
+- Use descriptive H2 and H3 subheadings that work as a scannable outline
+- Write in a confident, knowledgeable tone — authoritative but not academic
+- Expand key points with concrete examples, data references, or actionable takeaways
+- Use short paragraphs (2-3 sentences max) for readability
+- Include bullet or numbered lists to break down complex ideas
+- Weave in natural transition sentences between sections
+- Close with a clear takeaway, next step, or call-to-action
+- Aim for 600-1200 words — long enough to be substantive, short enough to hold attention
+- Structure: Hook → Context → Core argument/insights → Supporting points → Conclusion/CTA
 
 ORIGINAL COPY:`,
 };

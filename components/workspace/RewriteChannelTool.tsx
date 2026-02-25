@@ -3,7 +3,7 @@
  * @description AI-powered channel-specific copy rewriting component
  * 
  * Features:
- * - Five channel options: LinkedIn, Twitter, Instagram, Facebook, Email
+ * - Six channel options: LinkedIn, Twitter, Instagram, Facebook, Email, Blog Post
  * - Platform-optimized copy rewriting
  * - Real-time loading states
  * - Result preview with insert/copy options
@@ -26,6 +26,7 @@ import {
   Instagram,
   Facebook,
   Mail,
+  FileText,
   Check, 
   X,
   Copy,
@@ -73,7 +74,7 @@ interface RewriteChannelToolProps {
 /**
  * Channel type definition
  */
-export type ChannelType = 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'email';
+export type ChannelType = 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'email' | 'blog';
 
 /**
  * Channel option configuration with icon and metadata
@@ -119,6 +120,13 @@ const CHANNEL_OPTIONS: {
     icon: Mail,
     description: 'Direct & action-oriented',
     color: 'gray',
+  },
+  {
+    value: 'blog',
+    label: 'Blog Post',
+    icon: FileText,
+    description: 'Strategic & SEO-driven',
+    color: 'emerald',
   },
 ];
 
