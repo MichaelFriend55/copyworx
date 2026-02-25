@@ -53,6 +53,9 @@ export async function GET(request: NextRequest) {
 
     // Fetch all brand voices for this user
     // Use LEFT JOIN (projects) to include brand voices without project_id
+    // FK hint required because migration 001 added projects.brand_voice_id,
+    // creating a second FK between brand_voices and projects. Without the hint
+    // PostgREST cannot resolve which relationship to follow.
     const { data: brandVoices, error } = await (supabase
       .from('brand_voices') as any)
       .select(`
@@ -66,7 +69,7 @@ export async function GET(request: NextRequest) {
         mission_statement,
         created_at,
         updated_at,
-        projects(name)
+        projects!brand_voices_project_id_fkey(name)
       `)
       .eq('user_id', userId)
       .order('brand_name', { ascending: true });

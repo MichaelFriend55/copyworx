@@ -45,15 +45,19 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   if (isSubscriptionRoute(request)) {
-    const metadata = session.sessionClaims?.metadata as
-      | { subscriptionStatus?: string }
-      | undefined;
+    const isDev = process.env.NODE_ENV === 'development';
 
-    const status = metadata?.subscriptionStatus;
+    if (!isDev) {
+      const metadata = session.sessionClaims?.metadata as
+        | { subscriptionStatus?: string }
+        | undefined;
 
-    if (status !== 'active') {
-      const pricingUrl = new URL('/pricing', request.url);
-      return NextResponse.redirect(pricingUrl);
+      const status = metadata?.subscriptionStatus;
+
+      if (status !== 'active') {
+        const pricingUrl = new URL('/pricing', request.url);
+        return NextResponse.redirect(pricingUrl);
+      }
     }
   }
 });

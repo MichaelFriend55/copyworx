@@ -109,19 +109,19 @@ export const TOOLS: ToolConfig[] = [
   // MY BRAND & AUDIENCE
   // ═══════════════════════════════════════════════════════════
   {
-    id: 'personas',
-    name: 'Personas',
-    icon: Users,
-    section: 'brand',
-    description: 'Target audience profiles',
-    requiresDocument: false,
-  },
-  {
     id: 'brand-voice',
     name: 'Brand Voice',
     icon: Volume2,
     section: 'brand',
     description: 'Brand tone & style guidelines',
+    requiresDocument: false,
+  },
+  {
+    id: 'personas',
+    name: 'Personas',
+    icon: Users,
+    section: 'brand',
+    description: 'Target audience profiles',
     requiresDocument: false,
   },
   
