@@ -54,7 +54,7 @@ export default clerkMiddleware(async (auth, request) => {
 
       const status = metadata?.subscriptionStatus;
 
-      if (status !== 'active') {
+      if (status !== 'active' && status !== 'trialing') {
         const pricingUrl = new URL('/pricing', request.url);
         return NextResponse.redirect(pricingUrl);
       }

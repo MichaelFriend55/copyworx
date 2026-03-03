@@ -129,26 +129,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             : session.customer?.id ?? null;
 
         let endDate: string | null = null;
+        let subscriptionStatus = 'active';
+
         if (session.subscription) {
           const subId = typeof session.subscription === 'string'
             ? session.subscription
             : session.subscription.id;
           const sub = await stripe.subscriptions.retrieve(subId);
+          subscriptionStatus = sub.status;
           const firstItem = sub.items.data[0];
           if (firstItem) {
             endDate = new Date(firstItem.current_period_end * 1000).toISOString();
           }
         }
 
+        logger.log('checkout.session.completed — subscription status from Stripe:', subscriptionStatus);
+
         await upsertSubscription(clerkUserId, {
           stripe_customer_id: customerId ?? undefined,
-          subscription_status: 'active',
+          subscription_status: subscriptionStatus,
           subscription_end_date: endDate,
         });
 
-        await syncClerkMetadata(clerkUserId, 'active');
+        await syncClerkMetadata(clerkUserId, subscriptionStatus);
 
-        logger.log('Subscription activated for', clerkUserId.substring(0, 8) + '...');
+        logger.log('Subscription', subscriptionStatus, 'for', clerkUserId.substring(0, 8) + '...');
         break;
       }
 
@@ -161,7 +166,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           break;
         }
 
-        const status = subscription.status === 'active' ? 'active' : subscription.status;
+        const status = subscription.status;
         const firstItem = subscription.items.data[0];
         const endDate = firstItem
           ? new Date(firstItem.current_period_end * 1000).toISOString()

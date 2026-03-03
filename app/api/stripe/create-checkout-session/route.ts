@@ -46,9 +46,16 @@ export async function POST(): Promise<NextResponse<CheckoutSessionResponse | Err
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
+      payment_method_collection: 'always',
       line_items: [{ price: priceId, quantity: 1 }],
       metadata: { clerkUserId: userId },
-      subscription_data: { metadata: { clerkUserId: userId } },
+      subscription_data: {
+        metadata: { clerkUserId: userId },
+        trial_period_days: 7,
+        trial_settings: {
+          end_behavior: { missing_payment_method: 'cancel' },
+        },
+      },
       success_url: `${baseUrl}/worxspace?subscription=success`,
       cancel_url: `${baseUrl}/pricing`,
     });
