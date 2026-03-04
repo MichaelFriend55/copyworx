@@ -449,7 +449,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
         </button>
 
         {/* Document list with drag-and-drop — always visible */}
-        <div className="mt-1 rounded-lg border border-gray-200 overflow-y-auto max-h-[60vh]">
+        <div className="mt-1 rounded-lg border border-gray-200 overflow-y-auto max-h-[280px]">
           <DocumentList onDocumentClick={onDocumentClick ?? (() => {})} showCreateButtons={false} />
         </div>
       </div>
