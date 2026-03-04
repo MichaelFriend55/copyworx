@@ -21,13 +21,13 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { logger } from '@/lib/utils/logger';
+import DocumentList from './DocumentList';
 import Image from 'next/image';
 import { 
   Sparkles, 
   ChevronRight, 
   ChevronDown, 
   PanelLeftOpen, 
-  Folder as FolderIcon,
   Zap,
   UserCheck,
   Target,
@@ -384,8 +384,6 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
     });
   }, []);
 
-  const isProjectsExpanded = expandedSections.has('projects');
-
   return (
     <div className="space-y-1">
       {/* CopyWorx Logo Header */}
@@ -427,93 +425,33 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
       
       {/* MY PROJECTS SECTION */}
       <div className="space-y-1" data-tour="projects">
-        {/* Section Header - Click to open slide-out */}
-        <div className="flex items-center gap-1">
-          {/* Main header button - opens slide-out */}
-          <button
-            onClick={() => {
-              openProjectsSlideOut();
-            }}
-            className={cn(
-              'flex-1 flex items-center justify-between px-3 py-2.5 rounded-lg',
-              'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-              'relative pl-5 border-l-[3px] border-transparent',
-              'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
-              'before:w-[3px] before:rounded-l-lg',
-              'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
-            )}
-            aria-label="Open My Projects navigator"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-apple-text-dark" />
-              <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
-                My Projects
-              </span>
-            </div>
-            <PanelLeftOpen className="w-4 h-4 text-gray-400" />
-          </button>
-          
-          {/* Local collapse toggle button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleSection('projects');
-            }}
-            className={cn(
-              'p-2 rounded-lg',
-              'text-gray-400 hover:text-gray-600 hover:bg-apple-gray-bg',
-              'transition-colors duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
-            )}
-            title="Show/hide project selector"
-            aria-label="Toggle project selector visibility"
-          >
-            {isProjectsExpanded ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronRight className="w-4 h-4" />
-            )}
-          </button>
-        </div>
-
-        {/* Projects Content - Collapsed View - Simple project list */}
-        {isProjectsExpanded && (
-          <div className="py-2 space-y-1">
-            {projects.length > 0 ? (
-              projects.map((project) => (
-                <button
-                  key={project.id}
-                  onClick={() => {
-                    openProjectsSlideOut();
-                  }}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded-lg',
-                    'text-sm transition-all duration-200',
-                    'hover:bg-apple-gray-bg',
-                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                    project.id === activeProjectId
-                      ? 'bg-apple-blue/10 text-apple-blue font-medium'
-                      : 'text-gray-700 hover:text-gray-900'
-                  )}
-                  title={`Open ${project.name} in navigator`}
-                >
-                  <div className="flex items-center gap-2">
-                    <FolderIcon className={cn(
-                      'w-4 h-4 flex-shrink-0',
-                      project.id === activeProjectId ? 'text-apple-blue' : 'text-gray-400'
-                    )} />
-                    <span className="truncate">{project.name}</span>
-                  </div>
-                </button>
-              ))
-            ) : (
-              <div className="px-3 py-4 text-center">
-                <p className="text-xs text-gray-500">No projects yet</p>
-              </div>
-            )}
+        {/* Section Header - Click to open full navigator slide-out */}
+        <button
+          onClick={openProjectsSlideOut}
+          className={cn(
+            'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
+            'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+            'relative pl-5 border-l-[3px] border-transparent',
+            'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+            'before:w-[3px] before:rounded-l-lg',
+            'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
+          )}
+          aria-label="Open My Projects navigator"
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-apple-text-dark" />
+            <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
+              My Projects
+            </span>
           </div>
-        )}
+          <PanelLeftOpen className="w-4 h-4 text-gray-400" />
+        </button>
+
+        {/* Document list with drag-and-drop — always visible */}
+        <div className="mt-1 rounded-lg border border-gray-200 overflow-y-auto max-h-[60vh]">
+          <DocumentList onDocumentClick={onDocumentClick ?? (() => {})} showCreateButtons={false} />
+        </div>
       </div>
 
       {/* Divider */}

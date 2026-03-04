@@ -65,6 +65,8 @@ import { logger } from '@/lib/utils/logger';
 interface DocumentListProps {
   /** Callback when user clicks a document to load it in the editor */
   onDocumentClick: (doc: ProjectDocument) => void;
+  /** Whether to show the New Folder and New Document create buttons (default: true) */
+  showCreateButtons?: boolean;
 }
 
 // ============================================================================
@@ -102,10 +104,13 @@ const DraggableDocumentRow = React.memo(({
   return (
     <div
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       className={cn(
-        'group flex items-start gap-1.5 px-2 py-1.5 rounded cursor-pointer',
+        'group flex items-start gap-1.5 px-2 py-1.5 rounded cursor-grab active:cursor-grabbing',
         'transition-colors duration-100',
+        'select-none touch-none',
         isSelected
           ? 'bg-primary/10 text-primary'
           : 'hover:bg-accent/60'
@@ -120,8 +125,8 @@ const DraggableDocumentRow = React.memo(({
         <div className="w-3 h-px bg-foreground/30 -ml-2 flex-shrink-0" />
       )}
       
-      {/* Drag handle */}
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+      {/* File icon - visual indicator only (entire row is the drag handle) */}
+      <div className="flex-shrink-0">
         <FileText className={cn(
           'h-3 w-3 flex-shrink-0',
           isSelected ? 'text-primary' : 'text-muted-foreground'
@@ -146,15 +151,14 @@ const DraggableDocumentRow = React.memo(({
           className={cn(
             'flex-shrink-0 p-0.5 rounded',
             'opacity-0 group-hover:opacity-100',
-            'hover:bg-accent',
+            'hover:bg-accent cursor-pointer',
             'transition-opacity duration-100'
           )}
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
-            console.log('🖊️ PENCIL CLICKED FOR DOC:', doc.id, doc.title);
             const newTitle = window.prompt('Rename document:', doc.title);
             if (newTitle && newTitle.trim() && newTitle.trim() !== doc.title) {
-              console.log('🖊️ CALLING onSaveRename with:', newTitle.trim());
               onSaveRename(newTitle.trim());
             }
           }}
@@ -169,9 +173,10 @@ const DraggableDocumentRow = React.memo(({
             className={cn(
               'flex-shrink-0 p-0.5 rounded',
               'opacity-0 group-hover:opacity-100',
-              'hover:bg-accent',
+              'hover:bg-accent cursor-pointer',
               'transition-opacity duration-100'
             )}
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               onMoveToRoot(doc.id);
@@ -187,9 +192,10 @@ const DraggableDocumentRow = React.memo(({
           className={cn(
             'flex-shrink-0 p-0.5 rounded',
             'opacity-0 group-hover:opacity-100',
-            'hover:bg-destructive/10 hover:text-destructive',
+            'hover:bg-destructive/10 hover:text-destructive cursor-pointer',
             'transition-opacity duration-100'
           )}
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             onDelete(doc);
@@ -236,7 +242,7 @@ function groupDocumentsByBaseTitle(
 // Main Component
 // ============================================================================
 
-export default function DocumentList({ onDocumentClick }: DocumentListProps) {
+export default function DocumentList({ onDocumentClick, showCreateButtons = true }: DocumentListProps) {
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
@@ -787,8 +793,9 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
           {...attributes}
           {...listeners}
           className={cn(
-            'group flex items-center gap-1 px-2 py-1.5 hover:bg-accent rounded cursor-pointer',
+            'group flex items-center gap-1 px-2 py-1.5 hover:bg-accent rounded cursor-grab active:cursor-grabbing',
             'transition-colors duration-100',
+            'select-none touch-none',
             isOver && 'bg-accent ring-2 ring-primary'
           )}
           onClick={() => !isEditingThisFolder && toggleFolder(folder.id)}
@@ -801,7 +808,7 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
           {/* Chevron icon */}
           <ChevronRight 
             className={cn(
-              'h-3 w-3 transition-transform duration-150 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing',
+              'h-3 w-3 transition-transform duration-150 text-muted-foreground flex-shrink-0',
               isExpanded && 'rotate-90'
             )} 
           />
@@ -858,11 +865,12 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
               {/* Rename folder button */}
               <button
                 className={cn(
-                  'flex-shrink-0 p-0.5 rounded',
+                  'flex-shrink-0 p-0.5 rounded cursor-pointer',
                   'opacity-0 group-hover:opacity-100',
                   'hover:bg-accent',
                   'transition-opacity duration-100'
                 )}
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   startFolderRename(folder);
@@ -875,11 +883,12 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
               {/* Delete folder button */}
               <button
                 className={cn(
-                  'flex-shrink-0 p-0.5 rounded',
+                  'flex-shrink-0 p-0.5 rounded cursor-pointer',
                   'opacity-0 group-hover:opacity-100',
                   'hover:bg-destructive/10 hover:text-destructive',
                   'transition-opacity duration-100'
                 )}
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDeleteFolder(folder);
@@ -1066,33 +1075,35 @@ export default function DocumentList({ onDocumentClick }: DocumentListProps) {
     >
       <div className="flex flex-col h-full">
         {/* Header with New Folder and New Doc buttons - fixed at top, doesn't scroll */}
-        <div className="shrink-0 px-2 py-2 border-b border-border">
-          <div className="flex gap-1.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCreateFolder}
-              disabled={!activeProjectId || isLoading}
-              className="flex-1 justify-start text-xs h-7 px-2 min-w-0"
-              title="Create new folder"
-            >
-              <FolderPlus className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-              <span className="truncate">{newFolderButtonText}</span>
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCreateDocument}
-              disabled={!activeProjectId || isLoading}
-              className="flex-1 justify-start text-xs h-7 px-2 min-w-0"
-              title="Create new document"
-            >
-              <FilePlus className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-              <span className="truncate">{newDocButtonText}</span>
-            </Button>
+        {showCreateButtons && (
+          <div className="shrink-0 px-2 py-2 border-b border-border">
+            <div className="flex gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCreateFolder}
+                disabled={!activeProjectId || isLoading}
+                className="flex-1 justify-start text-xs h-7 px-2 min-w-0"
+                title="Create new folder"
+              >
+                <FolderPlus className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                <span className="truncate">{newFolderButtonText}</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCreateDocument}
+                disabled={!activeProjectId || isLoading}
+                className="flex-1 justify-start text-xs h-7 px-2 min-w-0"
+                title="Create new document"
+              >
+                <FilePlus className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                <span className="truncate">{newDocButtonText}</span>
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Scrollable content area - ENTIRE AREA is droppable for root */}
         <div 
