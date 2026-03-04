@@ -10,6 +10,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { getUserId, unauthorizedResponse, internalErrorResponse } from '@/lib/utils/api-auth';
 import { logger } from '@/lib/utils/logger';
@@ -75,7 +76,36 @@ export async function POST(): Promise<NextResponse<CheckoutSessionResponse | Err
 
     return NextResponse.json<CheckoutSessionResponse>({ url: session.url });
   } catch (error) {
-    logger.error('Failed to create checkout session:', error);
+    if (error instanceof Stripe.errors.StripeError) {
+      console.error('[Stripe Checkout] StripeError caught:', {
+        type: error.type,
+        code: error.code,
+        message: error.message,
+        statusCode: error.statusCode,
+        requestId: error.requestId,
+        decline_code: (error as Stripe.errors.StripeCardError).decline_code,
+        param: error.param,
+        rawType: error.rawType,
+        headers: error.headers,
+      });
+    } else if (error instanceof Error) {
+      console.error('[Stripe Checkout] Non-Stripe error caught:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+    } else {
+      console.error('[Stripe Checkout] Unknown error caught:', error);
+    }
+
+    console.error('[Stripe Checkout] Environment check:', {
+      hasSecretKey: !!process.env.STRIPE_SECRET_KEY,
+      secretKeyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 8) + '...',
+      priceId: process.env.STRIPE_PRICE_ID,
+      nodeEnv: process.env.NODE_ENV,
+      vercelRegion: process.env.VERCEL_REGION || 'unknown',
+    });
+
     return internalErrorResponse(error) as NextResponse<ErrorResponse>;
   }
 }

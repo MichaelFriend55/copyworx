@@ -276,6 +276,7 @@ export interface Database {
           stripe_customer_id: string | null;
           subscription_status: string;
           subscription_end_date: string | null;
+          is_admin: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -285,6 +286,7 @@ export interface Database {
           stripe_customer_id?: string | null;
           subscription_status?: string;
           subscription_end_date?: string | null;
+          is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -294,6 +296,7 @@ export interface Database {
           stripe_customer_id?: string | null;
           subscription_status?: string;
           subscription_end_date?: string | null;
+          is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
         };

@@ -3,11 +3,13 @@
  * @description Clerk authentication middleware with subscription gating (Clerk 5.x)
  *
  * Protects all routes under /worxspace, /templates, /projects.
- * Additionally checks subscription status (stored in Clerk publicMetadata)
- * and redirects inactive users to /pricing.
+ * Checks subscription status (stored in Clerk publicMetadata) and
+ * redirects inactive users to /pricing — unless the user has `is_admin`
+ * set in the Supabase `users` table, which grants unconditional access.
  */
 
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 /**
@@ -33,6 +35,40 @@ const isSubscriptionRoute = createRouteMatcher([
   '/templates(.*)',
 ]);
 
+/**
+ * Check if a user has the is_admin flag set in Supabase.
+ * Only called when the subscription check would otherwise fail,
+ * so paying users incur no extra latency.
+ */
+async function isAdminUser(userId: string): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    return false;
+  }
+
+  try {
+    const supabase = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !data) {
+      return false;
+    }
+
+    return (data as { is_admin?: boolean }).is_admin === true;
+  } catch {
+    return false;
+  }
+}
+
 export default clerkMiddleware(async (auth, request) => {
   if (isPublicRoute(request)) {
     return;
@@ -55,8 +91,11 @@ export default clerkMiddleware(async (auth, request) => {
       const status = metadata?.subscriptionStatus;
 
       if (status !== 'active' && status !== 'trialing') {
-        const pricingUrl = new URL('/pricing', request.url);
-        return NextResponse.redirect(pricingUrl);
+        const adminBypass = await isAdminUser(session.userId);
+        if (!adminBypass) {
+          const pricingUrl = new URL('/pricing', request.url);
+          return NextResponse.redirect(pricingUrl);
+        }
       }
     }
   }

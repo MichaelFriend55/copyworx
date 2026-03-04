@@ -99,6 +99,39 @@ export function internalErrorResponse(error: unknown): NextResponse {
 }
 
 // ============================================================================
+// Admin Check
+// ============================================================================
+
+/**
+ * Check if a user has admin privileges in the database.
+ * Admin users bypass subscription gating and usage limits.
+ *
+ * @param userId - Clerk user ID to check
+ * @returns true if the user's `is_admin` flag is set in the `users` table
+ */
+export async function checkIsAdmin(userId: string): Promise<boolean> {
+  if (!isSupabaseConfigured() || !supabaseAdmin) {
+    return false;
+  }
+
+  try {
+    const { data, error } = await (supabaseAdmin
+      .from('users') as any)
+      .select('is_admin')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !data) {
+      return false;
+    }
+
+    return data.is_admin === true;
+  } catch {
+    return false;
+  }
+}
+
+// ============================================================================
 // Usage Limit Checking
 // ============================================================================
 
@@ -150,14 +183,23 @@ export interface UsageLimitExceededResponse {
  * ```
  */
 export async function checkUserWithinLimit(userId: string): Promise<UsageLimitResult> {
-  // Default to within limit if Supabase is not configured
-  // This allows development without Supabase setup
   if (!isSupabaseConfigured() || !supabaseAdmin) {
     logger.log('⚠️ Supabase not configured, skipping usage limit check');
     return {
       withinLimit: true,
       totalCost: 0,
       remainingBudget: BETA_LIMIT_USD,
+      limit: BETA_LIMIT_USD,
+    };
+  }
+
+  const isAdmin = await checkIsAdmin(userId);
+  if (isAdmin) {
+    logger.log('👑 Admin user — bypassing usage limit');
+    return {
+      withinLimit: true,
+      totalCost: 0,
+      remainingBudget: Infinity,
       limit: BETA_LIMIT_USD,
     };
   }
