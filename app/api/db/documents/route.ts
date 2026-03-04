@@ -203,9 +203,9 @@ export async function PUT(request: NextRequest) {
       return badRequestResponse('Document ID is required');
     }
 
-    // Filter allowed update fields
+    // Filter allowed update fields (project_id enables cross-project moves)
     const allowedFields = [
-      'base_title', 'title', 'content', 'folder_id', 
+      'project_id', 'base_title', 'title', 'content', 'folder_id', 
       'metadata', 'template_progress'
     ];
     
