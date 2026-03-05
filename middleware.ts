@@ -20,6 +20,7 @@ const isPublicRoute = createRouteMatcher([
   '/home',
   '/about',
   '/pricing',
+  '/subscription-expired',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api(.*)',
@@ -93,8 +94,16 @@ export default clerkMiddleware(async (auth, request) => {
       if (status !== 'active' && status !== 'trialing') {
         const adminBypass = await isAdminUser(session.userId);
         if (!adminBypass) {
-          const pricingUrl = new URL('/pricing', request.url);
-          return NextResponse.redirect(pricingUrl);
+          const hasLapsedSubscription =
+            status === 'cancelled' ||
+            status === 'canceled' ||
+            status === 'past_due';
+
+          const redirectPath = hasLapsedSubscription
+            ? '/subscription-expired'
+            : '/pricing';
+
+          return NextResponse.redirect(new URL(redirectPath, request.url));
         }
       }
     }
