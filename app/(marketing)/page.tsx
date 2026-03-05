@@ -343,7 +343,7 @@ export default function HomePage() {
               </p>
               
               <p>
-                Start your free trial today and experience every feature CopyWorx has to offer. No commitment — cancel anytime.
+                Start your free trial today and experience every feature CopyWorx Studio™ has to offer. No commitment — cancel anytime.
               </p>
               
               <p className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent font-semibold text-xl md:text-2xl">
