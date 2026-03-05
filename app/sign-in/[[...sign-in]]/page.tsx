@@ -21,7 +21,7 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel — Form */}
-      <div className="w-full lg:w-[45%] flex flex-col bg-white px-8 py-10">
+      <div className="w-full lg:w-[45%] flex flex-col bg-white px-10 py-10">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
           <Image
@@ -51,7 +51,8 @@ export default function SignInPage() {
               appearance={{
                 elements: {
                   rootBox: 'w-full',
-                  card: 'w-full shadow-none border-0 p-0',
+                  cardBox: 'w-full max-w-[420px]',
+                  card: 'w-full shadow-none border-0 px-6 py-4',
                   formButtonPrimary:
                     'bg-gradient-to-r from-[#006EE6] to-[#A755F7] hover:opacity-90 text-white shadow-lg',
                   formFieldInput:
