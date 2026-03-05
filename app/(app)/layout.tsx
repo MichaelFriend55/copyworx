@@ -8,8 +8,8 @@
  * - Main content area
  */
 
-import { UserButton } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
+import UserMenu from '@/components/layout/user-menu';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -61,19 +61,7 @@ export default async function AppLayout({
             </div>
             
             {/* User Button */}
-            <UserButton 
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: 'h-9 w-9',
-                  userButtonPopoverCard: 'shadow-xl border border-border/50',
-                  userButtonPopoverActionButton: 'hover:bg-ink-50',
-                  userButtonPopoverActionButtonText: 'text-ink-700',
-                  userButtonPopoverActionButtonIcon: 'text-ink-500',
-                  userButtonPopoverFooter: 'hidden',
-                },
-              }}
-            />
+            <UserMenu />
           </div>
         </header>
         
