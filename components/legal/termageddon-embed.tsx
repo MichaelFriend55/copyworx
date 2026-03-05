@@ -29,6 +29,7 @@ export function TermageddonEmbed({ embedId, policyUrl }: TermageddonEmbedProps) 
 
     const script = document.createElement('script');
     script.src = `https://policies.termageddon.com/api/embed/${embedId}.js`;
+    script.setAttribute('data-usercentrics', 'Essential');
     container.appendChild(script);
 
     return () => {
