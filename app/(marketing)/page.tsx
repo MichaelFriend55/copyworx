@@ -108,7 +108,7 @@ export default function HomePage() {
             
             {/* Subheadline */}
             <p className="text-lg sm:text-xl md:text-2xl text-ink-600 max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in animation-delay-200">
-              The first AI-powered platform built by a professional copywriter, for copywriters and marketers.
+              The first AI-powered platform built by a professional copywriter – specifically for copywriters, content creators, and marketers.
             </p>
             
             {/* Primary CTA */}
