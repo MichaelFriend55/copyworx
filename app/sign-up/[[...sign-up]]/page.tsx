@@ -81,11 +81,11 @@ export default function SignUpPage() {
             {/* Terms */}
             <p className="text-xs text-ink-400 text-center mt-6">
               By signing up, you agree to our{' '}
-              <Link href="#" className="text-[#006EE6] hover:underline">
+              <Link href="/terms" className="text-[#006EE6] hover:underline">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="#" className="text-[#006EE6] hover:underline">
+              <Link href="/privacy" className="text-[#006EE6] hover:underline">
                 Privacy Policy
               </Link>
             </p>

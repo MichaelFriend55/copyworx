@@ -74,6 +74,15 @@ export function MarketingFooter() {
             <p className="text-sm text-white/60">
               © 2026 CopyWorx Studio™ LLC. All rights reserved.
             </p>
+            <div className="mt-3 flex flex-wrap justify-center items-center gap-x-3 gap-y-1">
+              <Link href="/privacy" className="text-sm text-white/40 hover:text-white/70 transition-colors">Privacy Policy</Link>
+              <span className="text-white/20 text-sm">·</span>
+              <Link href="/terms" className="text-sm text-white/40 hover:text-white/70 transition-colors">Terms of Service</Link>
+              <span className="text-white/20 text-sm">·</span>
+              <Link href="/cookies" className="text-sm text-white/40 hover:text-white/70 transition-colors">Cookie Policy</Link>
+              <span className="text-white/20 text-sm">·</span>
+              <Link href="/disclaimer" className="text-sm text-white/40 hover:text-white/70 transition-colors">Disclaimer</Link>
+            </div>
           </div>
         </div>
       </div>
