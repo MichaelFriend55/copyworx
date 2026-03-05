@@ -80,9 +80,9 @@ export function SubscribeButton() {
           Redirecting to checkout…
         </>
       ) : isSignedIn ? (
-        'Subscribe — $49/month'
+        'Start Your 7-Day Free Trial'
       ) : (
-        'Sign up to subscribe'
+        'Start Your 7-Day Free Trial'
       )}
     </button>
   );

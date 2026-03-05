@@ -36,6 +36,11 @@ const FAQ_ITEMS = [
       'Absolutely. Cancel your subscription with one click — no penalties, no questions asked. You keep access until the end of your billing period.',
   },
   {
+    question: 'How does the free trial work?',
+    answer:
+      'You get full access to every CopyWorx Studio\u2122 feature for 7 days. We collect payment info upfront, but you won\u2019t be charged until your trial ends. Cancel anytime during the trial and you\u2019ll never pay a cent.',
+  },
+  {
     question: 'Is my data safe?',
     answer:
       'Your documents are encrypted at rest and in transit. We never train AI models on your content.',
@@ -68,7 +73,7 @@ export default function PricingPage() {
               One plan. Everything included.
             </h1>
             <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
-              No tiers, no limits, no surprises. Get full access to every CopyWorx Studio™ feature.
+              No tiers, no limits, no surprises. Try every feature free for 7 days, then $49/month.
             </p>
           </div>
         </div>
@@ -81,7 +86,7 @@ export default function PricingPage() {
             <Card className="relative border-[#006EE6]/40 shadow-xl">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white rounded-full px-0.5">
                 <Badge variant="brand" className="shadow-lg">
-                  Full Access
+                  7-Day Free Trial
                 </Badge>
               </div>
 
@@ -101,6 +106,9 @@ export default function PricingPage() {
                     $49
                   </span>
                   <span className="text-ink-500 ml-2 text-lg">/month</span>
+                  <p className="text-sm text-ink-500 mt-2">
+                    Start with a 7-day free trial. Cancel anytime.
+                  </p>
                 </div>
 
                 {/* Features */}
