@@ -51,7 +51,7 @@ export interface ToolConfig {
   /** Optional: Whether tool requires a document to be open */
   requiresDocument?: boolean;
   
-  /** Optional: Badge text (e.g., "NEW", "BETA") */
+  /** Optional: Badge text (e.g., "NEW") */
   badge?: string;
 }
 

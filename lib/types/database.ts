@@ -429,7 +429,7 @@ export interface Database {
         }[];
       };
       /**
-       * Check if user is within beta limits
+       * Check if user is within usage limits
        */
       check_user_within_limits: {
         Args: {

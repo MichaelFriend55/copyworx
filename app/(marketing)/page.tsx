@@ -8,10 +8,11 @@
  * - The Story - founder narrative with gradient background
  * - Features - 2x2 grid of key capabilities
  * - How It Works - 4-step process
- * - Beta Access - final CTA section
+ * - Final CTA section
  */
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { 
   Wand2,
   Palette, 
@@ -117,10 +118,10 @@ export default function HomePage() {
                 className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg px-10 py-6 h-auto shadow-2xl transition-all duration-300"
                 asChild
               >
-                <a href="https://tally.so/r/Xx4yxV">
-                  Request Beta Access
+                <Link href="/pricing">
+                  Start Your 7-Day Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
@@ -326,8 +327,8 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================
-          BETA ACCESS SECTION
-          Final CTA with gradient background
+          FINAL CTA SECTION
+          Conversion CTA with gradient background
           ======================================================================== */}
       <section className="py-24 md:py-32 bg-[#F5F5F7] relative overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -338,11 +339,11 @@ export default function HomePage() {
             
             <div className="text-lg md:text-xl text-ink-600 leading-relaxed space-y-6 mb-10">
               <p>
-                CopyWorx Studio™ is currently in closed beta. We&apos;re carefully selecting marketing professionals and copywriters to test the platform and help shape its future.
+                CopyWorx Studio™ is now available to marketing professionals and copywriters. Get full access to every AI copywriting tool with a 7-day free trial.
               </p>
               
               <p>
-                Request access below and tell us why you want in. We review every application and send invites to approved beta testers.
+                Start your free trial today and experience every feature CopyWorx has to offer. No commitment — cancel anytime.
               </p>
               
               <p className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent font-semibold text-xl md:text-2xl">
@@ -356,10 +357,10 @@ export default function HomePage() {
               className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg px-10 py-6 h-auto shadow-2xl transition-all duration-300"
               asChild
             >
-              <a href="https://tally.so/r/Xx4yxV">
-                Request Beta Access
+              <Link href="/pricing">
+                Start Your 7-Day Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

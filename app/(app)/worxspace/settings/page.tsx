@@ -35,7 +35,7 @@ interface UsageData {
 // Constants
 // ============================================================================
 
-/** Must match BETA_LIMIT_USD in lib/utils/api-auth.ts */
+/** Must match MONTHLY_LIMIT_USD in lib/utils/api-auth.ts */
 const USAGE_LIMIT_USD = 5.0;
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'brand' | 'amber' | 'destructive'; className?: string }> = {

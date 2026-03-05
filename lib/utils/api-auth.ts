@@ -135,8 +135,8 @@ export async function checkIsAdmin(userId: string): Promise<boolean> {
 // Usage Limit Checking
 // ============================================================================
 
-/** Beta usage limit in USD */
-const BETA_LIMIT_USD = 5.00;
+/** Monthly AI usage limit in USD */
+const MONTHLY_LIMIT_USD = 5.00;
 
 /**
  * Result of usage limit check
@@ -169,7 +169,7 @@ export interface UsageLimitExceededResponse {
  * Check if a user is within their API usage limit
  * 
  * Queries the api_usage_logs table to sum up the user's total cost
- * and compares against the beta limit ($5.00).
+ * and compares against the monthly limit ($5.00).
  * 
  * @param userId - Clerk user ID to check
  * @returns UsageLimitResult with limit status and usage details
@@ -188,8 +188,8 @@ export async function checkUserWithinLimit(userId: string): Promise<UsageLimitRe
     return {
       withinLimit: true,
       totalCost: 0,
-      remainingBudget: BETA_LIMIT_USD,
-      limit: BETA_LIMIT_USD,
+      remainingBudget: MONTHLY_LIMIT_USD,
+      limit: MONTHLY_LIMIT_USD,
     };
   }
 
@@ -200,7 +200,7 @@ export async function checkUserWithinLimit(userId: string): Promise<UsageLimitRe
       withinLimit: true,
       totalCost: 0,
       remainingBudget: Infinity,
-      limit: BETA_LIMIT_USD,
+      limit: MONTHLY_LIMIT_USD,
     };
   }
 
@@ -219,8 +219,8 @@ export async function checkUserWithinLimit(userId: string): Promise<UsageLimitRe
       return {
         withinLimit: true,
         totalCost: 0,
-        remainingBudget: BETA_LIMIT_USD,
-        limit: BETA_LIMIT_USD,
+        remainingBudget: MONTHLY_LIMIT_USD,
+        limit: MONTHLY_LIMIT_USD,
       };
     }
 
@@ -231,14 +231,14 @@ export async function checkUserWithinLimit(userId: string): Promise<UsageLimitRe
       return {
         withinLimit: true,
         totalCost: 0,
-        remainingBudget: BETA_LIMIT_USD,
-        limit: BETA_LIMIT_USD,
+        remainingBudget: MONTHLY_LIMIT_USD,
+        limit: MONTHLY_LIMIT_USD,
       };
     }
 
     const totalCost = data?.total_cost_usd || 0;
-    const withinLimit = totalCost < BETA_LIMIT_USD;
-    const remainingBudget = Math.max(0, BETA_LIMIT_USD - totalCost);
+    const withinLimit = totalCost < MONTHLY_LIMIT_USD;
+    const remainingBudget = Math.max(0, MONTHLY_LIMIT_USD - totalCost);
 
     logger.log('📊 Usage limit check:', {
       userId: userId.substring(0, 8) + '...',
@@ -251,7 +251,7 @@ export async function checkUserWithinLimit(userId: string): Promise<UsageLimitRe
       withinLimit,
       totalCost,
       remainingBudget,
-      limit: BETA_LIMIT_USD,
+      limit: MONTHLY_LIMIT_USD,
     };
   } catch (err) {
     // Log error but default to allowing the request
@@ -259,8 +259,8 @@ export async function checkUserWithinLimit(userId: string): Promise<UsageLimitRe
     return {
       withinLimit: true,
       totalCost: 0,
-      remainingBudget: BETA_LIMIT_USD,
-      limit: BETA_LIMIT_USD,
+      remainingBudget: MONTHLY_LIMIT_USD,
+      limit: MONTHLY_LIMIT_USD,
     };
   }
 }
@@ -272,15 +272,15 @@ export async function checkUserWithinLimit(userId: string): Promise<UsageLimitRe
  * @returns NextResponse with 403 status and usage details
  */
 export function usageLimitExceededResponse(totalCost: number): NextResponse<UsageLimitExceededResponse> {
-  const percentUsed = Math.round((totalCost / BETA_LIMIT_USD) * 100);
+  const percentUsed = Math.round((totalCost / MONTHLY_LIMIT_USD) * 100);
   
   return NextResponse.json<UsageLimitExceededResponse>(
     {
       error: 'Usage limit exceeded',
-      details: `API usage limit reached ($${BETA_LIMIT_USD.toFixed(2)}). Please contact support to continue.`,
+      details: `API usage limit reached ($${MONTHLY_LIMIT_USD.toFixed(2)}). Please contact support to continue.`,
       usage: {
         totalCost: Math.round(totalCost * 100) / 100, // Round to 2 decimals
-        limit: BETA_LIMIT_USD,
+        limit: MONTHLY_LIMIT_USD,
         percentUsed,
       },
     },

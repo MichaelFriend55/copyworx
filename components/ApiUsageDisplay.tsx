@@ -3,10 +3,10 @@
  * @description Displays API usage statistics for the current user
  * 
  * Features:
- * - Progress bar showing usage against $5.00 beta limit
+ * - Progress bar showing usage against $5.00 monthly limit
  * - Color-coded status (green/yellow/red)
  * - Loading skeleton state
- * - Tooltip with beta info
+ * - Tooltip with usage info
  * - Responsive design for sidebar/topbar placement
  * 
  * @example
@@ -70,7 +70,7 @@ function UsageSkeleton({ variant }: { variant: 'default' | 'compact' }) {
 }
 
 /**
- * Tooltip component for displaying beta info
+ * Tooltip component for displaying usage info
  */
 function Tooltip({ 
   children, 
@@ -144,7 +144,7 @@ function getTextColor(percentUsed: number, isOverLimit: boolean): string {
 /**
  * API Usage Display component
  * 
- * Shows the user's API usage progress toward the $5.00 beta limit
+ * Shows the user's API usage progress toward the $5.00 monthly limit
  * with color-coded status indicators and helpful tooltips.
  */
 export function ApiUsageDisplay({ 
@@ -189,7 +189,7 @@ export function ApiUsageDisplay({
     }
 
     return (
-      <Tooltip content="Beta users have $5 API credit. Contact support to upgrade.">
+      <Tooltip content="Your plan includes $5.00/mo in AI usage. Contact support if you need more.">
         <div 
           className={cn(
             'flex items-center gap-1.5 cursor-help',
@@ -246,7 +246,7 @@ export function ApiUsageDisplay({
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <Tooltip content="Beta users have $5 API credit. Contact support to upgrade.">
+        <Tooltip content="Your plan includes $5.00/mo in AI usage. Contact support if you need more.">
           <div className="flex items-center gap-1.5 cursor-help">
             <span className="text-xs font-medium text-ink-500 dark:text-ink-400 uppercase tracking-wide">
               API Usage

@@ -4,7 +4,7 @@
  * 
  * Features:
  * - Fetches total tokens and cost from api_usage_logs
- * - Tracks progress toward $5.00 beta limit
+ * - Tracks progress toward $5.00 monthly limit
  * - Caches results for 30 seconds to minimize DB calls
  * - Refetches on window focus for fresh data
  * - Provides loading and error states
@@ -21,8 +21,8 @@ import { useUser } from '@clerk/nextjs';
 // Constants
 // ============================================================================
 
-/** Beta usage limit in USD */
-const BETA_LIMIT_USD = 5.00;
+/** Monthly AI usage limit in USD */
+const MONTHLY_LIMIT_USD = 5.00;
 
 /** Cache duration in milliseconds (30 seconds) */
 const CACHE_DURATION_MS = 30_000;
@@ -62,7 +62,7 @@ export interface ApiUsageData {
   /** Whether data is currently being fetched */
   isLoading: boolean;
   
-  /** Whether user has reached or exceeded the $5.00 beta limit */
+  /** Whether user has reached or exceeded the $5.00 monthly limit */
   isOverLimit: boolean;
   
   /** Remaining budget in USD (5.00 - totalCost) */
@@ -256,14 +256,14 @@ export function useApiUsage(): ApiUsageData {
   // Computed Values
   // ============================================================================
 
-  /** Whether user has exceeded the beta limit */
-  const isOverLimit = totalCost >= BETA_LIMIT_USD;
+  /** Whether user has exceeded the monthly limit */
+  const isOverLimit = totalCost >= MONTHLY_LIMIT_USD;
 
   /** Remaining budget (can be negative if over limit) */
-  const remainingBudget = Math.max(0, BETA_LIMIT_USD - totalCost);
+  const remainingBudget = Math.max(0, MONTHLY_LIMIT_USD - totalCost);
 
   /** Percentage of budget used (can exceed 100%) */
-  const percentUsed = (totalCost / BETA_LIMIT_USD) * 100;
+  const percentUsed = (totalCost / MONTHLY_LIMIT_USD) * 100;
 
   // ============================================================================
   // Return Value

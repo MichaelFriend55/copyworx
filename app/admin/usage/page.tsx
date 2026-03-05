@@ -40,8 +40,8 @@ import { cn } from '@/lib/utils';
 /** Admin email addresses */
 const ADMIN_EMAILS = ['michaelfriend55@gmail.com'];
 
-/** Beta usage limit */
-const BETA_LIMIT = 5.00;
+/** Monthly usage limit */
+const USAGE_LIMIT = 5.00;
 
 // ============================================================================
 // Types
@@ -432,7 +432,7 @@ export default function AdminUsagePage() {
             <div>
               <h1 className="text-2xl font-bold text-ink-900">API Usage Dashboard</h1>
               <p className="text-sm text-ink-500 mt-1">
-                Monitor beta user API consumption
+                Monitor user API consumption
                 {data?.fetchedAt && (
                   <span className="ml-2">
                     • Last updated: {formatDate(data.fetchedAt)}

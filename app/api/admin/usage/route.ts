@@ -137,7 +137,7 @@ export async function GET(): Promise<NextResponse<AdminUsageResponse | ErrorResp
     // 4. Transform data and calculate summary
     // ------------------------------------------------------------------------
     
-    const BETA_LIMIT = 5.00;
+    const USAGE_LIMIT = 5.00;
     
     const users: UserUsageRecord[] = (data || []).map((row: any) => ({
       userId: row.user_id,
@@ -147,8 +147,8 @@ export async function GET(): Promise<NextResponse<AdminUsageResponse | ErrorResp
       totalTokens: row.total_tokens_used || 0,
       totalCost: row.total_cost_usd || 0,
       lastApiCall: row.last_api_call || null,
-      percentOfLimit: ((row.total_cost_usd || 0) / BETA_LIMIT) * 100,
-      isOverLimit: (row.total_cost_usd || 0) >= BETA_LIMIT,
+      percentOfLimit: ((row.total_cost_usd || 0) / USAGE_LIMIT) * 100,
+      isOverLimit: (row.total_cost_usd || 0) >= USAGE_LIMIT,
     }));
 
     const totalCost = users.reduce((sum, u) => sum + u.totalCost, 0);
