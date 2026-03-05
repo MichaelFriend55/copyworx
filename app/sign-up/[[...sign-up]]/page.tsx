@@ -1,137 +1,111 @@
 /**
  * @file app/sign-up/[[...sign-up]]/page.tsx
- * @description Sign-up page using Clerk's SignUp component
- * 
- * Features:
- * - Clerk SignUp component with custom styling
- * - Centered layout with benefits side panel
- * - Brand-consistent orange/amber theme
+ * @description Sign-up page with two-panel layout
+ *
+ * Left panel: Clerk SignUp form with brand-styled appearance
+ * Right panel: Branding with logo, headline, and decorative elements
  */
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SignUp } from '@clerk/nextjs';
-import { Feather, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Feather, ArrowLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Sign Up',
-  description: 'Create your CopyWorx account and start writing better copy.',
+  description: 'Create your CopyWorx Studio account and start your free trial.',
 };
 
-/**
- * Benefits list for the sign-up page
- */
-const benefits = [
-  '50+ AI-powered copywriting templates',
-  'Unlimited projects and organization',
-  'Brand voice customization',
-  'Collaboration tools for teams',
-  '14-day free trial, no credit card required',
-] as const;
-
-/**
- * Sign-up page component
- * 
- * Uses Clerk's SignUp component with custom appearance
- * configured in the root layout's ClerkProvider.
- */
 export default function SignUpPage() {
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Decorative */}
-      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-amber-50 via-white to-ink-50 items-center justify-center p-8 relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-grid opacity-40" />
-        
-        {/* Decorative Elements */}
-        <div className="absolute top-20 right-10 w-72 h-72 bg-amber-400/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-ink-400/10 rounded-full blur-3xl" />
-        
-        {/* Content */}
-        <div className="relative max-w-md">
-          <h2 className="font-sans text-4xl font-bold text-ink-900 mb-6">
-            Start creating copy that converts today
-          </h2>
-          <p className="text-ink-600 leading-relaxed mb-8">
-            Join over 10,000 marketers and copywriters who trust CopyWorx 
-            to help them create compelling content every day.
-          </p>
-          
-          {/* Benefits List */}
-          <ul className="space-y-4">
-            {benefits.map((benefit) => (
-              <li key={benefit} className="flex items-center gap-3">
-                <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                </div>
-                <span className="text-ink-700">{benefit}</span>
-              </li>
-            ))}
-          </ul>
+      {/* Left Panel — Form */}
+      <div className="w-full lg:w-[45%] flex flex-col bg-white px-8 py-10">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#006EE6] to-[#A755F7] shadow">
+            <Feather className="h-4 w-4 text-white" />
+          </div>
+          <span className="font-sans text-lg font-semibold text-ink-900">
+            CopyWorx Studio™
+          </span>
+        </div>
+
+        {/* Back link */}
+        <Link
+          href="/"
+          className="mt-4 inline-flex items-center text-sm text-ink-500 hover:text-ink-700 transition-colors w-fit"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1.5" />
+          Back to home
+        </Link>
+
+        {/* Centered form */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-md">
+            <SignUp
+              appearance={{
+                elements: {
+                  rootBox: 'w-full',
+                  card: 'w-full shadow-none border-0 p-0',
+                  formButtonPrimary:
+                    'bg-gradient-to-r from-[#006EE6] to-[#A755F7] hover:opacity-90 text-white shadow-lg',
+                  formFieldInput:
+                    'border-ink-200 focus:border-[#006EE6] focus:ring-[#006EE6]/20 py-3',
+                  formFieldLabel: 'text-ink-700 font-medium',
+                  headerTitle: 'text-2xl font-bold text-ink-900',
+                  headerSubtitle: 'text-ink-500',
+                  socialButtonsBlockButton:
+                    'border-ink-200 hover:bg-ink-50 py-3',
+                  footerActionLink:
+                    'text-[#006EE6] hover:text-[#006EE6]/80',
+                  card__signUp: 'gap-6',
+                  dividerLine: 'bg-border',
+                  dividerText: 'text-ink-400 text-xs',
+                  identityPreviewEditButton:
+                    'text-[#006EE6] hover:text-[#006EE6]/80',
+                  formFieldAction:
+                    'text-[#006EE6] hover:text-[#006EE6]/80',
+                  alert: 'border-red-200 bg-red-50 text-red-800',
+                },
+              }}
+              forceRedirectUrl="/worxspace"
+              signInUrl="/sign-in"
+            />
+
+            {/* Terms */}
+            <p className="text-xs text-ink-400 text-center mt-6">
+              By signing up, you agree to our{' '}
+              <Link href="#" className="text-[#006EE6] hover:underline">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="#" className="text-[#006EE6] hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Right Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md">
-          {/* Back Link */}
-          <Link 
-            href="/home"
-            className="inline-flex items-center text-sm text-ink-500 hover:text-ink-700 mb-8 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to home
-          </Link>
+      {/* Right Panel — Branding */}
+      <div className="hidden lg:flex lg:w-[55%] bg-gradient-to-br from-ink-50 to-[#006EE6]/5 items-center justify-center p-12 relative overflow-hidden">
+        {/* Decorative glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#006EE6]/[0.06] blur-3xl" />
 
-          {/* Logo */}
-          <div className="flex items-center gap-2 mb-8">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink-900 shadow-lg">
-              <Feather className="h-5 w-5 text-amber-400" />
-            </div>
-            <span className="font-sans text-2xl font-bold text-ink-900">
-              CopyWorx
-            </span>
+        {/* Content */}
+        <div className="relative flex flex-col items-center text-center">
+          {/* Large logo */}
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#006EE6] to-[#A755F7] shadow-xl mb-8">
+            <Feather className="h-9 w-9 text-white" />
           </div>
 
-          {/* Clerk SignUp Component */}
-          <SignUp 
-            appearance={{
-              elements: {
-                rootBox: 'w-full',
-                card: 'shadow-none p-0 w-full',
-                headerTitle: 'font-sans text-2xl font-bold text-ink-900',
-                headerSubtitle: 'text-ink-600',
-                socialButtonsBlockButton: 
-                  'border border-border bg-white hover:bg-ink-50 text-ink-700 transition-colors',
-                socialButtonsBlockButtonText: 'font-medium',
-                dividerLine: 'bg-border',
-                dividerText: 'text-ink-400 text-xs',
-                formFieldLabel: 'text-sm font-medium text-ink-700',
-                formFieldInput: 
-                  'border-border rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors',
-                formButtonPrimary: 
-                  'bg-amber-500 hover:bg-amber-400 text-ink-900 font-medium shadow-lg hover:shadow-xl transition-all rounded-md',
-                footerActionLink: 
-                  'text-amber-600 hover:text-amber-700 font-medium',
-                identityPreviewEditButton: 'text-amber-600 hover:text-amber-700',
-                formFieldAction: 'text-amber-600 hover:text-amber-700',
-                alert: 'border-red-200 bg-red-50 text-red-800',
-              },
-            }}
-            forceRedirectUrl="/worxspace"
-            signInUrl="/sign-in"
-          />
-          
-          {/* Terms */}
-          <p className="text-xs text-ink-400 text-center mt-6">
-            By signing up, you agree to our{' '}
-            <Link href="#" className="text-amber-600 hover:underline">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="#" className="text-amber-600 hover:underline">
-              Privacy Policy
-            </Link>
+          <h2 className="font-sans text-3xl md:text-4xl font-bold text-ink-900 max-w-lg">
+            Write to win with the first AI-powered platform built by a professional copywriter
+          </h2>
+
+          <p className="text-lg text-ink-600 max-w-md mt-4">
+            Specifically for copywriters, content creators, and marketers.
           </p>
         </div>
       </div>
