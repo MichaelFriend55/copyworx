@@ -10,6 +10,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import UserMenu from '@/components/layout/user-menu';
+import TrialBanner from '@/components/layout/trial-banner';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,9 @@ export default async function AppLayout({
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Trial Banner */}
+        <TrialBanner />
+
         {/* Header */}
         <header className="h-16 border-b border-border bg-white flex items-center justify-between px-6">
           <div>
