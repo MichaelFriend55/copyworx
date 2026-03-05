@@ -7,9 +7,10 @@
  */
 
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { SignUp } from '@clerk/nextjs';
-import { Feather, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Sign Up',
@@ -23,9 +24,12 @@ export default function SignUpPage() {
       <div className="w-full lg:w-[45%] flex flex-col bg-white px-8 py-10">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#006EE6] to-[#A755F7] shadow">
-            <Feather className="h-4 w-4 text-white" />
-          </div>
+          <Image
+            src="/copyworx-logo-v2.png"
+            alt="CopyWorx Studio™"
+            width={40}
+            height={40}
+          />
           <span className="font-sans text-lg font-semibold text-ink-900">
             CopyWorx Studio™
           </span>
@@ -96,9 +100,13 @@ export default function SignUpPage() {
         {/* Content */}
         <div className="relative flex flex-col items-center text-center">
           {/* Large logo */}
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#006EE6] to-[#A755F7] shadow-xl mb-8">
-            <Feather className="h-9 w-9 text-white" />
-          </div>
+          <Image
+            src="/copyworx-logo-v2.png"
+            alt="CopyWorx Studio™"
+            width={120}
+            height={120}
+            className="mb-8"
+          />
 
           <h2 className="font-sans text-3xl md:text-4xl font-bold text-ink-900 max-w-lg">
             Write to win with the first AI-powered platform built by a professional copywriter
