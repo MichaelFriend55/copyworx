@@ -46,12 +46,12 @@ const navItems = [
  */
 const bottomNavItems = [
   {
-    href: '#settings',
+    href: '/worxspace/settings',
     icon: Settings,
     label: 'Settings',
   },
   {
-    href: '#help',
+    href: '/worxspace/guide',
     icon: HelpCircle,
     label: 'Help & Support',
   },

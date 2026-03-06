@@ -327,6 +327,45 @@
 
 /**
  * =============================================================================
+ * GUIDE PAGE PROSE STYLES
+ * =============================================================================
+ * Scoped typography for the user guide at /worxspace/guide.
+ * Applied via the .guide-prose wrapper class.
+ */
+.guide-prose .guide-section h2 {
+  @apply text-2xl font-bold text-ink-900 mb-6 pb-3 border-b border-border;
+}
+
+.guide-prose .guide-section h3 {
+  @apply text-base font-semibold text-ink-900 mt-8 mb-3;
+}
+
+.guide-prose .guide-section h4 {
+  @apply text-sm font-semibold text-ink-800 mt-5 mb-2;
+}
+
+.guide-prose .guide-section p {
+  @apply text-sm text-ink-700 leading-relaxed mb-4;
+}
+
+.guide-prose .guide-section ul {
+  @apply text-sm text-ink-700 leading-relaxed mb-4 space-y-1.5 pl-5 list-disc;
+}
+
+.guide-prose .guide-section ol {
+  @apply text-sm text-ink-700 leading-relaxed mb-4 space-y-1.5 pl-5 list-decimal;
+}
+
+.guide-prose .guide-section li {
+  @apply leading-relaxed;
+}
+
+.guide-prose .guide-section strong {
+  @apply font-semibold text-ink-900;
+}
+
+/**
+ * =============================================================================
  * PRINT / PDF EXPORT STYLES
  * =============================================================================
  * Applied when user clicks "Export PDF" or presses Cmd/Ctrl+P.
