@@ -1,9 +1,16 @@
 /**
- * @file app/(app)/worxspace/guide/page.tsx
+ * @file app/worxspace/guide/page.tsx
  * @description Full user guide for CopyWorx Studio™
  *
- * Two-panel layout: sticky section nav (left) + main scrollable content (right).
- * Active section is tracked via IntersectionObserver.
+ * Two-panel layout rendered entirely within this page component:
+ *   LEFT  – dark sidebar (bg-ink-950) matching the Worxspace sidebar.
+ *           Contains logo (→ /worxspace), "GUIDE CONTENTS" label,
+ *           7 section nav links with IntersectionObserver active tracking,
+ *           and support email at the bottom.
+ *   RIGHT – scrollable content with all seven guide sections.
+ *
+ * The parent layout (app/worxspace/guide/layout.tsx) supplies ONLY the
+ * h-16 header and an overflow-hidden <main> wrapper – no sidebar, no bell.
  *
  * Callout styles:
  *   PRO TIP  – blue left border, light blue background
@@ -17,6 +24,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   Rocket,
   Wand2,
@@ -1098,9 +1106,10 @@ function SectionAccountBilling() {
 /**
  * Guide page component.
  *
- * Layout: -m-6 flex container that fills the (app) layout's <main> element.
- * Left column: sticky section nav (desktop) / dropdown (mobile).
- * Right column: scrollable content with all seven guide sections.
+ * Renders a full two-panel layout that fills the <main> element provided by
+ * GuideLayout (which has overflow-hidden and no padding):
+ *   LEFT  – dark sidebar (w-56, bg-ink-950) with logo, section nav, support email
+ *   RIGHT – flex-1 scrollable content area
  */
 export default function GuidePage() {
   const [activeSection, setActiveSection] = useState<SectionId>('getting-started');
@@ -1137,16 +1146,35 @@ export default function GuidePage() {
   const ActiveIcon  = SECTIONS.find((s) => s.id === activeSection)?.icon ?? Rocket;
 
   return (
-    <div className="-m-6 flex min-h-full">
+    <div className="flex h-full overflow-hidden">
 
-      {/* ── Desktop: sticky left nav ─────────────────────────────────── */}
-      <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-border bg-white sticky top-0 self-start max-h-[calc(100vh-4rem)] overflow-y-auto">
-        <div className="px-4 pt-6 pb-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
+      {/* ── Desktop: left sidebar (matches Worxspace sidebar styling) ── */}
+      <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white border-r border-gray-200 overflow-y-auto">
+
+        {/* Logo – full-width gray block, links back to main workspace */}
+        <Link
+          href="/worxspace"
+          className="block w-full bg-gray-200 border-b border-gray-200 py-4 flex items-center justify-center hover:bg-gray-300 transition-colors shrink-0"
+        >
+          <Image
+            src="/copyworx-logo-v2.png"
+            alt="CopyWorx Studio"
+            width={140}
+            height={140}
+            className="object-contain ml-2"
+            priority
+            unoptimized
+          />
+        </Link>
+
+        {/* Section label */}
+        <div className="px-4 pt-4 pb-2 shrink-0">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
             Guide Contents
           </p>
         </div>
 
+        {/* Section nav links */}
         <nav className="flex-1 px-2 pb-4 space-y-0.5">
           {SECTIONS.map(({ id, icon: Icon, label }) => (
             <button
@@ -1157,13 +1185,13 @@ export default function GuidePage() {
                 'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-all duration-150',
                 activeSection === id
                   ? 'bg-[#006EE6]/10 text-[#006EE6]'
-                  : 'text-ink-600 hover:bg-ink-100 hover:text-ink-900',
+                  : 'text-apple-text-dark hover:bg-gray-100',
               )}
             >
               <Icon
                 className={cn(
                   'h-4 w-4 shrink-0',
-                  activeSection === id ? 'text-[#006EE6]' : 'text-ink-400',
+                  activeSection === id ? 'text-[#006EE6]' : 'text-gray-400',
                 )}
               />
               <span className="leading-tight">{label}</span>
@@ -1171,17 +1199,18 @@ export default function GuidePage() {
           ))}
         </nav>
 
-        <div className="px-4 pb-5 pt-3 border-t border-border">
+        {/* Support email */}
+        <div className="px-4 pb-5 pt-3 border-t border-gray-200 shrink-0">
           <a
             href="mailto:support@copyworx.io"
-            className="text-xs text-ink-400 hover:text-[#006EE6] transition-colors"
+            className="text-xs text-gray-500 hover:text-[#006EE6] transition-colors"
           >
             support@copyworx.io
           </a>
         </div>
       </aside>
 
-      {/* ── Mobile: sticky top dropdown nav ─────────────────────────── */}
+      {/* ── Mobile: fixed top dropdown nav ───────────────────────────── */}
       <div className="md:hidden fixed top-16 left-0 right-0 z-30 border-b border-border bg-white shadow-sm">
         <button
           type="button"
@@ -1225,8 +1254,8 @@ export default function GuidePage() {
         )}
       </div>
 
-      {/* ── Scrollable guide content ─────────────────────────────────── */}
-      <div className="flex-1 min-w-0">
+      {/* ── Scrollable guide content ──────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-8 py-8 md:pt-8 pt-24">
 
           {/* Page header */}
@@ -1235,11 +1264,11 @@ export default function GuidePage() {
               CopyWorx Studio™ User Guide
             </h1>
             <p className="mt-2 text-base text-ink-500">
-              Everything you need to know – from first login to advanced workflows.
+              Everything you need to know to write to win – from first login to advanced workflows.
             </p>
           </div>
 
-          {/* All guide sections with shared prose styles */}
+          {/* All guide sections */}
           <div className="guide-prose space-y-16">
             <SectionGettingStarted />
             <SectionCopyOptimizer />
