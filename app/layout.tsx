@@ -12,7 +12,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
-import Script from 'next/script';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { Toaster } from 'sonner';
 import './globals.css';
@@ -115,24 +114,7 @@ export default function RootLayout({
       className={`${inter.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <link rel="preconnect" href="//privacy-proxy.usercentrics.eu" />
-        <link rel="preload" href="//privacy-proxy.usercentrics.eu/latest/uc-block.bundle.js" as="script" />
-      </head>
       <body className={`${inter.className} min-h-screen bg-background antialiased`}>
-        <Script
-          src="https://privacy-proxy.usercentrics.eu/latest/uc-block.bundle.js"
-          strategy="beforeInteractive"
-        />
-        <Script
-          id="usercentrics-cmp"
-          src="https://app.usercentrics.eu/browser-ui/latest/loader.js"
-          data-settings-id="UAFhlFE8VUIXxM"
-          strategy="beforeInteractive"
-        />
-        <Script id="usercentrics-translations" strategy="afterInteractive">
-          {`uc.setCustomTranslations('https://termageddon.ams3.cdn.digitaloceanspaces.com/translations/');`}
-        </Script>
         <ClerkProvider
           appearance={{
             variables: {
