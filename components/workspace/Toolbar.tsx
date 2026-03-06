@@ -45,6 +45,8 @@ import {
   ChevronRight,
   FilePlus,
   Plus,
+  BookOpen,
+  PlayCircle,
 } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { useActiveDocumentId, useActiveProjectId, useProjects, useUIActions, useViewMode, useWorkspaceStore } from '@/lib/stores/workspaceStore';
@@ -1205,6 +1207,86 @@ function DocumentMenu({
 }
 
 /**
+ * Help dropdown component.
+ *
+ * Replaces the plain ? button with a two-item menu:
+ *   - User Guide   → navigates to /worxspace/guide
+ *   - Take the Tour → fires the existing onRestartTour callback
+ *
+ * Follows the same backdrop-dismiss pattern used by other dropdowns in this file.
+ */
+function HelpDropdown({ onRestartTour }: { onRestartTour?: () => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative flex-shrink-0">
+      {/* ? trigger button — keeps its existing appearance */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          'w-8 h-8 rounded-full',
+          isOpen
+            ? 'bg-[#006EE6] text-white'
+            : 'bg-gray-100 text-gray-600 hover:bg-[#006EE6] hover:text-white',
+          'flex items-center justify-center',
+          'text-lg font-bold',
+          'transition-colors duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-[#006EE6] focus:ring-offset-2',
+        )}
+        title="Help"
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+      >
+        ?
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop – clicking outside closes the dropdown */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Dropdown menu – anchored to the right edge of the button */}
+          <div className="absolute top-full right-0 mt-1 z-20 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px]">
+            {/* User Guide */}
+            <Link
+              href="/worxspace/guide"
+              onClick={() => setIsOpen(false)}
+              className={cn(
+                'flex items-center gap-2.5 w-full px-4 py-2 text-sm',
+                'text-apple-text-dark hover:bg-apple-gray-bg',
+                'transition-colors duration-150',
+              )}
+            >
+              <BookOpen className="w-4 h-4 flex-shrink-0 text-gray-500" />
+              <span>User Guide</span>
+            </Link>
+
+            {/* Take the Tour */}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onRestartTour?.();
+              }}
+              className={cn(
+                'flex items-center gap-2.5 w-full px-4 py-2 text-sm text-left',
+                'text-apple-text-dark hover:bg-apple-gray-bg',
+                'transition-colors duration-150',
+              )}
+            >
+              <PlayCircle className="w-4 h-4 flex-shrink-0 text-gray-500" />
+              <span>Take the Tour</span>
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
  * Top toolbar component with file menu and formatting controls
  */
 export function Toolbar({ className, onRestartTour }: ToolbarProps) {
@@ -1715,23 +1797,8 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
           }}
         />
         
-        {/* Product Tour Button */}
-        <button 
-          onClick={onRestartTour}
-          className={cn(
-            'w-8 h-8 rounded-full',
-            'bg-gray-100 hover:bg-[#006EE6] hover:text-white',
-            'text-gray-600',
-            'flex items-center justify-center',
-            'text-lg font-bold',
-            'transition-colors duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-[#006EE6] focus:ring-offset-2',
-            'flex-shrink-0' // Ensure button doesn't shrink
-          )}
-          title="Take Product Tour"
-        >
-          ?
-        </button>
+        {/* Help dropdown – User Guide + Take the Tour */}
+        <HelpDropdown onRestartTour={onRestartTour} />
       </div>
       </div> {/* End inner wrapper */}
 

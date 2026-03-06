@@ -6,71 +6,62 @@
  * - Hero with solid gray background and primary CTA
  * - The Challenge - problem statement
  * - The Story - founder narrative with gradient background
- * - Features - 2x2 grid of key capabilities
- * - How It Works - 4-step process
+ * - Product Showcase - alternating screenshot/text blocks
+ * - Video - Streamable embed
  * - Final CTA section
  */
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Wand2,
-  Palette, 
-  FileText, 
-  FolderOpen,
-  ArrowRight
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 /**
- * Features data for the features section
+ * Product showcase blocks – alternating screenshot/text layout.
+ * imagePosition controls which side the screenshot appears on (desktop).
  */
-const features = [
+const showcaseBlocks = [
   {
-    icon: Wand2,
-    title: 'Copy Optimizer Tools',
-    description: 'Refine your copy in real time. Shift tone, expand ideas, tighten language, generate headlines, or completely rewrite for different channels – all while maintaining your unique voice.',
+    screenshot: '/images/guide/03-workspace-three-column-layout.png',
+    alt: 'CopyWorx Studio three-column workspace layout',
+    headline: "A Copywriter's Workspace – Not a Chat Window",
+    body: "CopyWorx Studio™ gives you a real writing environment – organized projects on the left, a professional editor in the center, and AI-powered tools on the right. Everything a copywriter needs, exactly where you'd expect to find it.",
+    imagePosition: 'left' as const,
   },
   {
-    icon: FileText,
-    title: 'AI@Worx Templates',
-    description: "Strategic templates that ask the right questions to put you in the right direction fast. No more staring at a blank page. Answer a few prompts and get professional copy that's ready to refine.",
+    screenshot: '/images/guide/11-templates-browser-categories.png',
+    alt: 'CopyWorx Studio template browser with categories',
+    headline: '15 Professional Templates. Zero Prompt Engineering.',
+    body: "Every template is built around real copywriting frameworks – the same ones experienced copywriters use on every project. Choose your template, answer the guided questions, and generate copy that's strategically sound from the first draft.",
+    imagePosition: 'right' as const,
   },
   {
-    icon: Palette,
-    title: 'Brand Voice System',
-    description: 'Define your brand voice once, and CopyWorx Studio™ ensures everything you write stays on brand. Create detailed personas, set approved phrases and forbidden words, and maintain consistency across every piece of content.',
+    screenshot: '/images/guide/12-sales-email-form-completed.png',
+    alt: 'Sales email template form with completed fields',
+    headline: 'Answer a Few Guided Questions. Get Professional Copy.',
+    body: "No blank prompts. No guessing what to type. Each template walks you through exactly what the AI needs to produce strong copy – product details, audience, pain points, tone. Fill in the fields, click Generate, and get results you can actually use.",
+    imagePosition: 'left' as const,
   },
   {
-    icon: FolderOpen,
-    title: 'Smart Document Management',
-    description: 'Organize projects by client, track versions, and manage your entire copywriting workflow in one intuitive worxspace. No more scattered Google Docs or lost revisions.',
-  },
-] as const;
-
-/**
- * How it works steps
- */
-const steps = [
-  {
-    number: '01',
-    title: 'Define Your Brand',
-    description: 'Define your brand voice and create customer personas (or skip this and start writing)',
+    screenshot: '/images/guide/08-copy-optimizer-tone-shifter.png',
+    alt: 'Copy optimizer tone shifter tool showing six professional tones',
+    headline: 'Rewrite Any Copy in Six Professional Tones – In Seconds.',
+    body: "The Tone Shifter rewrites your selected copy as Professional, Casual, Urgent, Friendly, Techy, or Playful – without losing the core message. Adapt any piece of copy for a different audience or channel in one click.",
+    imagePosition: 'right' as const,
   },
   {
-    number: '02',
-    title: 'Choose Your Starting Point',
-    description: 'Choose a template or start from scratch in the editor',
+    screenshot: '/images/guide/28-brand-voice-fields-filled.png',
+    alt: 'Brand voice configuration with all fields filled in',
+    headline: "Define Your Brand's Voice Once. Every Piece of Copy Follows It.",
+    body: "Set up your brand's tone, approved phrases, forbidden words, and values. Then apply it to any template – the AI writes in your brand's voice from the first draft. No more off-brand copy. No more starting over for every project.",
+    imagePosition: 'left' as const,
   },
   {
-    number: '03',
-    title: 'Write & Optimize',
-    description: 'Write, optimize, and refine with AI-powered tools – use as much or as little help as you need',
-  },
-  {
-    number: '04',
-    title: 'Export & Deliver',
-    description: 'Export professional, on-brand copy in minutes',
+    screenshot: '/images/guide/36-my-insights-brand-alignment-score.png',
+    alt: 'Brand alignment analysis with score and actionable recommendations',
+    headline: 'Score Any Copy Against Your Brand Guidelines. Instantly.',
+    body: "Brand Alignment analyzes your copy against your Brand Voice and returns a score, specific matches, violations, and actionable recommendations. It's the quality-control tool that turns subjective brand feedback into objective, measurable performance.",
+    imagePosition: 'right' as const,
   },
 ] as const;
 
@@ -215,38 +206,59 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================
-          FEATURES SECTION
-          2x2 grid of key capabilities
+          PRODUCT SHOWCASE SECTION
+          Alternating screenshot + text blocks showcasing key features
           ======================================================================== */}
       <section className="py-24 md:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
-          <div className="max-w-3xl mx-auto text-center mb-16">
+          <div className="max-w-3xl mx-auto text-center mb-20 md:mb-28">
             <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
-              What Makes CopyWorx Studio™ Different
+              See What&apos;s Inside
             </h2>
+            <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
+              Professional copywriting tools that work the way you work.
+            </p>
           </div>
-          
-          {/* Features Grid - 2x2 */}
-          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={feature.title}
-                className="group relative bg-white rounded-2xl border border-ink-200 p-8 shadow-sm hover:shadow-xl hover:border-[#006EE6]/30 transition-all duration-300"
-                style={{ animationDelay: `${index * 100}ms` }}
+
+          {/* Showcase Blocks */}
+          <div className="max-w-6xl mx-auto space-y-20 lg:space-y-28">
+            {showcaseBlocks.map((block) => (
+              <div
+                key={block.headline}
+                className={`flex flex-col ${
+                  block.imagePosition === 'left' ? 'lg:flex-row' : 'lg:flex-row-reverse'
+                } items-center gap-10 lg:gap-16`}
               >
-                {/* Icon */}
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#006EE6] to-[#A755F7] text-white mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <feature.icon className="h-7 w-7" />
+                {/* Screenshot with browser chrome frame */}
+                <div className="w-full lg:w-[58%] flex-shrink-0">
+                  <div className="rounded-xl shadow-lg overflow-hidden border border-gray-200/80">
+                    <div className="bg-gray-100 px-4 py-2.5 flex items-center border-b border-gray-200/80">
+                      <div className="flex gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                      </div>
+                    </div>
+                    <Image
+                      src={block.screenshot}
+                      alt={block.alt}
+                      width={1200}
+                      height={750}
+                      className="w-full h-auto"
+                    />
+                  </div>
                 </div>
-                
-                {/* Content */}
-                <h3 className="font-sans text-xl md:text-2xl font-semibold text-ink-900 mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-ink-600 leading-relaxed">
-                  {feature.description}
-                </p>
+
+                {/* Text content */}
+                <div className="w-full lg:w-[42%]">
+                  <h3 className="font-sans text-2xl md:text-[28px] font-bold text-ink-900 leading-tight mb-4">
+                    {block.headline}
+                  </h3>
+                  <p className="text-base md:text-lg text-ink-600 leading-relaxed">
+                    {block.body}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -282,62 +294,29 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================
-          HOW IT WORKS SECTION
-          4-step process with numbered steps
-          ======================================================================== */}
-      <section className="py-24 md:py-32 bg-ink-950 text-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-              How It Works
-            </h2>
-          </div>
-          
-          {/* Steps */}
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-              {steps.map((step, index) => (
-                <div 
-                  key={step.number}
-                  className="relative flex gap-6"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  {/* Step Number */}
-                  <div className="flex-shrink-0">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#006EE6] to-[#A755F7] text-white font-bold text-xl">
-                      {step.number}
-                    </div>
-                  </div>
-                  
-                  {/* Step Content */}
-                  <div className="pt-2">
-                    <h3 className="font-sans text-xl font-semibold text-white mb-2">
-                      {step.title}
-                    </h3>
-                    <p className="text-ink-300 leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================
           FINAL CTA SECTION
-          Conversion CTA with gradient background
+          Gradient background matching "Built By A Copywriter" section
           ======================================================================== */}
-      <section className="py-24 md:py-32 bg-[#F5F5F7] relative overflow-hidden">
+      <section className="py-24 md:py-32 bg-gradient-to-br from-[#006EE6] via-[#4B3F99] to-[#A755F7] relative overflow-hidden">
+        {/* Subtle Pattern Overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 1px)',
+            backgroundSize: '40px 40px'
+          }} />
+        </div>
+
+        {/* Decorative Glow Elements */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-[#EFBF04]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
               Ready To Write To Win?
             </h2>
             
-            <div className="text-lg md:text-xl text-ink-600 leading-relaxed space-y-6 mb-10">
+            <div className="text-lg md:text-xl text-white/90 leading-relaxed space-y-6 mb-10">
               <p>
                 CopyWorx Studio™ is now available to marketing professionals and copywriters. Get full access to every AI copywriting tool with a 7-day free trial.
               </p>
@@ -346,15 +325,15 @@ export default function HomePage() {
                 Start your free trial today and experience every feature CopyWorx Studio™ has to offer. No commitment — cancel anytime.
               </p>
               
-              <p className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] bg-clip-text text-transparent font-semibold text-xl md:text-2xl">
+              <p className="text-white font-semibold text-xl md:text-2xl">
                 Now let&apos;s get to worx!
               </p>
             </div>
             
-            {/* CTA Button */}
+            {/* CTA Button – white bg with bold blue text */}
             <Button 
               size="xl" 
-              className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg px-10 py-6 h-auto shadow-2xl transition-all duration-300"
+              className="bg-white text-[#006EE6] hover:bg-white hover:shadow-[0_0_24px_rgba(255,255,255,0.45)] font-bold text-lg px-10 py-6 h-auto shadow-xl transition-all duration-300"
               asChild
             >
               <Link href="/pricing">
