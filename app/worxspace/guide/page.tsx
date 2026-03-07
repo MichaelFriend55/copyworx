@@ -1070,6 +1070,11 @@ function SectionAccountBilling() {
         menu in the top navigation to access account settings. From there you can update your name,
         email, and password, and manage connected social login accounts.
       </p>
+      <GuideImage
+        src="/images/guide/37-account-settings-profile.png"
+        alt="Account settings"
+        caption="Account settings"
+      />
 
       <h3>Subscription &amp; Billing</h3>
       <p>
@@ -1081,6 +1086,11 @@ function SectionAccountBilling() {
         <li>Upgrade, downgrade, or cancel your subscription.</li>
         <li>Download invoices or update your payment method.</li>
       </ul>
+      <GuideImage
+        src="/images/guide/38-billing-subscription-page.png"
+        alt="Subscription and billing management"
+        caption="Subscription and billing management"
+      />
 
       <h3>Usage Dashboard</h3>
       <p>
@@ -1092,6 +1102,11 @@ function SectionAccountBilling() {
         <li>Token consumption</li>
         <li>Usage relative to your plan limit</li>
       </ul>
+      <GuideImage
+        src="/images/guide/39-usage-dashboard.png"
+        alt="AI usage dashboard"
+        caption="AI usage dashboard"
+      />
       <Note>
         Your monthly AI usage allocation resets on the first of each month. If you&apos;re
         approaching your limit, focus on high-value template generation and use Copy Optimizer
