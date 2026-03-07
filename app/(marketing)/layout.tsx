@@ -10,7 +10,8 @@
 
 'use client';
 
-import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { SignedIn, SignedOut } from '@clerk/nextjs';
+import UserMenu from '@/components/layout/user-menu';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { MarketingFooter } from '@/components/layout/marketing-footer';
@@ -36,19 +37,7 @@ export default function MarketingLayout({
             <Button variant="ghost" className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90" asChild>
               <Link href="/worxspace">Worxspace</Link>
             </Button>
-            <UserButton 
-              afterSignOutUrl="/home"
-              appearance={{
-                elements: {
-                  avatarBox: 'h-9 w-9 shadow-lg',
-                  userButtonPopoverCard: 'shadow-xl border border-border/50',
-                  userButtonPopoverActionButton: 'hover:bg-ink-50',
-                  userButtonPopoverActionButtonText: 'text-ink-700',
-                  userButtonPopoverActionButtonIcon: 'text-ink-500',
-                  userButtonPopoverFooter: 'hidden',
-                },
-              }}
-            />
+            <UserMenu />
           </SignedIn>
 
           {/* Show when user is NOT signed in */}

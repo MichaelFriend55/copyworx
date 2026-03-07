@@ -48,7 +48,7 @@ import {
   BookOpen,
   PlayCircle,
 } from 'lucide-react';
-import { UserButton } from '@clerk/nextjs';
+import UserMenu from '@/components/layout/user-menu';
 import { useActiveDocumentId, useActiveProjectId, useProjects, useUIActions, useViewMode, useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getDocument, updateDocument, createDocument } from '@/lib/storage/unified-storage';
 import { toast } from 'sonner';
@@ -1783,19 +1783,7 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
         />
         
         {/* User Menu Button */}
-        <UserButton 
-          afterSignOutUrl="/home"
-          appearance={{
-            elements: {
-              avatarBox: 'h-9 w-9 shadow-lg',
-              userButtonPopoverCard: 'shadow-xl border border-border/50',
-              userButtonPopoverActionButton: 'hover:bg-gray-50',
-              userButtonPopoverActionButtonText: 'text-gray-700',
-              userButtonPopoverActionButtonIcon: 'text-gray-500',
-              userButtonPopoverFooter: 'hidden',
-            },
-          }}
-        />
+        <UserMenu />
         
         {/* Help dropdown – User Guide + Take the Tour */}
         <HelpDropdown onRestartTour={onRestartTour} />
