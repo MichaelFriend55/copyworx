@@ -3,7 +3,7 @@
  * @description Account settings page showing subscription info and AI usage.
  *
  * Renders a two-panel layout that fills the <main> provided by SettingsLayout:
- *   LEFT  – light sidebar (bg-white, gray-200 logo block) matching the User Guide style
+ *   LEFT  – gray sidebar (bg-gray-200 full height) with logo linking to /worxspace
  *   RIGHT – scrollable content with Subscription and AI Usage cards
  *
  * Two card sections:
@@ -18,7 +18,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { CreditCard, BarChart3, ExternalLink, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -52,13 +51,6 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'brand' | 'amber' 
   cancelled: { label: 'Canceled', variant: 'destructive' },
   canceled: { label: 'Canceled', variant: 'destructive' },
 };
-
-const NAV_ITEMS = [
-  { id: 'subscription', icon: CreditCard, label: 'Subscription' },
-  { id: 'ai-usage',     icon: BarChart3,  label: 'AI Usage'      },
-] as const;
-
-type SectionId = (typeof NAV_ITEMS)[number]['id'];
 
 // ============================================================================
 // Helpers
@@ -176,7 +168,6 @@ export default function SettingsPage() {
   const [subError, setSubError] = useState<string | null>(null);
   const [usageError, setUsageError] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [activeSection, setActiveSection] = useState<SectionId>('subscription');
 
   const fetchSubscription = useCallback(async () => {
     setSubLoading(true);
@@ -217,32 +208,6 @@ export default function SettingsPage() {
     fetchUsage();
   }, [fetchSubscription, fetchUsage]);
 
-  // Highlight the sidebar nav item whose section is currently in the viewport.
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id as SectionId);
-          }
-        }
-      },
-      { rootMargin: '-10% 0px -80% 0px', threshold: 0 },
-    );
-
-    NAV_ITEMS.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  function scrollToSection(id: SectionId) {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
   async function handleManageSubscription() {
     setPortalLoading(true);
     const toastId = toast.loading('Opening billing portal…');
@@ -274,13 +239,13 @@ export default function SettingsPage() {
   return (
     <div className="flex h-full overflow-hidden">
 
-      {/* ── Left sidebar (matches User Guide sidebar styling) ── */}
-      <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white border-r border-gray-200 overflow-y-auto">
+      {/* ── Left sidebar ── */}
+      <aside className="hidden md:flex w-56 shrink-0 flex-col bg-gray-200 border-r border-gray-200 overflow-y-auto">
 
-        {/* Logo – full-width gray block, links back to main workspace */}
+        {/* Logo – links back to main workspace */}
         <Link
           href="/worxspace"
-          className="block w-full bg-gray-200 border-b border-gray-200 py-4 flex items-center justify-center hover:bg-gray-300 transition-colors shrink-0"
+          className="block w-full py-4 flex items-center justify-center hover:bg-gray-300 transition-colors shrink-0"
         >
           <Image
             src="/copyworx-logo-v2.png"
@@ -293,40 +258,11 @@ export default function SettingsPage() {
           />
         </Link>
 
-        {/* Section label */}
-        <div className="px-4 pt-4 pb-2 shrink-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-            Account & Billing
-          </p>
-        </div>
-
-        {/* Section nav links */}
-        <nav className="flex-1 px-2 pb-4 space-y-0.5">
-          {NAV_ITEMS.map(({ id, icon: Icon, label }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => scrollToSection(id)}
-              className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-all duration-150',
-                activeSection === id
-                  ? 'bg-[#006EE6]/10 text-[#006EE6]'
-                  : 'text-apple-text-dark hover:bg-gray-100',
-              )}
-            >
-              <Icon
-                className={cn(
-                  'h-4 w-4 shrink-0',
-                  activeSection === id ? 'text-[#006EE6]' : 'text-gray-400',
-                )}
-              />
-              <span className="leading-tight">{label}</span>
-            </button>
-          ))}
-        </nav>
+        {/* Spacer pushes support email to bottom */}
+        <div className="flex-1" />
 
         {/* Support email */}
-        <div className="px-4 pb-5 pt-3 border-t border-gray-200 shrink-0">
+        <div className="px-4 pb-5 pt-3 border-t border-gray-300 shrink-0">
           <a
             href="mailto:support@copyworx.io"
             className="text-xs text-gray-500 hover:text-[#006EE6] transition-colors"
