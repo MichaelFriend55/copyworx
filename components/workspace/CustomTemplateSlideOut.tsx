@@ -15,7 +15,7 @@
 
 'use client';
 
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +23,7 @@ interface CustomTemplateSlideOutProps {
   /** Whether the panel is currently open */
   isOpen: boolean;
   
-  /** Callback when panel should close (ESC or backdrop click) */
+  /** Callback when panel should close (via explicit close button) */
   onClose: () => void;
   
   /** Panel content */
@@ -36,8 +36,9 @@ interface CustomTemplateSlideOutProps {
 /**
  * CustomTemplateSlideOut - Minimal slide-out for custom templates
  * 
- * Provides slide-out behavior (backdrop, animation, ESC key, etc.)
+ * Provides slide-out behavior (backdrop, animation, etc.)
  * without built-in header/padding that custom templates already have.
+ * Closes only via explicit close button — no backdrop click or ESC dismiss.
  */
 export function CustomTemplateSlideOut({
   isOpen,
@@ -65,18 +66,6 @@ export function CustomTemplateSlideOut({
     }
   }, [isOpen]);
   
-  // Handle ESC key to close
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'Escape' && isOpen) {
-      onClose();
-    }
-  }, [isOpen, onClose]);
-  
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-  
   // Prevent body scroll when panel is open
   useEffect(() => {
     if (isOpen) {
@@ -95,13 +84,6 @@ export function CustomTemplateSlideOut({
     }
   }, [isOpen]);
   
-  // Handle backdrop click
-  const handleBackdropClick = useCallback((event: React.MouseEvent) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
-  
   // Don't render on server or when not mounted
   if (!isMounted) {
     return null;
@@ -119,7 +101,6 @@ export function CustomTemplateSlideOut({
         'transition-opacity duration-300 ease-out',
         isAnimating ? 'opacity-100' : 'opacity-0'
       )}
-      onClick={handleBackdropClick}
       aria-hidden={!isOpen}
     >
       {/* Backdrop overlay */}
@@ -147,7 +128,6 @@ export function CustomTemplateSlideOut({
           isAnimating ? 'translate-x-0' : 'translate-x-full'
         )}
         style={{ width: `${width}px` }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Content - let the template handle its own layout */}
         <div className="h-full overflow-hidden">

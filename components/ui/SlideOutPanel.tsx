@@ -8,7 +8,7 @@
  * - Right panels: 550px width (forms/configuration)
  * - Smooth 300ms slide animation
  * - Dark backdrop overlay (50% opacity)
- * - Click backdrop or ESC to close
+ * - Close only via explicit X button or programmatic onClose calls
  * - Header with title and close button
  * - Scrollable content area
  * - Optional footer for action buttons
@@ -30,7 +30,7 @@
 
 'use client';
 
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -117,18 +117,6 @@ export function SlideOutPanel({
     }
   }, [isOpen]);
   
-  // Handle ESC key to close
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'Escape' && isOpen) {
-      onClose();
-    }
-  }, [isOpen, onClose]);
-  
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-  
   // Prevent body scroll when panel is open
   useEffect(() => {
     if (isOpen) {
@@ -146,14 +134,6 @@ export function SlideOutPanel({
       panelRef.current.focus();
     }
   }, [isOpen]);
-  
-  // Handle backdrop click
-  const handleBackdropClick = useCallback((event: React.MouseEvent) => {
-    // Only close if clicking the backdrop itself, not the panel
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
   
   // Don't render on server or when not mounted
   if (!isMounted) {
@@ -173,7 +153,6 @@ export function SlideOutPanel({
         'transition-opacity duration-300 ease-out',
         isAnimating ? 'opacity-100' : 'opacity-0'
       )}
-      onClick={handleBackdropClick}
       aria-hidden={!isOpen}
     >
       {/* Backdrop overlay */}
@@ -206,7 +185,6 @@ export function SlideOutPanel({
           className
         )}
         style={{ width: `${panelWidth}px` }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex-shrink-0 px-6 py-5 border-b border-gray-200">
