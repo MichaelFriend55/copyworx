@@ -22,6 +22,7 @@ import {
   Target,
   UserCheck,
   Zap,
+  BookOpenText,
 } from 'lucide-react';
 
 /**
@@ -102,6 +103,15 @@ export const TOOLS: ToolConfig[] = [
     section: 'optimizer',
     description: 'Generate channel-optimized headlines',
     requiresDocument: false,
+    badge: 'NEW',
+  },
+  {
+    id: 'word-advisor',
+    name: 'Word Advisor',
+    icon: BookOpenText,
+    section: 'optimizer',
+    description: 'Dictionary, thesaurus & copywriting intelligence',
+    requiresDocument: true,
     badge: 'NEW',
   },
   

@@ -33,6 +33,7 @@ import {
   Target,
   Loader2,
   AlertCircle,
+  BookOpenText,
 } from 'lucide-react';
 import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
 import { TemplatesSlideOut, TEMPLATES_PANEL_ID } from '@/components/workspace/TemplatesSlideOut';
@@ -492,94 +493,150 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
 
       {/* EXISTING TOOL SECTIONS - Exclude 'insights' section (replaced by AI@Worx Live) */}
       {SECTIONS.filter(section => section.id !== 'insights').map((section) => {
-        // Determine data-tour attribute for specific sections
         const dataTourAttr = section.id === 'optimizer' ? 'copy-optimizer' 
           : section.id === 'brand' ? 'brand-voice' 
           : undefined;
-        const tools = getToolsBySection(section.id);
+        const tools = getToolsBySection(section.id).filter(t => t.id !== 'word-advisor');
         const isExpanded = expandedSections.has(section.id);
         const SectionIcon = section.icon;
 
         return (
-          <div key={section.id} className="space-y-1" data-tour={dataTourAttr}>
-            {/* Section Header - Collapsible */}
-            <button
-              onClick={() => toggleSection(section.id)}
-              className={cn(
-                'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
-                'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                'relative pl-5 border-l-[3px] border-transparent',
-                'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
-                'before:w-[3px] before:rounded-l-lg',
-                'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
-              )}
-              aria-expanded={isExpanded}
-            >
-              <div className="flex items-center gap-2">
-                <SectionIcon className="w-4 h-4 text-apple-text-dark" />
-                <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
-                  {section.name}
-                </span>
-              </div>
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              )}
-            </button>
+          <React.Fragment key={section.id}>
+            <div className="space-y-1" data-tour={dataTourAttr}>
+              {/* Section Header - Collapsible */}
+              <button
+                onClick={() => toggleSection(section.id)}
+                className={cn(
+                  'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
+                  'bg-gray-50 hover:bg-gray-100 transition-colors duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                  'relative pl-5 border-l-[3px] border-transparent',
+                  'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+                  'before:w-[3px] before:rounded-l-lg',
+                  'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
+                )}
+                aria-expanded={isExpanded}
+              >
+                <div className="flex items-center gap-2">
+                  <SectionIcon className="w-4 h-4 text-apple-text-dark" />
+                  <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
+                    {section.name}
+                  </span>
+                </div>
+                {isExpanded ? (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
 
-            {/* Tools in Section */}
-            {isExpanded && (
-              <div className="ml-6 space-y-1">
-                {tools.map((tool) => {
-                  const ToolIcon = tool.icon;
-                  const isActive = activeToolId === tool.id;
+              {/* Tools in Section */}
+              {isExpanded && (
+                <div className="ml-6 space-y-1">
+                  {tools.map((tool) => {
+                    const ToolIcon = tool.icon;
+                    const isActive = activeToolId === tool.id;
 
-                  return (
-                    <button
-                      key={tool.id}
-                      onClick={() => {
-                        logger.log('🖱️ Tool clicked:', tool.id);
-                        handleToolClick(tool.id);
-                      }}
-                      className={cn(
-                        'w-full text-left p-2 rounded-lg',
-                        'transition-all duration-200',
-                        'flex items-center gap-2',
-                        'group',
-                        'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                        isActive
-                          ? 'bg-apple-blue text-white shadow-sm'
-                          : 'hover:bg-apple-gray-bg text-apple-text-dark'
-                      )}
-                      title={tool.description}
-                    >
-                      <ToolIcon
+                    return (
+                      <button
+                        key={tool.id}
+                        onClick={() => {
+                          logger.log('🖱️ Tool clicked:', tool.id);
+                          handleToolClick(tool.id);
+                        }}
                         className={cn(
-                          'w-4 h-4 flex-shrink-0',
-                          isActive ? 'text-white' : 'text-apple-blue'
+                          'w-full text-left p-2 rounded-lg',
+                          'transition-all duration-200',
+                          'flex items-center gap-2',
+                          'group',
+                          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                          isActive
+                            ? 'bg-apple-blue text-white shadow-sm'
+                            : 'hover:bg-apple-gray-bg text-apple-text-dark'
                         )}
-                      />
-                      <span className="text-sm font-medium flex-1">{tool.name}</span>
-                      {tool.badge && (
-                        <span
+                        title={tool.description}
+                      >
+                        <ToolIcon
                           className={cn(
-                            'px-1.5 py-0.5 text-[10px] font-bold rounded uppercase',
-                            isActive
-                              ? 'bg-white/20 text-white'
-                              : 'bg-green-100 text-green-700'
+                            'w-4 h-4 flex-shrink-0',
+                            isActive ? 'text-white' : 'text-apple-blue'
                           )}
-                        >
-                          {tool.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                        />
+                        <span className="text-sm font-medium flex-1">{tool.name}</span>
+                        {tool.badge && (
+                          <span
+                            className={cn(
+                              'px-1.5 py-0.5 text-[10px] font-bold rounded uppercase',
+                              isActive
+                                ? 'bg-white/20 text-white'
+                                : 'bg-green-100 text-green-700'
+                            )}
+                          >
+                            {tool.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* MY WORD ADVISOR – standalone item directly below MY COPY OPTIMIZER */}
+            {section.id === 'optimizer' && (
+              <div className="mt-1">
+                <button
+                  onClick={() => {
+                    logger.log('🖱️ Tool clicked: word-advisor');
+                    handleToolClick('word-advisor');
+                  }}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-3 rounded-lg',
+                    'transition-all duration-200',
+                    'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                    'relative pl-5 border-l-[3px] border-transparent',
+                    'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+                    'before:w-[3px] before:rounded-l-lg',
+                    'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]',
+                    'group',
+                    activeToolId === 'word-advisor'
+                      ? 'bg-apple-blue text-white shadow-sm'
+                      : 'bg-gray-50 hover:bg-gray-100'
+                  )}
+                  title="Dictionary, thesaurus & copywriting intelligence"
+                >
+                  <BookOpenText className={cn(
+                    'w-5 h-5',
+                    activeToolId === 'word-advisor'
+                      ? 'text-white'
+                      : 'text-apple-blue group-hover:text-blue-600 transition-colors'
+                  )} />
+                  <div className="text-left flex-1">
+                    <div className={cn(
+                      'font-medium text-sm',
+                      activeToolId === 'word-advisor' ? 'text-white' : 'text-apple-text-dark'
+                    )}>
+                      My Word Advisor
+                    </div>
+                    <div className={cn(
+                      'text-xs',
+                      activeToolId === 'word-advisor' ? 'text-blue-100' : 'text-gray-500'
+                    )}>
+                      Smart word alternatives
+                    </div>
+                  </div>
+                  <span className={cn(
+                    'px-1.5 py-0.5 text-[10px] font-bold rounded uppercase',
+                    activeToolId === 'word-advisor'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-green-100 text-green-700'
+                  )}>
+                    NEW
+                  </span>
+                </button>
               </div>
             )}
-          </div>
+          </React.Fragment>
         );
       })}
 

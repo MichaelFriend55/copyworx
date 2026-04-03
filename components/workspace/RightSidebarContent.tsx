@@ -28,6 +28,7 @@ import { BrandVoiceTool } from '@/components/workspace/BrandVoiceTool';
 import { PersonasTool } from '@/components/workspace/PersonasTool';
 import { BrandAlignmentTool } from '@/components/workspace/BrandAlignmentTool';
 import { PersonaAlignmentTool } from '@/components/workspace/PersonaAlignmentTool';
+import { WordAdvisor } from '@/components/workspace/WordAdvisor';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getTemplateById } from '@/lib/data/templates';
 import { toolRequiresDocument } from '@/lib/tools/toolRegistry';
@@ -82,6 +83,7 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<{ editor: Editor | nul
   'shorten': ShortenTool,
   'rewrite-channel': RewriteChannelTool,
   'headline-generator': HeadlineGeneratorTool,
+  'word-advisor': WordAdvisor,
   
   // MY BRAND & AUDIENCE
   'personas': PersonasTool,
