@@ -577,6 +577,7 @@ export default function DocumentList({
   // --------------------------------------------------------------------------
 
   const loadData = useCallback(async () => {
+    console.log('[DIAG] DocumentList.loadData called. activeProjectId:', activeProjectId, 'documentListVersion:', documentListVersion);
     if (!activeProjectId) {
       setDocuments([]);
       setFolders([]);
@@ -587,9 +588,11 @@ export default function DocumentList({
         getAllDocuments(activeProjectId),
         getAllFolders(activeProjectId),
       ]);
+      console.log('[DIAG] DocumentList loaded:', docs.length, 'docs,', flds.length, 'folders for project', activeProjectId);
       setDocuments(docs);
       setFolders(flds);
     } catch (error) {
+      console.error('[DIAG] DocumentList.loadData caught error:', error);
       logger.error('Failed to load documents/folders:', error);
       setDocuments([]);
       setFolders([]);

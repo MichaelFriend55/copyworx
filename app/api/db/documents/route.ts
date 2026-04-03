@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all documents for a project (no base_title filter)
+    console.log('[DIAG] GET /api/db/documents - projectId:', projectId, 'userId:', userId);
     const { data: documents, error } = await (supabase
       .from('documents') as any)
       .select('*')
@@ -90,9 +91,11 @@ export async function GET(request: NextRequest) {
       .order('modified_at', { ascending: false });
 
     if (error) {
+      console.error('[DIAG] Supabase error fetching documents:', error);
       return internalErrorResponse(error);
     }
 
+    console.log('[DIAG] Documents found in Supabase:', documents?.length ?? 0);
     return NextResponse.json(documents || []);
 
   } catch (error) {
