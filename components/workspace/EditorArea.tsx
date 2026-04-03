@@ -35,14 +35,15 @@ import Highlight from '@tiptap/extension-highlight';
 import { FontSize } from '@/lib/tiptap/font-size';
 import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId, useViewMode } from '@/lib/stores/workspaceStore';
 import { useSnippetStore } from '@/lib/stores/snippetStore';
-import { getDocument, updateDocument, createDocumentVersion } from '@/lib/storage/unified-storage';
+import { getDocument, updateDocument, createDocumentVersion, getDocumentVersions } from '@/lib/storage/unified-storage';
 import { getEditorSelection } from '@/lib/editor-utils';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
-import { ZoomIn, ZoomOut, Copy } from 'lucide-react';
+import { ZoomIn, ZoomOut, Copy, ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import { TemplateResumeBanner } from './TemplateResumeBanner';
+import { VersionCompare } from './VersionCompare';
 import { logger } from '@/lib/utils/logger';
 
 interface EditorAreaProps {
@@ -101,6 +102,12 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   
   // Track if we're loading content to prevent save during load
   const isLoadingRef = useRef(false);
+  
+  // Version comparison state
+  const [isComparing, setIsComparing] = useState(false);
+  const [compareLeftDoc, setCompareLeftDoc] = useState<ProjectDocument | null>(null);
+  const [compareRightDoc, setCompareRightDoc] = useState<ProjectDocument | null>(null);
+  const [allVersions, setAllVersions] = useState<Array<{ version: number; id: string }>>([]);
   
   // Keep refs updated
   useEffect(() => {
@@ -505,6 +512,107 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
     }
   }, [currentDocument, activeProjectId, editor, parseVersionFromTitle]);
 
+  /**
+   * Enter comparison mode — loads all versions and sets left/right docs
+   */
+  const handleCompareVersions = useCallback(async () => {
+    if (!currentDocument || !activeProjectId) return;
+
+    try {
+      const versions = await getDocumentVersions(activeProjectId, currentDocument.baseTitle);
+      if (versions.length < 2) {
+        toast.error('Need at least 2 versions to compare');
+        return;
+      }
+
+      const versionOptions = versions.map((v) => ({ version: v.version, id: v.id }));
+      setAllVersions(versionOptions);
+
+      const currentIdx = versions.findIndex((v) => v.id === currentDocument.id);
+      const rightDoc = currentIdx >= 0 ? versions[currentIdx] : versions[versions.length - 1];
+      const leftDoc = currentIdx > 0 ? versions[currentIdx - 1] : versions[0];
+
+      const [leftFull, rightFull] = await Promise.all([
+        getDocument(activeProjectId, leftDoc.id),
+        getDocument(activeProjectId, rightDoc.id),
+      ]);
+
+      if (!leftFull || !rightFull) {
+        toast.error('Failed to load version data');
+        return;
+      }
+
+      setCompareLeftDoc(leftFull);
+      setCompareRightDoc(rightFull);
+      setIsComparing(true);
+    } catch (error) {
+      logger.error('Failed to enter comparison mode:', error);
+      toast.error('Failed to load versions for comparison');
+    }
+  }, [currentDocument, activeProjectId]);
+
+  /**
+   * Switch a version in comparison mode by fetching the full document
+   */
+  const handleCompareVersionChange = useCallback(
+    async (side: 'left' | 'right', versionId: string) => {
+      if (!activeProjectId) return;
+
+      try {
+        const doc = await getDocument(activeProjectId, versionId);
+        if (!doc) {
+          toast.error('Failed to load selected version');
+          return;
+        }
+
+        if (side === 'left') {
+          setCompareLeftDoc(doc);
+        } else {
+          setCompareRightDoc(doc);
+        }
+      } catch (error) {
+        logger.error('Failed to switch comparison version:', error);
+        toast.error('Failed to load selected version');
+      }
+    },
+    [activeProjectId],
+  );
+
+  /**
+   * Exit comparison mode
+   */
+  const handleCloseComparison = useCallback(() => {
+    setIsComparing(false);
+    setCompareLeftDoc(null);
+    setCompareRightDoc(null);
+    setAllVersions([]);
+  }, []);
+
+  /**
+   * Check whether the current document has sibling versions
+   */
+  const [hasVersions, setHasVersions] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function check() {
+      if (!currentDocument || !activeProjectId) {
+        setHasVersions(false);
+        return;
+      }
+      try {
+        const versions = await getDocumentVersions(activeProjectId, currentDocument.baseTitle);
+        if (!cancelled) setHasVersions(versions.length >= 2);
+      } catch {
+        if (!cancelled) setHasVersions(false);
+      }
+    }
+
+    check();
+    return () => { cancelled = true; };
+  }, [currentDocument, activeProjectId]);
+
   // Expose loadDocument via ref
   useImperativeHandle(ref, () => ({
     loadDocument: handleLoadDocument,
@@ -543,7 +651,26 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
           boxShadow: isFocusMode ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.08)',
         }}
       >
-        {currentDocument ? (
+        {isComparing && compareLeftDoc && compareRightDoc ? (
+          <VersionCompare
+            leftDoc={{
+              title: compareLeftDoc.title,
+              version: compareLeftDoc.version,
+              content: compareLeftDoc.content,
+              modifiedAt: compareLeftDoc.modifiedAt,
+            }}
+            rightDoc={{
+              title: compareRightDoc.title,
+              version: compareRightDoc.version,
+              content: compareRightDoc.content,
+              modifiedAt: compareRightDoc.modifiedAt,
+            }}
+            allVersions={allVersions}
+            onChangeLeft={(versionId) => handleCompareVersionChange('left', versionId)}
+            onChangeRight={(versionId) => handleCompareVersionChange('right', versionId)}
+            onClose={handleCloseComparison}
+          />
+        ) : currentDocument ? (
           <>
             {/* Document header */}
             <div
@@ -555,31 +682,52 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
               )}
               data-print-hide
             >
-              {/* LINE 1: Document title and Save as New Version button */}
+              {/* LINE 1: Document title and version action buttons */}
               <div className="flex items-start justify-between gap-4">
                 <h1 
-                  className="text-xl font-sans font-semibold text-black leading-tight max-w-[70%]"
+                  className="text-xl font-sans font-semibold text-black leading-tight max-w-[60%]"
                   title={currentDocument.title}
                 >
                   {currentDocument.title}
                 </h1>
                 
-                <button
-                  onClick={handleSaveAsNewVersion}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md flex-shrink-0',
-                    'text-sm font-medium',
-                    'bg-primary/10 text-primary',
-                    'hover:bg-primary/20 active:bg-primary/25',
-                    'transition-colors duration-150',
-                    'focus:outline-none focus:ring-2 focus:ring-primary/30'
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {hasVersions && (
+                    <button
+                      onClick={handleCompareVersions}
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-1.5 rounded-md',
+                        'text-sm font-medium',
+                        'bg-gray-100 text-gray-700',
+                        'hover:bg-gray-200 active:bg-gray-250',
+                        'transition-colors duration-150',
+                        'focus:outline-none focus:ring-2 focus:ring-primary/30'
+                      )}
+                      title="Compare Versions"
+                      aria-label="Compare Versions"
+                    >
+                      <ArrowLeftRight className="w-4 h-4" />
+                      <span>Compare</span>
+                    </button>
                   )}
-                  title="Save as New Version"
-                  aria-label="Save as New Version"
-                >
-                  <Copy className="w-4 h-4" />
-                  <span>Save as New Version</span>
-                </button>
+
+                  <button
+                    onClick={handleSaveAsNewVersion}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-md',
+                      'text-sm font-medium',
+                      'bg-primary/10 text-primary',
+                      'hover:bg-primary/20 active:bg-primary/25',
+                      'transition-colors duration-150',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/30'
+                    )}
+                    title="Save as New Version"
+                    aria-label="Save as New Version"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Save as New Version</span>
+                  </button>
+                </div>
               </div>
 
               {/* LINE 2: Zoom controls and Save status */}
