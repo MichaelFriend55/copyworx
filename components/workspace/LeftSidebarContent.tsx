@@ -584,7 +584,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
 
             {/* MY WORD ADVISOR – standalone item directly below MY COPY OPTIMIZER */}
             {section.id === 'optimizer' && (
-              <div className="mt-1">
+              <div className="mt-1" data-tour="word-advisor">
                 <button
                   onClick={() => {
                     logger.log('🖱️ Tool clicked: word-advisor');
