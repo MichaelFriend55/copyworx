@@ -42,9 +42,21 @@ import type { ProjectDocument } from '@/lib/types/project';
 import { ZoomIn, ZoomOut, Copy, ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
+import dynamic from 'next/dynamic';
 import { TemplateResumeBanner } from './TemplateResumeBanner';
-import { VersionCompare } from './VersionCompare';
 import { logger } from '@/lib/utils/logger';
+
+const VersionCompare = dynamic(
+  () => import('./VersionCompare').then((mod) => mod.VersionCompare),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+        Loading comparison...
+      </div>
+    ),
+  },
+);
 
 interface EditorAreaProps {
   className?: string;
