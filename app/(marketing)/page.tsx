@@ -70,6 +70,13 @@ const showcaseBlocks = [
     body: "Highlight any word in your copy and MY WORD ADVISOR gives you smarter alternatives \u2013 with real copywriting rationale behind each one. It\u2019s not a thesaurus. It tells you why \u201Cproven\u201D hits harder than \u201Cinnovative\u201D when you\u2019re writing for CFOs, and which words align with your Brand Voice and Persona. One click and the new word drops right into your document.",
     imagePosition: 'left' as const,
   },
+  {
+    screenshot: '/images/guide/Version-Control-2.png',
+    alt: 'Side-by-side version comparison showing word-level changes between two document versions',
+    headline: 'Compare Any Two Versions. See Exactly What Changed.',
+    body: "Every document in CopyWorx Studio\u2122 supports built-in version control \u2013 v1, v2, v3, as many as you need. Click Compare Versions and the editor splits into two side-by-side panes with word-level highlighting showing exactly what was added, removed, or rewritten. No more playing spot-the-difference across tabs. Perfect for client revisions, A/B testing copy approaches, or simply tracking how a piece evolved.",
+    imagePosition: 'right' as const,
+  },
 ] as const;
 
 /**

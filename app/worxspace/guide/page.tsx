@@ -33,6 +33,7 @@ import {
   Palette,
   Users,
   FolderOpen,
+  History,
   CreditCard,
   Menu,
   X,
@@ -49,6 +50,7 @@ const SECTIONS = [
   { id: 'brand-voice',        icon: Palette,    label: 'Brand Voice' },
   { id: 'personas',           icon: Users,      label: 'Personas' },
   { id: 'projects-documents', icon: FolderOpen, label: 'Projects & Documents' },
+  { id: 'version-control',    icon: History,    label: 'Version Control & Comparison' },
   { id: 'account-billing',    icon: CreditCard, label: 'Account & Billing' },
 ] as const;
 
@@ -1091,7 +1093,49 @@ function SectionProjectsDocuments() {
   );
 }
 
-// ─── Section 7: Account & Billing ────────────────────────────────────────────
+// ─── Section 7: Version Control & Comparison ─────────────────────────────────
+
+function SectionVersionControl() {
+  return (
+    <section id="version-control" className="guide-section scroll-mt-6">
+      <h2>Version Control &amp; Comparison</h2>
+
+      <p>
+        Every document you create in CopyWorx Studio™ supports version control. When you&apos;re
+        ready to preserve your current draft before making changes, click{' '}
+        <strong>Save as New Version</strong> in the editor header. This creates a new version –
+        v1, v2, v3 – while keeping your original intact. You can switch between versions at any
+        time using the version dropdown in the editor header.
+      </p>
+
+      <p>
+        Once a document has two or more versions, a <strong>Compare</strong> button appears. Click
+        it and the editor splits into two read-only panes, each with its own version selector.
+        Added text is highlighted in green, removed text in red with strikethrough – giving you a
+        clear, word-level view of what changed between any two versions. Click{' '}
+        <strong>Close Compare</strong> to return to normal editing.
+      </p>
+
+      <GuideImage
+        src="/images/guide/Version-Control-2.png"
+        alt="Side-by-side version comparison showing word-level changes between two document versions"
+        caption="Side-by-side version comparison showing word-level changes between v2 and v3"
+      />
+
+      <p>
+        This is especially useful for managing client revisions, testing different copy approaches,
+        or simply tracking how a piece of writing evolved over time.
+      </p>
+
+      <p>
+        You&apos;ll find <strong>Save as New Version</strong> in the editor header and the{' '}
+        <strong>Compare</strong> button next to the version badge.
+      </p>
+    </section>
+  );
+}
+
+// ─── Section 8: Account & Billing ────────────────────────────────────────────
 
 function SectionAccountBilling() {
   return (
@@ -1326,6 +1370,7 @@ export default function GuidePage() {
             <SectionBrandVoice />
             <SectionPersonas />
             <SectionProjectsDocuments />
+            <SectionVersionControl />
             <SectionAccountBilling />
           </div>
 
