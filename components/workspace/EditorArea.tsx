@@ -727,6 +727,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
 
                   <button
                     onClick={handleSaveAsNewVersion}
+                    data-tour="version-control"
                     className={cn(
                       'flex items-center gap-1.5 px-3 py-1.5 rounded-md',
                       'text-sm font-medium',

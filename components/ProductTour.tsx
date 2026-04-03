@@ -153,6 +153,18 @@ const tourSteps: Step[] = [
     disableBeacon: true,
   },
   {
+    target: '[data-tour="version-control"]',
+    content: (
+      <div>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Version Control Built In</h3>
+        <p className="text-base mb-2">Click Save as New Version to create a snapshot of your work – v1, v2, v3. Your original is always preserved. Perfect for client revisions or A/B testing different approaches.</p>
+        <p className="text-sm text-gray-600 italic">Once you have two or more versions, a Compare button appears – letting you see exactly what changed, side by side, with differences highlighted.</p>
+      </div>
+    ),
+    placement: 'bottom',
+    disableBeacon: true,
+  },
+  {
     target: '[data-tour="toolbox"]',
     content: (
       <div>
