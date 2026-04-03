@@ -613,7 +613,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                   )} />
                   <div className="text-left flex-1">
                     <div className={cn(
-                      'font-medium text-sm',
+                      'font-medium text-xs',
                       activeToolId === 'word-advisor' ? 'text-white' : 'text-apple-text-dark'
                     )}>
                       MY WORD ADVISOR
