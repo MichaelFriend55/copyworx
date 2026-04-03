@@ -333,7 +333,7 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
         <div className="flex items-center gap-2">
           <BookOpenText className="w-5 h-5 text-apple-blue" />
           <h2 className="text-lg font-semibold text-apple-text-dark">
-            My Word Advisor
+            MY WORD ADVISOR
           </h2>
         </div>
         <p className="text-sm text-apple-text-light">

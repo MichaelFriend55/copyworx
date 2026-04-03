@@ -616,7 +616,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                       'font-medium text-sm',
                       activeToolId === 'word-advisor' ? 'text-white' : 'text-apple-text-dark'
                     )}>
-                      My Word Advisor
+                      MY WORD ADVISOR
                     </div>
                     <div className={cn(
                       'text-xs',
