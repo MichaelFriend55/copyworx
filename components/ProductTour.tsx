@@ -99,7 +99,7 @@ const tourSteps: Step[] = [
     target: '[data-tour="word-advisor"]',
     content: (
       <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">MY WORD ADVISOR</h3>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">My Word Advisor</h3>
         <p className="text-base mb-2">Highlight any word in your copy, then click here. You&apos;ll get smarter alternatives with real copywriting rationale – not just synonyms, but insight into why one word hits harder than another.</p>
         <p className="text-sm text-gray-600 italic">It even factors in your Brand Voice and Persona for tailored recommendations.</p>
       </div>
@@ -273,6 +273,12 @@ export default function ProductTour({ run, onComplete }: ProductTourProps) {
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       onComplete();
       setStepIndex(0);
+      return;
+    }
+
+    // Skip past steps whose target element isn't in the DOM
+    if (type === EVENTS.TARGET_NOT_FOUND) {
+      setStepIndex(index + 1);
       return;
     }
 
