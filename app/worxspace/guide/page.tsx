@@ -28,6 +28,7 @@ import Link from 'next/link';
 import {
   Rocket,
   Wand2,
+  BookOpen,
   FileText,
   Palette,
   Users,
@@ -43,6 +44,7 @@ import { cn } from '@/lib/utils';
 const SECTIONS = [
   { id: 'getting-started',    icon: Rocket,     label: 'Getting Started' },
   { id: 'copy-optimizer',     icon: Wand2,      label: 'Copy Optimizer Suite' },
+  { id: 'word-advisor',       icon: BookOpen,   label: 'Word Advisor' },
   { id: 'templates',          icon: FileText,   label: 'AI@Worx Templates' },
   { id: 'brand-voice',        icon: Palette,    label: 'Brand Voice' },
   { id: 'personas',           icon: Users,      label: 'Personas' },
@@ -416,6 +418,38 @@ function SectionCopyOptimizer() {
         caption="Headline Generator ready to produce 15 variations"
         size="half"
       />
+    </section>
+  );
+}
+
+// ─── Section 2b: Word Advisor ─────────────────────────────────────────────────
+
+function SectionWordAdvisor() {
+  return (
+    <section id="word-advisor" className="guide-section scroll-mt-6">
+      <h2>Word Advisor</h2>
+
+      <p>
+        MY WORD ADVISOR combines a dictionary, thesaurus, and copywriting advisor into a single
+        tool. Highlight a word or phrase in the editor, then click MY WORD ADVISOR in the left
+        panel. The right sidebar will display a marketing-relevant definition, 5–8 alternative
+        words, and a brief copywriting rationale for each – explaining why one word choice might
+        outperform another based on persuasion, clarity, and audience perception.
+      </p>
+      <GuideImage
+        src="/images/guide/word-advisor-screenshot.png"
+        alt="MY WORD ADVISOR showing alternatives for the word legacy with copywriting rationales"
+        caption='MY WORD ADVISOR showing alternatives for the word "legacy" with copywriting rationales'
+      />
+      <p>
+        If you&apos;ve configured a Brand Voice, the advisor identifies which alternatives best
+        match your defined tone and personality. If you have an active Persona, it recommends words
+        that resonate with that specific audience. Select any alternative and click Apply Word to
+        replace the highlighted text directly in your document.
+      </p>
+      <p>
+        You&apos;ll find MY WORD ADVISOR in the left panel, directly below MY COPY OPTIMIZER.
+      </p>
     </section>
   );
 }
@@ -1287,6 +1321,7 @@ export default function GuidePage() {
           <div className="guide-prose space-y-16">
             <SectionGettingStarted />
             <SectionCopyOptimizer />
+            <SectionWordAdvisor />
             <SectionTemplates />
             <SectionBrandVoice />
             <SectionPersonas />

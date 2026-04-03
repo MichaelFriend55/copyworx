@@ -63,6 +63,13 @@ const showcaseBlocks = [
     body: "Brand Alignment analyzes your copy against your Brand Voice and returns a score, specific matches, violations, and actionable recommendations. It's the quality-control tool that turns subjective brand feedback into objective, measurable performance.",
     imagePosition: 'right' as const,
   },
+  {
+    screenshot: '/images/guide/word-advisor-screenshot.png',
+    alt: 'MY WORD ADVISOR showing alternative word suggestions with copywriting rationales',
+    headline: 'Find the Right Word. Know Why It\u2019s Right.',
+    body: "Highlight any word in your copy and MY WORD ADVISOR gives you smarter alternatives \u2013 with real copywriting rationale behind each one. It\u2019s not a thesaurus. It tells you why \u201Cproven\u201D hits harder than \u201Cinnovative\u201D when you\u2019re writing for CFOs, and which words align with your Brand Voice and Persona. One click and the new word drops right into your document.",
+    imagePosition: 'left' as const,
+  },
 ] as const;
 
 /**
