@@ -33,7 +33,7 @@ import { FontFamily } from '@tiptap/extension-font-family';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import { FontSize } from '@/lib/tiptap/font-size';
-import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId, useViewMode } from '@/lib/stores/workspaceStore';
+import { useWorkspaceStore, useActiveProjectId, useActiveDocumentId, useViewMode, useInvalidateDocumentList } from '@/lib/stores/workspaceStore';
 import { useSnippetStore } from '@/lib/stores/snippetStore';
 import { getDocument, updateDocument, createDocumentVersion, getDocumentVersions } from '@/lib/storage/unified-storage';
 import { getEditorSelection } from '@/lib/editor-utils';
@@ -91,6 +91,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
   const activeProjectId = useActiveProjectId();
   const activeDocumentId = useActiveDocumentId();
   const viewMode = useViewMode();
+  const invalidateDocumentList = useInvalidateDocumentList();
   
   // Get actions via getState to avoid re-render loops
   const setSelectedTextRef = useRef(useWorkspaceStore.getState().setSelectedText);
@@ -510,6 +511,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       });
       
       setActiveDocumentIdRef.current(newDoc.id);
+      invalidateDocumentList();
       toast.success(`Created ${newTitle}`);
       
       logger.log('✅ New version created:', {
@@ -522,7 +524,7 @@ export const EditorArea = forwardRef<EditorAreaHandle, EditorAreaProps>(
       logger.error('❌ Failed to create new version:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create new version');
     }
-  }, [currentDocument, activeProjectId, editor, parseVersionFromTitle]);
+  }, [currentDocument, activeProjectId, editor, parseVersionFromTitle, invalidateDocumentList]);
 
   /**
    * Enter comparison mode — loads all versions and sets left/right docs

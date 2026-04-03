@@ -82,6 +82,9 @@ interface WorkspaceState {
   // Document state - ONLY the ID, not content!
   activeDocumentId: string | null;
   
+  /** Monotonic counter — bump to tell DocumentList to re-fetch */
+  documentListVersion: number;
+  
   // UI state
   leftSidebarOpen: boolean;
   rightSidebarOpen: boolean;
@@ -174,6 +177,8 @@ interface WorkspaceState {
   
   // Document actions - SIMPLIFIED
   setActiveDocumentId: (id: string | null) => void;
+  /** Bump documentListVersion to trigger a sidebar re-fetch */
+  invalidateDocumentList: () => void;
   
   // UI actions
   toggleLeftSidebar: () => void;
@@ -259,6 +264,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       
       // Initial document state - ONLY ID
       activeDocumentId: null,
+      documentListVersion: 0,
       
       // Initial UI state
       leftSidebarOpen: true,
@@ -418,6 +424,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       // Document actions - SIMPLIFIED
       setActiveDocumentId: (id: string | null) => {
         set({ activeDocumentId: id });
+      },
+
+      invalidateDocumentList: () => {
+        set((state) => ({ documentListVersion: state.documentListVersion + 1 }));
       },
 
       // UI actions
@@ -1432,10 +1442,14 @@ export const useProjectActions = () => useWorkspaceStore(
   }))
 );
 
+export const useDocumentListVersion = () => useWorkspaceStore((state) => state.documentListVersion);
+export const useInvalidateDocumentList = () => useWorkspaceStore((state) => state.invalidateDocumentList);
+
 export const useDocumentActions = () => useWorkspaceStore(
   useShallow((state) => ({
     setActiveDocumentId: state.setActiveDocumentId,
     setSelectedText: state.setSelectedText,
+    invalidateDocumentList: state.invalidateDocumentList,
   }))
 );
 

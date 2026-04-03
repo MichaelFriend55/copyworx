@@ -18,7 +18,7 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { ProjectDocument, Folder } from '@/lib/types/project';
-import { useActiveProjectId, useProjects } from '@/lib/stores/workspaceStore';
+import { useActiveProjectId, useProjects, useDocumentListVersion } from '@/lib/stores/workspaceStore';
 import {
   DndContext,
   DragEndEvent,
@@ -529,6 +529,7 @@ export default function DocumentList({
   // ---- Store state ----
   const activeProjectId = useActiveProjectId();
   const projects = useProjects();
+  const documentListVersion = useDocumentListVersion();
 
   // ---- Local data state ----
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
@@ -593,7 +594,7 @@ export default function DocumentList({
       setDocuments([]);
       setFolders([]);
     }
-  }, [activeProjectId]);
+  }, [activeProjectId, documentListVersion]);
 
   useEffect(() => {
     loadData();
