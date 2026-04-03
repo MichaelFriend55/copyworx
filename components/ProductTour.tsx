@@ -114,7 +114,7 @@ const tourSteps: Step[] = [
         <p className="text-base">Clean, distraction-free editor with professional formatting tools. This is where the magic happens.</p>
       </div>
     ),
-    placement: 'top',
+    placement: 'center',
     disableBeacon: true,
   },
   {
