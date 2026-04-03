@@ -337,15 +337,12 @@ export async function createDocumentVersion(
 export async function getAllDocuments(projectId: string): Promise<ProjectDocument[]> {
   if (typeof window === 'undefined') return [];
   
-  console.log('[DIAG] getAllDocuments called with projectId:', projectId);
-  
   try {
     const apiResponse = await apiCall<Record<string, unknown>[]>(
       `${API_BASE}?project_id=${encodeURIComponent(projectId)}`
     );
     
     const docs = apiResponse.map(mapApiToDocument);
-    console.log(`[DIAG] API returned ${docs.length} documents for project ${projectId}`);
     logger.log(`☁️ Fetched ${docs.length} documents from cloud`);
     
     // Update localStorage with latest data
@@ -353,11 +350,9 @@ export async function getAllDocuments(projectId: string): Promise<ProjectDocumen
     
     return docs;
   } catch (error) {
-    console.error('[DIAG] API call failed for getAllDocuments:', error);
     logger.warn('⚠️ API failed, falling back to localStorage:', error);
     
     const localDocs = getLocalDocuments(projectId);
-    console.log(`[DIAG] localStorage fallback returned ${localDocs.length} documents for project ${projectId}`);
     logger.log(`💾 Loaded ${localDocs.length} documents from localStorage`);
     
     return localDocs.sort((a, b) => 
