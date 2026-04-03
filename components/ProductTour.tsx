@@ -15,7 +15,6 @@
 
 import { useState, useCallback } from 'react';
 import Joyride, { CallBackProps, STATUS, Step, ACTIONS, EVENTS } from 'react-joyride';
-import { logger } from '@/lib/utils/logger';
 
 /**
  * Props for ProductTour component
@@ -108,40 +107,6 @@ const tourSteps: Step[] = [
     disableBeacon: true,
   },
   {
-    target: '[data-tour="insights"]',
-    content: (
-      <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">My Insights</h3>
-        <p className="text-base mb-2">Write smarter with AI-powered insights:</p>
-        <ul className="text-sm list-disc list-inside space-y-1">
-          <li>Alignment scores</li>
-          <li>Copy strengths</li>
-          <li>Areas to improve</li>
-          <li>Recommendations</li>
-        </ul>
-      </div>
-    ),
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: '[data-tour="snippets"]',
-    content: (
-      <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Snippets</h3>
-        <p className="text-base mb-2">Save and reuse copy easily:</p>
-        <ul className="text-sm list-disc list-inside space-y-1">
-          <li>Taglines</li>
-          <li>CTAs</li>
-          <li>Copyright info</li>
-          <li>Boilerplate</li>
-        </ul>
-      </div>
-    ),
-    placement: 'bottom',
-    disableBeacon: true,
-  },
-  {
     target: '[data-tour="editor"]',
     content: (
       <div>
@@ -149,19 +114,20 @@ const tourSteps: Step[] = [
         <p className="text-base">Clean, distraction-free editor with professional formatting tools. This is where the magic happens.</p>
       </div>
     ),
-    placement: 'center',
+    placement: 'top',
     disableBeacon: true,
   },
   {
-    target: '[data-tour="version-control"]',
+    target: 'body',
     content: (
       <div>
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">Version Control Built In</h3>
-        <p className="text-base mb-2">Click Save as New Version to create a snapshot of your work – v1, v2, v3. Your original is always preserved. Perfect for client revisions or A/B testing different approaches.</p>
-        <p className="text-sm text-gray-600 italic">Once you have two or more versions, a Compare button appears – letting you see exactly what changed, side by side, with differences highlighted.</p>
+        <p className="text-base mb-2">Every document supports versioning. Click &quot;Save as New Version&quot; to create a snapshot – v1, v2, v3. Your original is always preserved, making it easy to manage client revisions or test different copy approaches.</p>
+        <p className="text-base mb-2">Once you have two or more versions, a Compare button appears in the editor – letting you see exactly what changed, side by side, with differences highlighted.</p>
+        <p className="text-sm text-gray-600 italic">No more files named &quot;Homepage_FINAL_v3_ACTUALLY_FINAL.&quot;</p>
       </div>
     ),
-    placement: 'bottom',
+    placement: 'center',
     disableBeacon: true,
   },
   {
@@ -264,25 +230,14 @@ export default function ProductTour({ run, onComplete }: ProductTourProps) {
    * Manages step navigation and completion
    */
   const handleJoyrideCallback = useCallback((data: CallBackProps) => {
-    const { status, action, index, type } = data;
-    
-    // Log for debugging
-    logger.log('Tour callback:', { status, action, index, type });
+    const { action, index, status, type } = data;
 
-    // Handle tour completion or skip
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      onComplete();
       setStepIndex(0);
+      onComplete();
       return;
     }
 
-    // Skip past steps whose target element isn't in the DOM
-    if (type === EVENTS.TARGET_NOT_FOUND) {
-      setStepIndex(index + 1);
-      return;
-    }
-
-    // Handle step navigation
     if (type === EVENTS.STEP_AFTER) {
       if (action === ACTIONS.NEXT) {
         setStepIndex(index + 1);
@@ -291,10 +246,9 @@ export default function ProductTour({ run, onComplete }: ProductTourProps) {
       }
     }
 
-    // Handle close button click
     if (action === ACTIONS.CLOSE) {
-      onComplete();
       setStepIndex(0);
+      onComplete();
     }
   }, [onComplete]);
 
@@ -310,7 +264,7 @@ export default function ProductTour({ run, onComplete }: ProductTourProps) {
       styles={tourStyles}
       locale={tourLocale}
       scrollToFirstStep
-      disableOverlayClose
+      disableOverlayClose={false}
       spotlightClicks
       floaterProps={{
         disableAnimation: false,
