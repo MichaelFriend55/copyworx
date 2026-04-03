@@ -3,11 +3,14 @@
  * @description MY WORD ADVISOR – right sidebar panel combining dictionary,
  * thesaurus, and copywriting intelligence. Shows a definition, alternative
  * words with rationales, brand voice matching, and persona insights.
+ *
+ * Users must explicitly click "Analyze Word" to trigger the API call.
+ * Text selection in the editor only updates the displayed selection preview.
  */
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   BookOpenText,
   ArrowUp,
@@ -20,6 +23,7 @@ import {
   User,
   Lightbulb,
   AlertCircle,
+  Search,
 } from 'lucide-react';
 import {
   useSelectedText,
@@ -180,12 +184,12 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedAlternative, setSelectedAlternative] = useState<string | null>(null);
   const [appliedWord, setAppliedWord] = useState<string | null>(null);
+  const [analyzedWord, setAnalyzedWord] = useState<string | null>(null);
 
   const savedSelectionRef = useRef<{ from: number; to: number } | null>(null);
-  const lastFetchedWord = useRef<string | null>(null);
 
-  const hasSelection = selectedText && selectedText.trim().length > 0;
-  const word = selectedText?.trim() || '';
+  const displayedSelection = selectedText?.trim() || '';
+  const hasSelection = displayedSelection.length > 0;
 
   const activeProject = useMemo(() => {
     if (!activeProjectId) return null;
@@ -221,40 +225,32 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
   }, [activeProject]);
 
   /**
-   * Save selection range on mount / when selection changes before fetch
+   * Fetch word advisor results – called ONLY when the user clicks "Analyze Word"
    */
-  useEffect(() => {
-    if (selectionRange) {
-      savedSelectionRef.current = { ...selectionRange };
-    }
-  }, [selectionRange]);
+  const handleAnalyze = useCallback(async () => {
+    if (!editor || !displayedSelection) return;
 
-  /**
-   * Fetch word advisor results when selected text changes
-   */
-  const fetchAdvisorResults = useCallback(async (wordToAnalyze: string) => {
-    if (!editor || !wordToAnalyze.trim()) return;
+    const currentRange = selectionRange
+      ? { ...selectionRange }
+      : null;
+    savedSelectionRef.current = currentRange;
 
-    if (selectionRange) {
-      savedSelectionRef.current = { ...selectionRange };
-    }
-
-    const paragraph = getParagraphFromEditor(editor, selectionRange?.from ?? 0);
-    const sentence = extractSentence(paragraph, wordToAnalyze);
+    const paragraph = getParagraphFromEditor(editor, currentRange?.from ?? 0);
+    const sentence = extractSentence(paragraph, displayedSelection);
 
     setLoading(true);
     setError(null);
     setResult(null);
     setSelectedAlternative(null);
     setAppliedWord(null);
-    lastFetchedWord.current = wordToAnalyze;
+    setAnalyzedWord(displayedSelection);
 
     try {
       const response = await fetch('/api/word-advisor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          word: wordToAnalyze,
+          word: displayedSelection,
           sentence,
           paragraph,
           brandVoice: brandVoicePayload,
@@ -276,16 +272,7 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
     } finally {
       setLoading(false);
     }
-  }, [editor, selectionRange, brandVoicePayload, personaPayload]);
-
-  /**
-   * Auto-fetch when selected text changes (and differs from last fetch)
-   */
-  useEffect(() => {
-    if (hasSelection && word && word !== lastFetchedWord.current) {
-      fetchAdvisorResults(word);
-    }
-  }, [word, hasSelection, fetchAdvisorResults]);
+  }, [editor, displayedSelection, selectionRange, brandVoicePayload, personaPayload]);
 
   /**
    * Apply the selected alternative word to the editor
@@ -304,12 +291,12 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
         .run();
 
       setAppliedWord(selectedAlternative);
-      logger.log('✅ Word replaced:', { original: word, replacement: selectedAlternative });
+      logger.log('✅ Word replaced:', { original: analyzedWord, replacement: selectedAlternative });
     } catch (err) {
       logger.error('❌ Failed to apply word:', err);
       setError('Failed to replace word in editor.');
     }
-  }, [editor, selectedAlternative, word]);
+  }, [editor, selectedAlternative, analyzedWord]);
 
   /**
    * Clear and reset state
@@ -319,7 +306,7 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
     setError(null);
     setSelectedAlternative(null);
     setAppliedWord(null);
-    lastFetchedWord.current = null;
+    setAnalyzedWord(null);
   }, []);
 
   // ────────────────────────────────────────────────────────────
@@ -341,29 +328,52 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
         </p>
       </div>
 
-      {/* No Selection State */}
-      {!hasSelection && !result && (
+      {/* Prompt / instruction state */}
+      {!result && !loading && (
         <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0" />
           <p className="text-xs text-blue-700">
-            Highlight a word or phrase in your document, then click MY WORD ADVISOR to get copywriting insights and alternatives.
+            Highlight a word or phrase in your document, then click&nbsp;
+            <strong>Analyze Word</strong> below.
           </p>
         </div>
       )}
 
-      {/* Selected Word Display */}
-      {(hasSelection || result) && (
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-apple-text-dark uppercase tracking-wide flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-apple-blue" />
-            Selected Word
-          </label>
-          <div className="bg-apple-gray-bg border border-apple-gray-light rounded-lg px-3 py-2">
-            <span className="text-sm font-semibold text-apple-text-dark">
-              &ldquo;{result ? (lastFetchedWord.current || word) : word}&rdquo;
-            </span>
-          </div>
+      {/* Selected word display – always shows current editor selection */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-medium text-apple-text-dark uppercase tracking-wide flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-apple-blue" />
+          Selected
+        </label>
+        <div className="bg-apple-gray-bg border border-apple-gray-light rounded-lg px-3 py-2">
+          <span className={cn(
+            'text-sm',
+            hasSelection ? 'font-semibold text-apple-text-dark' : 'text-apple-text-light italic'
+          )}>
+            {hasSelection ? `\u201C${displayedSelection}\u201D` : '(none)'}
+          </span>
         </div>
+      </div>
+
+      {/* Analyze Word button – disabled when nothing is selected */}
+      {!loading && !result && (
+        <button
+          onClick={handleAnalyze}
+          disabled={!hasSelection}
+          className={cn(
+            'w-full py-2.5 px-4 rounded-lg',
+            'font-medium text-sm',
+            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+            'transition-all duration-200',
+            'flex items-center justify-center gap-2',
+            hasSelection
+              ? 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] text-white shadow-sm hover:shadow'
+              : 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
+          )}
+        >
+          <Search className="w-4 h-4" />
+          Analyze Word
+        </button>
       )}
 
       {/* Loading */}
@@ -386,6 +396,21 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
       {/* Results */}
       {result && !loading && (
         <>
+          {/* Analyzed Word Label */}
+          {analyzedWord && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-apple-text-dark uppercase tracking-wide flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5 text-apple-blue" />
+                Analyzed Word
+              </label>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <span className="text-sm font-semibold text-apple-text-dark">
+                  &ldquo;{analyzedWord}&rdquo;
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Definition */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-apple-text-dark uppercase tracking-wide">
@@ -513,6 +538,27 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
                 : 'Select an alternative to apply'}
             </button>
           )}
+
+          <div className="border-t border-gray-200" />
+
+          {/* Analyze another word */}
+          <button
+            onClick={handleAnalyze}
+            disabled={!hasSelection}
+            className={cn(
+              'w-full py-2 px-4 rounded-lg',
+              'font-medium text-sm',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              'transition-all duration-200',
+              'flex items-center justify-center gap-2',
+              hasSelection
+                ? 'border border-[#006EE6] text-[#006EE6] bg-white hover:bg-blue-50'
+                : 'border border-gray-200 text-apple-text-light bg-white cursor-not-allowed'
+            )}
+          >
+            <Search className="w-4 h-4" />
+            Analyze Word
+          </button>
         </>
       )}
     </div>
