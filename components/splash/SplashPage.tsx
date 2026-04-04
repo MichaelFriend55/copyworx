@@ -347,8 +347,8 @@ export function SplashPage() {
 
           <ActionButton
             icon={<Rocket className="w-8 h-8" strokeWidth={1.5} />}
-            label="Worxspace"
-            description="Take me to my Worxspace"
+            label="My Worxspace"
+            description="Take me to My Worxspace"
             onClick={handleGoToWorxspace}
           />
         </div>

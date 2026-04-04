@@ -212,7 +212,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
         >
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-apple-text-dark" />
-            <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
+            <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-normal">
               My Projects
             </span>
           </div>
@@ -233,26 +233,20 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
         <button
           onClick={openTemplatesSlideOut}
           className={cn(
-            'w-full flex items-center justify-between px-3 py-3 rounded-lg',
+            'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
             'bg-gray-50 hover:bg-gray-100 transition-all duration-200',
             'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
             'relative pl-5 border-l-[3px] border-transparent',
             'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
             'before:w-[3px] before:rounded-l-lg',
-            'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]',
-            'group'
+            'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
           )}
         >
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-5 h-5 text-blue-500 group-hover:text-blue-600 transition-colors" />
-            <div className="text-left">
-              <div className="font-medium text-sm text-apple-text-dark">
-                AI@Worx Templates
-              </div>
-              <div className="text-xs text-gray-500">
-                Browse templates
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-apple-text-dark" />
+            <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-normal">
+              AI@Worx Templates
+            </span>
           </div>
           <PanelLeftOpen className="w-4 h-4 text-gray-400" />
         </button>
@@ -289,7 +283,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
               >
                 <div className="flex items-center gap-2">
                   <SectionIcon className="w-4 h-4 text-apple-text-dark" />
-                  <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-wide">
+                  <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-normal">
                     {section.name}
                   </span>
                 </div>
@@ -383,18 +377,10 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                       : 'text-apple-text-dark'
                   )} />
                   <span className={cn(
-                    'font-semibold text-xs uppercase tracking-tight flex-1 whitespace-nowrap',
+                    'font-semibold text-sm uppercase tracking-normal flex-1 whitespace-nowrap',
                     activeToolId === 'word-advisor' ? 'text-white' : 'text-apple-text-dark'
                   )}>
                     My Word Advisor
-                  </span>
-                  <span className={cn(
-                    'px-1.5 py-0.5 text-[10px] font-bold rounded uppercase flex-shrink-0',
-                    activeToolId === 'word-advisor'
-                      ? 'bg-white/20 text-white'
-                      : 'bg-green-100 text-green-700'
-                  )}>
-                    NEW
                   </span>
                 </button>
               </div>

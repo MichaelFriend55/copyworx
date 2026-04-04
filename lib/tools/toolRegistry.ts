@@ -101,7 +101,6 @@ export const TOOLS: ToolConfig[] = [
     section: 'optimizer',
     description: 'Generate channel-optimized headlines',
     requiresDocument: false,
-    badge: 'NEW',
   },
   {
     id: 'word-advisor',
@@ -110,7 +109,6 @@ export const TOOLS: ToolConfig[] = [
     section: 'optimizer',
     description: 'Dictionary, thesaurus & copywriting intelligence',
     requiresDocument: true,
-    badge: 'NEW',
   },
   {
     id: 'competitive-analysis',
@@ -119,7 +117,6 @@ export const TOOLS: ToolConfig[] = [
     section: 'optimizer',
     description: 'Analyze competitor copy',
     requiresDocument: false,
-    badge: 'NEW',
   },
   
   // ═══════════════════════════════════════════════════════════
@@ -165,7 +162,7 @@ export const SECTIONS: SectionConfig[] = [
   },
   {
     id: 'brand',
-    name: 'Brand & Audience',
+    name: 'My Brand & Audience',
     icon: Users,
     description: 'Brand voice and target personas',
     defaultExpanded: false,
