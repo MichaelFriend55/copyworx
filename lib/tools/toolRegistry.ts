@@ -19,16 +19,14 @@ import {
   Type,
   Users,
   Volume2,
-  Target,
-  UserCheck,
-  Zap,
   BookOpenText,
+  ScanSearch,
 } from 'lucide-react';
 
 /**
  * Tool section types for organizing tools in the left sidebar
  */
-export type ToolSection = 'optimizer' | 'brand' | 'insights';
+export type ToolSection = 'optimizer' | 'brand';
 
 /**
  * Tool configuration interface
@@ -114,6 +112,15 @@ export const TOOLS: ToolConfig[] = [
     requiresDocument: true,
     badge: 'NEW',
   },
+  {
+    id: 'competitive-analysis',
+    name: 'Competitive Analysis',
+    icon: ScanSearch,
+    section: 'optimizer',
+    description: 'Analyze competitor copy',
+    requiresDocument: false,
+    badge: 'NEW',
+  },
   
   // ═══════════════════════════════════════════════════════════
   // MY BRAND & AUDIENCE
@@ -134,34 +141,7 @@ export const TOOLS: ToolConfig[] = [
     description: 'Target audience profiles',
     requiresDocument: false,
   },
-  
-  // ═══════════════════════════════════════════════════════════
-  // MY INSIGHTS
-  // ═══════════════════════════════════════════════════════════
-  {
-    id: 'competitor-analyzer',
-    name: 'Competitor Analyzer',
-    icon: Target,
-    section: 'insights',
-    description: 'Analyze competitor copy',
-    requiresDocument: false,
-  },
-  {
-    id: 'persona-alignment',
-    name: 'Persona Alignment',
-    icon: UserCheck,
-    section: 'insights',
-    description: 'Check persona fit',
-    requiresDocument: true,
-  },
-  {
-    id: 'brand-alignment',
-    name: 'Brand Alignment',
-    icon: Zap,
-    section: 'insights',
-    description: 'Check brand consistency',
-    requiresDocument: true,
-  },
+
 ];
 
 /**
@@ -188,13 +168,6 @@ export const SECTIONS: SectionConfig[] = [
     name: 'Brand & Audience',
     icon: Users,
     description: 'Brand voice and target personas',
-    defaultExpanded: false,
-  },
-  {
-    id: 'insights',
-    name: 'My Insights',
-    icon: Target,
-    description: 'Analyze and align your copy',
     defaultExpanded: false,
   },
 ];

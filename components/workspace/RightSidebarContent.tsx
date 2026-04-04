@@ -26,9 +26,8 @@ import { RewriteChannelTool } from '@/components/workspace/RewriteChannelTool';
 import { HeadlineGeneratorTool } from '@/components/workspace/HeadlineGeneratorTool';
 import { BrandVoiceTool } from '@/components/workspace/BrandVoiceTool';
 import { PersonasTool } from '@/components/workspace/PersonasTool';
-import { BrandAlignmentTool } from '@/components/workspace/BrandAlignmentTool';
-import { PersonaAlignmentTool } from '@/components/workspace/PersonaAlignmentTool';
 import { WordAdvisor } from '@/components/workspace/WordAdvisor';
+import { CompetitiveAnalysis } from '@/components/workspace/CompetitiveAnalysis';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getTemplateById } from '@/lib/data/templates';
 import { toolRequiresDocument } from '@/lib/tools/toolRegistry';
@@ -48,31 +47,6 @@ interface RightSidebarContentProps {
 }
 
 /**
- * Placeholder component for tools under development
- */
-function PlaceholderTool({ 
-  title, 
-  description 
-}: { 
-  title: string; 
-  description: string; 
-  editor: Editor | null;
-}) {
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-apple-text-dark">{title}</h2>
-        <p className="text-sm text-apple-text-light">{description}</p>
-      </div>
-      <div className="p-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-        <p className="text-sm font-medium text-gray-600 mb-1">Coming Soon</p>
-        <p className="text-xs text-gray-500">This tool is under development</p>
-      </div>
-    </div>
-  );
-}
-
-/**
  * Tool component map - Maps tool IDs to their components
  * Defined outside component to prevent recreation on every render
  */
@@ -84,17 +58,12 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<{ editor: Editor | nul
   'rewrite-channel': RewriteChannelTool,
   'headline-generator': HeadlineGeneratorTool,
   'word-advisor': WordAdvisor,
+  'competitive-analysis': CompetitiveAnalysis,
   
   // MY BRAND & AUDIENCE
   'personas': PersonasTool,
   'brand-voice': BrandVoiceTool,
   
-  // MY INSIGHTS
-  'competitor-analyzer': (props) => (
-    <PlaceholderTool {...props} title="Competitor Analyzer" description="Analyze competitor copy" />
-  ),
-  'persona-alignment': PersonaAlignmentTool,
-  'brand-alignment': BrandAlignmentTool,
 };
 
 /**
