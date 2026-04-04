@@ -31,6 +31,7 @@ interface ProductTourProps {
  * Each step highlights a key feature of CopyWorx
  */
 const tourSteps: Step[] = [
+  // 1. Welcome
   {
     target: 'body',
     content: (
@@ -43,6 +44,7 @@ const tourSteps: Step[] = [
     placement: 'center',
     disableBeacon: true,
   },
+  // 2. My Projects
   {
     target: '[data-tour="projects"]',
     content: (
@@ -54,30 +56,7 @@ const tourSteps: Step[] = [
     placement: 'right',
     disableBeacon: true,
   },
-  {
-    target: '[data-tour="snippets"]',
-    content: (
-      <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Snippets</h3>
-        <p className="text-base mb-2">Your personal library of reusable copy &ndash; taglines, boilerplate, CTAs, legal disclaimers &ndash; saved by project and always at your fingertips.</p>
-        <p className="text-sm text-gray-600 italic">Pro tip: Highlight any text in the Editor, right-click, and save it as a Snippet instantly.</p>
-      </div>
-    ),
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: '[data-tour="brand-voice"]',
-    content: (
-      <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Brand Voice &amp; Personas</h3>
-        <p className="text-base mb-2">This is your strategic foundation. Set up your Brand Voice first, then a Persona or two — they ensure every piece of copy maintains consistency.</p>
-        <p className="text-sm text-gray-600 italic">Pro tip: Spend 10 minutes here before writing anything!</p>
-      </div>
-    ),
-    placement: 'right',
-    disableBeacon: true,
-  },
+  // 3. AI@Worx Templates
   {
     target: '[data-tour="templates"]',
     content: (
@@ -89,6 +68,7 @@ const tourSteps: Step[] = [
     placement: 'right',
     disableBeacon: true,
   },
+  // 4. Copy Optimizer Suite
   {
     target: '[data-tour="copy-optimizer"]',
     content: (
@@ -107,18 +87,45 @@ const tourSteps: Step[] = [
     placement: 'right',
     disableBeacon: true,
   },
+  // 5. My Word Advisor
   {
     target: '[data-tour="word-advisor"]',
     content: (
       <div>
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">My Word Advisor</h3>
-        <p className="text-base mb-2">Highlight any word in your copy, then click here. You&apos;ll get smarter alternatives with real copywriting rationale – not just synonyms, but insight into why one word hits harder than another.</p>
+        <p className="text-base mb-2">Highlight any word in your copy, then click here. You&apos;ll get smarter alternatives with real copywriting rationale &ndash; not just synonyms, but insight into why one word hits harder than another.</p>
         <p className="text-sm text-gray-600 italic">It even factors in your Brand Voice and Persona for tailored recommendations.</p>
       </div>
     ),
     placement: 'right',
     disableBeacon: true,
   },
+  // 6. My Brand & Audience
+  {
+    target: '[data-tour="brand-voice"]',
+    content: (
+      <div>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">My Brand &amp; Audience</h3>
+        <p className="text-base">Define your brand identity and target audience so every piece of copy is on-brand and audience-specific from the first draft.</p>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
+  },
+  // 7. Brand Voice & Personas
+  {
+    target: '[data-tour="brand-voice"]',
+    content: (
+      <div>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Brand Voice &amp; Personas</h3>
+        <p className="text-base mb-2">This is your strategic foundation. Set up your Brand Voice first, then a Persona or two &mdash; they ensure every piece of copy maintains consistency.</p>
+        <p className="text-sm text-gray-600 italic">Pro tip: Spend 10 minutes here before writing anything!</p>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
+  },
+  // 8. Your Writing Canvas
   {
     target: '[data-tour="editor"]',
     content: (
@@ -130,19 +137,34 @@ const tourSteps: Step[] = [
     placement: 'center',
     disableBeacon: true,
   },
+  // 9. Version Control Built In
   {
     target: 'body',
     content: (
       <div>
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">Version Control Built In</h3>
-        <p className="text-base mb-2">Every document supports versioning. Click &quot;Save as New Version&quot; to create a snapshot – v1, v2, v3. Your original is always preserved, making it easy to manage client revisions or test different copy approaches.</p>
-        <p className="text-base mb-2">Once you have two or more versions, a Compare button appears in the editor – letting you see exactly what changed, side by side, with differences highlighted.</p>
+        <p className="text-base mb-2">Every document supports versioning. Click &quot;Save as New Version&quot; to create a snapshot &ndash; v1, v2, v3. Your original is always preserved, making it easy to manage client revisions or test different copy approaches.</p>
+        <p className="text-base mb-2">Once you have two or more versions, a Compare button appears in the editor &ndash; letting you see exactly what changed, side by side, with differences highlighted.</p>
         <p className="text-sm text-gray-600 italic">No more files named &quot;Homepage_FINAL_v3_ACTUALLY_FINAL.&quot;</p>
       </div>
     ),
     placement: 'center',
     disableBeacon: true,
   },
+  // 10. Snippets
+  {
+    target: '[data-tour="snippets"]',
+    content: (
+      <div>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Snippets</h3>
+        <p className="text-base mb-2">Your personal library of reusable copy &ndash; taglines, boilerplate, CTAs, legal disclaimers &ndash; saved by project and always at your fingertips.</p>
+        <p className="text-sm text-gray-600 italic">Pro tip: Highlight any text in the Editor, right-click, and save it as a Snippet instantly.</p>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
+  },
+  // 11. AI@Worx Toolbox
   {
     target: '[data-tour="toolbox"]',
     content: (
@@ -154,6 +176,7 @@ const tourSteps: Step[] = [
     placement: 'left',
     disableBeacon: true,
   },
+  // 12. You're Ready to Write to Win!
   {
     target: 'body',
     content: (
