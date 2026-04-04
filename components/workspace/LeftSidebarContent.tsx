@@ -612,7 +612,7 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                       : 'text-apple-text-dark'
                   )} />
                   <span className={cn(
-                    'font-semibold text-sm uppercase tracking-wide flex-1',
+                    'font-semibold text-xs uppercase tracking-tight flex-1 whitespace-nowrap',
                     activeToolId === 'word-advisor' ? 'text-white' : 'text-apple-text-dark'
                   )}>
                     My Word Advisor
