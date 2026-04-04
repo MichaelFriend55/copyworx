@@ -106,18 +106,6 @@ const tourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">My Brand &amp; Audience</h3>
-        <p className="text-base">Define your brand identity and target audience so every piece of copy is on-brand and audience-specific from the first draft.</p>
-      </div>
-    ),
-    placement: 'right',
-    disableBeacon: true,
-  },
-  // 7. Brand Voice & Personas
-  {
-    target: '[data-tour="brand-voice"]',
-    content: (
-      <div>
-        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Brand Voice &amp; Personas</h3>
         <p className="text-base mb-2">This is your strategic foundation. Set up your Brand Voice first, then a Persona or two &mdash; they ensure every piece of copy maintains consistency.</p>
         <p className="text-sm text-gray-600 italic">Pro tip: Spend 10 minutes here before writing anything!</p>
       </div>
@@ -125,7 +113,7 @@ const tourSteps: Step[] = [
     placement: 'right',
     disableBeacon: true,
   },
-  // 8. Your Writing Canvas
+  // 7. Your Writing Canvas
   {
     target: '[data-tour="editor"]',
     content: (
@@ -137,7 +125,7 @@ const tourSteps: Step[] = [
     placement: 'center',
     disableBeacon: true,
   },
-  // 9. Version Control Built In
+  // 8. Version Control Built In
   {
     target: 'body',
     content: (
@@ -151,7 +139,7 @@ const tourSteps: Step[] = [
     placement: 'center',
     disableBeacon: true,
   },
-  // 10. Snippets
+  // 9. Snippets
   {
     target: '[data-tour="snippets"]',
     content: (
@@ -164,7 +152,7 @@ const tourSteps: Step[] = [
     placement: 'right',
     disableBeacon: true,
   },
-  // 11. AI@Worx Toolbox
+  // 10. AI@Worx Toolbox
   {
     target: '[data-tour="toolbox"]',
     content: (
@@ -176,7 +164,7 @@ const tourSteps: Step[] = [
     placement: 'left',
     disableBeacon: true,
   },
-  // 12. You're Ready to Write to Win!
+  // 11. You're Ready to Write to Win!
   {
     target: 'body',
     content: (
