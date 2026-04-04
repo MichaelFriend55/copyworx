@@ -35,7 +35,7 @@ export default function MarketingLayout({
           {/* Show when user IS signed in */}
           <SignedIn>
             <Button variant="ghost" className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90" asChild>
-              <Link href="/worxspace">Worxspace</Link>
+              <Link href="/worxspace">My Worxspace</Link>
             </Button>
             <UserMenu />
           </SignedIn>

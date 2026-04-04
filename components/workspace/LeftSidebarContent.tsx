@@ -356,32 +356,33 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                     handleToolClick('word-advisor');
                   }}
                   className={cn(
-                    'w-full flex items-center gap-2 px-3 py-2.5 rounded-lg',
+                    'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
                     'transition-all duration-200',
                     'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
                     'relative pl-5 border-l-[3px] border-transparent',
                     'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
                     'before:w-[3px] before:rounded-l-lg',
                     'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]',
-                    'group',
                     activeToolId === 'word-advisor'
                       ? 'bg-apple-blue text-white shadow-sm'
                       : 'bg-gray-50 hover:bg-gray-100'
                   )}
                   title="Dictionary, thesaurus & copywriting intelligence"
                 >
-                  <BookOpenText className={cn(
-                    'w-4 h-4 flex-shrink-0',
-                    activeToolId === 'word-advisor'
-                      ? 'text-white'
-                      : 'text-apple-text-dark'
-                  )} />
-                  <span className={cn(
-                    'font-semibold text-sm uppercase tracking-normal flex-1 whitespace-nowrap',
-                    activeToolId === 'word-advisor' ? 'text-white' : 'text-apple-text-dark'
-                  )}>
-                    My Word Advisor
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <BookOpenText className={cn(
+                      'w-4 h-4 flex-shrink-0',
+                      activeToolId === 'word-advisor'
+                        ? 'text-white'
+                        : 'text-apple-text-dark'
+                    )} />
+                    <span className={cn(
+                      'font-semibold text-sm uppercase tracking-normal',
+                      activeToolId === 'word-advisor' ? 'text-white' : 'text-apple-text-dark'
+                    )}>
+                      My Word Advisor
+                    </span>
+                  </div>
                 </button>
               </div>
             )}
