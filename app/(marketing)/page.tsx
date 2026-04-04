@@ -77,6 +77,13 @@ const showcaseBlocks = [
     body: "Every document in CopyWorx Studio\u2122 supports built-in version control \u2013 v1, v2, v3, as many as you need. Click Compare Versions and the editor splits into two side-by-side panes with word-level highlighting showing exactly what was added, removed, or rewritten. No more playing spot-the-difference across tabs. Perfect for client revisions, A/B testing copy approaches, or simply tracking how a piece evolved.",
     imagePosition: 'right' as const,
   },
+  {
+    screenshot: '/images/guide/competitive-analysis-screenshot.png',
+    alt: 'Competitive Analysis tool showing strategic teardown of competitor copy',
+    headline: "Tear Down Your Competitor\u2019s Copy. Find Your Edge.",
+    body: "Paste any competitor\u2019s copy into Competitive Analysis and get a strategic teardown \u2013 messaging strategy, strengths, weaknesses, and specific opportunities for you to differentiate. It\u2019s the competitive intelligence tool that turns someone else\u2019s copy into your advantage.",
+    imagePosition: 'left' as const,
+  },
 ] as const;
 
 /**

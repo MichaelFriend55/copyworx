@@ -420,6 +420,86 @@ function SectionCopyOptimizer() {
         caption="Headline Generator ready to produce 15 variations"
         size="half"
       />
+
+      <h3>Competitive Analysis</h3>
+      <p>
+        Competitive Analysis is the strategic intelligence tool in your Copy Optimizer Suite.
+        Instead of optimizing your own copy, this tool analyzes a competitor&apos;s copy and
+        delivers a structured teardown &ndash; helping you identify what they&apos;re doing well,
+        where they&apos;re falling short, and where you can differentiate.
+      </p>
+      <GuideImage
+        src="/images/guide/competitive-analysis-screenshot.png"
+        alt="Competitive Analysis tool showing strategic teardown"
+        caption="Competitive Analysis tool in the Copy Optimizer Suite"
+      />
+      <p><strong>How to use Competitive Analysis:</strong></p>
+      <ol>
+        <li>
+          Click <strong>Competitive Analysis</strong> in the MY COPY OPTIMIZER section of the left
+          panel.
+        </li>
+        <li>
+          Select a <strong>Copy Type</strong> from the dropdown (Landing Page, Sales Email, Social
+          Media Ad, Blog Post, etc.) &ndash; this tells the AI what kind of copy it&apos;s
+          evaluating.
+        </li>
+        <li>
+          Optionally add <strong>Industry / Product Context</strong> (e.g., &quot;project management
+          SaaS&quot; or &quot;luxury skincare brand&quot;) for a more targeted analysis.
+        </li>
+        <li>Paste the competitor&apos;s copy into the text area.</li>
+        <li>Click <strong>Analyze Copy</strong>.</li>
+      </ol>
+      <p><strong>Competitive Analysis returns five sections:</strong></p>
+      <div className="my-5 overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b-2 border-ink-200">
+              <th className="text-left py-2 pr-4 font-bold text-ink-900">Section</th>
+              <th className="text-left py-2 font-bold text-ink-900">Description</th>
+            </tr>
+          </thead>
+          <tbody className="text-ink-700">
+            <tr className="border-b border-ink-100">
+              <td className="py-2 pr-4 font-semibold align-top whitespace-nowrap">Messaging Strategy</td>
+              <td className="py-2">How the copy is structured and what persuasion approach the competitor is using.</td>
+            </tr>
+            <tr className="border-b border-ink-100">
+              <td className="py-2 pr-4 font-semibold align-top whitespace-nowrap">Strengths</td>
+              <td className="py-2">What works well &ndash; elements worth paying attention to or learning from.</td>
+            </tr>
+            <tr className="border-b border-ink-100">
+              <td className="py-2 pr-4 font-semibold align-top whitespace-nowrap">Weaknesses</td>
+              <td className="py-2">Where the copy falls short, what&apos;s missing, or where the messaging is unconvincing.</td>
+            </tr>
+            <tr className="border-b border-ink-100">
+              <td className="py-2 pr-4 font-semibold align-top whitespace-nowrap">Opportunities for You</td>
+              <td className="py-2">Specific ways you can differentiate based on the competitor&apos;s gaps and approach.</td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-4 font-semibold align-top whitespace-nowrap">Key Takeaways</td>
+              <td className="py-2">3&ndash;5 actionable bullet points summarizing the most important insights.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Use Competitive Analysis when:</strong></p>
+      <ul>
+        <li>
+          You&apos;re writing a landing page, email, or ad and want to see what competitors are
+          saying first.
+        </li>
+        <li>A client asks you to &quot;beat&quot; a competitor&apos;s messaging.</li>
+        <li>
+          You want to identify gaps in a market&apos;s messaging before positioning your copy.
+        </li>
+        <li>You need strategic ammunition for a pitch or creative brief.</li>
+      </ul>
+      <ProTip>
+        Use the Copy Analysis button to copy the full teardown to your clipboard. Paste it into a
+        Snippet or a project document as a reference while you write.
+      </ProTip>
     </section>
   );
 }

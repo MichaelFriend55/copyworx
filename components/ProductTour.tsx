@@ -55,6 +55,18 @@ const tourSteps: Step[] = [
     disableBeacon: true,
   },
   {
+    target: '[data-tour="snippets"]',
+    content: (
+      <div>
+        <h3 className="text-xl font-bold text-[#006EE6] mb-2">Snippets</h3>
+        <p className="text-base mb-2">Your personal library of reusable copy &ndash; taglines, boilerplate, CTAs, legal disclaimers &ndash; saved by project and always at your fingertips.</p>
+        <p className="text-sm text-gray-600 italic">Pro tip: Highlight any text in the Editor, right-click, and save it as a Snippet instantly.</p>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
     target: '[data-tour="brand-voice"]',
     content: (
       <div>
@@ -82,12 +94,13 @@ const tourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-xl font-bold text-[#006EE6] mb-2">Copy Optimizer Suite</h3>
-        <p className="text-base mb-2">Transform your copy with:</p>
+        <p className="text-base mb-2">Transform and analyze your copy with:</p>
         <ul className="text-sm list-disc list-inside space-y-1">
           <li>Tone Shifter (6 professional tones)</li>
           <li>Expand or Shorten</li>
           <li>Rewrite for Channel (email, social, ads)</li>
           <li>Headline Generator (channel-optimized variations using proven copywriting formulas)</li>
+          <li>Competitive Analysis (paste competitor copy, get a strategic teardown)</li>
         </ul>
       </div>
     ),
