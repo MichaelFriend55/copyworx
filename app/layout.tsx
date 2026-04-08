@@ -13,6 +13,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { Analytics } from '@vercel/analytics/next';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -150,6 +151,7 @@ export default function RootLayout({
               },
             }}
           />
+          <Analytics />
         </ClerkProvider>
         {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
