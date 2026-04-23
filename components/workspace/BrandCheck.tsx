@@ -45,10 +45,12 @@ import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
 import { insertTextAtSelection } from '@/lib/editor-utils';
+import { formatGeneratedContent } from '@/lib/utils/content-formatting';
 import {
   useProjects,
   useActiveProjectId,
   useSelectedText,
+  useSelectedHTML,
   useSelectionRange,
 } from '@/lib/stores/workspaceStore';
 import { useSlideOutActions } from '@/lib/stores/slideOutStore';
@@ -117,7 +119,10 @@ const ALIGNMENT_STYLES: Record<
  * Extract plain text from the editor, preferring the user's current selection
  * when available. Returns an empty string if the editor has no content.
  *
- * Keeping this small and side-effect-free so unit tests can cover it later.
+ * Used for (a) the pre-analyze preview and (b) the analysis API request body.
+ * The analysis endpoint is a diagnostic — plain text is the right input shape
+ * because we don't want the model distracted by tag noise when identifying
+ * brand-voice issues.
  */
 function getEditorText(editor: Editor | null, selectedText: string | null): string {
   if (selectedText && selectedText.trim().length > 0) {
@@ -125,6 +130,47 @@ function getEditorText(editor: Editor | null, selectedText: string | null): stri
   }
   if (!editor) return '';
   return editor.getText().trim();
+}
+
+/**
+ * Extract HTML from the editor, preferring the user's current selection slice
+ * (already serialized by lib/editor-utils.getEditorSelection and cached in the
+ * workspace store) when available. Falls back to editor.getHTML() for the
+ * whole document.
+ *
+ * Used for the REWRITE flow only — we send HTML so Claude can preserve the
+ * input's tag structure (headings, paragraphs, lists, inline formatting) when
+ * returning the rewritten copy.
+ */
+function getEditorHtml(editor: Editor | null, selectedHTML: string | null): string {
+  if (selectedHTML && selectedHTML.trim().length > 0) {
+    return selectedHTML;
+  }
+  if (!editor) return '';
+  return editor.getHTML();
+}
+
+/**
+ * Strip HTML tags for plain-text clipboard output.
+ *
+ * The Copy Rewrite button writes plain text to the clipboard (per spec) so
+ * pasting into email, Slack, Notes, or terminal yields clean prose without
+ * leaking tag markup. Mirrors the CompetitiveAnalysis "Copy Analysis" pattern.
+ */
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<\/(p|h[1-6]|li|br|div)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /**
@@ -288,6 +334,7 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
   const projects = useProjects();
   const activeProjectId = useActiveProjectId();
   const selectedText = useSelectedText();
+  const selectedHTML = useSelectedHTML();
   const selectionRange = useSelectionRange();
 
   const activeProject = useMemo(
@@ -298,14 +345,24 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
   const brandVoice = activeProject?.brandVoice ?? null;
   const hasBrandVoice = !!brandVoice?.brandName;
 
-  // Analysis state
+  // Analysis state. We snapshot BOTH plain text and HTML at analyze time:
+  //   - analyzedText is what the analysis endpoint saw (diagnostic input)
+  //     and what the stacked comparison renders in the "Original" pane.
+  //   - analyzedHtml is what we send to the rewrite endpoint so the model
+  //     can preserve tags. Keeping them paired here prevents the rewrite
+  //     from targeting a different chunk if the user's selection moves
+  //     between Analyze and Rewrite clicks.
   const [analysis, setAnalysis] = useState<BrandCheckAnalysis | null>(null);
   const [analyzedText, setAnalyzedText] = useState<string>('');
+  const [analyzedHtml, setAnalyzedHtml] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
-  // Rewrite state
-  const [rewrittenText, setRewrittenText] = useState<string | null>(null);
+  // Rewrite state. rewrittenHtml holds the HTML string from
+  // /api/brand-check-rewrite; the comparison view renders it via
+  // dangerouslySetInnerHTML (same pattern as ToneShifter) and Accept passes
+  // it through formatGeneratedContent before inserting into TipTap.
+  const [rewrittenHtml, setRewrittenHtml] = useState<string | null>(null);
   const [isRewriting, setIsRewriting] = useState(false);
   const [rewriteError, setRewriteError] = useState<string | null>(null);
   const [copiedRewrite, setCopiedRewrite] = useState(false);
@@ -319,14 +376,21 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
 
   /**
    * Run brand alignment analysis via /api/brand-check.
+   *
+   * We capture BOTH the plain text (sent to the analysis endpoint) and the
+   * HTML snapshot (held in state for the eventual rewrite call) here so the
+   * rewrite always targets the exact same chunk the analysis diagnosed, even
+   * if the user's editor selection moves between clicks.
    */
   const handleAnalyze = useCallback(async () => {
     if (!canAnalyze || !brandVoice) return;
 
+    const htmlSnapshot = getEditorHtml(editor, selectedHTML);
+
     setIsAnalyzing(true);
     setAnalysisError(null);
     setAnalysis(null);
-    setRewrittenText(null);
+    setRewrittenHtml(null);
     setRewriteError(null);
 
     try {
@@ -347,9 +411,11 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
       const data = await response.json();
       setAnalysis(data.analysis as BrandCheckAnalysis);
       setAnalyzedText(editorText);
+      setAnalyzedHtml(htmlSnapshot);
       logger.log('✅ Brand check complete:', {
         alignment: data.analysis?.overallAlignment,
         score: data.analysis?.alignmentScore,
+        htmlLength: htmlSnapshot.length,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -358,26 +424,30 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [canAnalyze, brandVoice, editorText]);
+  }, [canAnalyze, brandVoice, editorText, editor, selectedHTML]);
 
   /**
-   * Request a rewrite via /api/brand-check-rewrite using the original analyzed
-   * text as the rewrite source (so accepting the rewrite replaces a consistent
-   * chunk, not whatever the user happens to have selected at click time).
+   * Request a rewrite via /api/brand-check-rewrite.
+   *
+   * Sends the HTML snapshot captured at analyze time so Claude can preserve
+   * the input's tag structure (headings, lists, inline formatting) in the
+   * rewrite. Response body is `rewrittenHtml` — raw HTML that the preview
+   * renders with dangerouslySetInnerHTML and Accept inserts into TipTap with
+   * isHTML: true.
    */
   const handleRewrite = useCallback(async () => {
-    if (!analysis || !brandVoice || !analyzedText) return;
+    if (!analysis || !brandVoice || !analyzedHtml) return;
 
     setIsRewriting(true);
     setRewriteError(null);
-    setRewrittenText(null);
+    setRewrittenHtml(null);
 
     try {
       const response = await fetch('/api/brand-check-rewrite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: analyzedText,
+          html: analyzedHtml,
           brandVoice: serializeBrandVoice(brandVoice),
           analysis,
         }),
@@ -389,12 +459,12 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
       }
 
       const data = await response.json();
-      const newText = typeof data.rewrittenText === 'string' ? data.rewrittenText : '';
-      if (!newText) {
-        throw new Error('Rewrite returned empty text');
+      const newHtml = typeof data.rewrittenHtml === 'string' ? data.rewrittenHtml : '';
+      if (!newHtml) {
+        throw new Error('Rewrite returned empty HTML');
       }
-      setRewrittenText(newText);
-      logger.log('✅ Brand check rewrite complete:', { newLength: newText.length });
+      setRewrittenHtml(newHtml);
+      logger.log('✅ Brand check rewrite complete:', { newLength: newHtml.length });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred';
       setRewriteError(message);
@@ -402,55 +472,68 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
     } finally {
       setIsRewriting(false);
     }
-  }, [analysis, brandVoice, analyzedText]);
+  }, [analysis, brandVoice, analyzedHtml]);
 
   /**
-   * Accept the rewrite: insert into the editor at the current selection (if
-   * any), otherwise replace the entire document content. Plain text only.
+   * Accept the rewrite: insert HTML into the editor at the current selection
+   * (replacing it) or, if there is no selection, replace the entire document.
+   *
+   * We run the HTML through formatGeneratedContent first to sanitize and
+   * normalize — same pipeline ToneShifter uses for its Replace Selection flow
+   * — then hand it to insertTextAtSelection with isHTML: true so TipTap
+   * parses tags instead of inserting them as literal text.
    */
   const handleAcceptRewrite = useCallback(() => {
-    if (!editor || !rewrittenText) return;
+    if (!editor || !rewrittenHtml) return;
+
+    const formattedHtml = formatGeneratedContent(rewrittenHtml, false);
 
     if (selectionRange) {
-      const success = insertTextAtSelection(editor, rewrittenText, { isHTML: false });
+      const success = insertTextAtSelection(editor, formattedHtml, { isHTML: true });
       if (success) {
-        logger.log('✅ Brand-aligned rewrite inserted at selection');
+        logger.log('✅ Brand-aligned rewrite inserted at selection (HTML)');
       } else {
         logger.error('❌ Failed to insert rewrite at selection');
         return;
       }
     } else {
-      editor.commands.setContent(rewrittenText);
-      logger.log('✅ Brand-aligned rewrite replaced entire document');
+      editor.commands.setContent(formattedHtml);
+      logger.log('✅ Brand-aligned rewrite replaced entire document (HTML)');
     }
 
-    setRewrittenText(null);
+    setRewrittenHtml(null);
     setAnalysis(null);
     setAnalyzedText('');
-  }, [editor, rewrittenText, selectionRange]);
+    setAnalyzedHtml('');
+  }, [editor, rewrittenHtml, selectionRange]);
 
   /**
    * Keep the original — discard the rewrite without touching analysis.
    */
   const handleKeepOriginal = useCallback(() => {
-    setRewrittenText(null);
+    setRewrittenHtml(null);
     setRewriteError(null);
     setCopiedRewrite(false);
   }, []);
 
   /**
    * Copy the rewrite to the clipboard as plain text.
+   *
+   * Per spec, this writes tag-stripped prose so pasting into email, Slack,
+   * Notes, or a terminal yields clean text (no leaked HTML markup). Mirrors
+   * the CompetitiveAnalysis "Copy Analysis" behavior.
    */
   const handleCopyRewrite = useCallback(async () => {
-    if (!rewrittenText) return;
+    if (!rewrittenHtml) return;
     try {
-      await navigator.clipboard.writeText(rewrittenText);
+      const plainText = htmlToPlainText(rewrittenHtml);
+      await navigator.clipboard.writeText(plainText);
       setCopiedRewrite(true);
       setTimeout(() => setCopiedRewrite(false), 2000);
     } catch (err) {
       logger.error('Failed to copy rewrite:', err);
     }
-  }, [rewrittenText]);
+  }, [rewrittenHtml]);
 
   /**
    * Reset everything and return to the pre-analysis state.
@@ -458,8 +541,9 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
   const handleNewAnalysis = useCallback(() => {
     setAnalysis(null);
     setAnalyzedText('');
+    setAnalyzedHtml('');
     setAnalysisError(null);
-    setRewrittenText(null);
+    setRewrittenHtml(null);
     setRewriteError(null);
     setCopiedRewrite(false);
   }, []);
@@ -558,7 +642,7 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
       )}
 
       {/* Analysis result */}
-      {analysis && !rewrittenText && (
+      {analysis && !rewrittenHtml && (
         <div className="flex flex-col gap-4">
           {/* Alignment badge */}
           <div>
@@ -666,7 +750,7 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
       )}
 
       {/* Rewrite comparison (stacked, not side-by-side — sidebar is ~320px) */}
-      {analysis && rewrittenText && (
+      {analysis && rewrittenHtml && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-apple-text-dark">
@@ -683,23 +767,43 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
             </button>
           </div>
 
-          {/* Original */}
+          {/* Original — render the HTML snapshot so headings, lists, and inline
+              formatting show up in the preview (not as raw plain text). Same
+              prose styling the CompetitiveAnalysis result uses. */}
           <div className="flex flex-col gap-1.5">
             <div className="text-xs font-semibold uppercase tracking-wide text-apple-text-light">
               Original
             </div>
             <div className="bg-apple-gray-bg border border-apple-gray-light rounded-lg p-3 max-h-40 overflow-y-auto custom-scrollbar">
-              <p className="text-sm text-apple-text-dark whitespace-pre-wrap">{analyzedText}</p>
+              <div
+                className="text-sm text-apple-text-dark prose prose-sm max-w-none
+                  [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-2 [&_h1]:first:mt-0
+                  [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1.5 [&_h2]:first:mt-0
+                  [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:first:mt-0
+                  [&_p]:my-1.5 [&_p]:leading-relaxed
+                  [&_ul]:my-2 [&_ul]:pl-5 [&_ol]:my-2 [&_ol]:pl-5
+                  [&_li]:my-1"
+                dangerouslySetInnerHTML={{ __html: analyzedHtml || analyzedText }}
+              />
             </div>
           </div>
 
-          {/* Rewrite */}
+          {/* Rewrite — same HTML rendering pattern as ToneShifter's result preview. */}
           <div className="flex flex-col gap-1.5">
             <div className="text-xs font-semibold uppercase tracking-wide text-green-700">
               Brand-aligned Rewrite
             </div>
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 max-h-48 overflow-y-auto custom-scrollbar">
-              <p className="text-sm text-apple-text-dark whitespace-pre-wrap">{rewrittenText}</p>
+              <div
+                className="text-sm text-apple-text-dark prose prose-sm max-w-none
+                  [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-2 [&_h1]:first:mt-0
+                  [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1.5 [&_h2]:first:mt-0
+                  [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:first:mt-0
+                  [&_p]:my-1.5 [&_p]:leading-relaxed
+                  [&_ul]:my-2 [&_ul]:pl-5 [&_ol]:my-2 [&_ol]:pl-5
+                  [&_li]:my-1"
+                dangerouslySetInnerHTML={{ __html: rewrittenHtml }}
+              />
             </div>
           </div>
 

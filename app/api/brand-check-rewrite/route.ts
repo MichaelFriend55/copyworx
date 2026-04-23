@@ -1,14 +1,15 @@
 /**
  * @file app/api/brand-check-rewrite/route.ts
- * @description API route for rewriting copy to better align with a brand voice
+ * @description API route for rewriting HTML copy to better align with a brand voice
  *
- * Takes the original copy, the brand voice configuration (including writing
- * samples), and the prior analysis results, and returns a plain-text rewrite
- * that preserves meaning and length while fixing the flagged misalignments.
+ * Takes the original HTML, the brand voice configuration (including writing
+ * samples), and the prior analysis results. Returns the rewritten HTML with
+ * every structural tag from the input preserved (h1/h2/h3, p, ol/ul/li,
+ * strong/em/u, br, etc.) — only the text content inside tags changes.
  *
  * Pattern mirrors app/api/competitive-analysis/route.ts:
  *   getUserId() → checkUserWithinLimit() → build prompt → Anthropic call →
- *   fire-and-forget logUsageToSupabase() → return plain text.
+ *   fire-and-forget logUsageToSupabase() → return rewritten HTML.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -43,13 +44,15 @@ interface BrandCheckAnalysisContext {
 }
 
 interface BrandCheckRewriteRequest {
-  text: string;
+  /** Original copy as an HTML string (from editor.getHTML() or the selection slice). */
+  html: string;
   brandVoice: BrandVoicePayload;
   analysis?: BrandCheckAnalysisContext;
 }
 
 interface BrandCheckRewriteResponse {
-  rewrittenText: string;
+  /** Rewritten copy as an HTML string, with the input's tag structure preserved. */
+  rewrittenHtml: string;
   brandName: string;
   originalLength: number;
   newLength: number;
@@ -114,16 +117,13 @@ Forbidden Words: ${forbiddenWords}`;
 }
 
 /**
- * Format the prior analysis as bullet context for the rewrite prompt.
+ * Format the prior analysis as a bullet list of issues to fix, for the prompt.
  */
-function buildAnalysisContext(analysis: BrandCheckAnalysisContext | undefined): string {
-  if (!analysis) return '';
+function buildIssuesList(analysis: BrandCheckAnalysisContext | undefined): string {
+  if (!analysis) return '(no specific issues flagged — apply the brand voice throughout)';
 
   const sections: string[] = [];
 
-  if (typeof analysis.overallAlignment === 'string' && analysis.overallAlignment) {
-    sections.push(`Current alignment: ${analysis.overallAlignment}`);
-  }
   if (Array.isArray(analysis.misalignments) && analysis.misalignments.length > 0) {
     sections.push(
       `Misalignments to fix:\n${analysis.misalignments.map((m) => `- ${m}`).join('\n')}`
@@ -142,35 +142,56 @@ function buildAnalysisContext(analysis: BrandCheckAnalysisContext | undefined): 
     );
   }
 
-  if (sections.length === 0) return '';
+  if (sections.length === 0) {
+    return '(no specific issues flagged — apply the brand voice throughout)';
+  }
 
-  return `\n\nPRIOR ANALYSIS (fix these issues):\n\n${sections.join('\n\n')}`;
+  return sections.join('\n\n');
 }
 
-function buildSystemPrompt(
+/**
+ * Build the user-turn prompt. The original HTML, issues, and brand voice
+ * context are inlined here (vs. the system prompt) so the model receives them
+ * together with the explicit rewrite instruction.
+ */
+function buildUserPrompt(
+  originalHtml: string,
   brandVoice: BrandVoicePayload,
   analysis: BrandCheckAnalysisContext | undefined
 ): string {
   const brandContext = buildBrandVoiceContext(brandVoice);
-  const analysisContext = buildAnalysisContext(analysis);
+  const issues = buildIssuesList(analysis);
 
-  return `You are a senior brand copywriter with 20+ years of experience rewriting copy to match a specific brand voice exactly.
+  return `You previously analyzed a piece of HTML copy against a brand voice and identified specific issues. Now rewrite the copy to fix those issues while preserving the EXACT HTML structure.
 
-BRAND VOICE CONFIGURATION:
+CRITICAL FORMATTING RULES:
+1. Preserve ALL HTML tags from the original — every <h1>, <h2>, <h3>, <p>, <ol>, <ul>, <li>, <strong>, <em>, <u>, <br>, and any other structural tags.
+2. Maintain the same document structure — same number of sections, same heading hierarchy, same list items.
+3. Only change the TEXT CONTENT inside tags. Do not add new tags, remove existing tags, or restructure the document.
+4. If a heading said "Section 1 — Who This Is For" in the original, the rewritten version should still have an h1 or h2 with an updated but similar heading.
+5. Preserve approximate length within each section — do not expand or collapse content dramatically.
 
-${brandContext}${analysisContext}
+ORIGINAL HTML:
+"""
+${originalHtml}
+"""
 
-YOUR TASK:
-Rewrite the user's copy so it sounds like it came from this brand. Fix the misalignments and add the missing elements where it makes sense, without padding or bloat.
+IDENTIFIED ISSUES TO FIX:
+${issues}
 
-HARD RULES:
-- Preserve the original meaning, structure, and approximate length (±20%).
-- Keep the original format (if it's a paragraph, return a paragraph; if it's a list, return a list).
-- Use the brand's approved phrases where natural. Never use forbidden words.
-- If writing samples were provided above, match their rhythm, word choice, and sentence structure more closely than the abstract tone description.
-- Do NOT add commentary, headers, labels, explanations, or markdown fences.
-- Return ONLY the rewritten copy as plain text. Nothing else.`;
+BRAND VOICE CONTEXT:
+${brandContext}
+
+Rewrite the HTML now. Fix every identified brand voice issue. Match the voice of the Writing Samples if provided. Preserve every HTML tag. Return ONLY the rewritten HTML — no preamble, no code fences, no explanation. Just the HTML starting with the first tag.`;
 }
+
+/**
+ * System prompt — kept short; the heavy lifting is in the user prompt which
+ * carries the original HTML, issues, and brand voice context together.
+ */
+const SYSTEM_PROMPT = `You are a senior brand copywriter with 20+ years of experience rewriting HTML copy to match a specific brand voice exactly.
+
+You preserve every HTML tag in the input, change only the text content inside tags, and return raw HTML — never markdown, never code fences, never explanations. Your output begins with the first HTML tag and ends with the last.`;
 
 // ============================================================================
 // Usage Logging
@@ -222,14 +243,42 @@ function calculateCost(inputTokens: number, outputTokens: number): number {
 }
 
 // ============================================================================
+// Response Cleanup
+// ============================================================================
+
+/**
+ * Strip accidental code fences from Claude's response.
+ *
+ * We instruct the model not to use fences, but defensively remove them anyway
+ * since wrapping in ```html ... ``` is a common model habit. Mirrors the
+ * defensive parsing on the analysis endpoint.
+ */
+function stripCodeFences(raw: string): string {
+  let cleaned = raw.trim();
+
+  const fenceMatch = cleaned.match(/^```(?:html|xml)?\s*([\s\S]*?)\s*```$/i);
+  if (fenceMatch) {
+    return fenceMatch[1].trim();
+  }
+
+  cleaned = cleaned
+    .replace(/^```(?:html|xml)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  return cleaned;
+}
+
+// ============================================================================
 // Route Handler
 // ============================================================================
 
 /**
  * POST /api/brand-check-rewrite
  *
- * Returns a plain-text rewrite of the input that better aligns with the
- * provided brand voice.
+ * Returns an HTML rewrite of the input copy that better aligns with the
+ * provided brand voice. The output preserves the input's tag structure so
+ * TipTap can insert it without losing headings, lists, or inline formatting.
  */
 export async function POST(
   request: NextRequest
@@ -258,11 +307,14 @@ export async function POST(
       );
     }
 
-    const { text, brandVoice, analysis } = body;
+    const { html, brandVoice, analysis } = body;
 
-    if (!text || typeof text !== 'string') {
+    if (!html || typeof html !== 'string') {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Missing "text" field', details: 'Provide the original copy to rewrite' },
+        {
+          error: 'Missing "html" field',
+          details: 'Provide the original copy as HTML (from editor.getHTML()) to rewrite',
+        },
         { status: 400 }
       );
     }
@@ -275,14 +327,16 @@ export async function POST(
     }
 
     try {
-      validateNotEmpty(text, 'Text');
-      validateTextLength(text, 'Text');
+      validateNotEmpty(html, 'HTML');
+      // Length validation operates on character count, which is still a
+      // reasonable sanity bound for HTML input.
+      validateTextLength(html, 'HTML');
     } catch (validationError) {
       return NextResponse.json<ErrorResponse>(
         {
-          error: 'Invalid text',
+          error: 'Invalid HTML',
           details:
-            validationError instanceof Error ? validationError.message : 'Provide valid text',
+            validationError instanceof Error ? validationError.message : 'Provide valid HTML',
         },
         { status: 400 }
       );
@@ -298,12 +352,11 @@ export async function POST(
     }
 
     const anthropic = new Anthropic({ apiKey });
-    const systemPrompt = buildSystemPrompt(brandVoice as BrandVoicePayload, analysis);
-    const userPrompt = `Original copy to rewrite:\n\n${text}`;
+    const userPrompt = buildUserPrompt(html, brandVoice as BrandVoicePayload, analysis);
 
     logger.log('📝 Brand check rewrite request:', {
       brandName: brandVoice.brandName,
-      textLength: text.length,
+      htmlLength: html.length,
       hasAnalysis: !!analysis,
       hasWritingSamples: Array.isArray(brandVoice.writing_samples)
         ? brandVoice.writing_samples.length
@@ -313,8 +366,8 @@ export async function POST(
     const message = await Promise.race([
       anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 3000,
-        system: systemPrompt,
+        max_tokens: 4000,
+        system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],
       }),
       new Promise<never>((_, reject) =>
@@ -333,16 +386,22 @@ export async function POST(
       );
     }
 
-    // Defensive: strip any accidental code fences even though we told the model
-    // not to produce them. We still return plain text to the client.
-    const rewrittenText = rawResponse
-      .replace(/^```[a-z]*\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
+    const rewrittenHtml = stripCodeFences(rawResponse);
+
+    if (!rewrittenHtml) {
+      logger.error('❌ Rewrite produced empty HTML after cleanup');
+      return NextResponse.json<ErrorResponse>(
+        {
+          error: 'AI processing error',
+          details: 'Rewrite was empty after processing. Please try again.',
+        },
+        { status: 502 }
+      );
+    }
 
     logger.log('✅ Brand check rewrite complete:', {
-      originalLength: text.length,
-      newLength: rewrittenText.length,
+      originalLength: html.length,
+      newLength: rewrittenHtml.length,
     });
 
     if (userId) {
@@ -361,10 +420,10 @@ export async function POST(
 
     return NextResponse.json<BrandCheckRewriteResponse>(
       {
-        rewrittenText,
+        rewrittenHtml,
         brandName: brandVoice.brandName,
-        originalLength: text.length,
-        newLength: rewrittenText.length,
+        originalLength: html.length,
+        newLength: rewrittenHtml.length,
       },
       { status: 200 }
     );
