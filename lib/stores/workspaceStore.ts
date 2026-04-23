@@ -21,28 +21,10 @@ import React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import type { ToolCategory, AIAnalysisMode, ViewMode } from '@/lib/types';
+import type { AIAnalysisMode, ViewMode } from '@/lib/types';
 import type { Editor } from '@tiptap/react';
 import type { Project } from '@/lib/types/project';
-import type { BrandVoice, BrandAlignmentResult } from '@/lib/types/brand';
-import type { Persona } from '@/lib/types/project';
 import { logger } from '@/lib/utils/logger';
-
-/**
- * Insights panel types for the right slide-out
- */
-export type InsightsPanelType = 'brand-alignment' | 'persona-alignment' | null;
-
-/**
- * Persona alignment result from AI analysis
- */
-export interface PersonaAlignmentResult {
-  score: number;
-  assessment: string;
-  strengths: string[];
-  improvements: string[];
-  recommendations: string[];
-}
 import {
   getAllProjects,
   getActiveProjectId,
@@ -123,46 +105,11 @@ interface WorkspaceState {
   headlineRawText: string | null;
   headlineLoading: boolean;
   headlineError: string | null;
-  
-  // Brand Alignment Tool state
-  brandAlignmentResult: BrandAlignmentResult | null;
-  brandAlignmentLoading: boolean;
-  brandAlignmentError: string | null;
-  /** Brand name that was analyzed against */
-  brandAlignmentBrandName: string | null;
-  /** Text that was analyzed (stored for optimization) */
-  brandAlignmentAnalyzedText: string | null;
-  
-  // Persona Alignment Tool state
-  personaAlignmentResult: PersonaAlignmentResult | null;
-  personaAlignmentLoading: boolean;
-  personaAlignmentError: string | null;
-  /** Persona name that was analyzed against */
-  personaAlignmentPersonaName: string | null;
-  /** Text that was analyzed (stored for optimization) */
-  personaAlignmentAnalyzedText: string | null;
-  
-  // Optimize Alignment Tool state (rewrite to optimize)
-  optimizeAlignmentResult: string | null;
-  optimizeAlignmentChangesSummary: string[];
-  optimizeAlignmentLoading: boolean;
-  optimizeAlignmentError: string | null;
-  /** Target name (persona or brand) for optimization */
-  optimizeAlignmentTargetName: string | null;
-  /** Type of optimization (persona or brand) */
-  optimizeAlignmentType: 'persona' | 'brand' | null;
-  /** Original text being optimized */
-  optimizeAlignmentOriginalText: string | null;
-  /** Whether comparison modal is open */
-  optimizeAlignmentModalOpen: boolean;
-  
+
   // Template Generator state
   selectedTemplateId: string | null;
   isGeneratingTemplate: boolean;
-  
-  // Active insights panel for right slide-out
-  activeInsightsPanel: InsightsPanelType;
-  
+
   // Pending edit targets for slide-outs
   pendingBrandVoiceEdit: string | null; // Brand name to edit
   pendingPersonaEdit: string | null; // Persona ID to edit
@@ -218,35 +165,11 @@ interface WorkspaceState {
   // Headline Generator Tool actions
   runHeadlineGenerator: (formData: HeadlineFormData, append?: boolean) => Promise<void>;
   clearHeadlineResults: () => void;
-  
-  // Brand Alignment Tool actions
-  runBrandAlignment: (text: string, brandVoice: BrandVoice) => Promise<void>;
-  clearBrandAlignmentResult: () => void;
-  
-  // Persona Alignment Tool actions
-  runPersonaAlignment: (text: string, persona: Persona) => Promise<void>;
-  clearPersonaAlignmentResult: () => void;
-  
-  // Optimize Alignment Tool actions (rewrite to optimize)
-  runOptimizeAlignment: (
-    text: string,
-    type: 'persona' | 'brand',
-    analysisResult: PersonaAlignmentResult | BrandAlignmentResult,
-    personaOrBrand: Persona | BrandVoice
-  ) => Promise<void>;
-  clearOptimizeAlignmentResult: () => void;
-  setOptimizeAlignmentModalOpen: (open: boolean) => void;
-  acceptOptimizeResult: (editor: Editor) => void;
-  
+
   // Template Generator actions
   setSelectedTemplateId: (id: string | null) => void;
   setIsGeneratingTemplate: (isGenerating: boolean) => void;
-  
-  // Insights panel actions
-  setActiveInsightsPanel: (panel: InsightsPanelType) => void;
-  openInsightsPanel: (panel: InsightsPanelType) => void;
-  closeInsightsPanel: () => void;
-  
+
   // Pending edit actions
   setPendingBrandVoiceEdit: (brandName: string | null) => void;
   setPendingPersonaEdit: (personaId: string | null) => void;
@@ -304,38 +227,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       headlineRawText: null,
       headlineLoading: false,
       headlineError: null,
-      
-      // Brand Alignment Tool initial state
-      brandAlignmentResult: null,
-      brandAlignmentLoading: false,
-      brandAlignmentError: null,
-      brandAlignmentBrandName: null,
-      brandAlignmentAnalyzedText: null,
-      
-      // Persona Alignment Tool initial state
-      personaAlignmentResult: null,
-      personaAlignmentLoading: false,
-      personaAlignmentError: null,
-      personaAlignmentPersonaName: null,
-      personaAlignmentAnalyzedText: null,
-      
-      // Optimize Alignment Tool initial state
-      optimizeAlignmentResult: null,
-      optimizeAlignmentChangesSummary: [],
-      optimizeAlignmentLoading: false,
-      optimizeAlignmentError: null,
-      optimizeAlignmentTargetName: null,
-      optimizeAlignmentType: null,
-      optimizeAlignmentOriginalText: null,
-      optimizeAlignmentModalOpen: false,
-      
+
       // Template Generator initial state
       selectedTemplateId: null,
       isGeneratingTemplate: false,
-      
-      // Active insights panel - null means closed
-      activeInsightsPanel: null,
-      
+
       // Pending edit targets - null means no pending edit
       pendingBrandVoiceEdit: null,
       pendingPersonaEdit: null,
@@ -348,13 +244,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setActiveProjectId: async (id: string) => {
         set({ activeProjectId: id, activeDocumentId: null }); // Clear doc when switching projects
         await setStorageActiveProjectId(id);
-        
+
         // Clear tool results when switching projects
         set({
-          brandAlignmentResult: null,
-          brandAlignmentError: null,
-          personaAlignmentResult: null,
-          personaAlignmentError: null,
           toneShiftResult: null,
           toneShiftError: null,
           expandResult: null,
@@ -889,348 +781,24 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         });
       },
 
-      // Brand Alignment Tool actions
-      runBrandAlignment: async (text: string, brandVoice: BrandVoice): Promise<void> => {
-        try {
-          validateNotEmpty(text, 'Text');
-          validateTextLength(text, 'Text');
-          
-          if (!brandVoice || !brandVoice.brandName) {
-            throw new Error('Please set up your brand voice first');
-          }
-        } catch (error) {
-          set({ 
-            brandAlignmentError: formatErrorForUser(error, 'Validation'),
-            brandAlignmentLoading: false 
-          });
-          logError(error, 'Brand alignment validation');
-          return;
-        }
-
-        set({ 
-          brandAlignmentLoading: true, 
-          brandAlignmentError: null,
-          brandAlignmentResult: null,
-          brandAlignmentBrandName: null,
-          brandAlignmentAnalyzedText: text, // Store the text being analyzed
-        });
-
-        try {
-          const data = await retryWithBackoff(async () => {
-            const response = await fetchWithTimeout('/api/brand-alignment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text, brandVoice }),
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ 
-                error: 'API request failed',
-                details: `Status: ${response.status}` 
-              }));
-              throw new Error(errorData.details || errorData.error || 'Failed to check brand alignment');
-            }
-
-            const data = await response.json();
-            if (!data.result) {
-              throw new Error('No result received from API');
-            }
-            return data;
-          }, 2);
-
-          set({ 
-            brandAlignmentResult: data.result,
-            brandAlignmentLoading: false,
-            brandAlignmentError: null,
-            brandAlignmentBrandName: data.brandName || brandVoice.brandName,
-            // Keep brandAlignmentAnalyzedText as set above
-          });
-
-        } catch (error) {
-          set({ 
-            brandAlignmentError: formatErrorForUser(error, 'Brand alignment'),
-            brandAlignmentLoading: false,
-            brandAlignmentResult: null,
-            brandAlignmentBrandName: null,
-            brandAlignmentAnalyzedText: null,
-          });
-          logError(error, 'Brand alignment');
-        }
-      },
-
-      clearBrandAlignmentResult: () => {
-        set({ brandAlignmentResult: null, brandAlignmentError: null, brandAlignmentBrandName: null, brandAlignmentAnalyzedText: null });
-      },
-
-      // Persona Alignment Tool actions
-      runPersonaAlignment: async (text: string, persona: Persona): Promise<void> => {
-        // Validate inputs
-        try {
-          validateNotEmpty(text, 'Text');
-          validateTextLength(text, 'Text');
-          validateNotEmpty(persona.name, 'Persona name');
-        } catch (error) {
-          set({ 
-            personaAlignmentError: formatErrorForUser(error, 'Validation'),
-            personaAlignmentLoading: false 
-          });
-          return;
-        }
-
-        // Set loading state
-        set({ 
-          personaAlignmentLoading: true, 
-          personaAlignmentError: null,
-          personaAlignmentResult: null,
-          personaAlignmentPersonaName: null,
-          personaAlignmentAnalyzedText: text, // Store the text being analyzed
-        });
-
-        try {
-          const response = await retryWithBackoff(
-            () => fetchWithTimeout('/api/persona-alignment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text, persona }),
-            }),
-            2, // maxRetries
-            1000 // baseDelay
-          );
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.details || errorData.error || 'Failed to check persona alignment');
-          }
-
-          const data = await response.json();
-          
-          set({ 
-            personaAlignmentResult: data.result,
-            personaAlignmentLoading: false,
-            personaAlignmentError: null,
-            personaAlignmentPersonaName: data.personaName || persona.name,
-            // Keep personaAlignmentAnalyzedText as set above
-          });
-        } catch (error) {
-          set({ 
-            personaAlignmentError: formatErrorForUser(error, 'Persona alignment'),
-            personaAlignmentLoading: false,
-            personaAlignmentResult: null,
-            personaAlignmentPersonaName: null,
-            personaAlignmentAnalyzedText: null,
-          });
-          logError(error, 'Persona alignment');
-        }
-      },
-
-      clearPersonaAlignmentResult: () => {
-        set({ personaAlignmentResult: null, personaAlignmentError: null, personaAlignmentPersonaName: null, personaAlignmentAnalyzedText: null });
-      },
-
-      // Optimize Alignment Tool actions
-      runOptimizeAlignment: async (
-        text: string,
-        type: 'persona' | 'brand',
-        analysisResult: PersonaAlignmentResult | BrandAlignmentResult,
-        personaOrBrand: Persona | BrandVoice
-      ): Promise<void> => {
-        // Validate inputs
-        try {
-          validateNotEmpty(text, 'Text');
-          validateTextLength(text, 'Text');
-        } catch (error) {
-          set({ 
-            optimizeAlignmentError: formatErrorForUser(error, 'Validation'),
-            optimizeAlignmentLoading: false 
-          });
-          logError(error, 'Optimize alignment validation');
-          return;
-        }
-
-        // Set loading state and store original text
-        set({ 
-          optimizeAlignmentLoading: true, 
-          optimizeAlignmentError: null,
-          optimizeAlignmentResult: null,
-          optimizeAlignmentChangesSummary: [],
-          optimizeAlignmentTargetName: null,
-          optimizeAlignmentType: type,
-          optimizeAlignmentOriginalText: text,
-          optimizeAlignmentModalOpen: false,
-        });
-
-        try {
-          // Build the request based on type
-          const analysisContext = {
-            score: analysisResult.score,
-            assessment: analysisResult.assessment,
-            strengths: type === 'persona' 
-              ? (analysisResult as PersonaAlignmentResult).strengths 
-              : (analysisResult as BrandAlignmentResult).matches,
-            issues: type === 'persona'
-              ? (analysisResult as PersonaAlignmentResult).improvements
-              : (analysisResult as BrandAlignmentResult).violations,
-            recommendations: analysisResult.recommendations,
-          };
-
-          const requestBody: Record<string, unknown> = {
-            text,
-            type,
-            analysisContext,
-          };
-
-          if (type === 'persona') {
-            const persona = personaOrBrand as Persona;
-            requestBody.personaContext = {
-              name: persona.name,
-              demographics: persona.demographics,
-              psychographics: persona.psychographics,
-              painPoints: persona.painPoints,
-              goals: persona.goals,
-            };
-          } else {
-            const brand = personaOrBrand as BrandVoice;
-            requestBody.brandContext = {
-              brandName: brand.brandName,
-              brandTone: brand.brandTone,
-              missionStatement: brand.missionStatement,
-              brandValues: brand.brandValues,
-              approvedPhrases: brand.approvedPhrases,
-              forbiddenWords: brand.forbiddenWords,
-            };
-          }
-
-          const data = await retryWithBackoff(async () => {
-            const response = await fetchWithTimeout('/api/optimize-alignment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(requestBody),
-            }, 60000); // 60 second timeout for optimization
-
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ 
-                error: 'API request failed',
-                details: `Status: ${response.status}` 
-              }));
-              throw new Error(errorData.details || errorData.error || 'Failed to optimize alignment');
-            }
-
-            const responseData = await response.json();
-            if (!responseData.rewrittenText) {
-              throw new Error('No result received from API');
-            }
-            return responseData;
-          }, 2);
-
-          set({ 
-            optimizeAlignmentResult: data.rewrittenText,
-            optimizeAlignmentChangesSummary: data.changesSummary || [],
-            optimizeAlignmentLoading: false,
-            optimizeAlignmentError: null,
-            optimizeAlignmentTargetName: data.targetName,
-            optimizeAlignmentModalOpen: true, // Open the comparison modal
-            // rightSidebarOpen already closed at the start, keep it closed
-          });
-
-        } catch (error) {
-          set({ 
-            optimizeAlignmentError: formatErrorForUser(error, 'Optimize alignment'),
-            optimizeAlignmentLoading: false,
-            optimizeAlignmentResult: null,
-            optimizeAlignmentChangesSummary: [],
-            optimizeAlignmentTargetName: null,
-            optimizeAlignmentModalOpen: false,
-          });
-          logError(error, 'Optimize alignment');
-        }
-      },
-
-      clearOptimizeAlignmentResult: () => {
-        set({ 
-          optimizeAlignmentResult: null, 
-          optimizeAlignmentChangesSummary: [],
-          optimizeAlignmentError: null, 
-          optimizeAlignmentTargetName: null,
-          optimizeAlignmentType: null,
-          optimizeAlignmentOriginalText: null,
-          optimizeAlignmentModalOpen: false,
-        });
-      },
-
-      setOptimizeAlignmentModalOpen: (open: boolean) => {
-        set({ optimizeAlignmentModalOpen: open });
-      },
-
-      acceptOptimizeResult: (editor: Editor) => {
-        const { optimizeAlignmentResult, selectionRange } = get();
-        
-        if (!optimizeAlignmentResult) {
-          logger.warn('⚠️ No optimize result to accept');
-          return;
-        }
-
-        try {
-          // Import the insert function dynamically to avoid circular deps
-          const { insertTextAtSelection } = require('@/lib/editor-utils');
-          
-          // If we have a selection range, replace that selection
-          if (selectionRange) {
-            const success = insertTextAtSelection(editor, optimizeAlignmentResult, { isHTML: true });
-            if (success) {
-              logger.log('✅ Optimized content inserted at selection');
-            }
-          } else {
-            // Otherwise replace entire content
-            editor.commands.setContent(optimizeAlignmentResult);
-            logger.log('✅ Optimized content replaced entire document');
-          }
-
-          // Clear the result after inserting
-          set({
-            optimizeAlignmentResult: null,
-            optimizeAlignmentChangesSummary: [],
-            optimizeAlignmentTargetName: null,
-            optimizeAlignmentType: null,
-            optimizeAlignmentOriginalText: null,
-            optimizeAlignmentModalOpen: false,
-          });
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to insert content';
-          set({ optimizeAlignmentError: errorMessage });
-          logError(error, 'Accept optimize result');
-        }
-      },
-      
       // Template Generator actions
       setSelectedTemplateId: (id: string | null) => {
         set({ selectedTemplateId: id });
       },
-      
+
       setIsGeneratingTemplate: (isGenerating: boolean) => {
         set({ isGeneratingTemplate: isGenerating });
       },
-      
-      // Insights panel actions
-      setActiveInsightsPanel: (panel: InsightsPanelType) => {
-        set({ activeInsightsPanel: panel });
-      },
-      
-      openInsightsPanel: (panel: InsightsPanelType) => {
-        set({ activeInsightsPanel: panel });
-      },
-      
-      closeInsightsPanel: () => {
-        set({ activeInsightsPanel: null });
-      },
-      
+
       // Pending edit actions
       setPendingBrandVoiceEdit: (brandName: string | null) => {
         set({ pendingBrandVoiceEdit: brandName });
       },
-      
+
       setPendingPersonaEdit: (personaId: string | null) => {
         set({ pendingPersonaEdit: personaId });
       },
+
     }),
     {
       name: 'copyworx-workspace',
@@ -1318,24 +886,6 @@ export const useHeadlineLoading = () => useWorkspaceStore((state) => state.headl
 export const useHeadlineError = () => useWorkspaceStore((state) => state.headlineError);
 
 /**
- * Brand Alignment Tool selector hooks
- */
-export const useBrandAlignmentResult = () => useWorkspaceStore((state) => state.brandAlignmentResult);
-export const useBrandAlignmentLoading = () => useWorkspaceStore((state) => state.brandAlignmentLoading);
-export const useBrandAlignmentError = () => useWorkspaceStore((state) => state.brandAlignmentError);
-export const useBrandAlignmentBrandName = () => useWorkspaceStore((state) => state.brandAlignmentBrandName);
-export const useBrandAlignmentAnalyzedText = () => useWorkspaceStore((state) => state.brandAlignmentAnalyzedText);
-
-/**
- * Persona Alignment Tool selector hooks
- */
-export const usePersonaAlignmentResult = () => useWorkspaceStore((state) => state.personaAlignmentResult);
-export const usePersonaAlignmentLoading = () => useWorkspaceStore((state) => state.personaAlignmentLoading);
-export const usePersonaAlignmentError = () => useWorkspaceStore((state) => state.personaAlignmentError);
-export const usePersonaAlignmentPersonaName = () => useWorkspaceStore((state) => state.personaAlignmentPersonaName);
-export const usePersonaAlignmentAnalyzedText = () => useWorkspaceStore((state) => state.personaAlignmentAnalyzedText);
-
-/**
  * Editor selection selector hooks
  */
 export const useSelectedText = () => useWorkspaceStore((state) => state.selectedText);
@@ -1399,39 +949,6 @@ export const useHeadlineGeneratorActions = () => useWorkspaceStore(
   }))
 );
 
-export const useBrandAlignmentActions = () => useWorkspaceStore(
-  useShallow((state) => ({
-    runBrandAlignment: state.runBrandAlignment,
-    clearBrandAlignmentResult: state.clearBrandAlignmentResult,
-  }))
-);
-
-export const usePersonaAlignmentActions = () => useWorkspaceStore(
-  useShallow((state) => ({
-    runPersonaAlignment: state.runPersonaAlignment,
-    clearPersonaAlignmentResult: state.clearPersonaAlignmentResult,
-  }))
-);
-
-// Optimize Alignment selectors
-export const useOptimizeAlignmentResult = () => useWorkspaceStore((state) => state.optimizeAlignmentResult);
-export const useOptimizeAlignmentChangesSummary = () => useWorkspaceStore((state) => state.optimizeAlignmentChangesSummary);
-export const useOptimizeAlignmentLoading = () => useWorkspaceStore((state) => state.optimizeAlignmentLoading);
-export const useOptimizeAlignmentError = () => useWorkspaceStore((state) => state.optimizeAlignmentError);
-export const useOptimizeAlignmentTargetName = () => useWorkspaceStore((state) => state.optimizeAlignmentTargetName);
-export const useOptimizeAlignmentType = () => useWorkspaceStore((state) => state.optimizeAlignmentType);
-export const useOptimizeAlignmentOriginalText = () => useWorkspaceStore((state) => state.optimizeAlignmentOriginalText);
-export const useOptimizeAlignmentModalOpen = () => useWorkspaceStore((state) => state.optimizeAlignmentModalOpen);
-
-export const useOptimizeAlignmentActions = () => useWorkspaceStore(
-  useShallow((state) => ({
-    runOptimizeAlignment: state.runOptimizeAlignment,
-    clearOptimizeAlignmentResult: state.clearOptimizeAlignmentResult,
-    setOptimizeAlignmentModalOpen: state.setOptimizeAlignmentModalOpen,
-    acceptOptimizeResult: state.acceptOptimizeResult,
-  }))
-);
-
 export const useProjectActions = () => useWorkspaceStore(
   useShallow((state) => ({
     setActiveProjectId: state.setActiveProjectId,
@@ -1475,19 +992,6 @@ export const useTemplateActions = () => useWorkspaceStore(
     clearShortenResult: state.clearShortenResult,
     clearRewriteChannelResult: state.clearRewriteChannelResult,
     clearHeadlineResults: state.clearHeadlineResults,
-    clearBrandAlignmentResult: state.clearBrandAlignmentResult,
-  }))
-);
-
-/**
- * Insights panel selector hooks
- */
-export const useActiveInsightsPanel = () => useWorkspaceStore((state) => state.activeInsightsPanel);
-export const useInsightsPanelActions = () => useWorkspaceStore(
-  useShallow((state) => ({
-    setActiveInsightsPanel: state.setActiveInsightsPanel,
-    openInsightsPanel: state.openInsightsPanel,
-    closeInsightsPanel: state.closeInsightsPanel,
   }))
 );
 

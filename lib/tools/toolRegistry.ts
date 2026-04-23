@@ -21,12 +21,27 @@ import {
   Volume2,
   BookOpenText,
   ScanSearch,
+  ShieldCheck,
 } from 'lucide-react';
 
 /**
  * Tool section types for organizing tools in the left sidebar
  */
 export type ToolSection = 'optimizer' | 'brand';
+
+/**
+ * Where the tool's UI is rendered when activated.
+ *
+ * - 'right-sidebar': Tool is rendered inside the right sidebar via
+ *   RightSidebarContent's TOOL_COMPONENTS registry (ToneShifter, Expand,
+ *   CompetitiveAnalysis, BrandCheck, etc.).
+ * - 'slideout': Tool opens a full-height slide-out panel managed by the
+ *   slide-out store (BrandVoiceSlideOut, PersonasSlideOut).
+ *
+ * LeftSidebarContent uses this field to decide whether a tool click opens a
+ * slide-out or sets the active right-sidebar tool.
+ */
+export type ToolUISurface = 'right-sidebar' | 'slideout';
 
 /**
  * Tool configuration interface
@@ -46,6 +61,12 @@ export interface ToolConfig {
   
   /** Short description */
   description: string;
+  
+  /**
+   * Where this tool's UI is rendered when activated. Defaults to
+   * 'right-sidebar' if omitted. See ToolUISurface for details.
+   */
+  uiSurface: ToolUISurface;
   
   /** Optional: Whether tool requires a document to be open */
   requiresDocument?: boolean;
@@ -68,6 +89,7 @@ export const TOOLS: ToolConfig[] = [
     icon: Wand2,
     section: 'optimizer',
     description: 'Rewrite in different tones',
+    uiSurface: 'right-sidebar',
     requiresDocument: true,
   },
   {
@@ -76,6 +98,7 @@ export const TOOLS: ToolConfig[] = [
     icon: Maximize2,
     section: 'optimizer',
     description: 'Make copy longer and more detailed',
+    uiSurface: 'right-sidebar',
     requiresDocument: true,
   },
   {
@@ -84,6 +107,7 @@ export const TOOLS: ToolConfig[] = [
     icon: Minimize2,
     section: 'optimizer',
     description: 'Make copy more concise',
+    uiSurface: 'right-sidebar',
     requiresDocument: true,
   },
   {
@@ -92,6 +116,7 @@ export const TOOLS: ToolConfig[] = [
     icon: Repeat,
     section: 'optimizer',
     description: 'Adapt for different platforms',
+    uiSurface: 'right-sidebar',
     requiresDocument: true,
   },
   {
@@ -100,6 +125,7 @@ export const TOOLS: ToolConfig[] = [
     icon: Type,
     section: 'optimizer',
     description: 'Generate channel-optimized headlines',
+    uiSurface: 'right-sidebar',
     requiresDocument: false,
   },
   {
@@ -108,6 +134,7 @@ export const TOOLS: ToolConfig[] = [
     icon: BookOpenText,
     section: 'optimizer',
     description: 'Dictionary, thesaurus & copywriting intelligence',
+    uiSurface: 'right-sidebar',
     requiresDocument: true,
   },
   {
@@ -116,18 +143,22 @@ export const TOOLS: ToolConfig[] = [
     icon: ScanSearch,
     section: 'optimizer',
     description: 'Analyze competitor copy',
+    uiSurface: 'right-sidebar',
     requiresDocument: false,
   },
   
   // ═══════════════════════════════════════════════════════════
   // MY BRAND & AUDIENCE
   // ═══════════════════════════════════════════════════════════
+  // Display order within this section: brand-voice, personas, brand-check,
+  // persona-check (persona-check arrives in Part 3).
   {
     id: 'brand-voice',
     name: 'Brand Voice',
     icon: Volume2,
     section: 'brand',
     description: 'Brand tone & style guidelines',
+    uiSurface: 'slideout',
     requiresDocument: false,
   },
   {
@@ -136,7 +167,17 @@ export const TOOLS: ToolConfig[] = [
     icon: Users,
     section: 'brand',
     description: 'Target audience profiles',
+    uiSurface: 'slideout',
     requiresDocument: false,
+  },
+  {
+    id: 'brand-check',
+    name: 'Brand Check',
+    icon: ShieldCheck,
+    section: 'brand',
+    description: 'Check copy alignment with your brand voice',
+    uiSurface: 'right-sidebar',
+    requiresDocument: true,
   },
 
 ];

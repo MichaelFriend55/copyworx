@@ -343,7 +343,6 @@ export function TemplatesSlideOut({
     clearExpandResult,
     clearShortenResult,
     clearRewriteChannelResult,
-    clearBrandAlignmentResult,
   } = useTemplateActions();
   const { openSlideOut } = useGlobalSlideOutActions();
 
@@ -412,7 +411,6 @@ export function TemplatesSlideOut({
       clearExpandResult();
       clearShortenResult();
       clearRewriteChannelResult();
-      clearBrandAlignmentResult();
       setIsGeneratingTemplate(false);
       
       // Custom-component templates use their own component in the right sidebar
@@ -465,7 +463,6 @@ export function TemplatesSlideOut({
       clearExpandResult,
       clearShortenResult,
       clearRewriteChannelResult,
-      clearBrandAlignmentResult,
     ]
   );
 

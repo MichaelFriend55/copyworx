@@ -19,7 +19,7 @@ export type { Snippet, CreateSnippetInput, UpdateSnippetInput } from './snippet'
 export { isSnippet, validateSnippetName, validateSnippetContent } from './snippet';
 
 // Re-export brand types
-export type { BrandVoice, BrandAlignmentResult, BrandAlignmentRequest, BrandAlignmentResponse } from './brand';
+export type { BrandVoice } from './brand';
 
 // Re-export template types
 export type { 

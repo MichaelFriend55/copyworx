@@ -37,8 +37,21 @@ import { PERSONAS_PANEL_ID } from '@/components/workspace/PersonasSlideOut';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
+import { getToolById } from '@/lib/tools/toolRegistry';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
+
+/**
+ * Map of slide-out-surface tool IDs to their panel IDs.
+ *
+ * Tools flagged with `uiSurface: 'slideout'` in the tool registry open the
+ * corresponding slide-out panel instead of rendering in the right sidebar.
+ * If you add another slide-out tool, wire its panel ID here.
+ */
+const SLIDEOUT_TOOL_PANEL_IDS: Record<string, string> = {
+  'brand-voice': BRAND_VOICE_PANEL_ID,
+  'personas': PERSONAS_PANEL_ID,
+};
 
 /**
  * Props for LeftSidebarContent
@@ -115,34 +128,34 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
     store.clearExpandResult();
     store.clearShortenResult();
     store.clearRewriteChannelResult();
-    
-    // Clear Brand & Audience results
-    store.clearBrandAlignmentResult();
-    
+
     // Clear template state
     store.setSelectedTemplateId(null);
     store.setIsGeneratingTemplate(false);
   }, []);
 
   /**
-   * Handle tool selection with automatic state clearing
-   * Special handling for brand-voice and personas which open slide-outs
+   * Handle tool selection with automatic state clearing.
+   *
+   * Routes by the tool registry's `uiSurface` property:
+   *   - 'slideout'       → open the tool's slide-out panel (no activeToolId change)
+   *   - 'right-sidebar'  → set as the active right-sidebar tool (clearing prior state)
    */
   const handleToolClick = useCallback((toolId: string) => {
+    const tool = getToolById(toolId);
+    const uiSurface = tool?.uiSurface ?? 'right-sidebar';
+
+    if (uiSurface === 'slideout') {
+      const panelId = SLIDEOUT_TOOL_PANEL_IDS[toolId];
+      if (panelId) {
+        openSlideOut(panelId);
+      } else {
+        logger.warn(`⚠️ Slide-out tool "${toolId}" has no panel ID mapping`);
+      }
+      return;
+    }
+
     const currentToolId = useWorkspaceStore.getState().activeToolId;
-    
-    // Special handling for brand-voice and personas - open slide-outs instead
-    if (toolId === 'brand-voice') {
-      openSlideOut(BRAND_VOICE_PANEL_ID);
-      return;
-    }
-    
-    if (toolId === 'personas') {
-      openSlideOut(PERSONAS_PANEL_ID);
-      return;
-    }
-    
-    // Only clear if switching to a different tool
     if (currentToolId !== toolId) {
       clearAllToolStates();
     }

@@ -105,7 +105,6 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
     clearExpandResult,
     clearShortenResult,
     clearRewriteChannelResult,
-    clearBrandAlignmentResult,
   } = useTemplateActions();
 
   // Close on ESC key
@@ -148,7 +147,6 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
     clearExpandResult();
     clearShortenResult();
     clearRewriteChannelResult();
-    clearBrandAlignmentResult();
     setIsGeneratingTemplate(false);
     
     // For custom-component templates, ALWAYS create a new document
