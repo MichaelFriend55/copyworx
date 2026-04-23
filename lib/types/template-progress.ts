@@ -189,6 +189,12 @@ export interface SectionGenerationRequest {
     forbiddenWords: string[];
     brandValues: string[];
     missionStatement: string;
+    /**
+     * Optional array of existing brand copy samples. The server appends these
+     * to the AI prompt to ground voice in concrete examples. Clients that
+     * predate the Writing Samples feature may omit this field.
+     */
+    writing_samples?: string[];
   };
   
   /** Persona data if selected */

@@ -41,10 +41,43 @@ interface ErrorResponse {
 // ============================================================================
 
 /**
+ * Build a Writing Samples block that is appended to the brand voice context.
+ *
+ * Returns an empty string when no usable samples exist so callers can
+ * concatenate unconditionally without emitting a stray "WRITING SAMPLES:" header.
+ * The block instructs the model to match the voice of the samples rather than
+ * describe it, because examples teach voice more reliably than abstract rules.
+ */
+function buildWritingSamplesBlock(samples: string[] | undefined | null): string {
+  if (!Array.isArray(samples)) {
+    return '';
+  }
+
+  const cleaned = samples
+    .filter((s): s is string => typeof s === 'string')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  if (cleaned.length === 0) {
+    return '';
+  }
+
+  const formatted = cleaned
+    .map((sample, index) => `SAMPLE ${index + 1}:\n${sample}`)
+    .join('\n\n');
+
+  return `
+WRITING SAMPLES (existing copy in this brand's voice — use these as reference for rhythm, word choice, sentence structure, and tone. Match the voice of these samples more than you describe it):
+
+${formatted}
+`;
+}
+
+/**
  * Build brand voice instructions for Claude
  */
 function buildBrandVoiceInstructions(brandVoice: BrandVoice): string {
-  return `
+  const base = `
 BRAND VOICE REQUIREMENTS:
 
 Brand: ${brandVoice.brandName}
@@ -56,6 +89,8 @@ Mission context: ${brandVoice.missionStatement}
 
 Write in a way that authentically reflects this brand voice.
 `;
+
+  return base + buildWritingSamplesBlock(brandVoice.writing_samples);
 }
 
 /**

@@ -30,6 +30,7 @@ interface SyncedBrandVoice {
   forbiddenWords: string[];
   brandValues: string[];
   missionStatement: string;
+  writing_samples: string[];
   savedAt?: Date;
 }
 
@@ -201,6 +202,7 @@ export async function GET(request: NextRequest) {
           forbiddenWords: brandVoice.forbidden_words || [],
           brandValues: brandVoice.brand_values || [],
           missionStatement: brandVoice.mission_statement,
+          writing_samples: Array.isArray(brandVoice.writing_samples) ? brandVoice.writing_samples : [],
           savedAt: brandVoice.updated_at ? new Date(brandVoice.updated_at) : undefined,
         } : null,
         personas: projectPersonas.map((p: any) => ({

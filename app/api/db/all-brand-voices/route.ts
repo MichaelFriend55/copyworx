@@ -31,6 +31,7 @@ interface BrandVoiceWithProject {
   forbiddenWords: string[];
   brandValues: string[];
   missionStatement: string;
+  writingSamples: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +68,7 @@ export async function GET(request: NextRequest) {
         forbidden_words,
         brand_values,
         mission_statement,
+        writing_samples,
         created_at,
         updated_at,
         projects!brand_voices_project_id_fkey(name)
@@ -90,6 +92,7 @@ export async function GET(request: NextRequest) {
       forbiddenWords: bv.forbidden_words || [],
       brandValues: bv.brand_values || [],
       missionStatement: bv.mission_statement || '',
+      writingSamples: Array.isArray(bv.writing_samples) ? bv.writing_samples : [],
       createdAt: bv.created_at,
       updatedAt: bv.updated_at,
     }));

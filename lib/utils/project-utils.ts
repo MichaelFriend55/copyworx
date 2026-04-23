@@ -86,8 +86,22 @@ function migrateLegacyBrandVoice(): void {
       return;
     }
     
-    // Parse legacy brand voice
-    const legacyBrandVoice: BrandVoice = JSON.parse(legacyBrandVoiceJson);
+    // Parse legacy brand voice. Older payloads predate the writing_samples
+    // field, so normalize to an empty array if missing to satisfy the BrandVoice
+    // type and keep downstream consumers runtime-safe.
+    const legacyBrandVoiceRaw = JSON.parse(legacyBrandVoiceJson) as Partial<BrandVoice>;
+    const legacyBrandVoice: BrandVoice = {
+      brandName: legacyBrandVoiceRaw.brandName ?? '',
+      brandTone: legacyBrandVoiceRaw.brandTone ?? '',
+      approvedPhrases: legacyBrandVoiceRaw.approvedPhrases ?? [],
+      forbiddenWords: legacyBrandVoiceRaw.forbiddenWords ?? [],
+      brandValues: legacyBrandVoiceRaw.brandValues ?? [],
+      missionStatement: legacyBrandVoiceRaw.missionStatement ?? '',
+      writing_samples: Array.isArray(legacyBrandVoiceRaw.writing_samples)
+        ? legacyBrandVoiceRaw.writing_samples
+        : [],
+      savedAt: legacyBrandVoiceRaw.savedAt,
+    };
     logger.log('📦 Found legacy brand voice:', legacyBrandVoice.brandName);
     
     // Get current projects (use local storage for sync operation)

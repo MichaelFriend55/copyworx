@@ -24,7 +24,17 @@ export interface BrandVoice {
   
   /** Mission statement */
   missionStatement: string;
-  
+
+  /**
+   * Writing Samples — 0 to 5 pieces of existing brand copy.
+   *
+   * Each entry is a non-empty string of at least 20 characters (validated on
+   * write). Samples are injected into every AI prompt that uses this brand
+   * voice; the model learns voice from examples more reliably than from
+   * abstract rules. An empty array is valid and means "no samples provided".
+   */
+  writing_samples: string[];
+
   /** Timestamp when saved */
   savedAt?: Date;
 }

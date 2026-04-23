@@ -181,6 +181,7 @@ export function BrandVoiceTool({ editor, className }: BrandVoiceToolProps) {
         .map(v => v.trim())
         .filter(Boolean),
       missionStatement: missionStatement.trim(),
+      writing_samples: [],
       savedAt: new Date(),
     };
 

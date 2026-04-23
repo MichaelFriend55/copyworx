@@ -425,6 +425,9 @@ export async function cloudSaveBrandVoice(
       forbidden_words: brandVoice.forbiddenWords,
       brand_values: brandVoice.brandValues,
       mission_statement: brandVoice.missionStatement,
+      // Defensive default: legacy brand voices loaded from localStorage may not
+      // have a writing_samples property yet. Always send an array.
+      writing_samples: Array.isArray(brandVoice.writing_samples) ? brandVoice.writing_samples : [],
     }),
   });
 }

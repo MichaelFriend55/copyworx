@@ -64,11 +64,30 @@ interface BrandVoiceData {
   forbidden_words: string[];
   brand_values: string[];
   mission_statement: string;
+  /** Up to 5 pieces of existing brand copy for AI voice grounding */
+  writing_samples: string[];
   created_at: string;
   updated_at: string;
 }
 
 type ViewMode = 'list' | 'create' | 'edit';
+
+// ═══════════════════════════════════════════════════════════
+// WRITING SAMPLES CONSTANTS
+// ═══════════════════════════════════════════════════════════
+
+/** Maximum number of Writing Samples a user can save on a single brand voice. */
+const MAX_WRITING_SAMPLES = 5;
+
+/**
+ * Minimum character length for a non-empty Writing Sample. Empties are allowed
+ * (and filtered out on save); partially-filled samples below this threshold
+ * trigger an inline validation message.
+ */
+const MIN_SAMPLE_LENGTH = 20;
+
+const SAMPLE_PLACEHOLDER =
+  'e.g., "At Cornerstone, the doctor who delivered your baby might be the one your daughter sees for her sports physical twenty years later. That\'s not marketing. That\'s how we practice medicine."';
 
 // ═══════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -111,6 +130,12 @@ export function BrandVoiceSlideOut({
   const [forbiddenWords, setForbiddenWords] = useState('');
   const [brandValues, setBrandValues] = useState('');
   const [missionStatement, setMissionStatement] = useState('');
+  /**
+   * Writing Samples form state — always contains at least one textarea so the
+   * user sees an input to type into on the create flow. Entries may be empty
+   * (filtered out on save) or below MIN_SAMPLE_LENGTH (shows inline warning).
+   */
+  const [writingSamples, setWritingSamples] = useState<string[]>(['']);
   
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -153,6 +178,7 @@ export function BrandVoiceSlideOut({
         forbidden_words: bv.forbiddenWords || [],
         brand_values: bv.brandValues || [],
         mission_statement: bv.missionStatement || '',
+        writing_samples: Array.isArray(bv.writingSamples) ? bv.writingSamples : [],
         created_at: bv.createdAt,
         updated_at: bv.updatedAt,
       }));
@@ -204,10 +230,13 @@ export function BrandVoiceSlideOut({
     setForbiddenWords('');
     setBrandValues('');
     setMissionStatement('');
+    // Always render at least one empty textarea on new-brand-voice creation
+    // so the user sees a prompt to add samples.
+    setWritingSamples(['']);
     setSaveError(null);
     setSaveSuccess(false);
   }, []);
-  
+
   /**
    * Load brand voice data into form
    */
@@ -218,8 +247,51 @@ export function BrandVoiceSlideOut({
     setForbiddenWords(bv.forbidden_words.join('\n'));
     setBrandValues(bv.brand_values.join('\n'));
     setMissionStatement(bv.mission_statement);
+    // Edit flow: render one textarea per existing sample, or a single empty
+    // textarea if this brand voice predates the Writing Samples feature.
+    setWritingSamples(
+      Array.isArray(bv.writing_samples) && bv.writing_samples.length > 0
+        ? [...bv.writing_samples]
+        : ['']
+    );
     setSaveError(null);
     setSaveSuccess(false);
+  }, []);
+
+  // ═══════════════════════════════════════════════════════════
+  // WRITING SAMPLES HANDLERS
+  // ═══════════════════════════════════════════════════════════
+
+  /** Update the text of a single Writing Sample at the given index. */
+  const updateWritingSample = useCallback((index: number, value: string) => {
+    setWritingSamples((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }, []);
+
+  /**
+   * Remove a Writing Sample textarea. Keeps at least one textarea rendered so
+   * the user always has a place to type.
+   */
+  const removeWritingSample = useCallback((index: number) => {
+    setWritingSamples((prev) => {
+      if (prev.length <= 1) {
+        return [''];
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  }, []);
+
+  /** Append a new empty Writing Sample textarea (capped at MAX_WRITING_SAMPLES). */
+  const addWritingSample = useCallback(() => {
+    setWritingSamples((prev) => {
+      if (prev.length >= MAX_WRITING_SAMPLES) {
+        return prev;
+      }
+      return [...prev, ''];
+    });
   }, []);
   
   /**
@@ -261,16 +333,38 @@ export function BrandVoiceSlideOut({
       setSaveError('Brand Name is required');
       return;
     }
-    
+
     // For creating new brand voices, we need a project (until migration is run)
     if (viewMode === 'create' && !activeProjectId) {
       setSaveError('Please select a project first. Brand voices need to be associated with a project.');
       return;
     }
-    
+
+    // Validate Writing Samples: entries that have content below MIN_SAMPLE_LENGTH
+    // must either be expanded to meet the threshold or cleared entirely. Empty
+    // strings are allowed and stripped on save.
+    const invalidSampleIndex = writingSamples.findIndex((sample) => {
+      const trimmed = sample.trim();
+      return trimmed.length > 0 && trimmed.length < MIN_SAMPLE_LENGTH;
+    });
+    if (invalidSampleIndex !== -1) {
+      setSaveError(
+        `Writing Sample ${invalidSampleIndex + 1} must be at least ${MIN_SAMPLE_LENGTH} characters or empty.`
+      );
+      return;
+    }
+
     setIsSaving(true);
-    
+
     try {
+      // Filter out empty samples before writing to DB. Only persist non-empty
+      // strings so a user who adds then clears a textarea doesn't leave noise
+      // in the stored array.
+      const cleanedWritingSamples = writingSamples
+        .map((sample) => sample.trim())
+        .filter((sample) => sample.length > 0)
+        .slice(0, MAX_WRITING_SAMPLES);
+
       const brandVoiceData: Record<string, unknown> = {
         brand_name: brandName.trim(),
         brand_tone: brandTone.trim(),
@@ -287,6 +381,7 @@ export function BrandVoiceSlideOut({
           .map(v => v.trim())
           .filter(Boolean),
         mission_statement: missionStatement.trim(),
+        writing_samples: cleanedWritingSamples,
       };
       
       let response: Response;
@@ -354,6 +449,7 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
     }
   }, [
     brandName, brandTone, approvedPhrases, forbiddenWords, brandValues, missionStatement,
+    writingSamples, activeProjectId,
     viewMode, editingBrandVoice, fetchBrandVoices, handleBackToList
   ]);
   
@@ -782,8 +878,111 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
             )}
           />
         </div>
+
+        {/* ─── Writing Samples ─────────────────────────────────────────── */}
+        {/*
+          Writing Samples live at the end of the form, immediately before the
+          action buttons. Dynamic list of up to 5 textareas; each can be
+          deleted individually, and an "+ Add Sample" button appends new ones
+          (capped at MAX_WRITING_SAMPLES). Empty samples are stripped on save
+          so users can add/remove entries without polluting the stored array.
+        */}
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-900">
+              Writing Samples
+            </label>
+            <p className="text-xs text-gray-500">
+              Paste 2–5 pieces of existing brand copy — email, web, social, or print.
+              The AI learns voice from examples better than from rules.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {writingSamples.map((sample, index) => {
+              const trimmed = sample.trim();
+              const isTooShort = trimmed.length > 0 && trimmed.length < MIN_SAMPLE_LENGTH;
+              return (
+                <div key={index} className="relative">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <AutoExpandTextarea
+                        id={`writingSample-${index}`}
+                        value={sample}
+                        onChange={(e) => updateWritingSample(index, e.target.value)}
+                        placeholder={SAMPLE_PLACEHOLDER}
+                        minHeight={120}
+                        maxHeight={400}
+                        disabled={isSaving || saveSuccess}
+                        aria-label={`Writing Sample ${index + 1}`}
+                        className={cn(
+                          'w-full px-3 py-2 rounded-lg border transition-all duration-200',
+                          'text-sm text-gray-900 bg-white',
+                          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                          'disabled:bg-gray-50 disabled:opacity-50',
+                          'placeholder:text-gray-400',
+                          isTooShort ? 'border-amber-300' : 'border-gray-200'
+                        )}
+                      />
+                      {isTooShort && (
+                        <p className="text-xs text-amber-700 mt-1">
+                          Sample must be at least {MIN_SAMPLE_LENGTH} characters or empty.
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeWritingSample(index)}
+                      disabled={isSaving || saveSuccess}
+                      className={cn(
+                        'p-2 rounded-lg transition-colors flex-shrink-0 mt-1',
+                        'text-gray-400 hover:text-red-600 hover:bg-red-50',
+                        'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400',
+                        'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2'
+                      )}
+                      aria-label={`Remove Writing Sample ${index + 1}`}
+                      title="Remove sample"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add Sample button (capped at MAX_WRITING_SAMPLES) */}
+          <div>
+            <button
+              type="button"
+              onClick={addWritingSample}
+              disabled={
+                isSaving ||
+                saveSuccess ||
+                writingSamples.length >= MAX_WRITING_SAMPLES
+              }
+              title={
+                writingSamples.length >= MAX_WRITING_SAMPLES
+                  ? `Maximum ${MAX_WRITING_SAMPLES} samples`
+                  : 'Add another writing sample'
+              }
+              className={cn(
+                'inline-flex items-center gap-1.5 text-sm font-medium',
+                'text-apple-blue hover:text-blue-700 transition-colors',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2 rounded-md px-1 py-0.5',
+                'disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:text-gray-400'
+              )}
+            >
+              <Plus className="w-4 h-4" />
+              Add Sample
+            </button>
+            <p className="text-xs text-gray-400 mt-1">
+              {writingSamples.length} of {MAX_WRITING_SAMPLES} sample slot{writingSamples.length === 1 ? '' : 's'} used
+            </p>
+          </div>
+        </div>
       </div>
-      
+
       {/* Action Buttons */}
       <div className="flex gap-3 pt-4">
         <Button

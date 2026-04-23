@@ -533,6 +533,9 @@ export function BrochureMultiSectionTemplate({
           forbiddenWords: activeProject.brandVoice.forbiddenWords,
           brandValues: activeProject.brandVoice.brandValues,
           missionStatement: activeProject.brandVoice.missionStatement,
+          writing_samples: Array.isArray(activeProject.brandVoice.writing_samples)
+            ? activeProject.brandVoice.writing_samples
+            : [],
         } : undefined,
         persona: selectedPersona ? {
           name: selectedPersona.name,

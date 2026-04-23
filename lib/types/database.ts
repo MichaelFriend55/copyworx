@@ -112,6 +112,7 @@ export interface Database {
           forbidden_words: string[];
           brand_values: string[];
           mission_statement: string;
+          writing_samples: string[];
           created_at: string;
           updated_at: string;
         };
@@ -125,6 +126,7 @@ export interface Database {
           forbidden_words?: string[];
           brand_values?: string[];
           mission_statement?: string;
+          writing_samples?: string[];
           created_at?: string;
           updated_at?: string;
         };
@@ -138,6 +140,7 @@ export interface Database {
           forbidden_words?: string[];
           brand_values?: string[];
           mission_statement?: string;
+          writing_samples?: string[];
           created_at?: string;
           updated_at?: string;
         };

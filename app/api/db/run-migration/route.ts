@@ -7,6 +7,7 @@
  * 
  * Currently supports:
  * - multiple-brand-voices: Enables multiple brand voices per user
+ * - add-writing-samples: Adds writing_samples jsonb column to brand_voices
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -145,6 +146,55 @@ CREATE INDEX IF NOT EXISTS idx_projects_brand_voice_id ON projects(brand_voice_i
         migration: 'multiple-brand-voices',
         results,
         message: 'Migration completed successfully! You can now create multiple brand voices.',
+      });
+    }
+
+    if (migration === 'add-writing-samples') {
+      const results: { step: string; success: boolean; error?: string }[] = [];
+
+      const step1 = await executeSql(
+        `ALTER TABLE brand_voices ADD COLUMN IF NOT EXISTS writing_samples jsonb DEFAULT '[]'::jsonb;`
+      );
+      results.push({ step: 'Add writing_samples column', ...step1 });
+
+      const step2 = await executeSql(
+        `UPDATE brand_voices SET writing_samples = '[]'::jsonb WHERE writing_samples IS NULL;`
+      );
+      results.push({ step: 'Backfill existing rows', ...step2 });
+
+      const anyFailed = results.some((r) => !r.success);
+
+      if (anyFailed) {
+        return NextResponse.json(
+          {
+            success: false,
+            migration: 'add-writing-samples',
+            results,
+            message:
+              'Automatic migration failed. Please run the following SQL in your Supabase SQL Editor:',
+            sql: `-- Run this in Supabase SQL Editor (https://supabase.com/dashboard)
+-- Navigate to: SQL Editor > New Query
+
+-- Step 1: Add writing_samples column (JSONB array of strings)
+ALTER TABLE brand_voices
+  ADD COLUMN IF NOT EXISTS writing_samples jsonb DEFAULT '[]'::jsonb;
+
+-- Step 2: Backfill any NULL values defensively
+UPDATE brand_voices
+  SET writing_samples = '[]'::jsonb
+  WHERE writing_samples IS NULL;
+
+-- Done! Writing Samples are now available on brand voices.`,
+          },
+          { status: 200 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        migration: 'add-writing-samples',
+        results,
+        message: 'Migration completed successfully. Writing Samples are now available on brand voices.',
       });
     }
 

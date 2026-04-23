@@ -105,20 +105,32 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin();
 
     const body = await request.json();
-    const { 
+    const {
       project_id, // Optional - brand voices can exist independently
       brand_name,
       brand_tone,
       approved_phrases,
       forbidden_words,
       brand_values,
-      mission_statement
+      mission_statement,
+      writing_samples,
     } = body;
 
     // Validate required fields
     if (!brand_name || typeof brand_name !== 'string' || brand_name.trim().length === 0) {
       return badRequestResponse('Brand name is required');
     }
+
+    // Sanitize writing samples: non-string entries are dropped; strings are
+    // trimmed; empties filtered; max 5 enforced. 20-char minimum is a UI
+    // validation — the DB accepts whatever the client submits after filtering.
+    const sanitizedWritingSamples = Array.isArray(writing_samples)
+      ? writing_samples
+          .filter((s: unknown): s is string => typeof s === 'string')
+          .map((s: string) => s.trim())
+          .filter((s: string) => s.length > 0)
+          .slice(0, 5)
+      : [];
 
     // Create new brand voice (project_id is optional)
     const insertData: Record<string, unknown> = {
@@ -129,6 +141,7 @@ export async function POST(request: NextRequest) {
       forbidden_words: Array.isArray(forbidden_words) ? forbidden_words : [],
       brand_values: Array.isArray(brand_values) ? brand_values : [],
       mission_statement: typeof mission_statement === 'string' ? mission_statement : '',
+      writing_samples: sanitizedWritingSamples,
     };
 
     // Only add project_id if provided
@@ -206,9 +219,10 @@ export async function PUT(request: NextRequest) {
     // Filter allowed update fields
     const allowedFields = [
       'brand_name', 'brand_tone', 'approved_phrases',
-      'forbidden_words', 'brand_values', 'mission_statement', 'project_id'
+      'forbidden_words', 'brand_values', 'mission_statement',
+      'writing_samples', 'project_id'
     ];
-    
+
     const filteredUpdates: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
@@ -223,6 +237,18 @@ export async function PUT(request: NextRequest) {
         return badRequestResponse('Brand name cannot be empty');
       }
       filteredUpdates.brand_name = brandName.trim();
+    }
+
+    // Sanitize writing_samples if present on update
+    if (filteredUpdates.writing_samples !== undefined) {
+      const raw = filteredUpdates.writing_samples;
+      filteredUpdates.writing_samples = Array.isArray(raw)
+        ? raw
+            .filter((s: unknown): s is string => typeof s === 'string')
+            .map((s: string) => s.trim())
+            .filter((s: string) => s.length > 0)
+            .slice(0, 5)
+        : [];
     }
 
     if (Object.keys(filteredUpdates).length === 0) {
