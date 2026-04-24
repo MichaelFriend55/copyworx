@@ -57,10 +57,10 @@ const showcaseBlocks = [
     imagePosition: 'left' as const,
   },
   {
-    screenshot: '/images/guide/36-my-insights-brand-alignment-score.png',
-    alt: 'Brand alignment analysis with score and actionable recommendations',
+    screenshot: '/images/guide/36-brand-check-alignment-score.png',
+    alt: 'Brand Check analysis with a strong alignment score, matching phrases, and actionable recommendations',
     headline: 'Score Any Copy Against Your Brand Guidelines. Instantly.',
-    body: "Brand Alignment analyzes your copy against your Brand Voice and returns a score, specific matches, violations, and actionable recommendations. It's the quality-control tool that turns subjective brand feedback into objective, measurable performance.",
+    body: "Brand Check analyzes your copy against your Brand Voice and returns a score, specific matches, misalignments, and actionable recommendations. It's the quality-control tool that turns subjective brand feedback into objective, measurable performance.",
     imagePosition: 'right' as const,
   },
   {

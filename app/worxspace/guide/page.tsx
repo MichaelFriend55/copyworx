@@ -345,8 +345,8 @@ function SectionCopyOptimizer() {
       </ul>
       <GuideImage
         src="/images/guide/09-copy-optimizer-expand.png"
-        alt="The Expand tool with My Insights panel"
-        caption="The Expand tool with My Insights panel"
+        alt="The Expand tool showing a completed expansion in the right sidebar, with the longer version ready to replace the selected copy in the editor"
+        caption="The Expand tool after generating a longer version of the selected copy — click Replace Selection to drop it into the document."
       />
 
       <h3>Shorten</h3>
