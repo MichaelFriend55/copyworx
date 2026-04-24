@@ -60,29 +60,36 @@ const showcaseBlocks = [
     screenshot: '/images/guide/36-brand-check-alignment-score.png',
     alt: 'Brand Check analysis with a strong alignment score, matching phrases, and actionable recommendations',
     headline: 'Diagnose Off-Brand Copy. Fix It in One Click.',
-    body: "Brand Check scores any copy against your Brand Voice, flags exactly where it misses – forbidden words, tone mismatches, missed opportunities – and gives you a one-click rewrite that preserves your formatting and fixes the issues. Persona Check does the same against any audience you've built. No more subjective \"this doesn't feel on brand\" feedback cycles. Just diagnosis, recommendation, and repair.",
+    body: "Brand Check scores any copy against your Brand Voice, flags exactly where it misses – forbidden words, tone mismatches, missed opportunities – and gives you a one-click rewrite that preserves your formatting and fixes the issues. No more subjective \"this doesn't feel on brand\" feedback cycles. Just diagnosis, recommendation, and repair.",
     imagePosition: 'right' as const,
+  },
+  {
+    screenshot: '/images/guide/37-persona-check-audience-alignment.png',
+    alt: 'Persona Check showing a Strongly Aligned analysis against Sarah Donovan persona with pain points addressed and missed',
+    headline: 'Check Copy Against Any Audience. Rewrite for That Person.',
+    body: "Persona Check analyzes your copy against any persona you've built – pain points addressed, language patterns, emotional territory – and rewrites it to speak directly to that specific audience. Different persona, different rewrite. Same brand voice, different audience fit.",
+    imagePosition: 'left' as const,
   },
   {
     screenshot: '/images/guide/word-advisor-screenshot.png',
     alt: 'MY WORD ADVISOR showing alternative word suggestions with copywriting rationales',
     headline: 'Find the Right Word. Know Why It\u2019s Right.',
     body: "Highlight any word in your copy and MY WORD ADVISOR gives you smarter alternatives \u2013 with real copywriting rationale behind each one. It\u2019s not a thesaurus. It tells you why \u201Cproven\u201D hits harder than \u201Cinnovative\u201D when you\u2019re writing for CFOs, and which words align with your Brand Voice and Persona. One click and the new word drops right into your document.",
-    imagePosition: 'left' as const,
+    imagePosition: 'right' as const,
   },
   {
     screenshot: '/images/guide/Version-Control-2.png',
     alt: 'Side-by-side version comparison showing word-level changes between two document versions',
     headline: 'Compare Any Two Versions. See Exactly What Changed.',
     body: "Every document in CopyWorx Studio\u2122 supports built-in version control \u2013 v1, v2, v3, as many as you need. Click Compare Versions and the editor splits into two side-by-side panes with word-level highlighting showing exactly what was added, removed, or rewritten. No more playing spot-the-difference across tabs. Perfect for client revisions, A/B testing copy approaches, or simply tracking how a piece evolved.",
-    imagePosition: 'right' as const,
+    imagePosition: 'left' as const,
   },
   {
     screenshot: '/images/guide/competitive-analysis-screenshot.png',
     alt: 'Competitive Analysis tool showing strategic teardown of competitor copy',
     headline: "Tear Down Your Competitor\u2019s Copy. Find Your Edge.",
     body: "Paste any competitor\u2019s copy into Competitive Analysis and get a strategic teardown \u2013 messaging strategy, strengths, weaknesses, and specific opportunities for you to differentiate. It\u2019s the competitive intelligence tool that turns someone else\u2019s copy into your advantage.",
-    imagePosition: 'left' as const,
+    imagePosition: 'right' as const,
   },
 ] as const;
 
@@ -120,7 +127,7 @@ export default function HomePage() {
             
             {/* Subheadline */}
             <p className="text-lg sm:text-xl md:text-2xl text-ink-600 max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in animation-delay-200">
-              The first AI-powered platform built by a professional copywriter – specifically for copywriters, content creators, and marketers.
+              The only AI writing platform that generates copy in your brand&apos;s voice, diagnoses what&apos;s off, and rewrites it to match – without destroying your formatting. Built by a professional copywriter, for copywriters and marketers who refuse to settle for generic AI output.
             </p>
             
             {/* Primary CTA */}
@@ -160,15 +167,15 @@ export default function HomePage() {
             
             <div className="prose prose-lg md:prose-xl max-w-none text-ink-600 leading-relaxed space-y-6">
               <p>
-                Whether you&apos;re a seasoned copywriter juggling multiple clients or a marketing team trying to maintain brand consistency across campaigns, the challenge is the same: How do you write professional, strategic copy quickly without sacrificing quality?
+                You&apos;re juggling multiple clients or campaigns. Each one has its own brand voice, its own audience, its own expectations. Staying consistent is exhausting.
               </p>
               
               <p>
-                Traditional writing tools aren&apos;t built for copywriters. AI tools promise speed but deliver generic fluff. And hiring out? Expensive and slow.
+                Traditional writing tools don&apos;t understand your brand. AI tools generate copy that sounds like everyone else&apos;s. And the handful that claim to learn your voice can&apos;t actually diagnose when you&apos;ve drifted off it, let alone fix it.
               </p>
               
-              <p className="text-ink-900 font-semibold text-xl md:text-2xl">
-                CopyWorx Studio™ changes that.
+              <p>
+                CopyWorx Studio™ closes that loop. Generate in brand. Diagnose what&apos;s off. Rewrite it to fix. All in one tool.
               </p>
             </div>
           </div>
