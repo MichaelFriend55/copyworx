@@ -21,8 +21,8 @@ export const metadata: Metadata = {
 const FEATURES = [
   'Unlimited "AI@Worx" AI-powered rewrites',
   'Access to all copywriting templates',
-  'Brand voice alignment & analysis',
-  'Persona targeting & analysis',
+  'Brand Check – score and rewrite against your Brand Voice',
+  'Persona Check – score and rewrite for any audience',
   'Multi-channel adaptation',
   'Cloud sync across devices',
   'Priority email support',
