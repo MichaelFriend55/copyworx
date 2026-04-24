@@ -385,7 +385,7 @@ export function TemplateFormSlideOut({
   // so the generate/cancel affordances stay pinned to the panel bottom while
   // long template forms scroll.
   const panelFooter = (
-    <StickyActionBar>
+    <StickyActionBar variant="static">
       <div className="flex gap-3">
         <Button
           variant="outline"

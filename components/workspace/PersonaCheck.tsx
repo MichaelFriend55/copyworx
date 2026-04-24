@@ -1121,7 +1121,7 @@ export function PersonaCheck({ editor, className }: PersonaCheckProps) {
             Accept Rewrite / Copy Rewrite / Keep Original so those contextual
             actions stay grouped with the rewrite they act on. */}
       {!analysis && hasPersonas && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleAnalyze}
             disabled={!canAnalyze}
@@ -1152,7 +1152,7 @@ export function PersonaCheck({ editor, className }: PersonaCheckProps) {
       )}
 
       {analysis && !rewrittenHtml && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <div className="flex flex-col gap-2">
             <button
               onClick={handleRewrite}

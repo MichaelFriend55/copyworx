@@ -549,7 +549,7 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
           results section above owns its own Apply "{word}" and re-analyze
           buttons, which stay visually grouped with the analysis they act on. */}
       {!result && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleAnalyze}
             disabled={!hasSelection || loading}

@@ -257,7 +257,7 @@ export function ExpandTool({ editor, className }: ExpandToolProps) {
       {/* Sticky primary action — hidden when a result is showing. Result card
           above owns its own Replace/Copy/Clear buttons. */}
       {!expandResult && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleExpand}
             disabled={!canExpand}

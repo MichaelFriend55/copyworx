@@ -257,7 +257,7 @@ export function ShortenTool({ editor, className }: ShortenToolProps) {
       {/* Sticky primary action — hidden when a result is showing. Result card
           above owns its own Replace/Copy/Clear buttons. */}
       {!shortenResult && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleShorten}
             disabled={!canShorten}

@@ -820,7 +820,7 @@ export function HeadlineGeneratorTool({ className }: HeadlineGeneratorToolProps)
           Per-card copy and Copy All live inside the results list so they stay
           grouped with the headlines they act on. */}
       {selectedChannel && !hasResults && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleGenerate}
             disabled={!canGenerate || headlineLoading}
@@ -846,7 +846,7 @@ export function HeadlineGeneratorTool({ className }: HeadlineGeneratorToolProps)
       )}
 
       {hasResults && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <div className="flex items-center gap-3">
             <button
               onClick={handleGenerateMore}

@@ -820,7 +820,7 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
             Accept Rewrite / Copy Rewrite / Keep Original so those contextual
             actions stay grouped with the rewrite they act on. */}
       {!analysis && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleAnalyze}
             disabled={!canAnalyze}
@@ -847,7 +847,7 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
       )}
 
       {analysis && !rewrittenHtml && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <div className="flex flex-col gap-2">
             <button
               onClick={handleRewrite}

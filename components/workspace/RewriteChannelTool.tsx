@@ -387,7 +387,7 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
       {/* Sticky primary action — hidden when a result is showing. Result card
           above owns its own Replace/Copy/Clear buttons. */}
       {!rewriteChannelResult && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleRewrite}
             disabled={!canRewrite}

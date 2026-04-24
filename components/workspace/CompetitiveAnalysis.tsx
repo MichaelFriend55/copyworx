@@ -302,7 +302,7 @@ export function CompetitiveAnalysis({ className }: CompetitiveAnalysisProps) {
           result section above owns its own Copy Analysis / New Analysis
           buttons, which stay visually grouped with the analysis they act on. */}
       {!result && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleAnalyze}
             disabled={!canAnalyze}

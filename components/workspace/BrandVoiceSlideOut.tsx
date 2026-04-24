@@ -1047,7 +1047,7 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
    * regardless of scroll position in long forms.
    */
   const renderFormFooter = () => (
-    <StickyActionBar>
+    <StickyActionBar variant="static">
       <div className="flex gap-3">
         <Button
           variant="outline"

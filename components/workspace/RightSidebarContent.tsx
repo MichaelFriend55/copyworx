@@ -165,21 +165,35 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
 
   // Show tool content if a tool is selected
   if (ActiveToolComponent) {
-    // Layout: the wrapper fills at least the full height of the Sidebar scroll
-    // container (min-h-full) and lays out its two children (toolbox header +
-    // tool cell) as a flex column. The tool cell uses flex-1 so it claims all
-    // remaining vertical space below the header. This gives the tool's inner
-    // StickyActionBar a containing block that always spans the scroll viewport
-    // bottom — so `sticky bottom-0` + `mt-auto` pins the action bar to the
-    // bottom of the panel regardless of how much content the tool renders.
+    // Layout (absolute-positioned StickyActionBar strategy):
     //
-    // `min-h-0` on the tool cell is a flexbox hygiene flag so it doesn't
-    // force its parent to grow based on children min-content size when very
-    // long tool content would otherwise push the wrapper past the scroll
-    // container. `pb-4` leaves a 16px buffer between the last content item
-    // and the sticky action bar so content never visually touches the bar.
+    // Outer wrapper uses `h-full` (not `min-h-full`) so it exactly fills the
+    // Sidebar scroll container. This intentionally neutralizes Sidebar's own
+    // `overflow-y-auto` — scrolling is relocated one level down into the tool
+    // cell's inner scroll region, which is the only scroll surface in this
+    // subtree.
+    //
+    // The tool cell is `flex-1 relative min-h-0`: it claims all vertical space
+    // below the toolbox header AND serves as the `position: relative`
+    // containing block for the tool's inner `StickyActionBar` (which renders
+    // with `variant="absolute"`, i.e. `position: absolute; bottom: 0;
+    // left: 0; right: 0`). `min-h-0` is flexbox hygiene — without it, a long
+    // tool would refuse to shrink below its min-content height and would
+    // overflow the parent.
+    //
+    // Inside the tool cell, a child div with `absolute inset-0 overflow-y-auto`
+    // becomes the actual scroll surface for tool content. `pb-36` (144px)
+    // reserves breathing room above the StickyActionBar so content never
+    // scrolls underneath it. 144px was sized against the tallest bar observed
+    // (BrandCheck / PersonaCheck post-analysis stacked two-button bars, ~121px)
+    // plus ~23px buffer.
+    //
+    // Because `overflow` does not establish a containing block for absolutely
+    // positioned descendants, the tool's StickyActionBar escapes this scroll
+    // region and anchors to the `relative` wrapper above it — pinning the bar
+    // to the tool cell's bottom regardless of scroll position.
     return (
-      <div className="flex flex-col min-h-full gap-6">
+      <div className="flex flex-col h-full gap-6">
         {/* Header - Always Shows "AI@Worx ToolBox" */}
         <div className={cn(
           'flex items-center gap-2 px-3 py-2.5 rounded-lg',
@@ -195,23 +209,26 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
           </h2>
         </div>
 
-        {/* Dynamic Tool Rendering */}
-        <div className="flex-1 flex flex-col min-h-0 pb-4">
-          {!hasActiveDocument && activeToolId && toolRequiresDocument(activeToolId) ? (
-            // Tool selected but no document open (only for document-requiring tools)
-            <div className="text-center py-16 text-gray-400">
-              <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" />
-              <p className="text-sm font-medium text-gray-600 mb-1">
-                No Document Open
-              </p>
-              <p className="text-xs text-gray-500">
-                Create a document to use this tool
-              </p>
-            </div>
-          ) : (
-            // Render active tool
-            <ActiveToolComponent editor={editor} />
-          )}
+        {/* Tool cell: relative containing block for the absolute StickyActionBar. */}
+        <div className="flex-1 relative min-h-0">
+          {/* Scroll surface: absolute inset-0 so the inner scroll region matches
+              the relative parent exactly. pb-36 reserves space above the bar. */}
+          <div className="absolute inset-0 overflow-y-auto custom-scrollbar pb-36">
+            {!hasActiveDocument && activeToolId && toolRequiresDocument(activeToolId) ? (
+              // Tool selected but no document open (only for document-requiring tools)
+              <div className="text-center py-16 text-gray-400">
+                <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  No Document Open
+                </p>
+                <p className="text-xs text-gray-500">
+                  Create a document to use this tool
+                </p>
+              </div>
+            ) : (
+              <ActiveToolComponent editor={editor} />
+            )}
+          </div>
         </div>
       </div>
     );

@@ -549,7 +549,7 @@ export function MyProjectsSlideOut({
   // create-folder/create-document affordances match the treatment used across
   // every other panel.
   const panelFooter = (
-    <StickyActionBar>
+    <StickyActionBar variant="static">
       <div className="flex gap-2">
         <Button
           variant="outline"

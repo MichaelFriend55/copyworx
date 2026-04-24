@@ -28,7 +28,7 @@ import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { Button } from '@/components/ui/button';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { PersonaForm } from '@/components/workspace/PersonaForm';
+import { PersonaForm, PERSONA_FORM_ID } from '@/components/workspace/PersonaForm';
 import { cn } from '@/lib/utils';
 import {
   useWorkspaceStore,
@@ -158,6 +158,11 @@ export function PersonasSlideOut({
   // Delete confirmation state
   const [personaToDelete, setPersonaToDelete] = useState<Persona | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Mirrors PersonaForm's internal photo-upload progress. Used to disable
+  // the Submit button rendered in this component's footer (the form itself
+  // no longer owns its Submit button — see PersonaForm doc header).
+  const [isPersonaFormUploading, setIsPersonaFormUploading] = useState(false);
   
   // Load personas when project changes or panel opens
   useEffect(() => {
@@ -300,23 +305,65 @@ export function PersonasSlideOut({
     setPersonaToDelete(null);
   }, []);
   
-  // Panel footer — varies by view mode. List view gets a primary CTA via the
-  // shared StickyActionBar so it renders consistently with every other panel.
-  // Form views own their own sticky actions inside PersonaForm.
-  const panelFooter = viewMode === 'list' ? (
-    <StickyActionBar>
-      <Button
-        variant="brand"
-        size="default"
-        onClick={handleCreateNew}
-        disabled={!activeProject}
-        className="w-full"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Create New Persona
-      </Button>
-    </StickyActionBar>
-  ) : null;
+  // Panel footer — varies by view mode. Every variant uses a `variant="static"`
+  // StickyActionBar (the SlideOutPanel footer slot is a flex-shrink-0 row inside
+  // a fixed flex-column panel; that slot already reserves space, so the bar only
+  // needs visual chrome).
+  //
+  // - list mode:        primary CTA "Create New Persona".
+  // - create/edit mode: Cancel + Submit. Submit uses `form={PERSONA_FORM_ID}` +
+  //                     `type="submit"` so clicking it triggers <PersonaForm>'s
+  //                     submit handler via HTML5 form association — no refs,
+  //                     no imperative handles, no prop threading. Submit is
+  //                     disabled while PersonaForm's internal photo upload is
+  //                     in flight (tracked via `isPersonaFormUploading`).
+  let panelFooter: React.ReactNode = null;
+  if (viewMode === 'list') {
+    panelFooter = (
+      <StickyActionBar variant="static">
+        <Button
+          variant="brand"
+          size="default"
+          onClick={handleCreateNew}
+          disabled={!activeProject}
+          className="w-full"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Create New Persona
+        </Button>
+      </StickyActionBar>
+    );
+  } else {
+    // create or edit
+    const submitLabel = viewMode === 'edit' ? 'Update Persona' : 'Create Persona';
+    panelFooter = (
+      <StickyActionBar variant="static">
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleBackToList}
+            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form={PERSONA_FORM_ID}
+            disabled={isPersonaFormUploading}
+            className={cn(
+              'flex-1 px-6 py-3 font-medium rounded-lg transition-all',
+              'bg-gradient-to-r from-purple-600 to-blue-600',
+              'text-white hover:from-purple-700 hover:to-blue-700',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              'shadow-md hover:shadow-lg'
+            )}
+          >
+            {submitLabel}
+          </button>
+        </div>
+      </StickyActionBar>
+    );
+  }
   
   return (
     <>
@@ -400,7 +447,7 @@ export function PersonasSlideOut({
             persona={editingPersona}
             defaultProjectId={activeProjectId}
             onSave={handleSave}
-            onCancel={handleBackToList}
+            onUploadingChange={setIsPersonaFormUploading}
           />
         )}
       </div>

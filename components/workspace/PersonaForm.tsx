@@ -1,21 +1,37 @@
 /**
  * @file components/workspace/PersonaForm.tsx
  * @description Form component for creating/editing personas
- * 
+ *
  * Features:
  * - Photo upload with drag & drop
  * - All persona fields with validation
  * - Create/Edit modes
  * - Form validation
  * - Success/error handling
- * 
+ *
+ * Action bar placement:
+ * This form is rendered inside `PersonasSlideOut`'s `SlideOutPanel` content area.
+ * Primary actions (Cancel, Create/Update) are NOT rendered by this component —
+ * they live in the parent slide-out's footer slot as a `StickyActionBar`
+ * (matching the pattern used by BrandVoiceSlideOut and TemplateFormSlideOut).
+ * The submit button in the parent's footer uses `form="persona-form"` to trigger
+ * this form's submit handler via standard HTML5 form association. The form
+ * reports its photo-upload progress upward via `onUploadingChange` so the parent
+ * can disable the Submit button while an upload is in flight.
+ *
  * @example
  * ```tsx
+ * const [isUploading, setIsUploading] = useState(false);
+ *
  * <PersonaForm
  *   persona={existingPersona} // or null for create
+ *   defaultProjectId={activeProjectId}
  *   onSave={(persona) => handleSave(persona)}
- *   onCancel={() => setShowForm(false)}
+ *   onUploadingChange={setIsUploading}
  * />
+ *
+ * // In the parent's SlideOutPanel footer:
+ * <button type="submit" form="persona-form" disabled={isUploading}>Save</button>
  * ```
  */
 
@@ -26,9 +42,15 @@ import { Upload, X, User, Loader2 } from 'lucide-react';
 import type { Persona } from '@/lib/types/project';
 import { processImageFile } from '@/lib/utils/image-utils';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
-import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { ProjectSelectorField } from '@/components/workspace/ProjectSelectorField';
 import { cn } from '@/lib/utils';
+
+/**
+ * HTML id applied to the `<form>` element. Referenced by the parent's
+ * footer Submit button via the `form="persona-form"` attribute so clicking
+ * it submits this form without needing the button to be a descendant.
+ */
+export const PERSONA_FORM_ID = 'persona-form';
 
 interface PersonaFormProps {
   /** Persona to edit (null for create mode) */
@@ -44,8 +66,14 @@ interface PersonaFormProps {
   /** Callback when form is saved */
   onSave: (personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>) => void;
 
-  /** Callback when form is cancelled */
-  onCancel: () => void;
+  /**
+   * Called whenever the internal photo-upload progress flips. The parent
+   * uses this to disable its externally-rendered Submit button while an
+   * upload is in flight (historically this form used to disable its own
+   * Submit button inline; after migrating actions to the parent's footer,
+   * the parent needs this signal).
+   */
+  onUploadingChange?: (_isUploading: boolean) => void;
 
   /** Optional CSS classes */
   className?: string;
@@ -58,7 +86,7 @@ export function PersonaForm({
   persona,
   defaultProjectId,
   onSave,
-  onCancel,
+  onUploadingChange,
   className,
 }: PersonaFormProps) {
   // Form state
@@ -89,8 +117,13 @@ export function PersonaForm({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mode
-  const isEditMode = !!persona;
+  // Propagate photo-upload progress upward so the externally-rendered
+  // Submit button (in PersonasSlideOut's footer) can be disabled while a
+  // photo upload is in flight. Without this, a user could click Submit
+  // during upload and save the persona with a stale or empty photoUrl.
+  useEffect(() => {
+    onUploadingChange?.(isUploading);
+  }, [isUploading, onUploadingChange]);
 
   /**
    * Handle photo upload
@@ -179,17 +212,18 @@ export function PersonaForm({
   };
 
   return (
-    // Layout rationale: the form is rendered inside SlideOutPanel's scrollable
-    // content area. Making it `flex flex-col min-h-full` means the form always
-    // spans the full scroll viewport height, which gives its inner
-    // StickyActionBar a containing block big enough to actually engage
-    // `sticky bottom-0` (combined with the bar's own `mt-auto` to push it to
-    // the bottom when the form content is short). `gap-6` replaces the prior
-    // `space-y-6` to keep the 24px vertical rhythm while being flex-aware.
-    // `pb-4` leaves a 16px buffer between the last field and the sticky bar.
+    // Layout rationale: the form renders inside SlideOutPanel's scrollable
+    // content area and the primary action bar lives in the parent's footer
+    // slot (not inside this form). So this element is a plain flex column —
+    // no `min-h-full` gymnastics and no bottom padding reservation for an
+    // inner bar. `gap-6` preserves the original 24px vertical rhythm between
+    // field groups while being flex-aware. `id={PERSONA_FORM_ID}` lets the
+    // parent's Submit button trigger this form via the HTML5 `form="…"`
+    // attribute — no prop threading or ref handoffs required.
     <form
+      id={PERSONA_FORM_ID}
       onSubmit={handleSubmit}
-      className={cn('flex flex-col gap-6 min-h-full pb-4', className)}
+      className={cn('flex flex-col gap-6', className)}
     >
       {/* Photo Upload */}
       <div className="space-y-2">
@@ -374,35 +408,6 @@ export function PersonaForm({
         />
       </div>
 
-      {/* Sticky action bar. Negative horizontal margin bleeds it past the
-          scroll container's px-6 padding so the border and shadow span the full
-          panel width, matching other slide-out footers. Negative bottom margin
-          cancels the scroll container's py-5 bottom padding so the bar sits
-          flush with the panel bottom. */}
-      <StickyActionBar className="-mx-6 -mb-5">
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isUploading}
-            className={cn(
-              'flex-1 px-6 py-3 font-medium rounded-lg transition-all',
-              'bg-gradient-to-r from-purple-600 to-blue-600',
-              'text-white hover:from-purple-700 hover:to-blue-700',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
-              'shadow-md hover:shadow-lg'
-            )}
-          >
-            {isEditMode ? 'Update Persona' : 'Create Persona'}
-          </button>
-        </div>
-      </StickyActionBar>
     </form>
   );
 }

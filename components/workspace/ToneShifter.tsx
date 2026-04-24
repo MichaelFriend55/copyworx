@@ -372,7 +372,7 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
           card above owns its own Replace/Copy/Clear buttons so they remain
           visually grouped with the output they act on. */}
       {!toneShiftResult && (
-        <StickyActionBar>
+        <StickyActionBar variant="absolute">
           <button
             onClick={handleShiftTone}
             disabled={!canShift}
