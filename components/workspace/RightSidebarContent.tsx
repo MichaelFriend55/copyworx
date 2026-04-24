@@ -209,11 +209,24 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
           </h2>
         </div>
 
-        {/* Tool cell: relative containing block for the absolute StickyActionBar. */}
-        <div className="flex-1 relative min-h-0">
-          {/* Scroll surface: absolute inset-0 so the inner scroll region matches
-              the relative parent exactly. pb-36 reserves space above the bar. */}
-          <div className="absolute inset-0 overflow-y-auto custom-scrollbar pb-36">
+        {/* Tool cell: relative containing block for the absolute StickyActionBar,
+            AND a flex column so the scroll surface below can claim remaining
+            height via `flex-1` without needing `position: absolute`. This is
+            critical: if the scroll surface is itself absolutely positioned, it
+            becomes the containing block for its absolute-positioned descendants
+            — and the tool's StickyActionBar would then anchor to the scroll
+            surface's bottom (which scrolls with content) instead of to this
+            tool cell's bottom (which stays pinned to the viewport bottom). */}
+        <div className="flex-1 relative min-h-0 flex flex-col">
+          {/* Scroll surface: `flex-1` fills remaining height inside the tool
+              cell's flex column; `min-h-0` is flex hygiene so long content
+              can shrink and scroll rather than overflow; `overflow-y-auto` is
+              the scroll behavior; `pb-36` reserves 144px above the action bar
+              so content never scrolls underneath it. Intentionally NOT
+              positioned — the tool's inner StickyActionBar (position:absolute)
+              must skip past this div in the ancestor chain and anchor to the
+              relative tool cell above. */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar pb-36 min-h-0">
             {!hasActiveDocument && activeToolId && toolRequiresDocument(activeToolId) ? (
               // Tool selected but no document open (only for document-requiring tools)
               <div className="text-center py-16 text-gray-400">
