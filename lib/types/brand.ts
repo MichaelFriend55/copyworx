@@ -7,6 +7,18 @@
  * Brand Voice configuration interface
  */
 export interface BrandVoice {
+  /**
+   * Unique identifier for the brand voice.
+   *
+   * Required for every BrandVoice in memory. Cloud-sourced voices use the
+   * Supabase `brand_voices.id` UUID; local-only voices (legacy localStorage
+   * migrations) are assigned a client-generated UUID via `crypto.randomUUID()`
+   * so the type invariant always holds. Consumers rely on `id` to resolve
+   * the project's active brand voice (`projects.brand_voice_id`) without
+   * name-based matching, which is fragile when two voices share a name.
+   */
+  id: string;
+
   /** Brand name (required) */
   brandName: string;
   

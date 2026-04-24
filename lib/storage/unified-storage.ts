@@ -213,7 +213,15 @@ export async function createProject(name: string): Promise<Project> {
 export async function updateProject(id: string, updates: Partial<Project>): Promise<void> {
   if (isCloudAvailable() && currentMode !== 'local') {
     try {
-      await cloudStorage.cloudUpdateProject(id, { name: updates.name });
+      // Forward only cloud-supported fields. `brandVoiceId` rides on the
+      // same PUT so "Set Active" in the sidebar reaches the server without
+      // a second round-trip. Other fields (documents / personas / folders)
+      // have their own dedicated endpoints and are not part of this PUT.
+      const cloudUpdates: Partial<Pick<Project, 'name' | 'brandVoiceId'>> = {};
+      if (updates.name !== undefined) cloudUpdates.name = updates.name;
+      if (updates.brandVoiceId !== undefined) cloudUpdates.brandVoiceId = updates.brandVoiceId;
+
+      await cloudStorage.cloudUpdateProject(id, cloudUpdates);
       logger.log('☁️ Project updated in cloud:', id);
       return;
     } catch (error) {

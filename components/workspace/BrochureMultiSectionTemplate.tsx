@@ -527,6 +527,7 @@ export function BrochureMultiSectionTemplate({
         previousContent: getPreviousContent(),
         applyBrandVoice,
         brandVoice: applyBrandVoice && activeProject?.brandVoice ? {
+          id: activeProject.brandVoice.id,
           brandName: activeProject.brandVoice.brandName,
           brandTone: activeProject.brandVoice.brandTone,
           approvedPhrases: activeProject.brandVoice.approvedPhrases,

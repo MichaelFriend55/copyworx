@@ -11,12 +11,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
-import { 
-  requireUserId, 
-  unauthorizedResponse, 
-  badRequestResponse, 
+import {
+  requireUserId,
+  unauthorizedResponse,
+  badRequestResponse,
   notFoundResponse,
-  internalErrorResponse 
+  internalErrorResponse,
+  projectAccessDeniedResponse,
 } from '@/lib/utils/api-auth';
 
 // ============================================================================
@@ -145,9 +146,14 @@ export async function PUT(request: NextRequest) {
     const userId = await requireUserId();
     const supabase = getSupabaseAdmin();
 
-    // Parse request body
+    // Parse request body. `brand_voice_id` is optional; it may be a UUID
+    // string (Set Active) or explicitly `null` (clear the active pointer).
     const body = await request.json();
-    const { id, name } = body;
+    const { id, name, brand_voice_id } = body as {
+      id?: string;
+      name?: string;
+      brand_voice_id?: string | null;
+    };
 
     // Validate required fields
     if (!id) {
@@ -156,7 +162,7 @@ export async function PUT(request: NextRequest) {
 
     // Build update object
     const updates: Record<string, unknown> = {};
-    
+
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim().length === 0) {
         return badRequestResponse('Project name cannot be empty');
@@ -167,11 +173,49 @@ export async function PUT(request: NextRequest) {
       updates.name = name.trim();
     }
 
+    // brand_voice_id handling. `undefined` means "not touching this field".
+    // `null` clears the pointer. A string must reference a brand voice the
+    // caller owns AND whose `project_id` matches the project being updated —
+    // otherwise we would let callers activate a brand voice that doesn't
+    // actually belong to this project.
+    if (brand_voice_id !== undefined) {
+      if (brand_voice_id === null) {
+        updates.brand_voice_id = null;
+      } else if (typeof brand_voice_id !== 'string' || brand_voice_id.length === 0) {
+        return badRequestResponse('brand_voice_id must be a non-empty string or null');
+      } else {
+        const { data: bv, error: bvError } = await (supabase
+          .from('brand_voices') as any)
+          .select('id, project_id, user_id')
+          .eq('id', brand_voice_id)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (bvError) {
+          console.error('Error verifying brand voice ownership:', bvError);
+          return internalErrorResponse(bvError);
+        }
+        if (!bv) {
+          // Brand voice missing OR not owned — collapse to 403 so we do
+          // not disclose existence to unauthorized callers.
+          return projectAccessDeniedResponse();
+        }
+        if (bv.project_id !== id) {
+          return badRequestResponse(
+            'brand_voice_id must belong to this project'
+          );
+        }
+        updates.brand_voice_id = brand_voice_id;
+      }
+    }
+
     if (Object.keys(updates).length === 0) {
       return badRequestResponse('No valid updates provided');
     }
 
-    // Update the project
+    // Update the project. The `.eq('user_id', userId)` guarantees the caller
+    // owns the project; combined with the brand-voice ownership check above,
+    // both sides of the foreign key are validated.
     const { data: project, error } = await (supabase
       .from('projects') as any)
       .update(updates)

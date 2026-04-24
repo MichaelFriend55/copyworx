@@ -112,13 +112,22 @@ export function getAllProjects(): Project[] {
     }
     
     // CRITICAL FIX: Ensure each project has required array fields
-    // This prevents ".find is not a function" errors from legacy/corrupted data
+    // This prevents ".find is not a function" errors from legacy/corrupted data.
+    // `brandVoices` / `brandVoiceId` are also backfilled for projects persisted
+    // before the multi-brand-voice-per-project feature shipped — otherwise the
+    // sidebar would call `.filter` on undefined.
     const sanitizedProjects = projects.map((project) => ({
       ...project,
       personas: Array.isArray(project.personas) ? project.personas : [],
       folders: Array.isArray(project.folders) ? project.folders : [],
       documents: Array.isArray(project.documents) ? project.documents : [],
       snippets: Array.isArray(project.snippets) ? project.snippets : [],
+      brandVoices: Array.isArray(project.brandVoices)
+        ? project.brandVoices
+        : project.brandVoice
+        ? [project.brandVoice]
+        : [],
+      brandVoiceId: project.brandVoiceId ?? null,
     }));
     
     return sanitizedProjects;
@@ -173,6 +182,11 @@ export function createProject(name: string): Project {
     id: generateId(),
     name: sanitizedName,
     brandVoice: null,
+    // brandVoices / brandVoiceId must be initialized so the Project type
+    // invariant holds even when the DB is unreachable. The sidebar reads
+    // `brandVoices` as an array unconditionally.
+    brandVoices: [],
+    brandVoiceId: null,
     personas: [],
     folders: [],
     documents: [],
@@ -336,17 +350,29 @@ export function saveBrandVoiceToProject(projectId: string, brandVoice: BrandVoic
     throw new Error(`Project not found: ${projectId}`);
   }
   
-  // Update localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  // Update localStorage directly (don't call updateProject - it tries to sync
+  // to Supabase). Keep `brandVoices` and `brandVoiceId` in sync with the
+  // singular `brandVoice` pointer so the sidebar (which reads `brandVoices`)
+  // and tools (which read `brandVoice`) stay consistent in local-only mode.
   const projects = getAllProjects();
-  const updatedProjects = projects.map(p => 
-    p.id === projectId ? { ...p, brandVoice } : p
-  );
-  
+  const updatedProjects = projects.map(p => {
+    if (p.id !== projectId) return p;
+    const existingVoices = Array.isArray(p.brandVoices) ? p.brandVoices : [];
+    const withoutDupe = existingVoices.filter(bv => bv.id !== brandVoice.id);
+    return {
+      ...p,
+      brandVoice,
+      brandVoices: [...withoutDupe, brandVoice],
+      brandVoiceId: brandVoice.id,
+    };
+  });
+
   localStorage.setItem(PROJECTS_KEY, JSON.stringify(updatedProjects));
-  
+
   logger.log('✅ Brand voice saved to project (localStorage):', {
     projectId,
     brandName: brandVoice.brandName,
+    brandVoiceId: brandVoice.id,
   });
 }
 
@@ -368,12 +394,16 @@ export function deleteBrandVoiceFromProject(projectId: string): void {
     throw new Error(`Project not found: ${projectId}`);
   }
   
-  // Update localStorage directly (don't call updateProject - it tries to sync to Supabase)
+  // Update localStorage directly (don't call updateProject - it tries to sync
+  // to Supabase). Clear the singular `brandVoice`, empty `brandVoices`, and
+  // drop `brandVoiceId` so all three fields agree.
   const projects = getAllProjects();
-  const updatedProjects = projects.map(p => 
-    p.id === projectId ? { ...p, brandVoice: undefined } : p
+  const updatedProjects = projects.map(p =>
+    p.id === projectId
+      ? { ...p, brandVoice: null, brandVoices: [], brandVoiceId: null }
+      : p
   );
-  
+
   localStorage.setItem(PROJECTS_KEY, JSON.stringify(updatedProjects));
   
   logger.log('🗑️ Brand voice deleted from project (localStorage):', {

@@ -58,9 +58,42 @@ export interface Project {
   /** Project name (user-defined) */
   name: string;
   
-  /** Brand voice configuration for this project */
+  /**
+   * The project's "active" brand voice — what tools (Brand Check, templates,
+   * Word Advisor) use when they need a single brand voice for this project.
+   *
+   * Resolution priority (see `app/api/db/sync/route.ts`):
+   * 1. The brand voice whose id matches `projects.brand_voice_id` (explicit).
+   * 2. If `brand_voice_id` is null, the oldest brand voice whose
+   *    `brand_voices.project_id === project.id` (deterministic fallback).
+   * 3. `null` if the project has no brand voices at all.
+   *
+   * This field is intentionally singular and backward-compatible — legacy
+   * consumers predate the multi-brand-voice-per-project model. Do not use
+   * this field for sidebar rendering; use `brandVoices` instead.
+   */
   brandVoice: BrandVoice | null;
-  
+
+  /**
+   * All brand voices owned by this project — i.e. every row in the
+   * `brand_voices` table whose `project_id` equals this project's id.
+   *
+   * Populated from `brand_voices.project_id` (the many-to-one back-reference),
+   * NOT from `projects.brand_voice_id`. The sidebar renders this array so
+   * that reassigning a brand voice into a project (which updates
+   * `brand_voices.project_id`) immediately shows both voices under the
+   * project, even if `projects.brand_voice_id` still points at just one.
+   */
+  brandVoices: BrandVoice[];
+
+  /**
+   * The id of the currently-active brand voice for this project, mirroring
+   * `projects.brand_voice_id` in Supabase. `null` means "no explicit choice
+   * has been made" — in that case the sidebar shows no Active pill on any
+   * row and the singular `brandVoice` field falls back to the oldest voice.
+   */
+  brandVoiceId: string | null;
+
   /** Array of personas (target audience profiles) */
   personas: Persona[];
   
@@ -225,6 +258,14 @@ export function isProject(value: unknown): value is Project {
     typeof obj.id === 'string' &&
     typeof obj.name === 'string' &&
     (obj.brandVoice === null || typeof obj.brandVoice === 'object') &&
+    // brandVoices and brandVoiceId are additive (migration 001 + multi-brand-
+    // voice-per-project). Older localStorage payloads may not have them, so
+    // accept undefined for backward compatibility; readers coerce via
+    // `project.brandVoices ?? []` / `project.brandVoiceId ?? null`.
+    (obj.brandVoices === undefined || Array.isArray(obj.brandVoices)) &&
+    (obj.brandVoiceId === undefined ||
+      obj.brandVoiceId === null ||
+      typeof obj.brandVoiceId === 'string') &&
     Array.isArray(obj.personas) &&
     Array.isArray(obj.folders) &&
     Array.isArray(obj.documents) &&

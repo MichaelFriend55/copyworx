@@ -92,7 +92,22 @@ interface SyncedSnippet {
 interface SyncedProject {
   id: string;
   name: string;
+  /**
+   * The project's active brand voice — resolved in priority order below.
+   * See the mapping logic in the GET handler for the exact resolution rules.
+   */
   brandVoice: SyncedBrandVoice | null;
+  /**
+   * All brand voices whose `brand_voices.project_id` equals this project's
+   * id, ordered by `created_at ASC` for deterministic rendering.
+   */
+  brandVoices: SyncedBrandVoice[];
+  /**
+   * Mirror of `projects.brand_voice_id`. `null` means no explicit choice.
+   * The sidebar compares this against each `brandVoices[i].id` to decide
+   * which row gets the "Active" pill.
+   */
+  brandVoiceId: string | null;
   personas: SyncedPersona[];
   folders: SyncedFolder[];
   documents: SyncedDocument[];
@@ -141,7 +156,11 @@ export async function GET(request: NextRequest) {
       (supabase
         .from('brand_voices') as any)
         .select('*')
-        .eq('user_id', userId),
+        .eq('user_id', userId)
+        // Ordering by created_at ASC gives the sidebar a stable per-project
+        // render order AND makes the "oldest" fallback deterministic when
+        // `projects.brand_voice_id` is NULL.
+        .order('created_at', { ascending: true }),
       (supabase
         .from('personas') as any)
         .select('*')
@@ -183,29 +202,58 @@ export async function GET(request: NextRequest) {
 
     // Build the synced projects with nested data
     const syncedProjects: SyncedProject[] = projects.map((project: any) => {
-      // Find brand voice for this project
-      const brandVoice = brandVoices.find((bv: any) => bv.project_id === project.id);
-      
+      // Collect ALL brand voices belonging to this project, preserving the
+      // ORDER BY created_at ASC applied on the query above. The sidebar
+      // renders this array directly — one row per brand voice.
+      const projectBrandVoices = brandVoices.filter(
+        (bv: any) => bv.project_id === project.id
+      );
+
+      // Resolve the singular "active" brand voice in this priority order:
+      //   1. The row whose id equals `projects.brand_voice_id` (explicit).
+      //   2. The oldest row with matching `project_id` (deterministic
+      //      fallback when the project has no explicit choice yet).
+      //   3. null (no brand voices on this project).
+      // Tools like Brand Check / Word Advisor / template generators keep
+      // reading this singular field — do not remove it.
+      const brandVoiceIdOnProject: string | null = project.brand_voice_id ?? null;
+      let activeBrandVoice: any = null;
+      if (brandVoiceIdOnProject) {
+        activeBrandVoice =
+          projectBrandVoices.find((bv: any) => bv.id === brandVoiceIdOnProject) ?? null;
+      }
+      if (!activeBrandVoice && projectBrandVoices.length > 0) {
+        // Fallback: oldest-first (index 0 since we pre-sorted created_at ASC).
+        activeBrandVoice = projectBrandVoices[0];
+      }
+
       // Filter related data for this project
       const projectPersonas = personas.filter((p: any) => p.project_id === project.id);
       const projectFolders = folders.filter((f: any) => f.project_id === project.id);
       const projectDocuments = documents.filter((d: any) => d.project_id === project.id);
       const projectSnippets = snippets.filter((s: any) => s.project_id === project.id);
 
+      // Shared mapper so the singular brandVoice and the brandVoices array
+      // produce identical shapes — drift here would create subtle type bugs
+      // in consumers that read both fields.
+      const toSyncedBrandVoice = (bv: any): SyncedBrandVoice => ({
+        id: bv.id,
+        brandName: bv.brand_name,
+        brandTone: bv.brand_tone,
+        approvedPhrases: bv.approved_phrases || [],
+        forbiddenWords: bv.forbidden_words || [],
+        brandValues: bv.brand_values || [],
+        missionStatement: bv.mission_statement,
+        writing_samples: Array.isArray(bv.writing_samples) ? bv.writing_samples : [],
+        savedAt: bv.updated_at ? new Date(bv.updated_at) : undefined,
+      });
+
       return {
         id: project.id,
         name: project.name,
-        brandVoice: brandVoice ? {
-          id: brandVoice.id,
-          brandName: brandVoice.brand_name,
-          brandTone: brandVoice.brand_tone,
-          approvedPhrases: brandVoice.approved_phrases || [],
-          forbiddenWords: brandVoice.forbidden_words || [],
-          brandValues: brandVoice.brand_values || [],
-          missionStatement: brandVoice.mission_statement,
-          writing_samples: Array.isArray(brandVoice.writing_samples) ? brandVoice.writing_samples : [],
-          savedAt: brandVoice.updated_at ? new Date(brandVoice.updated_at) : undefined,
-        } : null,
+        brandVoice: activeBrandVoice ? toSyncedBrandVoice(activeBrandVoice) : null,
+        brandVoices: projectBrandVoices.map(toSyncedBrandVoice),
+        brandVoiceId: brandVoiceIdOnProject,
         personas: projectPersonas.map((p: any) => ({
           id: p.id,
           projectId: p.project_id,

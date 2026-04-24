@@ -527,7 +527,7 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
       // Also update Zustand store if this brand voice was assigned to any project
       const { projects } = useWorkspaceStore.getState();
       const updatedProjects = projects.map(p => {
-        if (p.brandVoice && (p.brandVoice as any).id === deletingBrandVoice.id) {
+        if (p.brandVoice && p.brandVoice.id === deletingBrandVoice.id) {
           return { ...p, brandVoice: null };
         }
         return p;
@@ -640,8 +640,11 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
       {!isLoading && !loadError && brandVoices.length > 0 && (
         <div className="space-y-2">
           {brandVoices.map((bv) => {
-            // Check if this brand voice is currently assigned to the active project
-            const isCurrentBrandVoice = activeProject?.brandVoice?.brandName === bv.brand_name;
+            // Check if this brand voice is currently assigned to the active
+            // project. Compare by id (not name) so two voices sharing a name
+            // don't both light up, and so the check stays in sync with the
+            // sidebar's Active pill which is also id-based.
+            const isCurrentBrandVoice = activeProject?.brandVoice?.id === bv.id;
             
             return (
               <div

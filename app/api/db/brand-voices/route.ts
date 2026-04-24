@@ -302,6 +302,42 @@ export async function PUT(request: NextRequest) {
       return internalErrorResponse(error);
     }
 
+    // Orphan cleanup (B4): when a brand voice is reassigned to a different
+    // project, any project that currently has this brand voice as its
+    // ACTIVE pointer (`projects.brand_voice_id`) must have that pointer
+    // cleared — the voice no longer lives there. We do this after the
+    // primary update so the source of truth (brand_voices) moves first.
+    // The FK's ON DELETE SET NULL only fires on delete, not on a foreign
+    // key value change, so this cleanup is explicit.
+    if (filteredUpdates.project_id !== undefined) {
+      const newProjectId = filteredUpdates.project_id as string | null;
+      const stalePointerQuery = (supabase.from('projects') as any)
+        .update({ brand_voice_id: null })
+        .eq('brand_voice_id', id)
+        .eq('user_id', userId);
+
+      // When reassigning to a real project, exclude the new owner so we do
+      // not inadvertently clear a pointer we may want to keep. When the
+      // voice is being moved to "unassigned" (null), clear ALL projects
+      // that still point at this voice.
+      const cleanupPromise =
+        newProjectId === null
+          ? stalePointerQuery
+          : stalePointerQuery.neq('id', newProjectId);
+
+      const { error: cleanupError } = await cleanupPromise;
+      if (cleanupError) {
+        // Log but do not fail the primary update — the brand voice has
+        // already moved successfully. An orphaned pointer is recoverable
+        // (the next Set Active corrects it) whereas a failed PUT would
+        // leave the UI confused about whether the move happened.
+        console.error(
+          'Orphan cleanup failed after brand voice reassignment:',
+          cleanupError
+        );
+      }
+    }
+
     return NextResponse.json(data);
 
   } catch (error) {

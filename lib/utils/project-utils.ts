@@ -90,7 +90,17 @@ function migrateLegacyBrandVoice(): void {
     // field, so normalize to an empty array if missing to satisfy the BrandVoice
     // type and keep downstream consumers runtime-safe.
     const legacyBrandVoiceRaw = JSON.parse(legacyBrandVoiceJson) as Partial<BrandVoice>;
+    // Legacy payloads never persisted an `id` (the field did not exist yet),
+    // so assign one here. crypto.randomUUID is available in every modern
+    // browser and in the Node/Edge runtimes we target; the fallback mirrors
+    // `generateId()` in lib/storage/project-storage.ts.
+    const legacyId =
+      legacyBrandVoiceRaw.id ??
+      (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`);
     const legacyBrandVoice: BrandVoice = {
+      id: legacyId,
       brandName: legacyBrandVoiceRaw.brandName ?? '',
       brandTone: legacyBrandVoiceRaw.brandTone ?? '',
       approvedPhrases: legacyBrandVoiceRaw.approvedPhrases ?? [],

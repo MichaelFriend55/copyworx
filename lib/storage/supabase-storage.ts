@@ -33,7 +33,12 @@ interface ApiError {
 interface SyncedProject {
   id: string;
   name: string;
+  /** Project's active brand voice (singular, legacy-compatible). */
   brandVoice: BrandVoice | null;
+  /** Every brand voice belonging to this project (for sidebar rendering). */
+  brandVoices: BrandVoice[];
+  /** Mirrors `projects.brand_voice_id`; null when no explicit choice. */
+  brandVoiceId: string | null;
   personas: Persona[];
   folders: Folder[];
   documents: ProjectDocument[];
@@ -103,11 +108,16 @@ export async function syncAllProjects(): Promise<{
 
   const data = await apiCall<SyncResponse>('/api/db/sync');
 
-  // Convert synced projects to the Project format
+  // Convert synced projects to the Project format. `brandVoices` and
+  // `brandVoiceId` default to empty-array / null respectively so that a
+  // server running an older build (before multi-brand-voice support) still
+  // yields a type-valid Project on the client.
   const projects: Project[] = data.projects.map(sp => ({
     id: sp.id,
     name: sp.name,
     brandVoice: sp.brandVoice,
+    brandVoices: Array.isArray(sp.brandVoices) ? sp.brandVoices : [],
+    brandVoiceId: sp.brandVoiceId ?? null,
     personas: sp.personas,
     folders: sp.folders,
     documents: sp.documents,
@@ -143,6 +153,8 @@ export async function cloudCreateProject(name: string): Promise<Project> {
     id: data.id,
     name: data.name,
     brandVoice: null,
+    brandVoices: [],
+    brandVoiceId: null,
     personas: [],
     folders: [],
     documents: [],
@@ -153,15 +165,29 @@ export async function cloudCreateProject(name: string): Promise<Project> {
 }
 
 /**
- * Update a project in Supabase
+ * Update a project in Supabase.
+ *
+ * Supports:
+ * - `name`: rename the project (existing behavior).
+ * - `brandVoiceId`: set / clear the project's active brand voice. Serialized
+ *   to the API as `brand_voice_id` (snake_case) to match the Supabase column.
+ *   Passing `null` clears the active brand voice; passing a string sets it.
+ *   The server validates both project ownership and brand-voice membership.
  */
 export async function cloudUpdateProject(
   id: string,
-  updates: Partial<Pick<Project, 'name'>>
+  updates: Partial<Pick<Project, 'name' | 'brandVoiceId'>>
 ): Promise<void> {
+  const body: Record<string, unknown> = { id };
+  if (updates.name !== undefined) {
+    body.name = updates.name;
+  }
+  if (updates.brandVoiceId !== undefined) {
+    body.brand_voice_id = updates.brandVoiceId;
+  }
   await apiCall('/api/db/projects', {
     method: 'PUT',
-    body: JSON.stringify({ id, ...updates }),
+    body: JSON.stringify(body),
   });
 }
 
