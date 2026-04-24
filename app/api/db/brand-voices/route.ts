@@ -16,7 +16,8 @@ import {
   unauthorizedResponse, 
   badRequestResponse, 
   notFoundResponse,
-  internalErrorResponse 
+  internalErrorResponse,
+  verifyProjectOwnership,
 } from '@/lib/utils/api-auth';
 
 // ============================================================================
@@ -119,6 +120,19 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!brand_name || typeof brand_name !== 'string' || brand_name.trim().length === 0) {
       return badRequestResponse('Brand name is required');
+    }
+
+    // When project_id is supplied on create, verify caller owns that project.
+    // project_id is optional for brand voices (migration 001), so we only run
+    // the check when a value is present. 403 on mismatch, 500 on query error.
+    if (project_id !== undefined && project_id !== null) {
+      if (typeof project_id !== 'string' || project_id.length === 0) {
+        return badRequestResponse('project_id must be a non-empty string');
+      }
+      const ownership = await verifyProjectOwnership(supabase, project_id, userId);
+      if (!ownership.ok) {
+        return ownership.response;
+      }
     }
 
     // Sanitize writing samples: non-string entries are dropped; strings are
@@ -249,6 +263,22 @@ export async function PUT(request: NextRequest) {
             .filter((s: string) => s.length > 0)
             .slice(0, 5)
         : [];
+    }
+
+    // If caller is reassigning the brand voice to a different project, verify
+    // they own the target project. project_id may be explicitly null (move
+    // brand voice to "unassigned"), which is allowed without an ownership
+    // check. Only a non-null string triggers validation. 403 on mismatch,
+    // 500 on query error.
+    if (filteredUpdates.project_id !== undefined && filteredUpdates.project_id !== null) {
+      const targetProjectId = filteredUpdates.project_id;
+      if (typeof targetProjectId !== 'string' || targetProjectId.length === 0) {
+        return badRequestResponse('project_id must be a non-empty string or null');
+      }
+      const ownership = await verifyProjectOwnership(supabase, targetProjectId, userId);
+      if (!ownership.ok) {
+        return ownership.response;
+      }
     }
 
     if (Object.keys(filteredUpdates).length === 0) {

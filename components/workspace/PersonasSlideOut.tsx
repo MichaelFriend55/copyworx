@@ -29,7 +29,14 @@ import { Button } from '@/components/ui/button';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { PersonaForm } from '@/components/workspace/PersonaForm';
 import { cn } from '@/lib/utils';
-import { useWorkspaceStore, useActiveProjectId, useProjects, usePendingPersonaEdit, usePendingEditActions } from '@/lib/stores/workspaceStore';
+import {
+  useWorkspaceStore,
+  useActiveProjectId,
+  useProjects,
+  usePendingPersonaEdit,
+  usePendingEditActions,
+  useProjectActions,
+} from '@/lib/stores/workspaceStore';
 import {
   getProjectPersonas,
   createPersona,
@@ -134,6 +141,7 @@ export function PersonasSlideOut({
   const projects = useProjects();
   const pendingPersonaEdit = usePendingPersonaEdit();
   const { setPendingPersonaEdit } = usePendingEditActions();
+  const { refreshProjects } = useProjectActions();
   
   // Get active project
   const activeProject = React.useMemo(
@@ -215,25 +223,35 @@ export function PersonasSlideOut({
    * Handle save persona from PersonaForm
    */
   const handleSave = useCallback(async (personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>) => {
-    // Check if project exists
-    if (!activeProject || !activeProjectId) {
-      alert('No active project. Please create a project first.');
+    // The form now guarantees personaData.projectId is a non-empty string
+    // (validated inside PersonaForm before calling onSave). Treat it as
+    // the source of truth for both create and edit flows so reassignment
+    // "just works": editing a persona and picking a new project updates
+    // the row's project_id on the server.
+    const targetProjectId = personaData.projectId;
+
+    if (!targetProjectId) {
+      alert('No project selected for this persona. Please choose a project.');
       return;
     }
-    
+
     try {
       if (viewMode === 'edit' && editingPersona) {
-        // Update existing persona
-        await updatePersona(activeProjectId, editingPersona.id, personaData);
+        // Pass targetProjectId as the "owner" argument to updatePersona
+        // so the storage layer looks up the persona in the right local
+        // cache bucket. The updates payload independently carries the new
+        // projectId, which reaches the PUT endpoint and reassigns the row.
+        await updatePersona(targetProjectId, editingPersona.id, personaData);
         logger.log('✅ Persona updated');
       } else {
-        // Create new persona
-        await createPersona(activeProjectId, personaData);
+        await createPersona(targetProjectId, personaData);
         logger.log('✅ Persona created');
       }
-      
-      // Reload personas and return to list
-      await loadPersonas();
+
+      // Refresh both the local persona list (for this slide-out) and the
+      // workspace projects store (so the sidebar immediately reflects
+      // any reassignment, mirroring the Brand Voice behavior).
+      await Promise.all([loadPersonas(), refreshProjects()]);
       handleBackToList();
     } catch (error) {
       const errorMessage = error instanceof Error 
@@ -242,7 +260,7 @@ export function PersonasSlideOut({
       alert(errorMessage);
       logger.error('❌ Failed to save persona:', error);
     }
-  }, [activeProject, activeProjectId, viewMode, editingPersona, loadPersonas, handleBackToList]);
+  }, [viewMode, editingPersona, loadPersonas, refreshProjects, handleBackToList]);
   
   /**
    * Handle delete persona - show confirmation modal
@@ -375,6 +393,7 @@ export function PersonasSlideOut({
         {(viewMode === 'create' || viewMode === 'edit') && (
           <PersonaForm
             persona={editingPersona}
+            defaultProjectId={activeProjectId}
             onSave={handleSave}
             onCancel={handleBackToList}
           />

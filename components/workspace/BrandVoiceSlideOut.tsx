@@ -30,8 +30,16 @@ import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { Button } from '@/components/ui/button';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { ProjectSelectorField } from '@/components/workspace/ProjectSelectorField';
 import { cn } from '@/lib/utils';
-import { useWorkspaceStore, useActiveProjectId, useProjects, usePendingBrandVoiceEdit, usePendingEditActions } from '@/lib/stores/workspaceStore';
+import {
+  useWorkspaceStore,
+  useActiveProjectId,
+  useProjects,
+  usePendingBrandVoiceEdit,
+  usePendingEditActions,
+  useProjectActions,
+} from '@/lib/stores/workspaceStore';
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -102,6 +110,7 @@ export function BrandVoiceSlideOut({
   const projects = useProjects();
   const pendingBrandVoiceEdit = usePendingBrandVoiceEdit();
   const { setPendingBrandVoiceEdit } = usePendingEditActions();
+  const { refreshProjects } = useProjectActions();
   
   // Get active project
   const activeProject = React.useMemo(
@@ -136,6 +145,19 @@ export function BrandVoiceSlideOut({
    * (filtered out on save) or below MIN_SAMPLE_LENGTH (shows inline warning).
    */
   const [writingSamples, setWritingSamples] = useState<string[]>(['']);
+
+  /**
+   * Currently-selected owning project for this brand voice.
+   *
+   * - Edit mode: initialized from the loaded brand voice's project_id.
+   * - Create mode: defaults to the currently active project (if any).
+   *
+   * Null is a valid runtime state (a brand voice can legally live with no
+   * project since migration 001), but the save handler requires a value
+   * before hitting POST so new brand voices always have an organizational
+   * home on creation.
+   */
+  const [projectId, setProjectId] = useState<string | null>(null);
   
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -233,9 +255,12 @@ export function BrandVoiceSlideOut({
     // Always render at least one empty textarea on new-brand-voice creation
     // so the user sees a prompt to add samples.
     setWritingSamples(['']);
+    // Create-flow default: owning project = the currently active project.
+    // Edit-flow will overwrite this in loadBrandVoiceIntoForm before render.
+    setProjectId(activeProjectId ?? null);
     setSaveError(null);
     setSaveSuccess(false);
-  }, []);
+  }, [activeProjectId]);
 
   /**
    * Load brand voice data into form
@@ -254,6 +279,10 @@ export function BrandVoiceSlideOut({
         ? [...bv.writing_samples]
         : ['']
     );
+    // Edit flow: initialize the project dropdown from the brand voice's
+    // current owning project so reassignment only happens when the user
+    // explicitly picks a different project.
+    setProjectId(bv.project_id ?? null);
     setSaveError(null);
     setSaveSuccess(false);
   }, []);
@@ -334,8 +363,10 @@ export function BrandVoiceSlideOut({
       return;
     }
 
-    // For creating new brand voices, we need a project (until migration is run)
-    if (viewMode === 'create' && !activeProjectId) {
+    // For creating new brand voices, we need a project (until migration is run).
+    // The project is picked via the ProjectSelectorField and falls back to
+    // the active project on mount; reject save only if both are missing.
+    if (viewMode === 'create' && !projectId && !activeProjectId) {
       setSaveError('Please select a project first. Brand voices need to be associated with a project.');
       return;
     }
@@ -387,24 +418,30 @@ export function BrandVoiceSlideOut({
       let response: Response;
       
       if (viewMode === 'edit' && editingBrandVoice) {
-        // Update existing brand voice
+        // Update existing brand voice. Always include project_id so the
+        // server can reassign the owning project when the user picks a
+        // different one in the dropdown. Sending the unchanged value is
+        // a no-op — see brand-voices PUT handler.
         response = await fetch('/api/db/brand-voices', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: editingBrandVoice.id,
+            project_id: projectId,
             ...brandVoiceData,
           }),
         });
       } else {
-        // Create new brand voice - include project_id for database compatibility
-        // Note: Once the migration is run, project_id becomes optional
+        // Create new brand voice. Use the project picked in the dropdown
+        // (may be null if the user intentionally cleared it, but we block
+        // that earlier for create mode). Fall back to the active project
+        // for backwards compatibility.
         response = await fetch('/api/db/brand-voices', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...brandVoiceData,
-            project_id: activeProjectId, // Required until migration is run
+            project_id: projectId ?? activeProjectId,
           }),
         });
       }
@@ -429,10 +466,13 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
       
       setSaveSuccess(true);
       logger.log(`✅ Brand voice ${viewMode === 'edit' ? 'updated' : 'created'}`);
-      
-      // Refresh the list and go back after a short delay
-      await fetchBrandVoices();
-      
+
+      // Refresh the brand voices list (this slide-out) AND the workspace
+      // projects store so the sidebar reflects the reassignment without
+      // requiring a page reload. Both fetches run in parallel — failure
+      // of refreshProjects is non-fatal for the save itself.
+      await Promise.all([fetchBrandVoices(), refreshProjects()]);
+
       setTimeout(() => {
         setSaveSuccess(false);
         handleBackToList();
@@ -449,8 +489,8 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
     }
   }, [
     brandName, brandTone, approvedPhrases, forbiddenWords, brandValues, missionStatement,
-    writingSamples, activeProjectId,
-    viewMode, editingBrandVoice, fetchBrandVoices, handleBackToList
+    writingSamples, activeProjectId, projectId,
+    viewMode, editingBrandVoice, fetchBrandVoices, refreshProjects, handleBackToList
   ]);
   
   /**
@@ -760,7 +800,18 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
             Give this brand voice a name so you can identify it
           </p>
         </div>
-        
+
+        {/* Project Assignment ────────────────────────────────────────────
+            Placement: directly after Brand Name and before Brand Tone.
+            Project assignment is organizational metadata and belongs near
+            the top of the form alongside the name, per spec. */}
+        <ProjectSelectorField
+          value={projectId}
+          onChange={setProjectId}
+          helperText="Choose which project this brand voice belongs to"
+          disabled={isSaving || saveSuccess}
+        />
+
         {/* Brand Tone Description */}
         <div className="space-y-2">
           <label htmlFor="brandTone" className="block text-sm font-medium text-gray-900">

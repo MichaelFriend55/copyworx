@@ -36,6 +36,7 @@ interface SyncedBrandVoice {
 
 interface SyncedPersona {
   id: string;
+  projectId: string;
   name: string;
   photoUrl?: string;
   demographics: string;
@@ -207,6 +208,7 @@ export async function GET(request: NextRequest) {
         } : null,
         personas: projectPersonas.map((p: any) => ({
           id: p.id,
+          projectId: p.project_id,
           name: p.name,
           photoUrl: p.photo_url || undefined,
           demographics: p.demographics,

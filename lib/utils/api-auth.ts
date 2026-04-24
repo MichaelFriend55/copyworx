@@ -98,6 +98,80 @@ export function internalErrorResponse(error: unknown): NextResponse {
   );
 }
 
+/**
+ * Create a 403 response for project ownership failures.
+ *
+ * Use this only after an ownership query succeeds but returns no rows
+ * (meaning the project either does not exist or does not belong to the
+ * authenticated user). The message is user-displayable as-is.
+ */
+export function projectAccessDeniedResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      error: 'Forbidden',
+      details: 'Project not found or access denied',
+    },
+    { status: 403 }
+  );
+}
+
+/**
+ * Result of a project ownership check.
+ *
+ * - `ok: true`  — the authenticated user owns the project. Proceed.
+ * - `ok: false` — caller must return `response` directly. The helper
+ *   distinguishes between an infrastructure error (500) and a legitimate
+ *   access-denied (403) via its own logic; callers do not need to branch.
+ */
+export type ProjectOwnershipResult =
+  | { ok: true }
+  | { ok: false; response: NextResponse };
+
+/**
+ * Verify that a given project_id exists AND belongs to the authenticated user.
+ *
+ * Error contract (spec-mandated):
+ * - Query execution error (DB down, malformed query, unexpected exception)
+ *   → 500 Internal Server Error. This is distinct from an access denial and
+ *   must not be conflated — precision on error codes matters for debugging.
+ * - Query succeeds, no rows returned → 403 "Project not found or access denied".
+ *   The authenticated user either supplied a non-existent id or tried to touch
+ *   another user's project. We deliberately do not distinguish between these
+ *   two cases in the response (no user enumeration).
+ * - Query succeeds, row returned → `ok: true`.
+ *
+ * @param supabase - Supabase admin client
+ * @param projectId - UUID of the project to validate
+ * @param userId - Clerk user ID of the authenticated caller
+ */
+export async function verifyProjectOwnership(
+  supabase: { from: (table: string) => any },
+  projectId: string,
+  userId: string
+): Promise<ProjectOwnershipResult> {
+  try {
+    const { data, error } = await (supabase.from('projects') as any)
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      logger.error('❌ Project ownership query failed:', error);
+      return { ok: false, response: internalErrorResponse(error) };
+    }
+
+    if (!data) {
+      return { ok: false, response: projectAccessDeniedResponse() };
+    }
+
+    return { ok: true };
+  } catch (err) {
+    logger.error('❌ Project ownership check threw:', err);
+    return { ok: false, response: internalErrorResponse(err) };
+  }
+}
+
 // ============================================================================
 // Admin Check
 // ============================================================================

@@ -87,7 +87,18 @@ export interface Project {
 export interface Persona {
   /** Unique identifier */
   id: string;
-  
+
+  /**
+   * Project this persona currently belongs to.
+   *
+   * Reassignable via the Project dropdown in the Persona edit modal — moving
+   * a persona between projects updates this value. Because documents do not
+   * store a direct persona reference (the Persona Check tool resolves
+   * personas through the active project), changing this value is equivalent
+   * to moving the persona's "home" in the sidebar.
+   */
+  projectId: string;
+
   /** Persona name and title (e.g., "Sarah, the Startup Founder") */
   name: string;
   

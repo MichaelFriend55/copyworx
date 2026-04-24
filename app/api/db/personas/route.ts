@@ -16,7 +16,8 @@ import {
   unauthorizedResponse, 
   badRequestResponse, 
   notFoundResponse,
-  internalErrorResponse 
+  internalErrorResponse,
+  verifyProjectOwnership,
 } from '@/lib/utils/api-auth';
 
 // ============================================================================
@@ -113,8 +114,8 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!project_id) {
-      return badRequestResponse('Project ID is required');
+    if (!project_id || typeof project_id !== 'string') {
+      return badRequestResponse('project_id is required');
     }
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -132,6 +133,13 @@ export async function POST(request: NextRequest) {
       if (sizeInBytes > 2 * 1024 * 1024) { // 2MB limit
         return badRequestResponse('Photo size too large. Please use an image smaller than 2MB.');
       }
+    }
+
+    // Verify caller owns the target project. 403 on ownership mismatch,
+    // 500 on any query-level failure — see verifyProjectOwnership docs.
+    const ownership = await verifyProjectOwnership(supabase, project_id, userId);
+    if (!ownership.ok) {
+      return ownership.response;
     }
 
     // Create the persona
@@ -189,12 +197,13 @@ export async function PUT(request: NextRequest) {
       return badRequestResponse('Persona ID is required');
     }
 
-    // Filter allowed update fields
+    // Filter allowed update fields. `project_id` is included here to support
+    // reassigning a persona to a different project via the edit modal.
     const allowedFields = [
-      'name', 'photo_url', 'demographics', 'psychographics',
+      'project_id', 'name', 'photo_url', 'demographics', 'psychographics',
       'pain_points', 'language_patterns', 'goals'
     ];
-    
+
     const filteredUpdates: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
@@ -223,6 +232,20 @@ export async function PUT(request: NextRequest) {
         if (sizeInBytes > 2 * 1024 * 1024) {
           return badRequestResponse('Photo size too large. Please use an image smaller than 2MB.');
         }
+      }
+    }
+
+    // If the caller is reassigning the persona to a different project, verify
+    // they own the target project before allowing the write. 403 on mismatch,
+    // 500 on query-level failure — see verifyProjectOwnership docs.
+    if (filteredUpdates.project_id !== undefined) {
+      const targetProjectId = filteredUpdates.project_id;
+      if (typeof targetProjectId !== 'string' || targetProjectId.length === 0) {
+        return badRequestResponse('project_id must be a non-empty string');
+      }
+      const ownership = await verifyProjectOwnership(supabase, targetProjectId, userId);
+      if (!ownership.ok) {
+        return ownership.response;
       }
     }
 

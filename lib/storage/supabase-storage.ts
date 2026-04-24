@@ -468,6 +468,7 @@ export async function cloudCreatePersona(
 
   return {
     id: data.id as string,
+    projectId: (data.project_id as string) ?? projectId,
     name: data.name as string,
     photoUrl: data.photo_url as string | undefined,
     demographics: data.demographics as string,
@@ -488,7 +489,8 @@ export async function cloudUpdatePersona(
   updates: Partial<Omit<Persona, 'id' | 'createdAt'>>
 ): Promise<void> {
   const apiUpdates: Record<string, unknown> = {};
-  
+
+  if (updates.projectId !== undefined) apiUpdates.project_id = updates.projectId;
   if (updates.name !== undefined) apiUpdates.name = updates.name;
   if (updates.photoUrl !== undefined) apiUpdates.photo_url = updates.photoUrl;
   if (updates.demographics !== undefined) apiUpdates.demographics = updates.demographics;

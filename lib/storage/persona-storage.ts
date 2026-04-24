@@ -37,6 +37,7 @@ function generateId(): string {
 function mapApiToPersona(apiPersona: Record<string, unknown>): Persona {
   return {
     id: apiPersona.id as string,
+    projectId: apiPersona.project_id as string,
     name: apiPersona.name as string,
     photoUrl: apiPersona.photo_url as string | undefined,
     demographics: apiPersona.demographics as string,
@@ -54,7 +55,8 @@ function mapApiToPersona(apiPersona: Record<string, unknown>): Persona {
  */
 function mapPersonaToApi(persona: Partial<Persona>): Record<string, unknown> {
   const apiPersona: Record<string, unknown> = {};
-  
+
+  if (persona.projectId !== undefined) apiPersona.project_id = persona.projectId;
   if (persona.name !== undefined) apiPersona.name = persona.name;
   if (persona.photoUrl !== undefined) apiPersona.photo_url = persona.photoUrl;
   if (persona.demographics !== undefined) apiPersona.demographics = persona.demographics;
@@ -62,7 +64,7 @@ function mapPersonaToApi(persona: Partial<Persona>): Record<string, unknown> {
   if (persona.painPoints !== undefined) apiPersona.pain_points = persona.painPoints;
   if (persona.languagePatterns !== undefined) apiPersona.language_patterns = persona.languagePatterns;
   if (persona.goals !== undefined) apiPersona.goals = persona.goals;
-  
+
   return apiPersona;
 }
 
@@ -221,6 +223,7 @@ export async function createPersona(
     // Fallback: create locally
     const newPersona: Persona = {
       id: generateId(),
+      projectId,
       name: validatedName,
       photoUrl: personaData.photoUrl,
       demographics: personaData.demographics?.trim() || '',

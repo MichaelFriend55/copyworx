@@ -26,18 +26,26 @@ import { Upload, X, User, Loader2 } from 'lucide-react';
 import type { Persona } from '@/lib/types/project';
 import { processImageFile } from '@/lib/utils/image-utils';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
+import { ProjectSelectorField } from '@/components/workspace/ProjectSelectorField';
 import { cn } from '@/lib/utils';
 
 interface PersonaFormProps {
   /** Persona to edit (null for create mode) */
   persona: Persona | null;
-  
+
+  /**
+   * Default project assignment for create mode. Ignored when `persona`
+   * is provided — edit mode always initializes from `persona.projectId`.
+   * Typically this is the currently active workspace project.
+   */
+  defaultProjectId: string | null;
+
   /** Callback when form is saved */
   onSave: (personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  
+
   /** Callback when form is cancelled */
   onCancel: () => void;
-  
+
   /** Optional CSS classes */
   className?: string;
 }
@@ -47,6 +55,7 @@ interface PersonaFormProps {
  */
 export function PersonaForm({
   persona,
+  defaultProjectId,
   onSave,
   onCancel,
   className,
@@ -59,6 +68,18 @@ export function PersonaForm({
   const [painPoints, setPainPoints] = useState(persona?.painPoints || '');
   const [languagePatterns, setLanguagePatterns] = useState(persona?.languagePatterns || '');
   const [goals, setGoals] = useState(persona?.goals || '');
+  /**
+   * Owning project for this persona.
+   *
+   * - Edit mode: initialized from `persona.projectId`. Changing it triggers
+   *   a reassignment on save (server updates the persona's project_id, and
+   *   the persona moves from the old project's sidebar to the new one).
+   * - Create mode: defaults to `defaultProjectId` passed by the parent
+   *   (typically the active workspace project).
+   */
+  const [projectId, setProjectId] = useState<string | null>(
+    persona?.projectId ?? defaultProjectId ?? null
+  );
 
   // UI state
   const [isDragging, setIsDragging] = useState(false);
@@ -119,14 +140,21 @@ export function PersonaForm({
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
 
-    // Validate required fields
     if (!name.trim()) {
       alert('Persona name is required');
       return;
     }
 
-    // Create persona data
+    // `projectId` is required by the Persona type. A missing value here
+    // means the parent modal opened without an active project and the
+    // user did not pick one from the dropdown — block save and explain.
+    if (!projectId) {
+      alert('Please choose a project for this persona.');
+      return;
+    }
+
     const personaData: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'> = {
+      projectId,
       name: name.trim(),
       photoUrl: photoUrl || undefined,
       demographics: demographics.trim(),
@@ -242,6 +270,17 @@ export function PersonaForm({
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
         />
       </div>
+
+      {/* Project Assignment ─────────────────────────────────────────────
+          Placement: directly after Name & Title and before Demographics.
+          Project assignment is organizational metadata and belongs near
+          the top of the form alongside the name, per spec. */}
+      <ProjectSelectorField
+        value={projectId}
+        onChange={setProjectId}
+        helperText="Choose which project this persona belongs to"
+        disabled={isUploading}
+      />
 
       {/* Demographics */}
       <div className="space-y-2">
