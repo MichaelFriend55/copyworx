@@ -59,8 +59,8 @@ const showcaseBlocks = [
   {
     screenshot: '/images/guide/36-brand-check-alignment-score.png',
     alt: 'Brand Check analysis with a strong alignment score, matching phrases, and actionable recommendations',
-    headline: 'Score Any Copy Against Your Brand Guidelines. Instantly.',
-    body: "Brand Check analyzes your copy against your Brand Voice and returns a score, specific matches, misalignments, and actionable recommendations. It's the quality-control tool that turns subjective brand feedback into objective, measurable performance.",
+    headline: 'Diagnose Off-Brand Copy. Fix It in One Click.',
+    body: "Brand Check scores any copy against your Brand Voice, flags exactly where it misses – forbidden words, tone mismatches, missed opportunities – and gives you a one-click rewrite that preserves your formatting and fixes the issues. Persona Check does the same against any audience you've built. No more subjective \"this doesn't feel on brand\" feedback cycles. Just diagnosis, recommendation, and repair.",
     imagePosition: 'right' as const,
   },
   {
