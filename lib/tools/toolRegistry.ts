@@ -22,6 +22,7 @@ import {
   BookOpenText,
   ScanSearch,
   ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
 
 /**
@@ -176,6 +177,15 @@ export const TOOLS: ToolConfig[] = [
     icon: ShieldCheck,
     section: 'brand',
     description: 'Check copy alignment with your brand voice',
+    uiSurface: 'right-sidebar',
+    requiresDocument: true,
+  },
+  {
+    id: 'persona-check',
+    name: 'Persona Check',
+    icon: UserCheck,
+    section: 'brand',
+    description: 'Check copy against a Persona',
     uiSurface: 'right-sidebar',
     requiresDocument: true,
   },

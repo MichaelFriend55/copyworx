@@ -1,9 +1,13 @@
 /**
  * @file app/api/db/all-brand-voices/route.ts
  * @description API route for fetching ALL brand voices for a user (across all projects)
- * 
- * Used by the MY INSIGHTS section to populate the brand voice selector dropdown.
- * Returns all brand voices the user has created, regardless of which project they belong to.
+ *
+ * Returns every brand voice the authenticated user has created, annotated with
+ * its owning project's id and name, regardless of which project each brand
+ * voice belongs to. Used by the Brand Voice slide-out
+ * (components/workspace/BrandVoiceSlideOut.tsx) to populate cross-project
+ * selectors so users can import or reuse an existing brand voice when
+ * setting up a new project.
  */
 
 import { NextRequest, NextResponse } from 'next/server';

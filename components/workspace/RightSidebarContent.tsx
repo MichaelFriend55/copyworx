@@ -27,6 +27,7 @@ import { HeadlineGeneratorTool } from '@/components/workspace/HeadlineGeneratorT
 import { WordAdvisor } from '@/components/workspace/WordAdvisor';
 import { CompetitiveAnalysis } from '@/components/workspace/CompetitiveAnalysis';
 import { BrandCheck } from '@/components/workspace/BrandCheck';
+import { PersonaCheck } from '@/components/workspace/PersonaCheck';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { getTemplateById } from '@/lib/data/templates';
 import { toolRequiresDocument } from '@/lib/tools/toolRegistry';
@@ -64,6 +65,7 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<{ editor: Editor | nul
   // toolRegistry) and are therefore NOT registered here. Only right-sidebar
   // tools appear in TOOL_COMPONENTS.
   'brand-check': BrandCheck,
+  'persona-check': PersonaCheck,
 };
 
 /**

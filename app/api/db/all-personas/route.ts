@@ -1,9 +1,12 @@
 /**
  * @file app/api/db/all-personas/route.ts
  * @description API route for fetching ALL personas for a user (across all projects)
- * 
- * Used by the MY INSIGHTS section to populate the persona selector dropdown.
- * Returns all personas the user has created, regardless of which project they belong to.
+ *
+ * Returns every persona the authenticated user has created, annotated with
+ * its owning project's id and name, regardless of which project each persona
+ * belongs to. Intended for cross-project persona selectors (e.g. importing
+ * an existing persona into a new project). No active UI consumer at the
+ * time of writing; retained for future cross-project persona tooling.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
