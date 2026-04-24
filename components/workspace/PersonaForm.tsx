@@ -179,7 +179,18 @@ export function PersonaForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={cn('space-y-6', className)}>
+    // Layout rationale: the form is rendered inside SlideOutPanel's scrollable
+    // content area. Making it `flex flex-col min-h-full` means the form always
+    // spans the full scroll viewport height, which gives its inner
+    // StickyActionBar a containing block big enough to actually engage
+    // `sticky bottom-0` (combined with the bar's own `mt-auto` to push it to
+    // the bottom when the form content is short). `gap-6` replaces the prior
+    // `space-y-6` to keep the 24px vertical rhythm while being flex-aware.
+    // `pb-4` leaves a 16px buffer between the last field and the sticky bar.
+    <form
+      onSubmit={handleSubmit}
+      className={cn('flex flex-col gap-6 min-h-full pb-4', className)}
+    >
       {/* Photo Upload */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700">

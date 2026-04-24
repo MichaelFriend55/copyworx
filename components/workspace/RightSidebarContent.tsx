@@ -165,8 +165,21 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
 
   // Show tool content if a tool is selected
   if (ActiveToolComponent) {
+    // Layout: the wrapper fills at least the full height of the Sidebar scroll
+    // container (min-h-full) and lays out its two children (toolbox header +
+    // tool cell) as a flex column. The tool cell uses flex-1 so it claims all
+    // remaining vertical space below the header. This gives the tool's inner
+    // StickyActionBar a containing block that always spans the scroll viewport
+    // bottom — so `sticky bottom-0` + `mt-auto` pins the action bar to the
+    // bottom of the panel regardless of how much content the tool renders.
+    //
+    // `min-h-0` on the tool cell is a flexbox hygiene flag so it doesn't
+    // force its parent to grow based on children min-content size when very
+    // long tool content would otherwise push the wrapper past the scroll
+    // container. `pb-4` leaves a 16px buffer between the last content item
+    // and the sticky action bar so content never visually touches the bar.
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col min-h-full gap-6">
         {/* Header - Always Shows "AI@Worx ToolBox" */}
         <div className={cn(
           'flex items-center gap-2 px-3 py-2.5 rounded-lg',
@@ -183,21 +196,23 @@ export function RightSidebarContent({ editor }: RightSidebarContentProps) {
         </div>
 
         {/* Dynamic Tool Rendering */}
-        {!hasActiveDocument && activeToolId && toolRequiresDocument(activeToolId) ? (
-          // Tool selected but no document open (only for document-requiring tools)
-          <div className="text-center py-16 text-gray-400">
-            <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" />
-            <p className="text-sm font-medium text-gray-600 mb-1">
-              No Document Open
-            </p>
-            <p className="text-xs text-gray-500">
-              Create a document to use this tool
-            </p>
-          </div>
-        ) : (
-          // Render active tool
-          <ActiveToolComponent editor={editor} />
-        )}
+        <div className="flex-1 flex flex-col min-h-0 pb-4">
+          {!hasActiveDocument && activeToolId && toolRequiresDocument(activeToolId) ? (
+            // Tool selected but no document open (only for document-requiring tools)
+            <div className="text-center py-16 text-gray-400">
+              <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" />
+              <p className="text-sm font-medium text-gray-600 mb-1">
+                No Document Open
+              </p>
+              <p className="text-xs text-gray-500">
+                Create a document to use this tool
+              </p>
+            </div>
+          ) : (
+            // Render active tool
+            <ActiveToolComponent editor={editor} />
+          )}
+        </div>
       </div>
     );
   }

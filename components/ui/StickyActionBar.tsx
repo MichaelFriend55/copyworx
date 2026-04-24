@@ -62,6 +62,15 @@ function hasRenderableChildren(children: React.ReactNode): boolean {
  *
  * Visual spec:
  * - `position: sticky; bottom: 0` inside the nearest scroll container.
+ * - `mt-auto` so that when the bar's parent is a `flex flex-col` with free
+ *   vertical space (short-content case in right-sidebar tools and embedded
+ *   forms), the bar is flex-pushed to the bottom of that column. Combined
+ *   with `sticky bottom-0`, this guarantees viewport-bottom placement
+ *   regardless of content length:
+ *     - short content → flex-push (mt-auto) pins the bar at container bottom
+ *     - long content  → sticky engages and pins the bar at scroll viewport bottom
+ *   `mt-auto` is a no-op inside non-flex parents (e.g. SlideOutPanel's footer
+ *   wrapper, which already positions the bar via its own flex layout).
  * - `z-10` so it paints above scrolling content but below modals/portals.
  * - White background to match panels.
  * - 1px top border in gray-200.
@@ -77,7 +86,7 @@ export function StickyActionBar({ children, className }: StickyActionBarProps) {
   return (
     <div
       className={cn(
-        'sticky bottom-0 z-10',
+        'sticky bottom-0 z-10 mt-auto',
         'px-4 py-3',
         'bg-white',
         'border-t border-gray-200',
