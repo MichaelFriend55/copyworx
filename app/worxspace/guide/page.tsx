@@ -158,7 +158,7 @@ function SectionGettingStarted() {
         </li>
         <li>
           <strong>Right Sidebar (AI@Worx ToolBox)</strong> – Houses all AI tools: Templates, Copy
-          Optimizer tools, Brand Alignment, and Insights.
+          Optimizer tools, Brand Check, and Persona Check.
         </li>
       </ul>
       <GuideImage
@@ -256,7 +256,7 @@ function SectionGettingStarted() {
           Select specific text and run it through Copy Optimizer tools to refine tone, length, or
           channel fit.
         </li>
-        <li>Use Brand Alignment to score the content against your Brand Voice guidelines.</li>
+        <li>Use Brand Check to score the content against your Brand Voice guidelines.</li>
         <li>Run Headline Generator on any headline in the document to generate alternatives.</li>
       </ul>
       <GuideImage
@@ -874,7 +874,7 @@ function SectionBrandVoice() {
           reflects the brand&apos;s voice from the first draft.
         </li>
         <li>
-          <strong>Reactive:</strong> Run Brand Alignment on copy you&apos;ve already written to
+          <strong>Reactive:</strong> Run Brand Check on copy you&apos;ve already written to
           see a score and specific recommendations for improvement.
         </li>
       </ul>
@@ -943,7 +943,7 @@ function SectionBrandVoice() {
       </ul>
       <p>
         To switch between Brand Voices, select the desired one from the Brand Voice dropdown when
-        launching a Template or running the Brand Alignment tool.
+        launching a Template or running the Brand Check tool.
       </p>
 
       <h3>Applying Brand Voice to AI-Generated Copy</h3>
