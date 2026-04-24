@@ -31,6 +31,8 @@ import {
   useActiveProjectId,
   useProjects,
 } from '@/lib/stores/workspaceStore';
+import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
 import type { Editor } from '@tiptap/react';
@@ -355,27 +357,6 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
         </div>
       </div>
 
-      {/* Analyze Word button – disabled when nothing is selected */}
-      {!loading && !result && (
-        <button
-          onClick={handleAnalyze}
-          disabled={!hasSelection}
-          className={cn(
-            'w-full py-2.5 px-4 rounded-lg',
-            'font-medium text-sm',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-            'transition-all duration-200',
-            'flex items-center justify-center gap-2',
-            hasSelection
-              ? 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] text-white shadow-sm hover:shadow'
-              : 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
-          )}
-        >
-          <Search className="w-4 h-4" />
-          Analyze Word
-        </button>
-      )}
-
       {/* Loading */}
       {loading && <AdvisorSkeleton />}
 
@@ -541,7 +522,9 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
 
           <div className="border-t border-gray-200" />
 
-          {/* Analyze another word */}
+          {/* Analyze another word — kept inline with the analysis because it is
+              contextual to the result view (a "re-analyze" affordance). The
+              tool-global Analyze Word lives in the StickyActionBar pre-result. */}
           <button
             onClick={handleAnalyze}
             disabled={!hasSelection}
@@ -560,6 +543,37 @@ export function WordAdvisor({ editor }: WordAdvisorProps) {
             Analyze Word
           </button>
         </>
+      )}
+
+      {/* Sticky primary action — hidden once an analysis is displayed. The
+          results section above owns its own Apply "{word}" and re-analyze
+          buttons, which stay visually grouped with the analysis they act on. */}
+      {!result && (
+        <StickyActionBar>
+          <button
+            onClick={handleAnalyze}
+            disabled={!hasSelection || loading}
+            className={cn(
+              'w-full py-2.5 px-4 rounded-lg',
+              'font-medium text-sm',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              'transition-all duration-200',
+              'flex items-center justify-center gap-2',
+              loading && 'aiworx-gradient-animated cursor-wait text-white',
+              !loading && hasSelection && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] text-white shadow-sm hover:shadow',
+              !loading && !hasSelection && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
+            )}
+          >
+            {loading ? (
+              <AIWorxButtonLoader />
+            ) : (
+              <>
+                <Search className="w-4 h-4" />
+                Analyze Word
+              </>
+            )}
+          </button>
+        </StickyActionBar>
       )}
     </div>
   );

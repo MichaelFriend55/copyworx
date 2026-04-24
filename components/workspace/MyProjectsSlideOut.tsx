@@ -39,6 +39,7 @@ import {
   X,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -544,30 +545,34 @@ export function MyProjectsSlideOut({
     openEditModal(snippet);
   }, [loadSnippets, openEditModal]);
 
-  // Panel footer
+  // Panel footer. Wrapped in the shared StickyActionBar so the primary
+  // create-folder/create-document affordances match the treatment used across
+  // every other panel.
   const panelFooter = (
-    <div className="flex gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleCreateFolder}
-        disabled={!activeProjectId}
-        className="flex-1"
-      >
-        <FolderPlus className="h-4 w-4 mr-2" />
-        New Folder
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleCreateDocument}
-        disabled={!activeProjectId}
-        className="flex-1"
-      >
-        <FilePlus className="h-4 w-4 mr-2" />
-        New Document
-      </Button>
-    </div>
+    <StickyActionBar>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCreateFolder}
+          disabled={!activeProjectId}
+          className="flex-1"
+        >
+          <FolderPlus className="h-4 w-4 mr-2" />
+          New Folder
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCreateDocument}
+          disabled={!activeProjectId}
+          className="flex-1"
+        >
+          <FilePlus className="h-4 w-4 mr-2" />
+          New Document
+        </Button>
+      </div>
+    </StickyActionBar>
   );
 
   return (

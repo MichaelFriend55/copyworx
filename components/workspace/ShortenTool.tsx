@@ -38,6 +38,7 @@ import {
 import { insertTextAtSelection } from '@/lib/editor-utils';
 import { formatGeneratedContent, copyFormattedHtmlToClipboard } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
@@ -162,29 +163,6 @@ export function ShortenTool({ editor, className }: ShortenToolProps) {
         </div>
       )}
 
-      {/* Action Button */}
-      <button
-        onClick={handleShorten}
-        disabled={!canShorten}
-        className={cn(
-          'w-full py-3 px-4 rounded-lg',
-          'font-medium text-sm text-white',
-          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-          // Animated gradient when loading
-          shortenLoading && 'aiworx-gradient-animated cursor-wait',
-          // Brand button with blue→purple active when not loading
-          !shortenLoading && hasSelection && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
-          // Gray background when truly disabled (not loading)
-          !hasSelection && !shortenLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
-        )}
-      >
-        {shortenLoading ? (
-          <AIWorxButtonLoader />
-        ) : (
-          'Shorten Copy'
-        )}
-      </button>
-
       {/* Helper Text */}
       {!hasSelection && (
         <p className="text-xs text-apple-text-light text-center">
@@ -274,6 +252,27 @@ export function ShortenTool({ editor, className }: ShortenToolProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Sticky primary action — hidden when a result is showing. Result card
+          above owns its own Replace/Copy/Clear buttons. */}
+      {!shortenResult && (
+        <StickyActionBar>
+          <button
+            onClick={handleShorten}
+            disabled={!canShorten}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm text-white',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              shortenLoading && 'aiworx-gradient-animated cursor-wait',
+              !shortenLoading && hasSelection && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
+              !hasSelection && !shortenLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
+            )}
+          >
+            {shortenLoading ? <AIWorxButtonLoader /> : 'Shorten Copy'}
+          </button>
+        </StickyActionBar>
       )}
     </div>
   );

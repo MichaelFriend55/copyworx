@@ -44,6 +44,7 @@ import {
 import { insertTextAtSelection } from '@/lib/editor-utils';
 import { formatGeneratedContent, copyFormattedHtmlToClipboard } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
 
@@ -292,31 +293,6 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
         )}
       </div>
 
-      {/* Action Button */}
-      <button
-        onClick={handleRewrite}
-        disabled={!canRewrite}
-        className={cn(
-          'w-full py-3 px-4 rounded-lg',
-          'font-medium text-sm text-white',
-          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-          // Animated gradient when loading
-          rewriteChannelLoading && 'aiworx-gradient-animated cursor-wait',
-          // Brand button with blue→purple active when not loading
-          !rewriteChannelLoading && (hasSelection && selectedChannel) && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
-          // Gray background when truly disabled (not loading)
-          (!hasSelection || !selectedChannel) && !rewriteChannelLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
-        )}
-      >
-        {rewriteChannelLoading ? (
-          <AIWorxButtonLoader />
-        ) : selectedChannel ? (
-          `Rewrite for ${CHANNEL_OPTIONS.find(c => c.value === selectedChannel)?.label}`
-        ) : (
-          'Select a Channel'
-        )}
-      </button>
-
       {/* Helper Text */}
       {!hasSelection && (
         <p className="text-xs text-apple-text-light text-center">
@@ -406,6 +382,33 @@ export function RewriteChannelTool({ editor, className }: RewriteChannelToolProp
             </button>
           </div>
         </div>
+      )}
+
+      {/* Sticky primary action — hidden when a result is showing. Result card
+          above owns its own Replace/Copy/Clear buttons. */}
+      {!rewriteChannelResult && (
+        <StickyActionBar>
+          <button
+            onClick={handleRewrite}
+            disabled={!canRewrite}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm text-white',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              rewriteChannelLoading && 'aiworx-gradient-animated cursor-wait',
+              !rewriteChannelLoading && (hasSelection && selectedChannel) && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
+              (!hasSelection || !selectedChannel) && !rewriteChannelLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
+            )}
+          >
+            {rewriteChannelLoading ? (
+              <AIWorxButtonLoader />
+            ) : selectedChannel ? (
+              `Rewrite for ${CHANNEL_OPTIONS.find(c => c.value === selectedChannel)?.label}`
+            ) : (
+              'Select a Channel'
+            )}
+          </button>
+        </StickyActionBar>
       )}
     </div>
   );

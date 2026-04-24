@@ -26,6 +26,7 @@ import { Upload, X, User, Loader2 } from 'lucide-react';
 import type { Persona } from '@/lib/types/project';
 import { processImageFile } from '@/lib/utils/image-utils';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { ProjectSelectorField } from '@/components/workspace/ProjectSelectorField';
 import { cn } from '@/lib/utils';
 
@@ -362,29 +363,35 @@ export function PersonaForm({
         />
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={isUploading}
-          className={cn(
-            'flex-1 px-6 py-3 font-medium rounded-lg transition-all',
-            'bg-gradient-to-r from-purple-600 to-blue-600',
-            'text-white hover:from-purple-700 hover:to-blue-700',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'shadow-md hover:shadow-lg'
-          )}
-        >
-          {isEditMode ? 'Update Persona' : 'Create Persona'}
-        </button>
-      </div>
+      {/* Sticky action bar. Negative horizontal margin bleeds it past the
+          scroll container's px-6 padding so the border and shadow span the full
+          panel width, matching other slide-out footers. Negative bottom margin
+          cancels the scroll container's py-5 bottom padding so the bar sits
+          flush with the panel bottom. */}
+      <StickyActionBar className="-mx-6 -mb-5">
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isUploading}
+            className={cn(
+              'flex-1 px-6 py-3 font-medium rounded-lg transition-all',
+              'bg-gradient-to-r from-purple-600 to-blue-600',
+              'text-white hover:from-purple-700 hover:to-blue-700',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              'shadow-md hover:shadow-lg'
+            )}
+          >
+            {isEditMode ? 'Update Persona' : 'Create Persona'}
+          </button>
+        </div>
+      </StickyActionBar>
     </form>
   );
 }

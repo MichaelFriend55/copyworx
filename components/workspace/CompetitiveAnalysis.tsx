@@ -23,6 +23,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
 import type { Editor } from '@tiptap/react';
@@ -219,30 +220,6 @@ export function CompetitiveAnalysis({ className }: CompetitiveAnalysisProps) {
         />
       </div>
 
-      {/* Analyze Button */}
-      <button
-        onClick={handleAnalyze}
-        disabled={!canAnalyze}
-        className={cn(
-          'w-full py-3 px-4 rounded-lg',
-          'font-medium text-sm text-white',
-          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-          'flex items-center justify-center gap-2',
-          isLoading && 'aiworx-gradient-animated cursor-wait',
-          !isLoading && canAnalyze && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
-          !canAnalyze && !isLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed',
-        )}
-      >
-        {isLoading ? (
-          <AIWorxButtonLoader />
-        ) : (
-          <>
-            <Sparkles className="w-4 h-4" />
-            Analyze Copy
-          </>
-        )}
-      </button>
-
       {/* Error Display */}
       {error && (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -319,6 +296,36 @@ export function CompetitiveAnalysis({ className }: CompetitiveAnalysisProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Sticky primary action — hidden once an analysis is displayed. The
+          result section above owns its own Copy Analysis / New Analysis
+          buttons, which stay visually grouped with the analysis they act on. */}
+      {!result && (
+        <StickyActionBar>
+          <button
+            onClick={handleAnalyze}
+            disabled={!canAnalyze}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm text-white',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              'flex items-center justify-center gap-2',
+              isLoading && 'aiworx-gradient-animated cursor-wait',
+              !isLoading && canAnalyze && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
+              !canAnalyze && !isLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed',
+            )}
+          >
+            {isLoading ? (
+              <AIWorxButtonLoader />
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Analyze Copy
+              </>
+            )}
+          </button>
+        </StickyActionBar>
       )}
     </div>
   );

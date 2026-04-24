@@ -40,6 +40,7 @@ import {
   useHeadlineGeneratorActions,
 } from '@/lib/stores/workspaceStore';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
 import {
@@ -642,48 +643,6 @@ export function HeadlineGeneratorTool({ className }: HeadlineGeneratorToolProps)
             </div>
           )}
 
-          {/* ═══ Generate Button with Start Over ═══ */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleGenerate}
-              disabled={!canGenerate || generationCount > 0 || headlineLoading}
-              className={cn(
-                'flex-1 py-3 px-4 rounded-lg',
-                'font-medium text-sm transition-all duration-200',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                headlineLoading && generationCount === 0
-                  ? 'aiworx-gradient-animated cursor-wait text-white'
-                  : generationCount > 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-                  : canGenerate
-                  ? 'bg-[#006EE6] text-white hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow'
-                  : 'bg-apple-gray-light text-apple-text-light cursor-not-allowed',
-              )}
-            >
-              {headlineLoading && generationCount === 0 ? (
-                <AIWorxButtonLoader />
-              ) : (
-                `Generate ${numberOfVariations} Headlines`
-              )}
-            </button>
-            
-            {/* Start Over button - appears after first generation */}
-            {generationCount > 0 && (
-              <button
-                onClick={handleReset}
-                disabled={headlineLoading}
-                className={cn(
-                  'px-4 py-3 rounded-lg text-sm font-medium',
-                  'border border-gray-300 text-gray-600',
-                  'hover:bg-gray-50 hover:border-gray-400 transition-all duration-200',
-                  'focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2',
-                  'disabled:opacity-50 disabled:cursor-not-allowed',
-                )}
-              >
-                Start Over
-              </button>
-            )}
-          </div>
         </>
       )}
 
@@ -823,32 +782,6 @@ export function HeadlineGeneratorTool({ className }: HeadlineGeneratorToolProps)
             </div>
           )}
 
-          {/* Generate More button - always at the bottom */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <button
-              onClick={handleGenerateMore}
-              disabled={headlineLoading || !canGenerate}
-              className={cn(
-                'w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg',
-                'text-sm font-medium transition-all duration-200',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                headlineLoading && generationCount > 0
-                  ? 'aiworx-gradient-animated cursor-wait text-white'
-                  : canGenerate && !headlineLoading
-                  ? 'bg-[#006EE6] text-white border border-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed',
-              )}
-            >
-              {headlineLoading && generationCount > 0 ? (
-                <AIWorxButtonLoader />
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4" />
-                  Generate {numberOfVariations} More
-                </>
-              )}
-            </button>
-          </div>
         </div>
       )}
 
@@ -877,6 +810,82 @@ export function HeadlineGeneratorTool({ className }: HeadlineGeneratorToolProps)
             Copy Raw Text
           </button>
         </div>
+      )}
+
+      {/* ═══ Sticky primary action ═══
+          State machine:
+          - No channel selected → no bar (nothing to generate yet).
+          - Channel selected, no results → Generate N Headlines.
+          - Results present → Generate N More + Start Over.
+          Per-card copy and Copy All live inside the results list so they stay
+          grouped with the headlines they act on. */}
+      {selectedChannel && !hasResults && (
+        <StickyActionBar>
+          <button
+            onClick={handleGenerate}
+            disabled={!canGenerate || headlineLoading}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm transition-all duration-200',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              'flex items-center justify-center gap-2',
+              headlineLoading
+                ? 'aiworx-gradient-animated cursor-wait text-white'
+                : canGenerate
+                ? 'bg-[#006EE6] text-white hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow'
+                : 'bg-apple-gray-light text-apple-text-light cursor-not-allowed',
+            )}
+          >
+            {headlineLoading ? (
+              <AIWorxButtonLoader />
+            ) : (
+              `Generate ${numberOfVariations} Headlines`
+            )}
+          </button>
+        </StickyActionBar>
+      )}
+
+      {hasResults && (
+        <StickyActionBar>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleGenerateMore}
+              disabled={headlineLoading || !canGenerate}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg',
+                'text-sm font-medium transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                headlineLoading
+                  ? 'aiworx-gradient-animated cursor-wait text-white'
+                  : canGenerate && !headlineLoading
+                  ? 'bg-[#006EE6] text-white border border-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed',
+              )}
+            >
+              {headlineLoading ? (
+                <AIWorxButtonLoader />
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  Generate {numberOfVariations} More
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleReset}
+              disabled={headlineLoading}
+              className={cn(
+                'px-4 py-3 rounded-lg text-sm font-medium',
+                'border border-gray-300 text-gray-600',
+                'hover:bg-gray-50 hover:border-gray-400 transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+              )}
+            >
+              Start Over
+            </button>
+          </div>
+        </StickyActionBar>
       )}
     </div>
   );

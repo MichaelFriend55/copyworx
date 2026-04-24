@@ -222,9 +222,11 @@ export function SlideOutPanel({
           {children}
         </div>
         
-        {/* Footer - optional */}
+        {/* Footer - optional. Intentionally a neutral wrapper; visual treatment
+            (border, background, shadow, padding) is owned by the child, which is
+            expected to be a <StickyActionBar> in most cases. */}
         {footer && (
-          <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex-shrink-0">
             {footer}
           </div>
         )}

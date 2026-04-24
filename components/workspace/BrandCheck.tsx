@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
 import { insertTextAtSelection } from '@/lib/editor-utils';
@@ -597,32 +598,6 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
         </div>
       )}
 
-      {/* Analyze button */}
-      {!analysis && (
-        <button
-          onClick={handleAnalyze}
-          disabled={!canAnalyze}
-          className={cn(
-            'w-full py-3 px-4 rounded-lg',
-            'font-medium text-sm text-white',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-            'flex items-center justify-center gap-2',
-            isAnalyzing && 'aiworx-gradient-animated cursor-wait',
-            !isAnalyzing && canAnalyze && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
-            !canAnalyze && !isAnalyzing && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
-          )}
-        >
-          {isAnalyzing ? (
-            <AIWorxButtonLoader />
-          ) : (
-            <>
-              <ShieldCheck className="w-4 h-4" />
-              Check Brand Alignment
-            </>
-          )}
-        </button>
-      )}
-
       {/* Analyze error */}
       {analysisError && (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -708,44 +683,6 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
             </div>
           )}
 
-          {/* Rewrite + reset actions */}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={handleRewrite}
-              disabled={isRewriting}
-              className={cn(
-                'w-full py-2.5 px-3 rounded-lg',
-                'text-sm font-medium text-white',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                'flex items-center justify-center gap-2',
-                isRewriting && 'aiworx-gradient-animated cursor-wait',
-                !isRewriting && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200'
-              )}
-            >
-              {isRewriting ? (
-                <AIWorxButtonLoader />
-              ) : (
-                <>
-                  <Wand2 className="w-4 h-4" />
-                  Rewrite to Fix Issues
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleNewAnalysis}
-              className={cn(
-                'w-full py-2 px-3 rounded-lg',
-                'text-sm font-medium text-gray-600',
-                'border border-gray-300 hover:bg-gray-50 hover:border-gray-400',
-                'transition-all duration-200',
-                'focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2',
-                'flex items-center justify-center gap-2'
-              )}
-            >
-              <RotateCcw className="w-4 h-4" />
-              New Check
-            </button>
-          </div>
         </div>
       )}
 
@@ -873,6 +810,82 @@ export function BrandCheck({ editor, className }: BrandCheckProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ═══ Sticky primary action ═══
+          States:
+          - Pre-analysis → Check Brand Alignment.
+          - Analysis shown, no rewrite yet → Rewrite to Fix Issues + New Check.
+          - Rewrite comparison → bar hidden; the comparison view above owns
+            Accept Rewrite / Copy Rewrite / Keep Original so those contextual
+            actions stay grouped with the rewrite they act on. */}
+      {!analysis && (
+        <StickyActionBar>
+          <button
+            onClick={handleAnalyze}
+            disabled={!canAnalyze}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm text-white',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              'flex items-center justify-center gap-2',
+              isAnalyzing && 'aiworx-gradient-animated cursor-wait',
+              !isAnalyzing && canAnalyze && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
+              !canAnalyze && !isAnalyzing && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
+            )}
+          >
+            {isAnalyzing ? (
+              <AIWorxButtonLoader />
+            ) : (
+              <>
+                <ShieldCheck className="w-4 h-4" />
+                Check Brand Alignment
+              </>
+            )}
+          </button>
+        </StickyActionBar>
+      )}
+
+      {analysis && !rewrittenHtml && (
+        <StickyActionBar>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handleRewrite}
+              disabled={isRewriting}
+              className={cn(
+                'w-full py-2.5 px-3 rounded-lg',
+                'text-sm font-medium text-white',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                'flex items-center justify-center gap-2',
+                isRewriting && 'aiworx-gradient-animated cursor-wait',
+                !isRewriting && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200'
+              )}
+            >
+              {isRewriting ? (
+                <AIWorxButtonLoader />
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4" />
+                  Rewrite to Fix Issues
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleNewAnalysis}
+              className={cn(
+                'w-full py-2 px-3 rounded-lg',
+                'text-sm font-medium text-gray-600',
+                'border border-gray-300 hover:bg-gray-50 hover:border-gray-400',
+                'transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2',
+                'flex items-center justify-center gap-2'
+              )}
+            >
+              <RotateCcw className="w-4 h-4" />
+              New Check
+            </button>
+          </div>
+        </StickyActionBar>
       )}
     </div>
   );

@@ -25,6 +25,7 @@ import {
   Edit2,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { Button } from '@/components/ui/button';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { PersonaForm } from '@/components/workspace/PersonaForm';
@@ -299,18 +300,22 @@ export function PersonasSlideOut({
     setPersonaToDelete(null);
   }, []);
   
-  // Panel footer - varies by view mode
+  // Panel footer — varies by view mode. List view gets a primary CTA via the
+  // shared StickyActionBar so it renders consistently with every other panel.
+  // Form views own their own sticky actions inside PersonaForm.
   const panelFooter = viewMode === 'list' ? (
-    <Button
-      variant="brand"
-      size="default"
-      onClick={handleCreateNew}
-      disabled={!activeProject}
-      className="w-full"
-    >
-      <Plus className="h-4 w-4 mr-2" />
-      Create New Persona
-    </Button>
+    <StickyActionBar>
+      <Button
+        variant="brand"
+        size="default"
+        onClick={handleCreateNew}
+        disabled={!activeProject}
+        className="w-full"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Create New Persona
+      </Button>
+    </StickyActionBar>
   ) : null;
   
   return (

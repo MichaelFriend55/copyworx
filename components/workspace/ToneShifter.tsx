@@ -46,6 +46,7 @@ import {
 import { insertTextAtSelection } from '@/lib/editor-utils';
 import { formatGeneratedContent, copyFormattedHtmlToClipboard } from '@/lib/utils/content-formatting';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
 
@@ -276,29 +277,6 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
         </div>
       </div>
 
-      {/* Action Button */}
-      <button
-        onClick={handleShiftTone}
-        disabled={!canShift}
-        className={cn(
-          'w-full py-3 px-4 rounded-lg',
-          'font-medium text-sm text-white',
-          'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-          // Animated gradient when loading
-          toneShiftLoading && 'aiworx-gradient-animated cursor-wait',
-          // Brand button with blue→purple active when not loading
-          !toneShiftLoading && hasSelection && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
-          // Gray background when truly disabled (not loading)
-          !hasSelection && !toneShiftLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
-        )}
-      >
-        {toneShiftLoading ? (
-          <AIWorxButtonLoader />
-        ) : (
-          'Shift Tone'
-        )}
-      </button>
-
       {/* Helper Text */}
       {!hasSelection && (
         <p className="text-xs text-apple-text-light text-center">
@@ -388,6 +366,28 @@ export function ToneShifter({ editor, className }: ToneShifterProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Sticky primary action — hidden when a result is showing. The result
+          card above owns its own Replace/Copy/Clear buttons so they remain
+          visually grouped with the output they act on. */}
+      {!toneShiftResult && (
+        <StickyActionBar>
+          <button
+            onClick={handleShiftTone}
+            disabled={!canShift}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm text-white',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              toneShiftLoading && 'aiworx-gradient-animated cursor-wait',
+              !toneShiftLoading && hasSelection && 'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
+              !hasSelection && !toneShiftLoading && 'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
+            )}
+          >
+            {toneShiftLoading ? <AIWorxButtonLoader /> : 'Shift Tone'}
+          </button>
+        </StickyActionBar>
       )}
     </div>
   );

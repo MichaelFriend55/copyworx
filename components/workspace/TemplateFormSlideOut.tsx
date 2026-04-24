@@ -26,6 +26,7 @@ import {
 import * as LucideIcons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { Button } from '@/components/ui/button';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
 import { TemplateFormField, OTHER_OPTION_VALUE } from './TemplateFormField';
@@ -380,51 +381,55 @@ export function TemplateFormSlideOut({
   // If no template, don't render
   if (!template) return null;
   
-  // Panel footer with action buttons
+  // Panel footer with action buttons, wrapped in the shared StickyActionBar
+  // so the generate/cancel affordances stay pinned to the panel bottom while
+  // long template forms scroll.
   const panelFooter = (
-    <div className="flex gap-3">
-      <Button
-        variant="outline"
-        size="default"
-        onClick={handleCancel}
-        disabled={isGenerating}
-        className="flex-1"
-      >
-        Cancel
-      </Button>
-      <Button
-        variant={generationSuccess ? 'default' : isGenerating ? 'default' : 'brand'}
-        size="default"
-        onClick={handleGenerate}
-        disabled={isGenerating || !editor || !activeProject || generationSuccess}
-        className={cn(
-          'flex-1',
-          // Animated gradient when generating (override background)
-          isGenerating && 'aiworx-gradient-animated',
-          // Green when success
-          generationSuccess && 'bg-green-500 hover:bg-green-600'
-        )}
-      >
-        {isGenerating ? (
-          <div className="flex flex-col items-center gap-1">
-            <AIWorxButtonLoader />
-            {getLoadingMessage() && (
-              <span className="text-xs">{getLoadingMessage()}</span>
-            )}
-          </div>
-        ) : generationSuccess ? (
-          <>
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Generated!
-          </>
-        ) : (
-          <>
-            <Sparkles className="h-4 w-4 mr-2" />
-            Generate Copy
-          </>
-        )}
-      </Button>
-    </div>
+    <StickyActionBar>
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          size="default"
+          onClick={handleCancel}
+          disabled={isGenerating}
+          className="flex-1"
+        >
+          Cancel
+        </Button>
+        <Button
+          variant={generationSuccess ? 'default' : isGenerating ? 'default' : 'brand'}
+          size="default"
+          onClick={handleGenerate}
+          disabled={isGenerating || !editor || !activeProject || generationSuccess}
+          className={cn(
+            'flex-1',
+            // Animated gradient when generating (override background)
+            isGenerating && 'aiworx-gradient-animated',
+            // Green when success
+            generationSuccess && 'bg-green-500 hover:bg-green-600'
+          )}
+        >
+          {isGenerating ? (
+            <div className="flex flex-col items-center gap-1">
+              <AIWorxButtonLoader />
+              {getLoadingMessage() && (
+                <span className="text-xs">{getLoadingMessage()}</span>
+              )}
+            </div>
+          ) : generationSuccess ? (
+            <>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Generated!
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Generate Copy
+            </>
+          )}
+        </Button>
+      </div>
+    </StickyActionBar>
   );
   
   return (

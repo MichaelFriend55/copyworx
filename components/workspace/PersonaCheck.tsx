@@ -52,6 +52,7 @@ import {
 } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/utils/logger';
 import { insertTextAtSelection } from '@/lib/editor-utils';
@@ -824,36 +825,6 @@ export function PersonaCheck({ editor, className }: PersonaCheckProps) {
         </div>
       )}
 
-      {/* Analyze button */}
-      {!analysis && hasPersonas && (
-        <button
-          onClick={handleAnalyze}
-          disabled={!canAnalyze}
-          className={cn(
-            'w-full py-3 px-4 rounded-lg',
-            'font-medium text-sm text-white',
-            'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-            'flex items-center justify-center gap-2',
-            isAnalyzing && 'aiworx-gradient-animated cursor-wait',
-            !isAnalyzing &&
-              canAnalyze &&
-              'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
-            !canAnalyze &&
-              !isAnalyzing &&
-              'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
-          )}
-        >
-          {isAnalyzing ? (
-            <AIWorxButtonLoader />
-          ) : (
-            <>
-              <UserCheck className="w-4 h-4" />
-              Analyze Copy
-            </>
-          )}
-        </button>
-      )}
-
       {/* Analyze error */}
       {analysisError && (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -981,69 +952,34 @@ export function PersonaCheck({ editor, className }: PersonaCheckProps) {
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={handleRewrite}
-              disabled={isRewriting}
-              className={cn(
-                'w-full py-2.5 px-3 rounded-lg',
-                'text-sm font-medium text-white',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                'flex items-center justify-center gap-2',
-                isRewriting && 'aiworx-gradient-animated cursor-wait',
-                !isRewriting &&
-                  'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200'
-              )}
-            >
-              {isRewriting ? (
-                <AIWorxButtonLoader />
-              ) : (
-                <>
-                  <Wand2 className="w-4 h-4" />
-                  Rewrite to Fix Issues
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleCopyAnalysis}
-              className={cn(
-                'w-full py-2 px-3 rounded-lg',
-                'text-sm font-medium',
-                'flex items-center justify-center gap-2',
-                'transition-all duration-200',
-                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
-                copiedAnalysis
-                  ? 'bg-green-100 text-green-700 border border-green-300'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              {copiedAnalysis ? (
-                <>
-                  <ClipboardCheck className="w-4 h-4" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  Copy Analysis
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleNewAnalysis}
-              className={cn(
-                'w-full py-1.5 px-3 rounded-lg',
-                'text-sm font-medium text-gray-600 hover:text-gray-900',
-                'transition-colors duration-150',
-                'focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2',
-                'flex items-center justify-center gap-1.5'
-              )}
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              New Analysis
-            </button>
-          </div>
+          {/* Copy Analysis — kept inline because it is contextual to the
+              analysis result above it. The tool-global actions (Rewrite,
+              New Analysis) live in the StickyActionBar at the bottom. */}
+          <button
+            onClick={handleCopyAnalysis}
+            className={cn(
+              'w-full py-2 px-3 rounded-lg',
+              'text-sm font-medium',
+              'flex items-center justify-center gap-2',
+              'transition-all duration-200',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              copiedAnalysis
+                ? 'bg-green-100 text-green-700 border border-green-300'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            )}
+          >
+            {copiedAnalysis ? (
+              <>
+                <ClipboardCheck className="w-4 h-4" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                Copy Analysis
+              </>
+            )}
+          </button>
         </div>
       )}
 
@@ -1173,6 +1109,89 @@ export function PersonaCheck({ editor, className }: PersonaCheckProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ═══ Sticky primary action ═══
+          States:
+          - No personas assigned → bar hidden; the info card above owns the
+            "Set up Personas" CTA so it remains grouped with the explanation.
+          - Pre-analysis (personas present) → Analyze Copy.
+          - Analysis shown, no rewrite yet → Rewrite to Fix Issues + New Analysis.
+          - Rewrite comparison → bar hidden; the comparison view above owns
+            Accept Rewrite / Copy Rewrite / Keep Original so those contextual
+            actions stay grouped with the rewrite they act on. */}
+      {!analysis && hasPersonas && (
+        <StickyActionBar>
+          <button
+            onClick={handleAnalyze}
+            disabled={!canAnalyze}
+            className={cn(
+              'w-full py-3 px-4 rounded-lg',
+              'font-medium text-sm text-white',
+              'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+              'flex items-center justify-center gap-2',
+              isAnalyzing && 'aiworx-gradient-animated cursor-wait',
+              !isAnalyzing &&
+                canAnalyze &&
+                'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200',
+              !canAnalyze &&
+                !isAnalyzing &&
+                'bg-apple-gray-light text-apple-text-light cursor-not-allowed'
+            )}
+          >
+            {isAnalyzing ? (
+              <AIWorxButtonLoader />
+            ) : (
+              <>
+                <UserCheck className="w-4 h-4" />
+                Analyze Copy
+              </>
+            )}
+          </button>
+        </StickyActionBar>
+      )}
+
+      {analysis && !rewrittenHtml && (
+        <StickyActionBar>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handleRewrite}
+              disabled={isRewriting}
+              className={cn(
+                'w-full py-2.5 px-3 rounded-lg',
+                'text-sm font-medium text-white',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                'flex items-center justify-center gap-2',
+                isRewriting && 'aiworx-gradient-animated cursor-wait',
+                !isRewriting &&
+                  'bg-[#006EE6] hover:bg-[#0062CC] active:bg-[#7A3991] active:scale-[0.98] shadow-sm hover:shadow transition-all duration-200'
+              )}
+            >
+              {isRewriting ? (
+                <AIWorxButtonLoader />
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4" />
+                  Rewrite to Fix Issues
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleNewAnalysis}
+              className={cn(
+                'w-full py-2 px-3 rounded-lg',
+                'text-sm font-medium text-gray-600',
+                'border border-gray-300 hover:bg-gray-50 hover:border-gray-400',
+                'transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2',
+                'flex items-center justify-center gap-2'
+              )}
+            >
+              <RotateCcw className="w-4 h-4" />
+              New Analysis
+            </button>
+          </div>
+        </StickyActionBar>
       )}
     </div>
   );

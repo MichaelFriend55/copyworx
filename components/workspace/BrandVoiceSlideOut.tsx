@@ -27,6 +27,7 @@ import {
   Star,
 } from 'lucide-react';
 import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { Button } from '@/components/ui/button';
 import { AutoExpandTextarea } from '@/components/ui/AutoExpandTextarea';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -1037,8 +1038,17 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 pt-4">
+    </div>
+  );
+
+  /**
+   * Footer for the create/edit form view. Rendered inside SlideOutPanel's footer
+   * slot (via StickyActionBar) so the primary Save/Cancel actions stay visible
+   * regardless of scroll position in long forms.
+   */
+  const renderFormFooter = () => (
+    <StickyActionBar>
+      <div className="flex gap-3">
         <Button
           variant="outline"
           size="default"
@@ -1073,7 +1083,7 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
           )}
         </Button>
       </div>
-    </div>
+    </StickyActionBar>
   );
   
   // ═══════════════════════════════════════════════════════════
@@ -1096,6 +1106,7 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
           viewMode === 'create' ? 'Define a new brand voice' :
           'Update brand voice settings'
         }
+        footer={viewMode === 'list' ? undefined : renderFormFooter()}
       >
         {viewMode === 'list' ? renderListView() : renderFormView()}
       </SlideOutPanel>
