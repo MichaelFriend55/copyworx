@@ -381,21 +381,26 @@ export function MyProjectsSlideOut({
     setExpandedProjectId(prev => (prev === projectId ? null : projectId));
   }, []);
 
-  // Handle document selection — panel stays open
+  // Handle document selection — auto-close the panel after the active
+  // document commits, so the editor renders the new doc before the slide-out
+  // begins its close animation.
   const handleDocumentSelect = useCallback((doc: ProjectDocument) => {
-    // Set active document in store
     setActiveDocumentId(doc.id);
 
-    // If document is in a different project, switch projects first
     if (doc.projectId !== activeProjectId) {
       setActiveProjectId(doc.projectId);
     }
 
-    // Notify parent (editor loads the document)
     onDocumentClick?.(doc);
 
-    // NOTE: onClose() intentionally not called — the panel stays open
-  }, [activeProjectId, setActiveProjectId, setActiveDocumentId, onDocumentClick]);
+    // Defer to the next tick so the active-document state update and the
+    // parent's onDocumentClick callback are processed first. Prevents a
+    // perceived "empty editor" flash by ensuring the editor commits the
+    // new document before this panel starts animating closed.
+    setTimeout(() => {
+      onClose();
+    }, 0);
+  }, [activeProjectId, setActiveProjectId, setActiveDocumentId, onDocumentClick, onClose]);
 
   // Handle project selection
   const handleProjectSelect = useCallback((projectId: string) => {
