@@ -34,7 +34,6 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { ProjectSelectorField } from '@/components/workspace/ProjectSelectorField';
 import { cn } from '@/lib/utils';
 import {
-  useWorkspaceStore,
   useActiveProjectId,
   useProjects,
   usePendingBrandVoiceEdit,
@@ -111,7 +110,7 @@ export function BrandVoiceSlideOut({
   const projects = useProjects();
   const pendingBrandVoiceEdit = usePendingBrandVoiceEdit();
   const { setPendingBrandVoiceEdit } = usePendingEditActions();
-  const { refreshProjects } = useProjectActions();
+  const { refreshProjects, refreshAll } = useProjectActions();
   
   // Get active project
   const activeProject = React.useMemo(
@@ -521,30 +520,25 @@ ALTER TABLE brand_voices ALTER COLUMN project_id DROP NOT NULL;`);
       }
       
       logger.log('✅ Brand voice deleted');
-      
-      // Refresh the list
-      await fetchBrandVoices();
-      
-      // Also update Zustand store if this brand voice was assigned to any project
-      const { projects } = useWorkspaceStore.getState();
-      const updatedProjects = projects.map(p => {
-        if (p.brandVoice && p.brandVoice.id === deletingBrandVoice.id) {
-          return { ...p, brandVoice: null };
-        }
-        return p;
-      });
-      useWorkspaceStore.setState({ projects: updatedProjects });
-      
+
+      // Refresh this slide-out's local list AND the workspace projects
+      // store so BrandVoiceSection in the sidebar drops the deleted row
+      // immediately. Replaces a previous manual setState patch that only
+      // cleared the legacy singular `project.brandVoice` field — which the
+      // sidebar doesn't read — leaving the deleted voice visible in
+      // `project.brandVoices` until a manual refresh.
+      await Promise.all([fetchBrandVoices(), refreshAll()]);
+
       setShowDeleteModal(false);
       setDeletingBrandVoice(null);
-      
+
     } catch (error) {
       logger.error('❌ Failed to delete brand voice:', error);
       setSaveError(error instanceof Error ? error.message : 'Failed to delete brand voice');
     } finally {
       setIsDeleting(false);
     }
-  }, [deletingBrandVoice, fetchBrandVoices]);
+  }, [deletingBrandVoice, fetchBrandVoices, refreshAll]);
   
   /**
    * Cancel delete

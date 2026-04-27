@@ -160,6 +160,10 @@ export function TemplatesModal({ isOpen, onClose, onTemplateSelect }: TemplatesM
           // Always create a new document for multi-section templates
           const newDoc = await createDocument(activeProjectId, template.name);
           store.setActiveDocumentId(newDoc.id);
+          // Sidebar's DocumentList isn't subscribed to this in-flight
+          // create — invalidate both the project tree and the document
+          // list so the new doc shows up without a manual refresh.
+          store.refreshAll();
           logger.log('✅ Created new document for multi-section template:', {
             id: newDoc.id,
             title: newDoc.title

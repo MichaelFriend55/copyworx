@@ -266,7 +266,10 @@ export function TemplateFormSlideOut({
         
         // Set as active document in store
         useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
-        
+        // Refresh both project tree + document list so the auto-created
+        // doc shows up in the sidebar immediately.
+        useWorkspaceStore.getState().refreshAll();
+
         logger.log('📄 Auto-created document for template:', {
           title: newDoc.title,
           id: newDoc.id,

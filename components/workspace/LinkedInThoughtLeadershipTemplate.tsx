@@ -770,6 +770,9 @@ export function LinkedInThoughtLeadershipTemplate({
         const newDoc = await createDocument(activeProjectId, title);
         targetDocumentId = newDoc.id;
         useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
+        // Refresh both project tree + document list so the auto-created
+        // doc shows up in the sidebar immediately.
+        useWorkspaceStore.getState().refreshAll();
         logger.log('Auto-created document for LinkedIn post:', newDoc.id);
         await new Promise((resolve) => setTimeout(resolve, 150));
       } catch (createError) {

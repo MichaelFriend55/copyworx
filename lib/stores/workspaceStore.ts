@@ -126,7 +126,15 @@ interface WorkspaceState {
   setActiveDocumentId: (id: string | null) => void;
   /** Bump documentListVersion to trigger a sidebar re-fetch */
   invalidateDocumentList: () => void;
-  
+  /**
+   * Refresh projects AND bump documentListVersion in one call. Use at
+   * any mutation site that may have changed both the project tree
+   * (BrandVoiceSection, PersonaSection, project headers) and the
+   * document list — so future handlers don't have to remember to call
+   * both primitives independently.
+   */
+  refreshAll: () => Promise<void>;
+
   // UI actions
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
@@ -320,6 +328,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       invalidateDocumentList: () => {
         set((state) => ({ documentListVersion: state.documentListVersion + 1 }));
+      },
+
+      refreshAll: async () => {
+        await get().refreshProjects();
+        get().invalidateDocumentList();
       },
 
       // UI actions
@@ -956,6 +969,7 @@ export const useProjectActions = () => useWorkspaceStore(
     updateProject: state.updateProject,
     deleteProject: state.deleteProject,
     refreshProjects: state.refreshProjects,
+    refreshAll: state.refreshAll,
   }))
 );
 

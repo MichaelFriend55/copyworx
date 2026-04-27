@@ -861,7 +861,12 @@ function DocumentMenu({
             window.dispatchEvent(new CustomEvent('documentUpdated', {
               detail: { projectId: activeProjectId, documentId: activeDocumentId }
             }));
-            
+
+            // Sidebar's DocumentList reads documents from its own
+            // useEffect-driven fetch keyed on documentListVersion, so the
+            // imported title needs an explicit invalidation to show up.
+            useWorkspaceStore.getState().refreshAll();
+
             logger.log('✅ Document title updated to:', newTitle);
           } catch (updateError) {
             logger.warn('⚠️ Could not update document title:', updateError);
@@ -1457,8 +1462,9 @@ export function Toolbar({ className, onRestartTour }: ToolbarProps) {
       // Set new document as active (triggers EditorArea to load it)
       useWorkspaceStore.getState().setActiveDocumentId(newDoc.id);
 
-      // Refresh projects so sidebar reflects the new document
-      useWorkspaceStore.getState().refreshProjects();
+      // Refresh projects + bump documentListVersion so both the project
+      // tree and the always-visible DocumentList reflect the new doc.
+      useWorkspaceStore.getState().refreshAll();
 
       // Show toast notification (blue with white text for visibility)
       toast.success(`New document created in ${targetProject.name}`, {

@@ -142,7 +142,7 @@ export function PersonasSlideOut({
   const projects = useProjects();
   const pendingPersonaEdit = usePendingPersonaEdit();
   const { setPendingPersonaEdit } = usePendingEditActions();
-  const { refreshProjects } = useProjectActions();
+  const { refreshProjects, refreshAll } = useProjectActions();
   
   // Get active project
   const activeProject = React.useMemo(
@@ -285,10 +285,12 @@ export function PersonasSlideOut({
     
     try {
       await deletePersona(activeProjectId, personaToDelete.id);
-      await loadPersonas();
+      // Refresh both this slide-out's local list AND the workspace
+      // projects store so PersonaSection in the sidebar drops the
+      // deleted row immediately. Mirrors handleSave's refresh pattern.
+      await Promise.all([loadPersonas(), refreshAll()]);
       logger.log('✅ Persona deleted');
-      
-      // Close modal
+
       setPersonaToDelete(null);
     } catch (error) {
       logger.error('❌ Failed to delete persona:', error);
@@ -296,7 +298,7 @@ export function PersonasSlideOut({
     } finally {
       setIsDeleting(false);
     }
-  }, [activeProjectId, personaToDelete, loadPersonas]);
+  }, [activeProjectId, personaToDelete, loadPersonas, refreshAll]);
   
   /**
    * Cancel delete

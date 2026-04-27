@@ -428,6 +428,10 @@ export function TemplatesSlideOut({
           try {
             const newDoc = await createDocument(activeProjectId, template.name);
             store.setActiveDocumentId(newDoc.id);
+            // Sidebar's DocumentList isn't subscribed to this in-flight
+            // create — invalidate both the project tree and the document
+            // list so the new doc shows up without a manual refresh.
+            store.refreshAll();
             logger.log('✅ Created new document for custom template:', {
               id: newDoc.id,
               title: newDoc.title
