@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateTextLength, validateNotEmpty, logError } from '@/lib/utils/error-handling';
+import { buildCompetitiveAnalysisPrompt } from '@/lib/prompts/competitive-analysis';
 import { logger } from '@/lib/utils/logger';
 import { getUserId, checkUserWithinLimit, usageLimitExceededResponse } from '@/lib/utils/api-auth';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
@@ -30,35 +31,6 @@ interface CompetitiveAnalysisResponse {
 interface ErrorResponse {
   error: string;
   details?: string;
-}
-
-// ============================================================================
-// Prompt Builder
-// ============================================================================
-
-/**
- * Build the system prompt for competitive analysis
- */
-function buildSystemPrompt(copyType: string, industryContext?: string): string {
-  return `You are a senior copywriting strategist with 40 years of experience analyzing competitive messaging. You specialize in identifying what makes copy effective or ineffective, and providing actionable strategic insights.
-
-Analyze the provided ${copyType} copy and deliver a structured competitive teardown.${industryContext ? ` The competitive context is: ${industryContext}.` : ''}
-
-IMPORTANT FORMATTING RULES:
-- Return your analysis in clean HTML using <h3>, <p>, <ul>, <li>, and <strong> tags
-- Do NOT use markdown
-- Be specific and actionable – cite actual phrases and elements from the copy
-- Write as a strategic advisor, not a generic AI reviewer
-- Focus on what a competing copywriter could LEARN and EXPLOIT from this analysis
-
-Structure your response with these exact section headers:
-<h3>📋 Messaging Strategy</h3>
-<h3>💪 Strengths</h3>
-<h3>⚠️ Weaknesses</h3>
-<h3>🎯 Opportunities for You</h3>
-<h3>💡 Key Takeaways</h3>
-
-For Key Takeaways, provide 3-5 actionable bullet points.`;
 }
 
 // ============================================================================
@@ -192,7 +164,7 @@ export async function POST(
 
     // 4. Call Claude
     const resolvedCopyType = copyType || 'marketing';
-    const systemPrompt = buildSystemPrompt(resolvedCopyType, industryContext);
+    const systemPrompt = buildCompetitiveAnalysisPrompt(resolvedCopyType, industryContext);
     const userPrompt = `Analyze this ${resolvedCopyType} copy:\n\n${text}`;
 
     logger.log('📝 Competitive analysis request:', {
@@ -204,6 +176,7 @@ export async function POST(
     const message = await Promise.race([
       anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
+        temperature: 0.3,
         max_tokens: 4000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
