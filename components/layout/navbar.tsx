@@ -156,7 +156,7 @@ export function Navbar(): React.ReactElement {
       )}
     >
       <nav aria-label="Primary" className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between gap-4">
+        <div className="flex h-24 items-center justify-between gap-4">
           <Link
             href="/"
             aria-label="CopyWorx Studio - Home"
@@ -168,7 +168,7 @@ export function Navbar(): React.ReactElement {
               width={200}
               height={50}
               priority
-              className="h-10 w-auto"
+              className="h-12 w-auto"
             />
           </Link>
 
