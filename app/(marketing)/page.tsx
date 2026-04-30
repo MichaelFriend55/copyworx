@@ -297,10 +297,13 @@ export default function HomePage() {
           VIDEO SECTION
           Streamable video embed with responsive container
           ======================================================================== */}
-      <section className="py-24 md:py-32 bg-[#F5F5F7]">
+      <section id="demo" className="scroll-mt-24 py-24 md:py-32 bg-[#F5F5F7]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-16">
+            <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
+              Demo
+            </p>
             <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
               Discover How To Write To Win
             </h2>
