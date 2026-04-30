@@ -19,12 +19,14 @@ export const metadata: Metadata = {
 };
 
 const FEATURES = [
-  'Unlimited "AI@Worx" AI-powered rewrites',
-  'Access to all copywriting templates',
-  'Brand Check – score and rewrite against your Brand Voice',
-  'Persona Check – score and rewrite for any audience',
-  'Multi-channel adaptation',
-  'Cloud sync across devices',
+  'Brand Voice creation and copy rewriting',
+  'Persona creation and copy rewriting',
+  '15 professional copywriting templates',
+  'Tone Shifter — six professional tones',
+  'My Word Advisor thesaurus',
+  'Compare versions side-by-side',
+  'Strategic Competitive Analysis tool',
+  'Unlimited projects and documents',
   'Priority email support',
   'New features as they ship',
 ] as const;
