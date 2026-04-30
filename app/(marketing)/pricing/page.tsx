@@ -66,9 +66,9 @@ export default function PricingPage() {
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl mx-auto text-center">
-            <Badge variant="brand" className="mb-3">
+            <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
               Pricing
-            </Badge>
+            </p>
             <h1 className="font-sans text-4xl md:text-5xl lg:text-6xl font-bold text-ink-900 mb-4">
               One plan. Everything included.
             </h1>
@@ -135,9 +135,9 @@ export default function PricingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-8">
-              <Badge variant="secondary" className="mb-3">
+              <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
                 FAQ
-              </Badge>
+              </p>
               <h2 className="font-sans text-3xl md:text-4xl font-bold text-ink-900 mb-4">
                 Frequently asked questions
               </h2>
