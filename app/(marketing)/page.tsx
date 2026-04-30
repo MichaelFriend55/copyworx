@@ -7,14 +7,13 @@
  * - The Challenge - problem statement
  * - The Story - founder narrative with gradient background
  * - Product Showcase - alternating screenshot/text blocks
- * - Pricing - single-tier pricing card (anchored at #pricing)
  * - Video - Streamable embed
  * - Final CTA section
  */
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -290,87 +289,6 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================
-          PRICING SECTION
-          Single-tier pricing card. Anchored at #pricing for the nav scroll-jump.
-          scroll-mt-24 (96px) clears the sticky h-24 nav.
-          ======================================================================== */}
-      <section id="pricing" className="scroll-mt-24 py-24 md:py-32 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
-              Pricing
-            </p>
-            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
-              Simple pricing. No surprises.
-            </h2>
-            <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
-              One plan. Everything included.
-            </p>
-          </div>
-
-          {/* Pricing Card */}
-          <div className="max-w-[420px] mx-auto bg-white border border-gray-200/80 rounded-xl shadow-lg p-8 md:p-10">
-            {/* Plan label */}
-            <p className="text-sm font-semibold text-ink-500 mb-4">
-              CopyWorx Studio
-            </p>
-
-            {/* Price line */}
-            <div className="flex items-baseline mb-6">
-              <span className="font-sans text-5xl md:text-6xl font-bold text-ink-900 leading-none">
-                $49
-              </span>
-              <span className="text-base text-ink-600 ml-2">/month</span>
-            </div>
-
-            <hr className="border-t border-gray-200/80 mb-6" />
-
-            {/* Feature checklist */}
-            <ul className="space-y-3 mb-8">
-              {[
-                'Brand Voice creation and copy rewriting',
-                'Persona creation and copy rewriting',
-                '15 professional copywriting templates',
-                'Tone Shifter — six professional tones',
-                'My Word Advisor thesaurus',
-                'Compare versions side-by-side',
-                'Strategic Competitive Analysis tool',
-                'Unlimited projects and documents',
-              ].map((feature) => (
-                <li key={feature} className="flex items-start gap-3">
-                  <Check
-                    className="h-5 w-5 text-[#0071E3] flex-shrink-0 mt-0.5"
-                    aria-hidden="true"
-                  />
-                  <span className="text-base text-ink-700 leading-relaxed">
-                    {feature}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            {/* CTA — matches hero gradient/arrow/font weight exactly */}
-            <Button
-              size="xl"
-              className="w-full bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg shadow-lg transition-all duration-300"
-              asChild
-            >
-              <Link href="/pricing">
-                Start Your 7-Day Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-
-            {/* Microcopy */}
-            <p className="text-sm text-ink-500 leading-relaxed text-center mt-4">
-              Credit card required. We&apos;ll remind you 2 days before your trial ends — cancel anytime, no charge.
-            </p>
           </div>
         </div>
       </section>
