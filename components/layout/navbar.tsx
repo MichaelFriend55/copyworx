@@ -156,7 +156,7 @@ export function Navbar(): React.ReactElement {
       )}
     >
       <nav aria-label="Primary" className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
+        <div className="flex h-20 items-center justify-between gap-4">
           <Link
             href="/"
             aria-label="CopyWorx Studio - Home"
@@ -165,10 +165,10 @@ export function Navbar(): React.ReactElement {
             <Image
               src="/copyworx-logo-v2.png"
               alt="CopyWorx Studio"
-              width={160}
-              height={40}
+              width={200}
+              height={50}
               priority
-              className="h-8 w-auto"
+              className="h-10 w-auto"
             />
           </Link>
 
@@ -182,10 +182,10 @@ export function Navbar(): React.ReactElement {
                     onClick={(event) => handleNavClick(event, link.href, closeMenu)}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'inline-flex items-center rounded-md px-3 py-2 text-sm transition-colors duration-150',
+                      'inline-flex items-center rounded-md px-3 py-2 text-base font-medium transition-colors duration-150',
                       active
                         ? 'bg-ink-100 text-ink-900 font-semibold'
-                        : 'font-medium text-ink-600 hover:bg-ink-50 hover:text-ink-900'
+                        : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
                     )}
                   >
                     {link.label}
