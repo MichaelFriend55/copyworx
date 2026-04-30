@@ -9,10 +9,10 @@
  * - Sticky to the top of the viewport.
  * - Soft bottom border + shadow appears only after the user scrolls
  *   (Aesthetic-Usability Effect - chrome stays quiet at rest).
- * - Hash links (#features, #pricing, #faq) smooth-scroll to their target if
- *   present; if the section does not exist yet, the link still works without
- *   throwing - the browser simply navigates to the URL hash and no scroll
- *   target is found. Sections will be added later.
+ * - Anchor links use the `/#section` form so they work from any page.
+ *   On the homepage, clicks are intercepted and smooth-scroll to the
+ *   target. On any other page, Next.js performs a normal route change to
+ *   `/` and the browser jumps to the fragment automatically.
  * - Active route highlighting via `usePathname()` for non-hash links
  *   (e.g. when on /demo the Demo link gets a subtle filled state).
  * - Mobile (< md): center links + secondary auth link collapse into a
@@ -58,13 +58,17 @@ interface NavLink {
 
 /**
  * Center nav links - order is fixed by spec.
- * Hash hrefs target sections on the homepage (added in a later task).
+ *
+ * Hash hrefs are written as `/#section` (not `#section`) so that clicking
+ * them from any page (e.g. /pricing) navigates to the homepage and then
+ * jumps to the anchor. When the user is already on the homepage,
+ * `handleNavClick` intercepts the click and smooth-scrolls instead.
  */
 const NAV_LINKS: readonly NavLink[] = [
-  { href: '#features', label: 'Features' },
+  { href: '/#features', label: 'Features' },
   { href: '/pricing', label: 'Pricing' },
-  { href: '#demo', label: 'Demo' },
-  { href: '#faq', label: 'FAQ' },
+  { href: '/#demo', label: 'Demo' },
+  { href: '/#faq', label: 'FAQ' },
 ] as const;
 
 /**
@@ -80,26 +84,38 @@ const TRY_FREE_CLASSES =
 const SCROLL_BORDER_THRESHOLD = 8;
 
 /**
- * Smoothly scroll to a hash target on the current page if it exists.
- * Falls back to default browser navigation when the target is missing,
- * so links remain functional even before their target sections are built.
+ * Click handler for nav links. Intercepts homepage anchor links so they
+ * smooth-scroll instead of replacing the URL fragment without animation.
  *
- * @param event Synthetic click event from the link
- * @param href  href value (e.g. "#features" or "/demo")
+ * Behavior:
+ * - Anchor href (`/#section`) AND already on `/`: preventDefault, smooth
+ *   scroll to the target, push the hash to history. No re-navigation.
+ * - Anchor href (`/#section`) on any other page: do nothing here so
+ *   Next.js's <Link> performs a normal route change to `/` - the browser
+ *   then jumps to the fragment automatically.
+ * - Page href (e.g. `/pricing`): do nothing here, normal navigation.
+ *
+ * `onComplete` always fires (used to close the mobile drawer regardless
+ * of which branch we took).
+ *
+ * @param event      Synthetic click event from the link
+ * @param href       href value (e.g. "/#features" or "/pricing")
+ * @param pathname   Current route pathname (from `usePathname()`)
  * @param onComplete Optional callback invoked once handling is done
- *                   (used to close the mobile menu).
  */
 function handleNavClick(
   event: React.MouseEvent<HTMLAnchorElement>,
   href: string,
+  pathname: string | null,
   onComplete?: () => void
 ): void {
-  if (href.startsWith('#')) {
-    const target = typeof document !== 'undefined' ? document.querySelector(href) : null;
+  if (href.startsWith('/#') && pathname === '/') {
+    const hash = href.slice(1);
+    const target = typeof document !== 'undefined' ? document.querySelector(hash) : null;
     if (target) {
       event.preventDefault();
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      window.history.pushState(null, '', href);
+      window.history.pushState(null, '', hash);
     }
   }
   onComplete?.();
@@ -114,7 +130,7 @@ function handleNavClick(
  */
 function isActive(href: string, pathname: string | null): boolean {
   if (!pathname) return false;
-  if (href.startsWith('#')) return false;
+  if (href.includes('#')) return false;
   return pathname === href;
 }
 
@@ -179,7 +195,7 @@ export function Navbar(): React.ReactElement {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    onClick={(event) => handleNavClick(event, link.href, closeMenu)}
+                    onClick={(event) => handleNavClick(event, link.href, pathname, closeMenu)}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
                       'inline-flex items-center rounded-md px-3 py-2 text-base font-medium transition-colors duration-150',
@@ -255,7 +271,7 @@ export function Navbar(): React.ReactElement {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    onClick={(event) => handleNavClick(event, link.href, closeMenu)}
+                    onClick={(event) => handleNavClick(event, link.href, pathname, closeMenu)}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
                       'flex min-h-[44px] items-center rounded-md px-3 py-3 text-base transition-colors duration-150',
