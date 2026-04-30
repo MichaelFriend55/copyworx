@@ -237,10 +237,13 @@ export default function HomePage() {
           PRODUCT SHOWCASE SECTION
           Alternating screenshot + text blocks showcasing key features
           ======================================================================== */}
-      <section className="py-24 md:py-32 bg-white">
+      <section id="features" className="scroll-mt-24 py-24 md:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-20 md:mb-28">
+            <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
+              Features
+            </p>
             <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
               See What&apos;s Inside
             </h2>
