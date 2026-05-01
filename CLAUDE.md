@@ -114,3 +114,38 @@ Required in `.env.local`:
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` - Clerk auth
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` - Supabase (optional; localStorage fallback if missing)
 - `ANTHROPIC_API_KEY` - Claude AI features
+
+## Standing Rules — Style and Workflow
+
+These rules apply to all future work on this codebase unless explicitly overridden in a specific prompt.
+
+### Content style
+
+- **Dashes:** Use en dashes (–) only. Never em dashes (—). Hyphens (-) are fine inside compound words (e.g., "AI-powered", "7-day", "side-by-side").
+- **Apostrophes:** Use straight apostrophes (') only. Never curly (' or '). Same rule for double quotes — straight (") only.
+- **Headlines:** All headlines (h1, h2, h3) and FAQ question headlines use Title Case. Capitalize every word, no exceptions — including articles (a, an, the), conjunctions (and, or), and short prepositions (to, of, by, with). UPPERCASE eyebrows are a separate style category and stay uppercase.
+- **Trademark:** Always use "CopyWorx Studio™" with the ™ symbol in marketing copy.
+
+### Vercel environment variables
+
+When adding new third-party API keys (Stripe, Clerk, Supabase, Anthropic, etc.) as environment variables in Vercel, scope them to "All Environments" (Production, Preview, AND Development). Scoping only to Production breaks preview deploys for feature branches.
+
+### Git workflow
+
+- Always commit and push BEFORE starting any Cursor session: `git add . && git commit -m '[message]' && git push`
+- Always commit and push AFTER any Cursor session that made changes
+- For non-trivial changes, work on a feature branch (e.g., `feature/[short-name]` or `fix/[short-name]`), open a PR, review the Vercel preview, and merge via Squash and Merge
+- Documentation-only changes can be committed directly to main
+
+### Cursor prompt structure
+
+For any non-trivial Cursor prompt, structure as:
+- **Step 1: Discovery (READ ONLY)** — Cursor reads the relevant files, reports findings, and pauses for explicit approval before making any changes
+- **Step 2+: Implementation** — only proceed after the user confirms the discovery findings
+- **Final step: Verify and report** — Cursor runs `npm run build`, lists files modified, and explicitly confirms whether anything outside the intended scope was changed
+
+This pattern catches contradictions, surfaces hidden dependencies (e.g., shared components, env var scope, deprecated routes), and prevents wasted work.
+
+### Sensitive operations
+
+Never push directly to main for code changes. Never merge a PR with failing checks. Never modify environment variables, Stripe configuration, or middleware logic without explicit approval in the same session.
