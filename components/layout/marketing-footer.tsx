@@ -49,7 +49,7 @@ export function MarketingFooter() {
             
             {/* Tagline */}
             <p className="text-xs text-white/80 leading-relaxed max-w-md text-center md:text-left">
-              CopyWorx Studio™ leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use — regardless of writing experience — to create professional, high-converting copy in minutes.
+              CopyWorx Studio™ leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use – regardless of writing experience – to create professional, high-converting copy in minutes.
             </p>
           </div>
 

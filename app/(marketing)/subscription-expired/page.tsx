@@ -49,7 +49,7 @@ export default function SubscriptionExpiredPage() {
                 href="/#pricing"
                 className="inline-flex w-full items-center justify-center rounded-md bg-gradient-to-r from-[#006EE6] to-[#A755F7] px-8 py-3 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:opacity-90 hover:shadow-xl active:scale-[0.98]"
               >
-                Resubscribe — $49/month
+                Resubscribe – $49/month
               </Link>
               <p className="text-center text-sm text-ink-500">
                 Questions?{' '}
