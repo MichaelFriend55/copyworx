@@ -34,6 +34,26 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+
+  /**
+   * Redirect rules.
+   *
+   * /pricing  ->  /#pricing
+   *   The standalone /pricing page was retired; the homepage is now the
+   *   single source of truth for pricing. We emit a 308 (permanent +
+   *   method-preserving) so old bookmarks, search-engine results, and any
+   *   stray external links land on the homepage with the URL fragment
+   *   intact, which scrolls the user to the new pricing card.
+   */
+  async redirects() {
+    return [
+      {
+        source: '/pricing',
+        destination: '/#pricing',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

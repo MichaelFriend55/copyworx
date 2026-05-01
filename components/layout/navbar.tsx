@@ -3,7 +3,7 @@
  * @description Sticky top navigation for the marketing site.
  *
  * Layout (Jakob's Law - standard SaaS pattern):
- *   [logo]  ........  [Features Pricing Demo FAQ]  ........  [Log in] [Try Free]
+ *   [logo]  ........  [Features Demo Pricing FAQ]  ........  [Log in] [Try Free]
  *
  * Behavior:
  * - Sticky to the top of the viewport.
@@ -60,14 +60,17 @@ interface NavLink {
  * Center nav links - order is fixed by spec.
  *
  * Hash hrefs are written as `/#section` (not `#section`) so that clicking
- * them from any page (e.g. /pricing) navigates to the homepage and then
+ * them from any page (e.g. /sign-in) navigates to the homepage and then
  * jumps to the anchor. When the user is already on the homepage,
  * `handleNavClick` intercepts the click and smooth-scrolls instead.
+ *
+ * All four entries are now hash links: the marketing site's pricing,
+ * features, demo, and FAQ all live as sections on the homepage.
  */
 const NAV_LINKS: readonly NavLink[] = [
   { href: '/#features', label: 'Features' },
-  { href: '/pricing', label: 'Pricing' },
   { href: '/#demo', label: 'Demo' },
+  { href: '/#pricing', label: 'Pricing' },
   { href: '/#faq', label: 'FAQ' },
 ] as const;
 
@@ -93,13 +96,13 @@ const SCROLL_BORDER_THRESHOLD = 8;
  * - Anchor href (`/#section`) on any other page: do nothing here so
  *   Next.js's <Link> performs a normal route change to `/` - the browser
  *   then jumps to the fragment automatically.
- * - Page href (e.g. `/pricing`): do nothing here, normal navigation.
+ * - Page href (e.g. `/sign-in`): do nothing here, normal navigation.
  *
  * `onComplete` always fires (used to close the mobile drawer regardless
  * of which branch we took).
  *
  * @param event      Synthetic click event from the link
- * @param href       href value (e.g. "/#features" or "/pricing")
+ * @param href       href value (e.g. "/#features" or "/sign-in")
  * @param pathname   Current route pathname (from `usePathname()`)
  * @param onComplete Optional callback invoked once handling is done
  */

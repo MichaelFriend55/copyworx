@@ -4,7 +4,7 @@
  *
  * Protects all routes under /worxspace, /templates, /projects.
  * Checks subscription status (stored in Clerk publicMetadata) and
- * redirects inactive users to /pricing — unless the user has `is_admin`
+ * redirects inactive users to /#pricing — unless the user has `is_admin`
  * set in the Supabase `users` table, which grants unconditional access.
  */
 
@@ -104,7 +104,7 @@ export default clerkMiddleware(async (auth, request) => {
 
           const redirectPath = hasLapsedSubscription
             ? '/subscription-expired'
-            : '/pricing';
+            : '/#pricing';
 
           return NextResponse.redirect(new URL(redirectPath, request.url));
         }

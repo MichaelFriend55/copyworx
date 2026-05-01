@@ -58,7 +58,7 @@ export async function POST(): Promise<NextResponse<CheckoutSessionResponse | Err
         },
       },
       success_url: `${baseUrl}/worxspace?subscription=success`,
-      cancel_url: `${baseUrl}/pricing`,
+      cancel_url: `${baseUrl}/#pricing`,
     });
 
     if (!session.url) {
