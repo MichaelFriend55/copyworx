@@ -102,9 +102,19 @@ export default clerkMiddleware(async (auth, request) => {
             status === 'canceled' ||
             status === 'past_due';
 
+          // Lapsed subscribers (cancelled/past_due) go to /subscription-expired
+          // — no fragment, so a server-side redirect is safe.
+          //
+          // Everyone else (incomplete, unpaid, no-subscription-yet, etc.) needs
+          // to see the pricing section on the homepage. We CANNOT redirect to
+          // "/#pricing" directly here: NextResponse.redirect() strips URL
+          // fragments before the browser sees them, so the user would land at
+          // "/" with no scroll. Instead, redirect to "/pricing", which renders
+          // a tiny client component that bounces to "/#pricing" via
+          // router.replace() — client-side navigation preserves the fragment.
           const redirectPath = hasLapsedSubscription
             ? '/subscription-expired'
-            : '/#pricing';
+            : '/pricing';
 
           return NextResponse.redirect(new URL(redirectPath, request.url));
         }
