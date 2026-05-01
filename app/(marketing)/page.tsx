@@ -358,13 +358,15 @@ export default function HomePage() {
                         <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
                       </div>
                     </div>
-                    <Image
-                      src={block.screenshot}
-                      alt={block.alt}
-                      width={1200}
-                      height={750}
-                      className="w-full h-auto"
-                    />
+                    <div className="aspect-[1200/750] w-full">
+                      <Image
+                        src={block.screenshot}
+                        alt={block.alt}
+                        width={1200}
+                        height={750}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </div>
                 </div>
 
