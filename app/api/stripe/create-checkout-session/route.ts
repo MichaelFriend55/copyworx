@@ -58,7 +58,11 @@ export async function POST(): Promise<NextResponse<CheckoutSessionResponse | Err
         },
       },
       success_url: `${baseUrl}/worxspace?subscription=success`,
-      cancel_url: `${baseUrl}/pricing`,
+      // cancel_url uses /#pricing directly. This works because Stripe Checkout
+      // navigates the browser to this URL client-side via window.location, which
+      // preserves the URL fragment. Unlike Next.js server-side redirects, no
+      // fragment stripping occurs here.
+      cancel_url: `${baseUrl}/#pricing`,
     });
 
     if (!session.url) {

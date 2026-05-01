@@ -34,6 +34,15 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+
+  // NOTE: /pricing -> /#pricing is intentionally NOT handled here.
+  // Next.js server-side redirects (both next.config.js redirects() and
+  // NextResponse.redirect() in middleware) strip URL fragments before the
+  // browser ever sees them, so a 308 to "/#pricing" loses the "#pricing"
+  // anchor and lands the user at the top of the homepage. Instead, we
+  // render a tiny client component at app/(marketing)/pricing/page.tsx
+  // that calls router.replace('/#pricing') on mount — client-side
+  // navigation preserves the fragment.
 };
 
 module.exports = nextConfig;

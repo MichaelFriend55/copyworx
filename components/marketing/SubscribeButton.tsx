@@ -1,7 +1,19 @@
 /**
- * @file app/(marketing)/pricing/subscribe-button.tsx
+ * @file components/marketing/SubscribeButton.tsx
  * @description Client component that calls the create-checkout-session API
- * and redirects the user to Stripe Checkout.
+ * and redirects the user to Stripe Checkout. Used by the marketing site's
+ * homepage Pricing section.
+ *
+ * Behavior:
+ * - Signed-out users are routed to /sign-up first (post-signup, the user can
+ *   subscribe).
+ * - Signed-in users hit POST /api/stripe/create-checkout-session, which
+ *   returns a Stripe Checkout URL. We then perform a hard navigation to
+ *   that URL via window.location.href so Stripe takes over the tab.
+ *
+ * Errors surface via Sonner toast; loading state disables the button and
+ * shows a spinner so users get clear feedback during the (short) round
+ * trip to Stripe.
  */
 
 'use client';
@@ -26,6 +38,10 @@ async function safeJson<T = Record<string, unknown>>(
   }
 }
 
+/**
+ * Subscribe CTA: starts the Stripe Checkout flow for the $49/month plan.
+ * Renders a full-width gradient button matching the homepage primary CTA.
+ */
 export function SubscribeButton() {
   const { isSignedIn } = useAuth();
   const router = useRouter();
@@ -79,8 +95,6 @@ export function SubscribeButton() {
           <Loader2 className="h-4 w-4 animate-spin" />
           Redirecting to checkout…
         </>
-      ) : isSignedIn ? (
-        'Start Your 7-Day Free Trial'
       ) : (
         'Start Your 7-Day Free Trial'
       )}

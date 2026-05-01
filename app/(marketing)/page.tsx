@@ -13,8 +13,24 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { SubscribeButton } from '@/components/marketing/SubscribeButton';
 
 /**
  * Product showcase blocks – alternating screenshot/text layout.
@@ -73,8 +89,8 @@ const showcaseBlocks = [
   {
     screenshot: '/images/guide/word-advisor-screenshot.png',
     alt: 'MY WORD ADVISOR showing alternative word suggestions with copywriting rationales',
-    headline: 'Find the Right Word. Know Why It\u2019s Right.',
-    body: "Highlight any word in your copy and MY WORD ADVISOR gives you smarter alternatives \u2013 with real copywriting rationale behind each one. It\u2019s not a thesaurus. It tells you why \u201Cproven\u201D hits harder than \u201Cinnovative\u201D when you\u2019re writing for CFOs, and which words align with your Brand Voice and Persona. One click and the new word drops right into your document.",
+    headline: "Find the Right Word. Know Why It's Right.",
+    body: 'Highlight any word in your copy and MY WORD ADVISOR gives you smarter alternatives \u2013 with real copywriting rationale behind each one. It\'s not a thesaurus. It tells you why "proven" hits harder than "innovative" when you\'re writing for CFOs, and which words align with your Brand Voice and Persona. One click and the new word drops right into your document.',
     imagePosition: 'right' as const,
   },
   {
@@ -87,9 +103,80 @@ const showcaseBlocks = [
   {
     screenshot: '/images/guide/competitive-analysis-screenshot.png',
     alt: 'Competitive Analysis tool showing strategic teardown of competitor copy',
-    headline: "Tear Down Your Competitor\u2019s Copy. Find Your Edge.",
-    body: "Paste any competitor\u2019s copy into Competitive Analysis and get a strategic teardown \u2013 messaging strategy, strengths, weaknesses, and specific opportunities for you to differentiate. It\u2019s the competitive intelligence tool that turns someone else\u2019s copy into your advantage.",
+    headline: "Tear Down Your Competitor's Copy. Find Your Edge.",
+    body: "Paste any competitor's copy into Competitive Analysis and get a strategic teardown \u2013 messaging strategy, strengths, weaknesses, and specific opportunities for you to differentiate. It's the competitive intelligence tool that turns someone else's copy into your advantage.",
     imagePosition: 'right' as const,
+  },
+] as const;
+
+/**
+ * Feature bullets displayed inside the homepage Pricing card.
+ * Single source of truth for the marketing site (the standalone /pricing
+ * page has been retired; this card is now the only pricing surface).
+ */
+const PRICING_FEATURES = [
+  'Brand Voice creation and copy rewriting',
+  'Persona creation and copy rewriting',
+  '15 professional copywriting templates',
+  'Tone Shifter – six professional tones',
+  'My Word Advisor thesaurus',
+  'Compare versions side-by-side',
+  'Strategic Competitive Analysis tool',
+  'Unlimited projects and documents',
+  'Priority email support',
+  'New features as they ship',
+] as const;
+
+/**
+ * FAQ items for the homepage. Trust + product-differentiation questions.
+ * Each answer renders inside a shadcn Accordion item.
+ * Em dashes (—) and the ™ character are intentional and should render literally.
+ */
+const FAQ_ITEMS = [
+  {
+    question: 'How Does CopyWorx Studio™ Differ From ChatGPT Or Other AI Platforms?',
+    answer:
+      "ChatGPT and other AI platforms are great at general assistance. CopyWorx Studio™ is a copywriting worxspace. We've built everything around proven copywriting frameworks – not blank prompts – so the tools guide you toward copy that actually performs. You create your Brand Voices and Personas once, then every template, rewrite, and tone shift can be checked and rewritten around a particular Brand Voice or Persona. That's the critical CopyWorx Studio™ difference: structure and methodology built by a copywriter, not a generic AI doing its best to guess what you want.",
+  },
+  {
+    question: 'How Does CopyWorx Studio™ Differ From Writing Platforms Like Copy.ai, Jasper, And Writesonic?',
+    answer:
+      'Those tools are built for speed and volume – generate as much content as possible, as fast as possible. CopyWorx Studio™ is built for strategic writing. Every template is grounded in proven copywriting frameworks, every output can be run through Brand Voice and Persona checks, and every rewrite is structured around the experienced decisions a real copywriter makes. The result isn\'t "more copy" – it\'s copy that actually performs. If you need to produce 200 generic blog posts a month, those tools are great. If you need copy that sounds like your brand and converts prospects like a pro wrote it, that\'s what we built.',
+  },
+  {
+    question: 'Who Owns The Copy I Generate? Can I Use It Commercially?',
+    answer:
+      "You do. Anything you create in CopyWorx Studio™ is yours to use however you want – in ads, on your website, in emails, in client work, anywhere. We don't claim any ownership over your output. That's true whether you're a solo copywriter writing for clients or a marketing team writing for your own brand.",
+  },
+  {
+    question: 'Is My Brand Data And Content Used To Train AI Models?',
+    answer:
+      "No. Your brand voice settings, the documents you create, and the content you put into CopyWorx Studio™ are not used to train any AI model – ours, or anyone else's. We use the Anthropic API under Commercial Terms of Service that explicitly prohibit training on customer content. Your brand voice, documents, and prompts stay yours – they're never used to improve any AI model, ours or Anthropic's.",
+  },
+  {
+    question: 'Do You Require A Credit Card For The Free Trial?',
+    answer:
+      "Yes – and we think that's actually fair to both sides. Asking for a card upfront means the people trying CopyWorx Studio™ are serious about evaluating it, which lets us focus support and product attention where it matters. We never charge during your 7-day trial, and we'll send you a reminder two days before it ends. Cancel anytime in those 7 days and you'll never see a charge.",
+  },
+  {
+    question: 'What Happens When My Trial Ends? Will I Be Charged Automatically?',
+    answer:
+      "If you don't cancel during the 7-day trial, your subscription starts at $49/month on day 8. We send a reminder email two days before that happens, so there are no surprises. You can cancel anytime from your account settings – before or after the trial ends.",
+  },
+  {
+    question: 'Can I Cancel Anytime?',
+    answer:
+      "Yes. Cancel from your account settings anytime – we won't bury the button or make you call us. If CopyWorx Studio™ isn't working for you, we'd rather you go than make you stay. We'd also love to know why – but that's a request, not a requirement.",
+  },
+  {
+    question: 'What Payment Methods Do You Accept?',
+    answer:
+      'We accept all major credit and debit cards (Visa, Mastercard, American Express, and Discover) through Stripe, our secure payment processor. Your card information is never stored on our servers.',
+  },
+  {
+    question: 'Do You Offer Annual Billing?',
+    answer:
+      "Not yet – but it's on the roadmap. For now, CopyWorx Studio™ is monthly subscription only. We'll notify subscribers when annual plans are available.",
   },
 ] as const;
 
@@ -127,7 +214,7 @@ export default function HomePage() {
             
             {/* Subheadline */}
             <p className="text-lg sm:text-xl md:text-2xl text-ink-600 max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in animation-delay-200">
-              The only AI writing platform that generates copy in your brand&apos;s voice, diagnoses what&apos;s off, and rewrites it to match – without destroying your formatting. Built by a professional copywriter, for copywriters and marketers who refuse to settle for generic AI output.
+              The first AI-powered copywriting platform created by a professional copywriter for copywriters, content creators, and marketers.
             </p>
             
             {/* Primary CTA */}
@@ -137,7 +224,7 @@ export default function HomePage() {
                 className="bg-gradient-to-r from-[#006EE6] to-[#A755F7] text-white hover:opacity-90 font-semibold text-lg px-10 py-6 h-auto shadow-2xl transition-all duration-300"
                 asChild
               >
-                <Link href="/pricing">
+                <Link href="/#pricing">
                   Start Your 7-Day Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -162,12 +249,12 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-8 text-center">
-              Writing Great Copy Shouldn&apos;t Be So Hard
+              Writing Great Copy Just Got Easy
             </h2>
             
             <div className="prose prose-lg md:prose-xl max-w-none text-ink-600 leading-relaxed space-y-6">
               <p>
-                You&apos;re juggling multiple clients or campaigns. Each one has its own brand voice, its own audience, its own expectations. Staying consistent is exhausting.
+                You&apos;re juggling multiple clients and campaigns. Each one has its own brand voice, its own audience, its own expectations. Staying consistent is everything.
               </p>
               
               <p>
@@ -175,7 +262,7 @@ export default function HomePage() {
               </p>
               
               <p>
-                CopyWorx Studio™ closes that loop. Generate in brand. Diagnose what&apos;s off. Rewrite it to fix. All in one tool.
+                But now you can generate copy that&apos;s on brand, diagnose what&apos;s off, and rewrite it to fix. All in one tool. That&apos;s what makes CopyWorx Studio™ the strategic writer&apos;s worxspace.
               </p>
             </div>
           </div>
@@ -207,7 +294,7 @@ export default function HomePage() {
             
             <div className="prose prose-lg md:prose-xl max-w-none text-white/90 leading-relaxed space-y-6">
               <p>
-                CopyWorx Studio™ leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use — regardless of writing experience — to create professional, high-converting copy in minutes.
+                CopyWorx Studio™ leverages proven, time-tested copywriting tools and combines them with the power of AI to create a platform any marketing professional can use – regardless of writing experience – to create professional, high-converting copy in minutes.
               </p>
               
               <p>
@@ -226,7 +313,7 @@ export default function HomePage() {
               </p>
               
               <p>
-                Start with a template, start with a brand voice, start on your own. The point is, it&apos;s easy to get started with real workflow-aware functionality.
+                Start with a Brand Voice, start with a Persona, start with a template, or start on your own. The point is, it&apos;s easy to get started with real workflow-aware functionality.
               </p>
             </div>
           </div>
@@ -237,10 +324,13 @@ export default function HomePage() {
           PRODUCT SHOWCASE SECTION
           Alternating screenshot + text blocks showcasing key features
           ======================================================================== */}
-      <section className="py-24 md:py-32 bg-white">
+      <section id="features" className="scroll-mt-24 py-24 md:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-20 md:mb-28">
+            <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
+              Features
+            </p>
             <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
               See What&apos;s Inside
             </h2>
@@ -297,10 +387,13 @@ export default function HomePage() {
           VIDEO SECTION
           Streamable video embed with responsive container
           ======================================================================== */}
-      <section className="py-24 md:py-32 bg-[#F5F5F7]">
+      <section id="demo" className="scroll-mt-24 py-24 md:py-32 bg-[#F5F5F7]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="max-w-3xl mx-auto text-center mb-16">
+            <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
+              Demo
+            </p>
             <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
               Discover How To Write To Win
             </h2>
@@ -317,6 +410,128 @@ export default function HomePage() {
                 allow="autoplay; fullscreen"
               />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          FAQ SECTION
+          Trust + product-differentiation questions in a shadcn Accordion.
+          Sits between the gray Demo section and the gradient final CTA;
+          uses bg-white to maintain the alternating section rhythm.
+          ======================================================================== */}
+      <section id="faq" className="scroll-mt-24 py-24 md:py-32 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
+              FAQ
+            </p>
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
+              Everything you need to know before you start your trial.
+            </p>
+          </div>
+
+          {/* Accordion list */}
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="multiple" className="w-full">
+              {FAQ_ITEMS.map((item, index) => (
+                <AccordionItem key={item.question} value={`item-${index}`}>
+                  <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-ink-900 hover:no-underline py-5">
+                    {item.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-base text-ink-600 leading-relaxed pb-5">
+                    {item.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+
+            <p className="text-base text-ink-500 text-center mt-12">
+              Still have questions? Email us at{' '}
+              <a
+                href="mailto:support@copyworx.io"
+                className="text-[#006EE6] hover:underline"
+              >
+                support@copyworx.io
+              </a>
+              .
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================
+          PRICING SECTION
+          Single $49/month plan with 7-day free trial. This card is the only
+          pricing surface on the marketing site — the standalone /pricing
+          route was retired and now redirects here. Sits between the white
+          FAQ section and the gradient final CTA; bg-[#F5F5F7] keeps the
+          alternating section rhythm intact.
+          ======================================================================== */}
+      <section id="pricing" className="scroll-mt-24 py-24 md:py-32 bg-[#F5F5F7]">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <p className="text-sm font-semibold tracking-widest uppercase text-ink-500 mb-4">
+              Pricing
+            </p>
+            <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-ink-900 mb-6">
+              One Plan. Everything Included.
+            </h2>
+            <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
+              No tiers, no limits, no surprises. Try every feature free for 7 days, then $49/month.
+            </p>
+          </div>
+
+          {/* Pricing Card */}
+          <div className="max-w-[420px] mx-auto">
+            <Card className="relative border-[#006EE6]/40 shadow-xl">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white rounded-full px-0.5">
+                <Badge variant="brand" className="shadow-lg">
+                  7-Day Free Trial
+                </Badge>
+              </div>
+
+              <CardHeader className="pb-3 pt-6 text-center">
+                <CardTitle className="font-sans text-2xl">
+                  CopyWorx Studio™
+                </CardTitle>
+                <CardDescription>
+                  Professional AI Copywriting Worxspace
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent>
+                {/* Price */}
+                <div className="mb-5 text-center">
+                  <span className="font-sans text-6xl font-bold text-ink-900">
+                    $49
+                  </span>
+                  <span className="text-ink-500 ml-2 text-lg">/month</span>
+                  <p className="text-sm text-ink-500 mt-2">
+                    Start with a 7-day free trial. Cancel anytime.
+                  </p>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-2">
+                  {PRICING_FEATURES.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-[#006EE6] shrink-0 mt-0.5" />
+                      <span className="text-sm text-ink-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+
+              <CardFooter className="pt-2">
+                <SubscribeButton />
+              </CardFooter>
+            </Card>
           </div>
         </div>
       </section>
@@ -350,7 +565,7 @@ export default function HomePage() {
               </p>
               
               <p>
-                Start your free trial today and experience every feature CopyWorx Studio™ has to offer. No commitment — cancel anytime.
+                Start your free trial today and experience every feature CopyWorx Studio™ has to offer. No commitment – cancel anytime.
               </p>
               
               <p className="text-white font-semibold text-xl md:text-2xl">
@@ -364,7 +579,7 @@ export default function HomePage() {
               className="bg-white text-[#006EE6] hover:bg-white hover:shadow-[0_0_24px_rgba(255,255,255,0.45)] font-bold text-lg px-10 py-6 h-auto shadow-xl transition-all duration-300"
               asChild
             >
-              <Link href="/pricing">
+              <Link href="/#pricing">
                 Start Your 7-Day Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
