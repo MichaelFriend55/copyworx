@@ -76,7 +76,7 @@ export const WORXDESK_PANEL_ID = 'worxdesk-onramp';
  * map so every transition uses the correct framing.
  */
 const SUBTITLE_BY_PHASE: Record<string, string> = {
-  input: 'Brief in. Copy out. Powered by methodology.',
+  input: 'Brief in. Copy out. Powered by AI@WORX.',
   streaming: 'Reading your brief…',
   review: 'Strategic Review complete.',
   extracting: 'Preparing your brief for generation…',
