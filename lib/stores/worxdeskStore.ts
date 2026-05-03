@@ -27,15 +27,32 @@
 
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
+import { toast } from 'sonner';
+import type { Editor } from '@tiptap/react';
 import type {
   BriefExtractionLLMResponse,
   StrategicReviewLLMRequest,
   WorxDeskAnswer,
+  WorxDeskMetadata,
   WorxDeskQuestion,
 } from '@/lib/types/worxdesk';
+import type { Project, Persona } from '@/lib/types/project';
+import type {
+  TemplateGenerationRequest,
+  TemplateGenerationResponse,
+} from '@/lib/types/template';
 import { parseStrategicReviewText } from '@/lib/files/strategic-review-parser';
+import { getTemplateById } from '@/lib/data/templates';
+import { WORXDESK_SUPPORTED_TEMPLATE_IDS } from '@/lib/templates/worxdesk-template-schemas';
+import { formatGeneratedContent } from '@/lib/utils/content-formatting';
+import {
+  createDocument,
+  getProjectPersonas,
+} from '@/lib/storage/unified-storage';
+import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
+import { useSlideOutStore } from '@/lib/stores/slideOutStore';
 import { logger } from '@/lib/utils/logger';
-import { logError } from '@/lib/utils/error-handling';
+import { formatErrorForUser, logError } from '@/lib/utils/error-handling';
 
 // ============================================================================
 // UUID generation
@@ -71,6 +88,36 @@ const STRATEGIC_REVIEW_ENDPOINT = '/api/worxdesk/strategic-review';
 
 /** Phase 3 JSON endpoint for Brief Extraction (Call 2). */
 const EXTRACT_BRIEF_ENDPOINT = '/api/worxdesk/extract-brief';
+
+/** Phase 6 JSON endpoint for final template-driven copy generation (Call 3). */
+const GENERATE_TEMPLATE_ENDPOINT = '/api/generate-template';
+
+/**
+ * Panel id of the WORX DESK on-ramp slide-out. Mirrored here from
+ * `components/workspace/WorxDeskSlideOut.tsx` so this store can close the
+ * panel after a successful generation without importing the component file
+ * (which would create a circular dependency: the component imports hooks
+ * from this store). Keep in sync with `WORXDESK_PANEL_ID` over there — the
+ * single source of truth lives next to the component, this is only a
+ * runtime-coordination duplicate.
+ */
+const WORXDESK_PANEL_ID_FOR_CLOSE = 'worxdesk-onramp';
+
+/**
+ * Number of milliseconds to wait between activating the freshly-created
+ * document and pushing the generated HTML into the editor. Mirrors the
+ * delay used by `TemplateFormSlideOut.handleGenerate` so the EditorArea
+ * has a render tick to react to the new `activeDocumentId` before we call
+ * `editor.commands.setContent` on it.
+ */
+const EDITOR_ACTIVATION_SETTLE_MS = 150;
+
+/**
+ * Sonner toast id reused for the "Copy generated. Document created." success
+ * notification fired by `generateCopy`. Reusing one id ensures rapid retries
+ * coalesce into a single visible toast rather than stacking duplicates.
+ */
+const GENERATION_SUCCESS_TOAST_ID = 'worxdesk-generation-success';
 
 /**
  * Sentinel answer text written when a question is skipped (either by the
@@ -296,6 +343,15 @@ export interface WorxDeskState {
    */
   generationError: string | null;
 
+  /**
+   * Safety net for the "generation succeeded but document persistence failed"
+   * edge case in `generateCopy`. When the LLM returned valid HTML but
+   * `createDocument` (or the editor write) threw, the formatted HTML is
+   * stored here so the user does not lose their generation. `null` in every
+   * other state. Cleared by `clearGeneratedCopy()` and by `resetSession()`.
+   */
+  generatedCopyHtml: string | null;
+
   // ── Actions ──────────────────────────────────────────────────────────────
 
   /**
@@ -391,6 +447,47 @@ export interface WorxDeskState {
   extractBrief: () => Promise<void>;
 
   /**
+   * Final orchestrator (Phase 6). Pipes the extracted form data into
+   * `/api/generate-template`, formats the returned HTML, creates a
+   * persisted `ProjectDocument` (carrying the full `WorxDeskMetadata`),
+   * activates that document so the editor swaps to it, pushes the HTML
+   * into the live TipTap editor, fires a success toast, then resets the
+   * session and closes the WORX DESK panel.
+   *
+   * Pre-conditions are validated up front; if any are missing, the
+   * action sets `generationError` and returns without touching the
+   * network.
+   *
+   * On a generation API failure: surfaces a user-facing error and leaves
+   * the panel open so the user can retry from the failure UI.
+   *
+   * On a post-generation persistence failure (HTML in hand, but
+   * `createDocument` or `editor.commands.setContent` threw): writes the
+   * HTML into `generatedCopyHtml` as a safety net so it can be recovered
+   * before the user navigates away, and surfaces a distinct error
+   * message that calls out the partial-success state.
+   *
+   * @param editor         Live TipTap editor instance from the worxspace
+   *                       page. May be `null` when the editor has not
+   *                       mounted yet — the action treats `null` as a
+   *                       precondition failure rather than a no-op so the
+   *                       UI can show "open a project first".
+   * @param activeProject  The currently-selected project. May be `null`
+   *                       for the same reason.
+   */
+  generateCopy: (
+    editor: Editor | null,
+    activeProject: Project | null,
+  ) => Promise<void>;
+
+  /**
+   * Clear the `generatedCopyHtml` safety net. Used by the Generating view
+   * after the user acknowledges a recovered partial-success state, and
+   * implicitly by `resetSession()`.
+   */
+  clearGeneratedCopy: () => void;
+
+  /**
    * Clear all review / answer / extraction state, leaving the input slice
    * untouched. Used by the "← Edit brief" button in the Strategic Review
    * view: the user wants to return to the input form to tweak the brief
@@ -418,13 +515,22 @@ export interface WorxDeskState {
  * Phases the WORX DESK panel can be in. Derived from state by
  * `useWorxDeskFlow()`; the store does not store a phase field directly
  * because every transition is implied by the underlying state slices.
+ *
+ * `generating` (Phase 6) covers the window between Brief Extraction
+ * succeeding and the panel auto-closing on a successful copy
+ * generation. It is distinct from `extracting` because the user-facing
+ * loader copy and the underlying API call are different; it is distinct
+ * from `extracted` because the latter is no longer a visible state in
+ * v1 (the view auto-triggers `generateCopy` as soon as
+ * `extractedFormData` lands).
  */
 export type WorxDeskFlowPhase =
   | 'input'
   | 'streaming'
   | 'review'
   | 'extracting'
-  | 'extracted';
+  | 'extracted'
+  | 'generating';
 
 // ============================================================================
 // Initial values
@@ -460,6 +566,7 @@ const INITIAL_SESSION_SLICES = {
   extractedFormData: null as Record<string, string> | null,
   isGenerating: false,
   generationError: null,
+  generatedCopyHtml: null as string | null,
 } as const;
 
 /**
@@ -481,6 +588,7 @@ const INITIAL_REVIEW_SLICES = {
   extractedFormData: null as Record<string, string> | null,
   isGenerating: false,
   generationError: null,
+  generatedCopyHtml: null as string | null,
 } as const;
 
 // ============================================================================
@@ -1122,6 +1230,254 @@ export const useWorxDeskStore = create<WorxDeskState>()((set, get) => ({
     }
   },
 
+  generateCopy: async (editor, activeProject) => {
+    const state = get();
+
+    // ── Preconditions ────────────────────────────────────────────────────
+    //
+    // Every check produces a user-facing `generationError` so the
+    // Generating view's failure UI surfaces the reason. None of these
+    // should fire under normal flow (the Generate button in the review
+    // view requires a brand voice / persona to already be selectable
+    // against the active project) but the action can also be called via
+    // the "Try again" affordance, where stale prerequisites are possible.
+
+    if (state.extractedFormData === null) {
+      set({
+        generationError:
+          'No extracted brief is available. Please run the Strategic Review first.',
+      });
+      logger.warn('⚠️ WORX DESK generateCopy: extractedFormData is null.');
+      return;
+    }
+
+    if (activeProject === null) {
+      set({
+        generationError:
+          'No project is currently active. Open a project before generating copy.',
+      });
+      logger.warn('⚠️ WORX DESK generateCopy: activeProject is null.');
+      return;
+    }
+
+    if (editor === null) {
+      set({
+        generationError:
+          'The editor is not ready yet. Please wait a moment and try again.',
+      });
+      logger.warn('⚠️ WORX DESK generateCopy: editor is null.');
+      return;
+    }
+
+    if (
+      !(WORXDESK_SUPPORTED_TEMPLATE_IDS as readonly string[]).includes(
+        state.chosenTemplateId,
+      )
+    ) {
+      set({
+        generationError: `Template "${state.chosenTemplateId}" is not supported by WORX DESK in this release.`,
+      });
+      logger.warn(
+        '⚠️ WORX DESK generateCopy: chosenTemplateId not in supported list:',
+        state.chosenTemplateId,
+      );
+      return;
+    }
+
+    const template = getTemplateById(state.chosenTemplateId);
+    if (!template) {
+      set({
+        generationError: `Template "${state.chosenTemplateId}" could not be found.`,
+      });
+      logger.error(
+        '❌ WORX DESK generateCopy: getTemplateById returned undefined for',
+        state.chosenTemplateId,
+      );
+      return;
+    }
+
+    // ── Resolve brand voice + persona from the active project ───────────
+    //
+    // Brand voice resolution prefers `brandVoices` (the multi-voice array)
+    // and falls back to `brandVoice` (the legacy singular field) so a
+    // project that has only the singular value still works. `null` is the
+    // canonical "none selected" value passed to the API.
+
+    const brandVoiceResolved =
+      state.brandVoiceId === null
+        ? null
+        : (activeProject.brandVoices ?? []).find(
+            (bv) => bv.id === state.brandVoiceId,
+          ) ??
+          (activeProject.brandVoice?.id === state.brandVoiceId
+            ? activeProject.brandVoice
+            : null);
+
+    let personaResolved: Persona | null = null;
+    if (state.personaId !== null) {
+      try {
+        const projectPersonas = await getProjectPersonas(activeProject.id);
+        personaResolved =
+          projectPersonas.find((p) => p.id === state.personaId) ?? null;
+      } catch (personaErr) {
+        // A persona load failure is not fatal: we continue without one.
+        // The selected persona is informational and the route accepts a
+        // missing persona gracefully.
+        logError(personaErr, 'WORX DESK generateCopy (persona load)');
+      }
+    }
+
+    set({
+      isGenerating: true,
+      generationError: null,
+      generatedCopyHtml: null,
+    });
+
+    // ── Step 1: Call /api/generate-template ──────────────────────────────
+
+    const requestBody: TemplateGenerationRequest = {
+      templateId: state.chosenTemplateId,
+      formData: state.extractedFormData,
+      // Mirror TemplateFormSlideOut: only set `applyBrandVoice: true` when
+      // we have a resolved voice to send. Without a voice the route must
+      // ignore the brand-voice prompt segment regardless of this flag, but
+      // setting it true with no voice attached would be misleading.
+      applyBrandVoice: brandVoiceResolved !== null,
+      brandVoice: brandVoiceResolved ?? undefined,
+      persona: personaResolved ?? undefined,
+    };
+
+    let formattedContent: string;
+    try {
+      const response = await fetch(GENERATE_TEMPLATE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorBody = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          details?: string;
+        };
+        const message =
+          errorBody.details ??
+          errorBody.error ??
+          `Generation failed (HTTP ${response.status}). Please try again.`;
+        throw new Error(message);
+      }
+
+      const data = (await response.json()) as TemplateGenerationResponse;
+      const generatedCopy = data?.generatedCopy ?? '';
+      if (generatedCopy.trim().length === 0) {
+        throw new Error('Generation returned empty copy. Please try again.');
+      }
+
+      formattedContent = formatGeneratedContent(generatedCopy);
+      logger.log('✅ WORX DESK generation API succeeded:', {
+        templateId: state.chosenTemplateId,
+        rawLength: generatedCopy.length,
+        formattedLength: formattedContent.length,
+      });
+    } catch (err) {
+      logError(err, 'WORX DESK generateCopy (API)');
+      set({
+        isGenerating: false,
+        generationError: formatErrorForUser(err, 'Generation'),
+      });
+      return;
+    }
+
+    // ── Step 2: Build WorxDeskMetadata snapshot ──────────────────────────
+
+    const worxdeskMetadata: WorxDeskMetadata = {
+      originalBrief: state.originalBrief,
+      deliverableSpec: state.deliverableSpec,
+      supportingMaterials: state.supportingMaterials,
+      chosenTemplateId: state.chosenTemplateId,
+      brandVoiceId: state.brandVoiceId,
+      personaId: state.personaId,
+      strategicTake: state.strategicTake,
+      questionsAndAnswers: buildQuestionsAndAnswersForMetadata(
+        state.strategicQuestions,
+        state.answers,
+      ),
+      extractedFormData: state.extractedFormData,
+      // The session run id is minted on `startSession`; it is non-null any
+      // time a session has been opened. We assert + fall back to an empty
+      // string so the metadata write does not throw on an impossible-but-
+      // typed-possible null.
+      worxdeskRunId: state.worxdeskRunId ?? '',
+      bypassedReview: state.bypassedReview,
+      createdAt: new Date().toISOString(),
+    };
+
+    // ── Step 3: Persist document + activate it in the editor ────────────
+    //
+    // From here on, any failure means the LLM already produced HTML that
+    // the user paid for. Stash it in `generatedCopyHtml` so a subsequent
+    // refresh / "Try again" cycle can recover it without re-paying for
+    // generation, and surface a distinct error message that says so.
+
+    try {
+      const documentTitle = buildWorxDeskDocumentTitle(template.name);
+      const newDoc = await createDocument(
+        activeProject.id,
+        documentTitle,
+        formattedContent,
+        worxdeskMetadata,
+      );
+      logger.log('📄 WORX DESK document created:', {
+        id: newDoc.id,
+        title: newDoc.title,
+      });
+
+      // Activate the new document so EditorArea swaps to it on the next
+      // render. Mirror TemplateFormSlideOut: refresh sidebar + document
+      // list so the just-created doc appears immediately.
+      const workspaceActions = useWorkspaceStore.getState();
+      workspaceActions.setActiveDocumentId(newDoc.id);
+      await workspaceActions.refreshAll();
+
+      // Brief delay to let EditorArea react to the new activeDocumentId
+      // before we push content into the editor instance directly.
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, EDITOR_ACTIVATION_SETTLE_MS),
+      );
+
+      editor.commands.setContent(formattedContent);
+    } catch (persistErr) {
+      logError(persistErr, 'WORX DESK generateCopy (persistence)');
+      set({
+        isGenerating: false,
+        generatedCopyHtml: formattedContent,
+        generationError:
+          'Generation succeeded but document creation failed. The copy is still available — please try again or contact support.',
+      });
+      return;
+    }
+
+    // ── Step 4: Notify, reset, close ─────────────────────────────────────
+
+    toast.success('Copy generated. Document created.', {
+      id: GENERATION_SUCCESS_TOAST_ID,
+    });
+
+    // resetSession() also clears `generatedCopyHtml` via INITIAL_SESSION_SLICES.
+    get().resetSession();
+    useSlideOutStore.getState().closeSlideOut(WORXDESK_PANEL_ID_FOR_CLOSE);
+
+    // `isGenerating` is included in INITIAL_SESSION_SLICES (as `false`),
+    // so resetSession() above already cleared it. The explicit set below
+    // is a defensive belt-and-braces in case INITIAL_SESSION_SLICES ever
+    // diverges from the field set here.
+    set({ isGenerating: false });
+  },
+
+  clearGeneratedCopy: () => {
+    set({ generatedCopyHtml: null });
+  },
+
   resetReview: () => {
     cancelActiveReviewStream('resetReview');
     set({ ...INITIAL_REVIEW_SLICES });
@@ -1189,6 +1545,66 @@ function coerceFormDataValues(
   return result;
 }
 
+/**
+ * Build the WORX DESK document title from the human-readable template name.
+ * Mirrors the format used by `TemplateFormSlideOut.generateDocumentTitle`
+ * (e.g. `"Sales Email - May 3, 2026 1:41pm"`) so documents created through
+ * either flow share a recognizable shape in the sidebar. Pure helper —
+ * deterministic given a stable `Date` argument.
+ */
+function buildWorxDeskDocumentTitle(
+  templateName: string,
+  now: Date = new Date(),
+): string {
+  const formattedDate = now.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const formattedTime = now
+    .toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+    .toLowerCase()
+    .replace(' ', '');
+  return `${templateName} - ${formattedDate} ${formattedTime}`;
+}
+
+/**
+ * Pair every Strategic Review question with its corresponding answer (or
+ * a "skipped" sentinel when the user never engaged with it) into the
+ * flattened shape persisted on `WorxDeskMetadata.questionsAndAnswers`.
+ *
+ * Questions are the source of iteration so the resulting array preserves
+ * the order the user saw the questions in. An answer entry without a
+ * matching question (which should never happen given the UI contract) is
+ * silently dropped — replay tooling reads this column for human display,
+ * not for state reconstruction, so an orphaned answer would have nothing
+ * to attach to.
+ */
+function buildQuestionsAndAnswersForMetadata(
+  questions: WorxDeskQuestion[],
+  answers: WorxDeskAnswer[],
+): WorxDeskMetadata['questionsAndAnswers'] {
+  return questions.map((question) => {
+    const matched = answers.find((a) => a.questionId === question.id);
+    if (matched) {
+      return {
+        question: question.text,
+        answer: matched.answer,
+        wasSkipped: matched.wasSkipped,
+      };
+    }
+    return {
+      question: question.text,
+      answer: WORXDESK_SKIPPED_ANSWER_TEXT,
+      wasSkipped: true,
+    };
+  });
+}
+
 // ============================================================================
 // Selector hooks
 // ============================================================================
@@ -1248,6 +1664,8 @@ export const useWorxDeskActions = () =>
       bypassReview: state.bypassReview,
       unbypassReview: state.unbypassReview,
       extractBrief: state.extractBrief,
+      generateCopy: state.generateCopy,
+      clearGeneratedCopy: state.clearGeneratedCopy,
       resetReview: state.resetReview,
       backToReview: state.backToReview,
       resetSession: state.resetSession,
@@ -1306,25 +1724,61 @@ export const useWorxDeskExtraction = () =>
   );
 
 /**
+ * Read the final-generation slice (Phase 6). Subscribed by the Generating
+ * view to switch between the "Writing your copy…" loader, the failure UI,
+ * and the safety-net recovery state when document persistence fails after
+ * a successful generation.
+ */
+export const useWorxDeskGeneration = () =>
+  useWorxDeskStore(
+    useShallow((state) => ({
+      isGenerating: state.isGenerating,
+      generationError: state.generationError,
+      generatedCopyHtml: state.generatedCopyHtml,
+    })),
+  );
+
+/**
  * Derive the current panel phase from the underlying state. The phase
  * drives the panel body's view selection and the StickyActionBar's
  * button layout.
  *
  * Order of checks matters – earlier branches win:
- *   1. `extracting` while Brief Extraction is in flight.
- *   2. `extracted` once a result is in hand.
- *   3. `streaming` while the SSE stream is open.
- *   4. `review` once we have any Strategic Take text to show OR a
+ *   1. `generating` while Phase 6 copy generation is in flight, OR
+ *      whenever extraction has completed and we still have an
+ *      `extractedFormData` snapshot in hand. The auto-trigger in the
+ *      Generating view fires `generateCopy` synchronously on that
+ *      transition, so the view should never display the raw extraction
+ *      result; reporting `generating` here keeps the panel header /
+ *      footer aligned with what the body is doing. The single exception
+ *      is when the safety-net `generatedCopyHtml` is set or there is a
+ *      `generationError`: those are the recovery surfaces the user
+ *      explicitly needs to see, so we still report `generating` (the
+ *      view branches internally on those flags).
+ *   2. `extracting` while Brief Extraction is in flight.
+ *   3. `extracted` once a result is in hand. Retained for legacy
+ *      compatibility / debugging — under the Phase 6 auto-trigger this
+ *      branch is normally short-circuited by the `generating` check
+ *      above.
+ *   4. `streaming` while the SSE stream is open.
+ *   5. `review` once we have any Strategic Take text to show OR a
  *      `reviewError` to surface. Including the error here is what keeps
  *      pre-stream HTTP failures (e.g. 503 returned before the SSE
  *      channel opens) from silently dropping the user back into the
  *      input form with no visible error.
- *   5. `input` otherwise.
+ *   6. `input` otherwise.
  */
 export const useWorxDeskFlow = (): WorxDeskFlowPhase =>
   useWorxDeskStore((state) => {
+    if (state.isGenerating) return 'generating';
+    if (
+      state.extractedFormData !== null ||
+      state.generatedCopyHtml !== null ||
+      (state.generationError !== null && !state.isExtractingBrief)
+    ) {
+      return 'generating';
+    }
     if (state.isExtractingBrief) return 'extracting';
-    if (state.extractedFormData !== null) return 'extracted';
     if (state.isStreamingReview) return 'streaming';
     if (state.strategicTake.length > 0 || state.reviewError !== null) {
       return 'review';

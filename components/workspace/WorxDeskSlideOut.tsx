@@ -81,6 +81,7 @@ const SUBTITLE_BY_PHASE: Record<string, string> = {
   review: 'Strategic Review complete.',
   extracting: 'Preparing your brief for generation…',
   extracted: 'Brief extracted successfully.',
+  generating: 'Writing your copy…',
 };
 
 // ============================================================================
@@ -145,13 +146,9 @@ export const useWorxDeskPanelActions = (): {
 export function WorxDeskSlideOut({
   isOpen,
   onClose,
-  editor: _editor,
+  editor,
   activeProject,
 }: WorxDeskSlideOutProps) {
-  // Editor is reserved for Phase 6. Suppress the unused-var lint
-  // without changing the public prop surface.
-  void _editor;
-
   const sessionId = useWorxDeskSessionId();
   const flowPhase = useWorxDeskFlow();
   const review = useWorxDeskReview();
@@ -326,6 +323,13 @@ export function WorxDeskSlideOut({
         // create more confusion than it solves.
         return null;
 
+      case 'generating':
+        // No footer during loading or failure. The body view owns the
+        // loader + the inline "Try again" / "Back to review" buttons,
+        // mirroring the extracting-phase pattern of keeping all
+        // async-state affordances in one place.
+        return null;
+
       case 'extracted':
         return (
           <StickyActionBar variant="static">
@@ -387,7 +391,18 @@ export function WorxDeskSlideOut({
       break;
     case 'extracting':
     case 'extracted':
-      body = <WorxDeskGeneratingView />;
+    case 'generating':
+      // The Generating view owns extraction loading, generation
+      // loading, both failure UIs (extraction + generation), and the
+      // post-generation safety-net recovery state. Phase 6 props the
+      // editor + active project through so the auto-trigger can hand
+      // them to `generateCopy`.
+      body = (
+        <WorxDeskGeneratingView
+          editor={editor}
+          activeProject={activeProject}
+        />
+      );
       break;
     default:
       body = null;
