@@ -291,6 +291,89 @@ function detectFileType(
 }
 
 // ============================================================================
+// DOCX-specific cleanup (image data URLs + over-aggressive escapes)
+// ============================================================================
+
+/**
+ * Matches a markdown image whose URL is an inline data: URI. Mammoth
+ * inlines embedded Word images as base64 data URLs, producing 5–10 KB
+ * blobs of pure noise per image. The negated character class `[^)]+`
+ * is safe because base64 alphabet (A-Za-z0-9+/=) and the
+ * `data:image/...;base64,` prefix never contain a literal `)` – and
+ * `[^)]` matches across newlines, which mammoth occasionally inserts
+ * inside the payload. Alt text may be empty or contain spaces.
+ */
+const DOCX_IMAGE_DATA_URL_REGEX = /!\[[^\]]*\]\(data:[^)]+\)/g;
+
+/**
+ * Backslash-escape sequences that appear in normal business prose but
+ * carry no markdown meaning we want to keep. Mammoth's markdown writer
+ * defensively escapes these even when they are syntactically harmless,
+ * which leaves the textarea littered with `\-`, `\.`, `\(`, etc.
+ *
+ * Deliberately excluded: `\\`, `\*`, `\_`, `\#`, `\|` – those carry
+ * structural meaning (literal backslash, literal asterisk/underscore
+ * to opt out of emphasis, literal hash to opt out of headings, literal
+ * pipe inside a table cell) and unescaping them would silently change
+ * how the brief renders downstream.
+ */
+const DOCX_ESCAPE_UNESCAPE_REGEX = /\\([-.()[\]!?:;,&])/g;
+
+/**
+ * Post-process the markdown that mammoth.convertToMarkdown returns for
+ * a DOCX file. This cleanup exists for two real-world problems we hit
+ * on actual customer briefs (e.g. the Nozomi SD Series creative brief):
+ *
+ *   1. Embedded images. Word docs commonly include logos, screenshots,
+ *      and diagrams. Mammoth inlines these as base64 data URLs, which
+ *      add kilobytes of noise per image, bloat downstream LLM token
+ *      usage, and visually pollute the brief textarea. We excise the
+ *      entire image reference (no placeholder – a placeholder would
+ *      itself be noise to the LLM).
+ *
+ *   2. Over-aggressive backslash escaping. Mammoth escapes characters
+ *      that are *technically* markdown-special but appear constantly
+ *      in normal prose (hyphens in compound words, periods in
+ *      abbreviations, parentheses, etc.). We unescape a small,
+ *      explicit allowlist that never carries structural meaning in
+ *      our briefs.
+ *
+ * What this function deliberately does NOT touch:
+ *   - Header markers (#, ##, ###)
+ *   - Bullet markers (-, *, numbered lists) at line start
+ *   - Pipe-table syntax (| col | col |)
+ *   - Bold / italic / underline emphasis (**, *, __, _)
+ *   - Block quotes (>) and code spans / fences (`, ```)
+ *   - Escaped backslash, asterisk, underscore, hash, pipe – these
+ *     have markdown meaning we want to preserve as-is.
+ *
+ * Edge case (accepted, not handled): if a DOCX places an image inside
+ * an emphasis run – e.g. `__![](data:...)__` – removing the image
+ * leaves bare `____` behind. We accept this because (a) it is
+ * semantically harmless to a downstream LLM, (b) trying to detect and
+ * strip the surrounding markers is fragile and risks damaging real
+ * emphasis runs around real text, and (c) the universal newline
+ * collapse already cleans up the surrounding whitespace.
+ *
+ * SCOPE NOTE: This cleanup is DOCX-specific. The PDF and TXT parsing
+ * paths must NOT call this function – PDFs do not produce inline
+ * markdown image syntax, and TXT files have no markdown semantics to
+ * preserve in the first place.
+ */
+function cleanDocxMarkdown(input: string): { text: string; imagesStripped: number } {
+  let imagesStripped = 0;
+
+  const withoutImages = input.replace(DOCX_IMAGE_DATA_URL_REGEX, () => {
+    imagesStripped += 1;
+    return '';
+  });
+
+  const unescaped = withoutImages.replace(DOCX_ESCAPE_UNESCAPE_REGEX, '$1');
+
+  return { text: unescaped, imagesStripped };
+}
+
+// ============================================================================
 // Format-specific parsers
 // ============================================================================
 
@@ -299,7 +382,13 @@ function detectFileType(
  * pipe-syntax markdown tables (mammoth's convertToMarkdown does this
  * natively in 1.8.0). Mammoth's per-paragraph warnings are surfaced.
  *
- * Throws a sanitized Error on mammoth failure — we do not let mammoth's
+ * After mammoth runs, `cleanDocxMarkdown` strips embedded image data
+ * URLs and unescapes a small set of over-aggressive backslash escapes.
+ * When one or more images are removed, a user-facing warning is added
+ * to the result so the WORX DESK panel UI can surface the change in
+ * its parser-warning callout.
+ *
+ * Throws a sanitized Error on mammoth failure – we do not let mammoth's
  * internal error messages leak to the client.
  */
 async function parseDocx(buffer: Buffer): Promise<{ text: string; warnings: string[] }> {
@@ -319,7 +408,15 @@ async function parseDocx(buffer: Buffer): Promise<{ text: string; warnings: stri
     .filter((m) => m.type === 'warning')
     .map((m) => m.message);
 
-  return { text: result.value, warnings };
+  const cleaned = cleanDocxMarkdown(result.value);
+
+  if (cleaned.imagesStripped > 0) {
+    warnings.push(
+      'Embedded images were removed from the document content. They are not used by AI processing.',
+    );
+  }
+
+  return { text: cleaned.text, warnings };
 }
 
 /**
