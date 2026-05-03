@@ -712,7 +712,7 @@ export function WorxDeskInputView({
       {/* Subtle bottom callout to reinforce the "Briefcase" pill identity */}
       <div className="flex items-center gap-2 pt-2 text-xs text-gray-400">
         <Briefcase className="w-3 h-3" />
-        <span>WORX DESK · brief-to-copy on-ramp</span>
+        <span>MY WORX DESK · brief-to-copy on-ramp</span>
       </div>
     </div>
   );

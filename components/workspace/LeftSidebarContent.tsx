@@ -307,12 +307,12 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
                 'before:w-[3px] before:rounded-l-lg',
                 'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
               )}
-              aria-label="Open WORX DESK on-ramp"
+              aria-label="Open MY WORX DESK on-ramp"
             >
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-apple-text-dark" />
                 <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-normal">
-                  WORX DESK
+                  MY WORX DESK
                 </span>
               </div>
               <PanelLeftOpen className="w-4 h-4 text-gray-400" />

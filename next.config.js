@@ -33,6 +33,13 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    // Tell Next.js to load these packages at runtime via Node's native
+    // module resolution instead of bundling them through webpack.
+    // pdf-parse and pdfjs-dist (the PDF text-extraction stack used by
+    // /api/worxdesk/parse-brief-file) include browser-only globals that
+    // crash with "Object.defineProperty called on non-object" when
+    // bundled for the React Server Components runtime.
+    serverComponentsExternalPackages: ['pdf-parse', 'pdfjs-dist'],
   },
 
   // NOTE: /pricing -> /#pricing is intentionally NOT handled here.

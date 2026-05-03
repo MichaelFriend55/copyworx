@@ -401,7 +401,7 @@ export function WorxDeskSlideOut({
       onClose={onClose}
       side="right"
       width={600}
-      title="WORX DESK"
+      title="MY WORX DESK"
       subtitle={SUBTITLE_BY_PHASE[flowPhase] ?? SUBTITLE_BY_PHASE.input}
       footer={footer ?? undefined}
     >
