@@ -129,7 +129,10 @@ export async function POST(request: NextRequest) {
       parent_version_id,
       folder_id,
       metadata,
-      template_progress
+      template_progress,
+      // jsonb provenance for documents created through the WORX DESK on-ramp.
+      // Defaults to null in the column for documents created any other way.
+      worxdesk_metadata
     } = body;
 
     // Validate required fields
@@ -157,6 +160,10 @@ export async function POST(request: NextRequest) {
       folder_id,
       metadata: metadata || {},
       template_progress,
+      // Pass through verbatim. `undefined` means the client did not send the
+      // field (column stays at its DEFAULT NULL). Explicit `null` means the
+      // client wants to clear it. Real WORX DESK objects are persisted as-is.
+      worxdesk_metadata: worxdesk_metadata ?? null,
     };
 
     const { data: document, error } = await (supabase
@@ -203,10 +210,13 @@ export async function PUT(request: NextRequest) {
       return badRequestResponse('Document ID is required');
     }
 
-    // Filter allowed update fields (project_id enables cross-project moves)
+    // Filter allowed update fields (project_id enables cross-project moves).
+    // worxdesk_metadata is included so Phase 5/6 can attach or amend WORX
+    // DESK provenance after document creation. Pass `null` to explicitly
+    // clear the column; omit the key to leave the column untouched.
     const allowedFields = [
-      'project_id', 'base_title', 'title', 'content', 'folder_id', 
-      'metadata', 'template_progress'
+      'project_id', 'base_title', 'title', 'content', 'folder_id',
+      'metadata', 'template_progress', 'worxdesk_metadata'
     ];
     
     const filteredUpdates: Record<string, unknown> = {};

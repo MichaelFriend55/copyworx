@@ -10,6 +10,7 @@
 'use client';
 
 import type { ProjectDocument } from '@/lib/types/project';
+import type { WorxDeskMetadata } from '@/lib/types/worxdesk';
 import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
@@ -86,11 +87,24 @@ function mapApiToDocument(apiDoc: Record<string, unknown>): ProjectDocument {
     modifiedAt: apiDoc.modified_at as string,
     metadata: apiDoc.metadata as ProjectDocument['metadata'],
     templateProgress: apiDoc.template_progress as ProjectDocument['templateProgress'],
+    // Always coerce missing values to `null` (never undefined) so callers that
+    // narrow on `=== null` see a stable shape regardless of whether the row
+    // came from before or after migration 005.
+    worxdeskMetadata:
+      (apiDoc.worxdesk_metadata as WorxDeskMetadata | null | undefined) ?? null,
   };
 }
 
 /**
  * Convert frontend document to API format (snake_case)
+ *
+ * Used for both inserts (full document) and partial updates. Each branch is
+ * conditional on `!== undefined` so partial updates never accidentally clear
+ * a column the caller did not intend to touch — for example, an autosave that
+ * only sets `content` must leave `worxdesk_metadata` alone in the database.
+ *
+ * To explicitly clear a column, the caller must pass `null` (which is
+ * preserved as `null` in the API body); omitting the field leaves it intact.
  */
 function mapDocumentToApi(doc: Partial<ProjectDocument>): Record<string, unknown> {
   const apiDoc: Record<string, unknown> = {};
@@ -104,6 +118,7 @@ function mapDocumentToApi(doc: Partial<ProjectDocument>): Record<string, unknown
   if (doc.content !== undefined) apiDoc.content = doc.content;
   if (doc.metadata !== undefined) apiDoc.metadata = doc.metadata;
   if (doc.templateProgress !== undefined) apiDoc.template_progress = doc.templateProgress;
+  if (doc.worxdeskMetadata !== undefined) apiDoc.worxdesk_metadata = doc.worxdeskMetadata;
   
   return apiDoc;
 }
@@ -182,12 +197,31 @@ async function apiCall<T>(
 // ============================================================================
 
 /**
- * Create a new document with version 1
+ * Create a new document with version 1.
+ *
+ * @param projectId           Project this document belongs to.
+ * @param baseTitle           Root document title (no version suffix). Must be
+ *                            1-200 characters after trimming; sanitized to
+ *                            strip `<` and `>`.
+ * @param content             Initial HTML content from the editor. Defaults
+ *                            to an empty string.
+ * @param worxdeskMetadata    Optional WORX DESK provenance metadata to
+ *                            persist in the `worxdesk_metadata` jsonb column.
+ *                            Pass a `WorxDeskMetadata` object only for
+ *                            documents created through the WORX DESK on-ramp;
+ *                            leave as the default `null` for every other
+ *                            creation path (blank, template form, AI@Worx
+ *                            tools). Backward compatible — existing call
+ *                            sites that omit the parameter behave identically
+ *                            to before.
+ * @returns The created `ProjectDocument` with `worxdeskMetadata` round-
+ *          tripped from the database row (null when not provided).
  */
 export async function createDocument(
   projectId: string,
   baseTitle: string,
-  content: string = ''
+  content: string = '',
+  worxdeskMetadata: WorxDeskMetadata | null = null
 ): Promise<ProjectDocument> {
   if (typeof window === 'undefined') {
     throw new Error('Cannot create document in non-browser environment');
@@ -208,6 +242,7 @@ export async function createDocument(
       charCount: calculateCharCount(content),
       tags: [],
     },
+    worxdesk_metadata: worxdeskMetadata,
   };
   
   try {
@@ -242,6 +277,7 @@ export async function createDocument(
         charCount: calculateCharCount(content),
         tags: [],
       },
+      worxdeskMetadata,
     };
     
     saveLocalDocument(newDoc);
@@ -277,6 +313,12 @@ export async function createDocumentVersion(
   const content = newContent !== undefined ? newContent : sourceDoc.content;
   const now = new Date().toISOString();
   
+  // Inherit WORX DESK metadata from the source document so v2/v3/... of a
+  // WORX DESK doc preserve their full creation provenance. Documents created
+  // outside the WORX DESK flow have `null` here, and `null` propagates.
+  const inheritedWorxdeskMetadata: WorxDeskMetadata | null =
+    sourceDoc.worxdeskMetadata ?? null;
+
   const docData = {
     project_id: projectId,
     base_title: sourceDoc.baseTitle,
@@ -290,6 +332,7 @@ export async function createDocumentVersion(
       templateId: sourceDoc.metadata?.templateId,
       tags: sourceDoc.metadata?.tags ? [...sourceDoc.metadata.tags] : [],
     },
+    worxdesk_metadata: inheritedWorxdeskMetadata,
   };
   
   try {
@@ -322,6 +365,7 @@ export async function createDocumentVersion(
         templateId: sourceDoc.metadata?.templateId,
         tags: sourceDoc.metadata?.tags ? [...sourceDoc.metadata.tags] : [],
       },
+      worxdeskMetadata: inheritedWorxdeskMetadata,
     };
     
     saveLocalDocument(newDoc);

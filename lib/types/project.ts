@@ -12,6 +12,7 @@
 import type { BrandVoice } from './brand';
 import type { Snippet } from './snippet';
 import type { TemplateProgress } from './template-progress';
+import type { WorxDeskMetadata } from './worxdesk';
 
 /**
  * Folder interface - Organizational container for documents
@@ -226,6 +227,21 @@ export interface ProjectDocument {
    * Tracks section-by-section generation progress and allows resuming
    */
   templateProgress?: TemplateProgress;
+
+  /**
+   * WORX DESK session metadata captured at document creation time.
+   *
+   * Persisted in the `documents.worxdesk_metadata` jsonb column. Populated only
+   * for documents created through the WORX DESK on-ramp flow (brief intake →
+   * Strategic Review → generation). Documents created through any other flow
+   * (blank, template form, AI@Worx tools, manual rename) leave this `null`.
+   *
+   * The optional `?` reflects that legacy documents and non-WORX-DESK paths
+   * never set it. Callers that need to act on metadata MUST narrow on `null`.
+   * Round-trips through `mapApiToDocument` / `mapDocumentToApi` preserve
+   * `null` explicitly; they never collapse it to `undefined`.
+   */
+  worxdeskMetadata?: WorxDeskMetadata | null;
 }
 
 /**

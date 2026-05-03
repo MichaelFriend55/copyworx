@@ -64,6 +64,11 @@ interface MigrationProject {
     modifiedAt: string;
     metadata?: Record<string, unknown>;
     templateProgress?: Record<string, unknown>;
+    // Optional WORX DESK provenance carried over from localStorage docs that
+    // were created through the on-ramp before cloud migration. Typed loosely
+    // here because the migration route accepts unvetted client data and the
+    // jsonb column tolerates any object shape.
+    worxdeskMetadata?: Record<string, unknown> | null;
   }>;
   snippets: Array<{
     id: string;
@@ -277,6 +282,7 @@ export async function POST(request: NextRequest) {
                 content: doc.content || '',
                 metadata: doc.metadata || {},
                 template_progress: doc.templateProgress || null,
+                worxdesk_metadata: doc.worxdeskMetadata ?? null,
                 created_at: doc.createdAt || new Date().toISOString(),
                 modified_at: doc.modifiedAt || new Date().toISOString(),
               })

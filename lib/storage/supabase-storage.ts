@@ -19,6 +19,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import type { Project, Persona, Folder, ProjectDocument } from '@/lib/types/project';
 import type { BrandVoice } from '@/lib/types/brand';
 import type { Snippet, CreateSnippetInput, UpdateSnippetInput } from '@/lib/types/snippet';
+import type { WorxDeskMetadata } from '@/lib/types/worxdesk';
 import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
@@ -217,6 +218,13 @@ export async function cloudCreateDocument(
     folderId?: string;
     metadata?: Record<string, unknown>;
     templateProgress?: unknown;
+    /**
+     * WORX DESK provenance metadata persisted in `documents.worxdesk_metadata`.
+     * Pass an object only for documents created through the WORX DESK on-ramp.
+     * `undefined` (option omitted) becomes `null` server-side, matching the
+     * column default.
+     */
+    worxdeskMetadata?: WorxDeskMetadata | null;
   }
 ): Promise<ProjectDocument> {
   const data = await apiCall<Record<string, unknown>>('/api/db/documents', {
@@ -233,6 +241,7 @@ export async function cloudCreateDocument(
       folder_id: options?.folderId,
       metadata: options?.metadata || {},
       template_progress: options?.templateProgress,
+      worxdesk_metadata: options?.worxdeskMetadata ?? null,
     }),
   });
 
@@ -249,15 +258,22 @@ export async function cloudCreateDocument(
     modifiedAt: data.modified_at as string,
     metadata: data.metadata as ProjectDocument['metadata'],
     templateProgress: data.template_progress as ProjectDocument['templateProgress'],
+    worxdeskMetadata:
+      (data.worxdesk_metadata as WorxDeskMetadata | null | undefined) ?? null,
   };
 }
 
 /**
  * Update a document in Supabase
+ *
+ * `worxdeskMetadata` is included in the allowed update keys so Phase 5/6 can
+ * attach or amend WORX DESK provenance after creation. Same partial-update
+ * semantics as every other field: omit to leave the column alone, pass
+ * `null` to explicitly clear it.
  */
 export async function cloudUpdateDocument(
   id: string,
-  updates: Partial<Pick<ProjectDocument, 'baseTitle' | 'title' | 'content' | 'folderId' | 'metadata' | 'templateProgress'>>
+  updates: Partial<Pick<ProjectDocument, 'baseTitle' | 'title' | 'content' | 'folderId' | 'metadata' | 'templateProgress' | 'worxdeskMetadata'>>
 ): Promise<void> {
   const apiUpdates: Record<string, unknown> = {};
   
@@ -267,6 +283,7 @@ export async function cloudUpdateDocument(
   if (updates.folderId !== undefined) apiUpdates.folder_id = updates.folderId;
   if (updates.metadata !== undefined) apiUpdates.metadata = updates.metadata;
   if (updates.templateProgress !== undefined) apiUpdates.template_progress = updates.templateProgress;
+  if (updates.worxdeskMetadata !== undefined) apiUpdates.worxdesk_metadata = updates.worxdeskMetadata;
 
   await apiCall('/api/db/documents', {
     method: 'PUT',
@@ -303,6 +320,8 @@ export async function cloudGetDocument(id: string): Promise<ProjectDocument | nu
       modifiedAt: data.modified_at as string,
       metadata: data.metadata as ProjectDocument['metadata'],
       templateProgress: data.template_progress as ProjectDocument['templateProgress'],
+      worxdeskMetadata:
+        (data.worxdesk_metadata as WorxDeskMetadata | null | undefined) ?? null,
     };
   } catch (error) {
     // Return null if document not found
@@ -332,6 +351,8 @@ export async function cloudGetAllDocuments(projectId: string): Promise<ProjectDo
     modifiedAt: doc.modified_at as string,
     metadata: doc.metadata as ProjectDocument['metadata'],
     templateProgress: doc.template_progress as ProjectDocument['templateProgress'],
+    worxdeskMetadata:
+      (doc.worxdesk_metadata as WorxDeskMetadata | null | undefined) ?? null,
   }));
 }
 
@@ -360,6 +381,8 @@ export async function cloudGetDocumentVersions(
     modifiedAt: doc.modified_at as string,
     metadata: doc.metadata as ProjectDocument['metadata'],
     templateProgress: doc.template_progress as ProjectDocument['templateProgress'],
+    worxdeskMetadata:
+      (doc.worxdesk_metadata as WorxDeskMetadata | null | undefined) ?? null,
   }));
   
   return docs.sort((a, b) => a.version - b.version);
@@ -396,6 +419,8 @@ export async function cloudRenameDocument(
     modifiedAt: data.modified_at as string,
     metadata: data.metadata as ProjectDocument['metadata'],
     templateProgress: data.template_progress as ProjectDocument['templateProgress'],
+    worxdeskMetadata:
+      (data.worxdesk_metadata as WorxDeskMetadata | null | undefined) ?? null,
   };
 }
 
@@ -420,13 +445,15 @@ export async function cloudCreateDocumentVersion(
     : 1;
   const newVersion = highestVersion + 1;
 
-  // Create the new version
+  // Create the new version. WORX DESK provenance carries forward from the
+  // source document so v2/v3/... preserve the originating brief metadata.
   return cloudCreateDocument(projectId, sourceDoc.baseTitle, newContent ?? sourceDoc.content, {
     version: newVersion,
     parentVersionId: sourceDocId,
     folderId: sourceDoc.folderId,
     metadata: sourceDoc.metadata,
     templateProgress: sourceDoc.templateProgress,
+    worxdeskMetadata: sourceDoc.worxdeskMetadata ?? null,
   });
 }
 

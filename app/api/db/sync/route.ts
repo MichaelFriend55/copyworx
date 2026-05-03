@@ -17,6 +17,7 @@ import {
   unauthorizedResponse,
   internalErrorResponse 
 } from '@/lib/utils/api-auth';
+import type { WorxDeskMetadata } from '@/lib/types/worxdesk';
 
 // ============================================================================
 // Types for synced data
@@ -75,6 +76,10 @@ interface SyncedDocument {
     tags?: string[];
   };
   templateProgress?: unknown;
+  // Mirrors `documents.worxdesk_metadata`. Always emitted (null when the
+  // column is empty) so the client never has to distinguish between
+  // "missing field" and "null column" — the round-trip shape is stable.
+  worxdeskMetadata: WorxDeskMetadata | null;
 }
 
 interface SyncedSnippet {
@@ -288,6 +293,8 @@ export async function GET(request: NextRequest) {
           modifiedAt: d.modified_at,
           metadata: d.metadata as SyncedDocument['metadata'],
           templateProgress: d.template_progress,
+          worxdeskMetadata:
+            (d.worxdesk_metadata as WorxDeskMetadata | null | undefined) ?? null,
         })),
         snippets: projectSnippets.map((s: any) => ({
           id: s.id,

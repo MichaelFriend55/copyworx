@@ -63,6 +63,10 @@ export interface Database {
           content: string;
           metadata: Json | null;
           template_progress: Json | null;
+          // Added by migration 005_add_worxdesk_metadata.sql. Nullable
+          // because only documents created through the WORX DESK on-ramp
+          // populate it; all other flows leave the column NULL.
+          worxdesk_metadata: Json | null;
           created_at: string;
           modified_at: string;
         };
@@ -78,6 +82,7 @@ export interface Database {
           content?: string;
           metadata?: Json | null;
           template_progress?: Json | null;
+          worxdesk_metadata?: Json | null;
           created_at?: string;
           modified_at?: string;
         };
@@ -93,6 +98,7 @@ export interface Database {
           content?: string;
           metadata?: Json | null;
           template_progress?: Json | null;
+          worxdesk_metadata?: Json | null;
           created_at?: string;
           modified_at?: string;
         };
