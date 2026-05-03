@@ -14,45 +14,24 @@
  * future file-upload feature. They aren't WORX-DESK-domain types — only
  * the API route that consumes them is WORX-DESK-specific.
  *
- * --- pdf-parse version note (READ BEFORE "FIXING") ---
+ * --- PDF parsing library note (READ BEFORE "FIXING") ---
  *
- * This module uses the pdf-parse v2.x class-based API:
+ * This module uses unpdf (unjs/unpdf) for PDF text extraction:
  *
- *   import { PDFParse } from 'pdf-parse';
- *   const parser = new PDFParse({ data: buffer });
- *   const result = await parser.getText();
- *   await parser.destroy();
+ *   import { extractText } from 'unpdf';
+ *   const { totalPages, text } = await extractText(uint8Array, { mergePages: true });
  *
- * If you have used pdf-parse in older codebases you have probably seen
- * patterns like:
+ * unpdf was chosen over pdf-parse because pdf-parse v2 wraps pdfjs-dist 4.x,
+ * which references browser-only globals (DOMMatrix, ImageData, Path2D) at
+ * module-load time. Those globals do NOT exist in Vercel's serverless runtime,
+ * causing a "ReferenceError: DOMMatrix is not defined" crash at import time —
+ * BEFORE the request handler runs — which killed the entire route (including
+ * DOCX and TXT uploads that have nothing to do with PDFs).
  *
- *   import pdfParse from 'pdf-parse';                      // v1 - DO NOT use here
- *   import pdfParse from 'pdf-parse/lib/pdf-parse.js';     // v1 deep import - DO NOT use here
- *
- * Why we are NOT using either of those:
- *
- *   1. The npm `pdf-parse` package was rewritten in v2.x by a new
- *      maintainer (mehmet-kozan). v2.4.5 is what `npm install pdf-parse`
- *      gives you today. The v1 default-export-function API does not exist
- *      in v2.
- *
- *   2. The v1 deep-import workaround (`pdf-parse/lib/pdf-parse.js`)
- *      existed solely to dodge a bug in v1.1.1's `index.js` that tried
- *      to read a hardcoded test PDF (`test/data/05-versions-space.pdf`)
- *      whenever `module.parent` was falsy — which it is in Next.js,
- *      Vercel, AWS Lambda, and most serverless runtimes. That bug is
- *      gone in v2. The deep-import workaround is also blocked in v2 by
- *      the package's `exports` map, so attempting it now throws
- *      `ERR_PACKAGE_PATH_NOT_EXPORTED` at runtime.
- *
- *   3. Pinning to v1.1.1 to keep the workaround intact would mean
- *      running away from a fix that already exists upstream, and would
- *      reintroduce the `unknown as` cast tax (v1 has no first-party
- *      types — only the community `@types/pdf-parse`).
- *
- * If a future maintainer "fixes" this back to a v1 pattern they have
- * seen elsewhere, the deploy will start crashing with ENOENT in
- * production while still passing locally. Please don't.
+ * unpdf bundles a serverless-optimized build of PDF.js that has no Canvas /
+ * DOMMatrix dependency and works cleanly in Vercel, Cloudflare Workers, and
+ * other edge runtimes. Do NOT revert this to pdf-parse or pdfjs-dist — that
+ * is the failure path we are explicitly moving away from.
  *
  * --- mammoth note ---
  *
@@ -66,7 +45,7 @@
  */
 
 import mammoth from 'mammoth';
-import { PDFParse } from 'pdf-parse';
+import { extractText } from 'unpdf';
 import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
@@ -420,8 +399,12 @@ async function parseDocx(buffer: Buffer): Promise<{ text: string; warnings: stri
 }
 
 /**
- * Parse a PDF buffer into plain text using pdf-parse v2.x. Always calls
- * `parser.destroy()` to release pdfjs resources, even on failure.
+ * Parse a PDF buffer into plain text using unpdf (unjs/unpdf).
+ * Replaced from pdf-parse v2.x for Vercel serverless compatibility —
+ * pdf-parse wraps pdfjs-dist which references DOMMatrix at module-load
+ * time, crashing the entire route in Vercel's runtime before any handler runs.
+ * unpdf uses a serverless-optimized PDF.js build with no Canvas/DOMMatrix dependency.
+ *
  * Applies PDF-specific normalization (collapse runs of newlines, strip
  * per-line whitespace, fix hyphenated word breaks across line wraps),
  * then surfaces a "looks scanned" warning when extracted text is much
@@ -430,25 +413,18 @@ async function parseDocx(buffer: Buffer): Promise<{ text: string; warnings: stri
 async function parsePdf(buffer: Buffer): Promise<{ text: string; warnings: string[] }> {
   const warnings: string[] = [];
 
-  // PDFParse accepts Buffer in `data` and converts to Uint8Array internally.
-  // The wider `data` field accepts Uint8Array, ArrayBuffer, etc. — Buffer is
-  // a Uint8Array subclass, so this assignment is safe at runtime; the cast
-  // is here only to satisfy the strict union type signature.
-  const parser = new PDFParse({ data: buffer as unknown as Uint8Array });
-
   let extracted: string;
   try {
-    const result = await parser.getText();
-    extracted = result.text;
+    // Buffer is a Uint8Array subclass; unpdf's `data` parameter accepts
+    // anything satisfying DocumentInitParameters['data'] — Uint8Array qualifies.
+    const { text } = await extractText(buffer, { mergePages: true });
+    extracted = text;
   } catch (err) {
-    logger.error('pdf-parse text extraction failed:', err);
-    await safeDestroy(parser);
+    logger.error('unpdf text extraction failed:', err);
     throw new Error(
       'Could not extract text from PDF. The file may be corrupted, password-protected, or image-only.',
     );
   }
-
-  await safeDestroy(parser);
 
   const normalized = normalizePdfText(extracted);
 
@@ -462,15 +438,6 @@ async function parsePdf(buffer: Buffer): Promise<{ text: string; warnings: strin
   }
 
   return { text: normalized, warnings };
-}
-
-/** Best-effort cleanup. Never throws; logs at warn level if it does. */
-async function safeDestroy(parser: PDFParse): Promise<void> {
-  try {
-    await parser.destroy();
-  } catch (err) {
-    logger.warn('pdf-parse destroy() threw (non-fatal):', err);
-  }
 }
 
 /**

@@ -44,7 +44,6 @@
     "mammoth": "^1.8.0",
     "markdown-it": "^14.1.0",
     "next": "14.2.35",
-    "pdf-parse": "^2.4.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-joyride": "^2.9.3",
@@ -53,6 +52,7 @@
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
     "turndown": "^7.2.2",
+    "unpdf": "^1.6.2",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
