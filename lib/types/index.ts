@@ -21,6 +21,19 @@ export { isSnippet, validateSnippetName, validateSnippetContent } from './snippe
 // Re-export brand types
 export type { BrandVoice } from './brand';
 
+// Re-export WORX DESK types
+export type {
+  WorxDeskQuestion,
+  WorxDeskAnswer,
+  WorxDeskStrategicReview,
+  WorxDeskSessionState,
+  WorxDeskMetadata,
+  StrategicReviewLLMRequest,
+  StrategicReviewLLMResponse,
+  BriefExtractionLLMRequest,
+  BriefExtractionLLMResponse,
+} from './worxdesk';
+
 // Re-export template types
 export type { 
   Template as TemplateDefinition,

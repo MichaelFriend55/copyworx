@@ -94,6 +94,7 @@ Types are in `lib/types/` with barrel export from `index.ts`:
 - `template.ts` - Template definitions
 - `workspace.ts` - Workspace UI types
 - `database.ts` - Supabase schema types
+- `worxdesk.ts` - WORX DESK session state, LLM I/O shapes, and persisted metadata
 
 ## Conventions
 
@@ -114,6 +115,14 @@ Required in `.env.local`:
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` - Clerk auth
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` - Supabase (optional; localStorage fallback if missing)
 - `ANTHROPIC_API_KEY` - Claude AI features
+
+## Feature Flags
+
+Feature flags live in `lib/config/feature-flags.ts` and are read from `NEXT_PUBLIC_*` env vars at build time. A missing variable always defaults to `false`. Set the variable in `.env.local` and restart the dev server to enable locally; in Vercel scope to All Environments.
+
+| Flag | Env var | Default | Description |
+|------|---------|---------|-------------|
+| `worxdeskEnabled` | `NEXT_PUBLIC_WORXDESK_ENABLED` | `false` | Enables the WORX DESK brief-to-copy on-ramp (AI Strategic Review + generation flow). |
 
 ## Standing Rules — Style and Workflow
 
