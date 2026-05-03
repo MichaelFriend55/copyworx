@@ -59,17 +59,20 @@ import { WorxDeskReviewView } from './worxdesk/WorxDeskReviewView';
 import { WorxDeskGeneratingView } from './worxdesk/WorxDeskGeneratingView';
 import type { Project } from '@/lib/types/project';
 import type { Editor } from '@tiptap/react';
+import { WORXDESK_PANEL_ID } from '@/lib/stores/worxdesk-panel-id';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
 /**
- * Unique panel id for the WORX DESK input slide-out. Lives next to the
- * panel component (mirrors `TEMPLATES_PANEL_ID` and friends) so consumers
- * import the id and the component from the same module.
+ * Re-exported here so existing consumers (`app/worxspace/page.tsx`,
+ * `LeftSidebarContent.tsx`) keep their current import path unchanged.
+ * The canonical definition lives in `lib/stores/worxdesk-panel-id.ts`
+ * to break the circular dependency between this component and
+ * `worxdeskStore.ts`.
  */
-export const WORXDESK_PANEL_ID = 'worxdesk-onramp';
+export { WORXDESK_PANEL_ID };
 
 /**
  * Subtitle copy keyed by flow phase. The shell reads this from a single

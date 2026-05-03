@@ -53,6 +53,7 @@ import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useSlideOutStore } from '@/lib/stores/slideOutStore';
 import { logger } from '@/lib/utils/logger';
 import { formatErrorForUser, logError } from '@/lib/utils/error-handling';
+import { WORXDESK_PANEL_ID } from '@/lib/stores/worxdesk-panel-id';
 
 // ============================================================================
 // UUID generation
@@ -91,17 +92,6 @@ const EXTRACT_BRIEF_ENDPOINT = '/api/worxdesk/extract-brief';
 
 /** Phase 6 JSON endpoint for final template-driven copy generation (Call 3). */
 const GENERATE_TEMPLATE_ENDPOINT = '/api/generate-template';
-
-/**
- * Panel id of the WORX DESK on-ramp slide-out. Mirrored here from
- * `components/workspace/WorxDeskSlideOut.tsx` so this store can close the
- * panel after a successful generation without importing the component file
- * (which would create a circular dependency: the component imports hooks
- * from this store). Keep in sync with `WORXDESK_PANEL_ID` over there — the
- * single source of truth lives next to the component, this is only a
- * runtime-coordination duplicate.
- */
-const WORXDESK_PANEL_ID_FOR_CLOSE = 'worxdesk-onramp';
 
 /**
  * Number of milliseconds to wait between activating the freshly-created
@@ -1465,7 +1455,7 @@ export const useWorxDeskStore = create<WorxDeskState>()((set, get) => ({
 
     // resetSession() also clears `generatedCopyHtml` via INITIAL_SESSION_SLICES.
     get().resetSession();
-    useSlideOutStore.getState().closeSlideOut(WORXDESK_PANEL_ID_FOR_CLOSE);
+    useSlideOutStore.getState().closeSlideOut(WORXDESK_PANEL_ID);
 
     // `isGenerating` is included in INITIAL_SESSION_SLICES (as `false`),
     // so resetSession() above already cleared it. The explicit set below
