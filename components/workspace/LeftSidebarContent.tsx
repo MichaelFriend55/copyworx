@@ -29,15 +29,18 @@ import {
   ChevronDown, 
   PanelLeftOpen, 
   BookOpenText,
+  Briefcase,
 } from 'lucide-react';
 import { MyProjectsSlideOut, MY_PROJECTS_PANEL_ID } from '@/components/workspace/MyProjectsSlideOut';
 import { TemplatesSlideOut, TEMPLATES_PANEL_ID } from '@/components/workspace/TemplatesSlideOut';
 import { BRAND_VOICE_PANEL_ID } from '@/components/workspace/BrandVoiceSlideOut';
 import { PERSONAS_PANEL_ID } from '@/components/workspace/PersonasSlideOut';
+import { WORXDESK_PANEL_ID } from '@/components/workspace/WorxDeskSlideOut';
 import { useWorkspaceStore } from '@/lib/stores/workspaceStore';
 import { useIsSlideOutOpen, useSlideOutActions } from '@/lib/stores/slideOutStore';
 import { SECTIONS, getToolsBySection } from '@/lib/tools';
 import { getToolById } from '@/lib/tools/toolRegistry';
+import { featureFlags } from '@/lib/config/feature-flags';
 import { cn } from '@/lib/utils';
 import type { ProjectDocument } from '@/lib/types/project';
 
@@ -109,6 +112,18 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
   const closeTemplatesSlideOut = useCallback(() => {
     closeSlideOut(TEMPLATES_PANEL_ID);
   }, [closeSlideOut]);
+
+  /**
+   * Open the WORX DESK on-ramp slide-out panel.
+   *
+   * Gated upstream by `featureFlags.worxdeskEnabled` – the pill button only
+   * renders when the flag is on, so this callback is dead code in disabled
+   * environments. Defined unconditionally so the hooks order is stable
+   * regardless of flag value (React rule of hooks).
+   */
+  const openWorxDeskSlideOut = useCallback(() => {
+    openSlideOut(WORXDESK_PANEL_ID);
+  }, [openSlideOut]);
   
   /**
    * Handle document click from slide-out panel
@@ -267,6 +282,47 @@ export function LeftSidebarContent({ onDocumentClick }: LeftSidebarContentProps)
 
       {/* Divider */}
       <div className="border-t border-gray-200 my-2" />
+
+      {/* WORX DESK SECTION
+          Conditionally rendered behind the worxdeskEnabled feature flag so
+          the entry stays dark in environments where Phase 5/6 isn't ready
+          yet. Mirrors the AI@Worx Templates pill anatomy exactly (gray-50
+          background, blue→purple gradient accent, uppercase label, right-
+          aligned PanelLeftOpen affordance) but uses the Briefcase icon to
+          differentiate the brief-to-copy on-ramp from the form-based
+          templates browser. Both the button and its trailing divider live
+          inside the same conditional so we don't leave a stray rule when
+          the flag is off. */}
+      {featureFlags.worxdeskEnabled && (
+        <>
+          <div className="mb-2" data-tour="worxdesk">
+            <button
+              onClick={openWorxDeskSlideOut}
+              className={cn(
+                'w-full flex items-center justify-between px-3 py-2.5 rounded-lg',
+                'bg-gray-50 hover:bg-gray-100 transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-apple-blue focus:ring-offset-2',
+                'relative pl-5 border-l-[3px] border-transparent',
+                'before:content-[""] before:absolute before:left-0 before:top-0 before:bottom-0',
+                'before:w-[3px] before:rounded-l-lg',
+                'before:bg-gradient-to-b before:from-[#006EE6] before:to-[#7A3991]'
+              )}
+              aria-label="Open WORX DESK on-ramp"
+            >
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-apple-text-dark" />
+                <span className="font-semibold text-sm text-apple-text-dark uppercase tracking-normal">
+                  WORX DESK
+                </span>
+              </div>
+              <PanelLeftOpen className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 my-2" />
+        </>
+      )}
 
       {/* TOOL SECTIONS */}
       {SECTIONS.map((section) => {

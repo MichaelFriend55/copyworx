@@ -22,6 +22,7 @@ import { RightSidebarContent } from '@/components/workspace/RightSidebarContent'
 import { TemplateFormSlideOut, TEMPLATE_FORM_PANEL_ID } from '@/components/workspace/TemplateFormSlideOut';
 import { BrandVoiceSlideOut, BRAND_VOICE_PANEL_ID } from '@/components/workspace/BrandVoiceSlideOut';
 import { PersonasSlideOut, PERSONAS_PANEL_ID } from '@/components/workspace/PersonasSlideOut';
+import { WorxDeskSlideOut, WORXDESK_PANEL_ID } from '@/components/workspace/WorxDeskSlideOut';
 import { BrochureMultiSectionTemplate } from '@/components/workspace/BrochureMultiSectionTemplate';
 import { BrandMessagingTemplate } from '@/components/workspace/BrandMessagingTemplate';
 import { CaseStudyTemplate } from '@/components/workspace/CaseStudyTemplate';
@@ -93,6 +94,7 @@ export default function WorkspacePage() {
   const isTemplateFormOpen = useIsSlideOutOpen(TEMPLATE_FORM_PANEL_ID);
   const isBrandVoiceOpen = useIsSlideOutOpen(BRAND_VOICE_PANEL_ID);
   const isPersonasOpen = useIsSlideOutOpen(PERSONAS_PANEL_ID);
+  const isWorxDeskOpen = useIsSlideOutOpen(WORXDESK_PANEL_ID);
   const { closeSlideOut } = useSlideOutActions();
   const selectedTemplateId = useWorkspaceStore((state) => state.selectedTemplateId);
   const activeProjectId = useWorkspaceStore((state) => state.activeProjectId);
@@ -288,6 +290,17 @@ export default function WorkspacePage() {
   const handleClosePersonas = useCallback(() => {
     closeSlideOut(PERSONAS_PANEL_ID);
   }, [closeSlideOut]);
+
+  /**
+   * Handle closing the WORX DESK on-ramp slide-out (X button or backdrop).
+   *
+   * Intentionally does NOT call `resetSession()` so users can re-open the
+   * panel and find their in-progress brief intact. The Cancel button inside
+   * the panel is the explicit "wipe and start over" affordance.
+   */
+  const handleCloseWorxDesk = useCallback(() => {
+    closeSlideOut(WORXDESK_PANEL_ID);
+  }, [closeSlideOut]);
   
   // Show loading during SSR/hydration
   if (!mounted) {
@@ -407,7 +420,20 @@ export default function WorkspacePage() {
         isOpen={isPersonasOpen}
         onClose={handleClosePersonas}
       />
-      
+
+      {/* WORX DESK On-Ramp Slide-Out – Opens from right when the WORX DESK
+          pill in the left sidebar is clicked. The pill itself is gated by
+          the worxdeskEnabled feature flag, so when the flag is off this
+          panel is mounted but unreachable from the UI. Mounting it
+          unconditionally keeps the React tree shape stable and matches the
+          pattern used by every other right-side slide-out in this file. */}
+      <WorxDeskSlideOut
+        isOpen={isWorxDeskOpen}
+        onClose={handleCloseWorxDesk}
+        editor={editor}
+        activeProject={activeProject}
+      />
+
       {/* Product Tour - Shows on first visit */}
       <ProductTour run={runTour} onComplete={completeTour} />
     </>
