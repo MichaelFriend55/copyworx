@@ -43,6 +43,7 @@ import { SlideOutPanel } from '@/components/ui/SlideOutPanel';
 import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { Button } from '@/components/ui/button';
 import { AIWorxButtonLoader } from '@/components/ui/AIWorxLoader';
+import { cn } from '@/lib/utils';
 import {
   useIsSlideOutOpen,
   useSlideOutActions,
@@ -281,14 +282,20 @@ export function WorxDeskSlideOut({
               >
                 Cancel
               </Button>
-              <Button
-                variant="brand"
-                size="default"
+              <button
+                type="button"
                 disabled
-                className="flex-1"
+                aria-busy="true"
+                className={cn(
+                  'flex-1 h-10 px-4 py-2 rounded-md',
+                  'inline-flex items-center justify-center whitespace-nowrap',
+                  'text-sm font-medium text-white',
+                  'aiworx-gradient-animated cursor-wait',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                )}
               >
                 <AIWorxButtonLoader />
-              </Button>
+              </button>
             </div>
           </StickyActionBar>
         );
