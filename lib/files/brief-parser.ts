@@ -45,7 +45,7 @@
  */
 
 import mammoth from 'mammoth';
-import { extractText } from 'unpdf';
+import { extractText, getDocumentProxy } from 'unpdf';
 import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
@@ -398,36 +398,149 @@ async function parseDocx(buffer: Buffer): Promise<{ text: string; warnings: stri
   return { text: cleaned.text, warnings };
 }
 
+// ============================================================================
+// PDF user-facing error messages
+// ============================================================================
+//
+// Exported as named constants so the API route's pass-through whitelist
+// can reference the exact strings rather than fragile substring matches.
+// Each maps 1:1 to a distinct failure mode and tells the user what to do
+// next. Style note: straight apostrophes (') and en dashes (–) only, per
+// CLAUDE.md content rules.
+
+/** Password-protected / encrypted PDFs. Thrown from getDocumentProxy. */
+export const PDF_ERROR_PASSWORD =
+  'This PDF is password-protected. Please remove the password and re-upload, or paste the brief as text below.';
+
+/**
+ * Image-only / scanned PDFs. Thrown when unpdf returns successfully but
+ * the extracted text is empty or whitespace-only — the canonical signal
+ * that the PDF has no embedded text layer.
+ */
+export const PDF_ERROR_IMAGE_ONLY =
+  "This PDF appears to be image-only or scanned. CopyWorx can't extract text from image-only PDFs yet – please paste the brief text below.";
+
+/**
+ * Corrupted / structurally invalid PDFs, and any other PDF.js exception
+ * we don't have a more specific message for. Thrown from either the load
+ * step or the extract step.
+ */
+export const PDF_ERROR_CORRUPTED =
+  "This PDF couldn't be read. The file may be corrupted. Please try re-saving the PDF and re-uploading, or paste the brief text below.";
+
 /**
  * Parse a PDF buffer into plain text using unpdf (unjs/unpdf).
- * Replaced from pdf-parse v2.x for Vercel serverless compatibility —
- * pdf-parse wraps pdfjs-dist which references DOMMatrix at module-load
- * time, crashing the entire route in Vercel's runtime before any handler runs.
- * unpdf uses a serverless-optimized PDF.js build with no Canvas/DOMMatrix dependency.
  *
- * Applies PDF-specific normalization (collapse runs of newlines, strip
- * per-line whitespace, fix hyphenated word breaks across line wraps),
- * then surfaces a "looks scanned" warning when extracted text is much
- * smaller than the source file.
+ * Library choice (unchanged): unpdf wraps a serverless-optimized PDF.js
+ * build with no Canvas/DOMMatrix dependency, so it runs on Vercel. See
+ * the file header for why we are NOT on pdf-parse / pdfjs-dist directly.
+ *
+ * --- Buffer handling (the real fix) ---
+ *
+ * We convert the Node Buffer to a fresh `new Uint8Array(buffer)` before
+ * handing it to unpdf. This is the exact pattern documented in the
+ * unpdf README:
+ *
+ *   const pdf = await getDocumentProxy(new Uint8Array(buffer))
+ *   const { text } = await extractText(pdf, { mergePages: true })
+ *
+ * Node `Buffer` is technically a `Uint8Array` subclass, but PDF.js does
+ * internal `instanceof Uint8Array` checks and ArrayBuffer-pool slicing
+ * that has historically misbehaved on subclass instances inside
+ * serverless runtimes. The explicit fresh Uint8Array view sidesteps
+ * that entire class of footguns and is the supported invocation per
+ * the unpdf maintainer.
+ *
+ * --- Two-step load (load, then extract) ---
+ *
+ * We call `getDocumentProxy` first and `extractText` second, instead of
+ * the one-shot `extractText(buffer)` form, so we can map failures to
+ * distinct user-facing messages:
+ *
+ *   - `getDocumentProxy` throws `PasswordException` for encrypted PDFs
+ *   - `getDocumentProxy` throws `InvalidPDFException` (or similar) for
+ *     structurally broken PDFs
+ *   - `extractText` throws for downstream extraction failures
+ *
+ * Each maps to one of the PDF_ERROR_* constants above. Empty / whitespace
+ * extractions are NOT thrown by unpdf — they return a successful empty
+ * string — so we detect those separately after extraction succeeds.
+ *
+ * --- Mirrors DOCX pattern ---
+ *
+ * Shape matches `parseDocx`: each library call is wrapped in a single
+ * try/catch that logs the raw error via `logger.error` (always logs,
+ * even in production — see `lib/utils/logger.ts`) and re-throws an
+ * `Error` whose `.message` is user-facing copy. The route's whitelist
+ * passes those messages through to the client verbatim. We use two
+ * try/catch blocks instead of DOCX's one because PDF parsing has two
+ * distinct library steps with different failure semantics; the SHAPE
+ * of each block is identical to DOCX's.
+ *
+ * --- Production logging ---
+ *
+ * Uses `console.log` (not `logger.log`, which is dev-only) for the
+ * invocation and success rows so they appear in Vercel logs. Failure
+ * rows go through `logger.error`, which always logs.
  */
 async function parsePdf(buffer: Buffer): Promise<{ text: string; warnings: string[] }> {
   const warnings: string[] = [];
 
-  let extracted: string;
+  console.log('[WORX DESK parse-brief] parsePdf invoked', {
+    bytes: buffer.length,
+  });
+
+  // Canonical unpdf invocation. Do NOT pass `buffer` directly; see header.
+  const data = new Uint8Array(buffer);
+
+  let pdf;
   try {
-    // Buffer is a Uint8Array subclass; unpdf's `data` parameter accepts
-    // anything satisfying DocumentInitParameters['data'] — Uint8Array qualifies.
-    const { text } = await extractText(buffer, { mergePages: true });
-    extracted = text;
+    pdf = await getDocumentProxy(data);
   } catch (err) {
-    logger.error('unpdf text extraction failed:', err);
-    throw new Error(
-      'Could not extract text from PDF. The file may be corrupted, password-protected, or image-only.',
-    );
+    logger.error('[WORX DESK parse-brief] parsePdf load failed', {
+      stage: 'getDocumentProxy',
+      name: err instanceof Error ? err.name : null,
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    throw new Error(classifyPdfLoadError(err));
+  }
+
+  let extracted: string;
+  let totalPages: number;
+  try {
+    const result = await extractText(pdf, { mergePages: true });
+    extracted = result.text;
+    totalPages = result.totalPages;
+  } catch (err) {
+    logger.error('[WORX DESK parse-brief] parsePdf extract failed', {
+      stage: 'extractText',
+      name: err instanceof Error ? err.name : null,
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    throw new Error(PDF_ERROR_CORRUPTED);
   }
 
   const normalized = normalizePdfText(extracted);
+  const trimmedLength = normalized.trim().length;
 
+  if (trimmedLength === 0) {
+    logger.error('[WORX DESK parse-brief] parsePdf empty extraction', {
+      totalPages,
+      bytes: buffer.length,
+    });
+    throw new Error(PDF_ERROR_IMAGE_ONLY);
+  }
+
+  console.log('[WORX DESK parse-brief] parsePdf success', {
+    totalPages,
+    characterCount: trimmedLength,
+  });
+
+  // Soft warning for the in-between case: nonzero but very little text on
+  // a large file. Keeps the brief textarea populated so the user can see
+  // what was extracted, but flags that the result looks suspicious.
   if (
     normalized.length < PDF_SCANNED_TEXT_THRESHOLD_CHARS &&
     buffer.length > PDF_SCANNED_FILE_SIZE_THRESHOLD
@@ -438,6 +551,37 @@ async function parsePdf(buffer: Buffer): Promise<{ text: string; warnings: strin
   }
 
   return { text: normalized, warnings };
+}
+
+/**
+ * Map a PDF.js load-time exception to one of our PDF_ERROR_* messages.
+ *
+ * Detection strategy:
+ *   - `err.name === 'PasswordException'` is the canonical PDF.js signal
+ *     for encrypted documents (used in v4+ and the unpdf serverless build).
+ *   - We also accept a case-insensitive `/password/` substring in the
+ *     message as a fallback, in case a bundler boundary flattens the
+ *     exception prototype chain and `name` collapses to "Error".
+ *
+ * Anything else — `InvalidPDFException`, malformed xref tables,
+ * unsupported encryption algorithms, MissingPDFException, etc. — maps
+ * to the corrupted message. That is the right user action regardless of
+ * which specific structural problem PDF.js found: re-save and retry, or
+ * paste the brief text.
+ */
+function classifyPdfLoadError(err: unknown): string {
+  if (!(err instanceof Error)) {
+    return PDF_ERROR_CORRUPTED;
+  }
+
+  const name = err.name ?? '';
+  const message = err.message ?? '';
+
+  if (name === 'PasswordException' || /password/i.test(message)) {
+    return PDF_ERROR_PASSWORD;
+  }
+
+  return PDF_ERROR_CORRUPTED;
 }
 
 /**

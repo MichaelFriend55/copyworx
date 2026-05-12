@@ -20,7 +20,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { parseBriefFile } from '@/lib/files/brief-parser';
+import {
+  PDF_ERROR_CORRUPTED,
+  PDF_ERROR_IMAGE_ONLY,
+  PDF_ERROR_PASSWORD,
+  parseBriefFile,
+} from '@/lib/files/brief-parser';
 import {
   requireWorxDeskPreflight,
   worxdeskFeatureGuard,
@@ -147,6 +152,15 @@ export async function POST(
     );
   }
 
+  // Production-visible upload log. Goes through raw console.log (not the
+  // dev-only `logger.log`) so it appears in Vercel logs for debugging
+  // when users report parse failures.
+  console.log('[WORX DESK parse-brief] upload received', {
+    filename: file.name,
+    size: file.size,
+    mimeType: file.type || null,
+  });
+
   // --------------------------------------------------------------------------
   // 5. Convert File → Buffer and parse.
   //    parseBriefFile owns type detection, size enforcement (defense in
@@ -174,6 +188,16 @@ export async function POST(
     });
 
     logger.log('📄 Brief file parsed:', {
+      fileType: result.fileType,
+      characterCount: result.characterCount,
+      wordCount: result.wordCount,
+      warningCount: result.warnings.length,
+    });
+
+    // Production-visible success log. Mirror of the logger.log above,
+    // but using raw console.log so it survives in Vercel logs.
+    console.log('[WORX DESK parse-brief] parse complete', {
+      filename: file.name,
       fileType: result.fileType,
       characterCount: result.characterCount,
       wordCount: result.wordCount,
@@ -214,6 +238,11 @@ function errorToJsonResponse(err: unknown): NextResponse<WorxDeskErrorBody> {
   // Each of these is written by lib/files/brief-parser.ts and is
   // already user-facing copy; matching by substring is fine because
   // we control both sides of the contract.
+  //
+  // PDF-specific messages are imported as named constants so the route
+  // and the parser cannot drift on the exact wording. The pre-existing
+  // generic "Could not extract text from PDF" string has been retired
+  // in favor of the three distinct PDF_ERROR_* messages below.
   const knownUserFacingFragments = [
     'File extension says',
     'Cannot detect file type from content alone',
@@ -221,7 +250,9 @@ function errorToJsonResponse(err: unknown): NextResponse<WorxDeskErrorBody> {
     'File is empty',
     'File exceeds size limit',
     'Could not parse Word document',
-    'Could not extract text from PDF',
+    PDF_ERROR_PASSWORD,
+    PDF_ERROR_IMAGE_ONLY,
+    PDF_ERROR_CORRUPTED,
     'Could not decode text file',
     'No text could be extracted from this file',
     'Unsupported input',
