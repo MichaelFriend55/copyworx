@@ -7,12 +7,12 @@
  * recovery state:
  *
  *   1. EXTRACTING (`isExtractingBrief: true`)
- *      Branded loader with the copy "Extracting your brief…". This is the
+ *      Branded loader with the copy "Extracting your brief". This is the
  *      window between the user clicking Generate in the review view and
  *      Brief Extraction (Call 2) returning structured `formData`.
  *
  *   2. GENERATING (`isGenerating: true`)
- *      Branded loader with "Writing your copy…" and the methodology
+ *      Branded loader with "Writing your copy" and the methodology
  *      tagline. The Phase 6 auto-trigger fires `generateCopy` as soon as
  *      `extractedFormData` lands, so the user sees this state immediately
  *      after extraction completes — there is no intermediate
@@ -154,7 +154,7 @@ export function WorxDeskGeneratingView({
     return (
       <div className="space-y-3">
         <div className="rounded-xl bg-gradient-to-br from-apple-blue to-purple-600 p-6">
-          <AIWorxLoader message="Extracting your brief…" />
+          <AIWorxLoader message="Extracting your brief" />
         </div>
         <p className="text-xs text-apple-text-light text-center">
           We&apos;re translating your brief into structured fields the writing
@@ -170,7 +170,7 @@ export function WorxDeskGeneratingView({
     return (
       <div className="space-y-3">
         <div className="rounded-xl bg-gradient-to-br from-apple-blue to-purple-600 p-6">
-          <AIWorxLoader message="Writing your copy…" />
+          <AIWorxLoader message="Writing your copy" />
         </div>
         <p className="text-xs text-apple-text-light text-center">
           Powered by 40 years of methodology.

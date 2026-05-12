@@ -64,7 +64,7 @@ export function AIWorxLoader({
       </div>
       
       {/* Loading Message */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <span className="text-white font-medium">
           {message}
         </span>
