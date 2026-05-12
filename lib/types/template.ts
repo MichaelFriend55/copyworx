@@ -149,6 +149,26 @@ export interface TemplateGenerationRequest {
   
   /** Persona data if selected */
   persona?: Persona;
+
+  /**
+   * Verbatim user request describing the exact output they want
+   * (quantity, format, structural instructions). Sent by the WORX DESK
+   * flow as the user's "What exactly do you want?" field, so the final
+   * writing model can honor instructions like "5 subject line variations"
+   * or "3 headline options" that the template's structured schema
+   * cannot represent.
+   *
+   * Optional. When omitted or empty (e.g. the AI@WORX Templates flow),
+   * the generation route behaves exactly as before — the template's
+   * default scaffold drives the output shape.
+   *
+   * When present, the route injects a USER REQUEST block into the user
+   * prompt with override semantics: explicit quantity / format /
+   * structural instructions in this field beat the template default;
+   * general intent statements (tone, voice) inform but do not deviate
+   * from the scaffold.
+   */
+  userRequest?: string;
 }
 
 /**

@@ -1335,6 +1335,14 @@ export const useWorxDeskStore = create<WorxDeskState>()((set, get) => ({
       applyBrandVoice: brandVoiceResolved !== null,
       brandVoice: brandVoiceResolved ?? undefined,
       persona: personaResolved ?? undefined,
+      // Forward the verbatim "What exactly do you want?" field so the
+      // writing model can honor explicit quantity / format / structural
+      // instructions (e.g. "1 launch email with 5 subject line variations
+      // and clear CTA to register") that the template's structured schema
+      // cannot represent. The generate-template route only injects this
+      // into the prompt when the string is non-empty after trim, so a
+      // blank deliverableSpec is a safe no-op.
+      userRequest: state.deliverableSpec,
     };
 
     let formattedContent: string;

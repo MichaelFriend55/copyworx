@@ -147,6 +147,55 @@ function buildPrompt(
   return prompt;
 }
 
+/**
+ * Build the USER REQUEST block that gets prepended to the assembled user
+ * prompt when the caller has supplied a verbatim `userRequest` string.
+ *
+ * Origin: WORX DESK's "What exactly do you want?" field. The text is the
+ * user's own description of the deliverable, often containing explicit
+ * quantity, format, or structural instructions ("5 subject line
+ * variations", "3 headline options", "include a P.S.") that the
+ * structured template schema cannot hold.
+ *
+ * Calibration of the directive (intentional):
+ *
+ *   - Explicit quantity / format / structural instructions in the user
+ *     request OVERRIDE the template's default (e.g. "5 subject lines"
+ *     produces 5, not the default 1).
+ *   - General intent statements ("punchy and direct", "warm tone")
+ *     INFORM tone and word choice but do NOT trigger structural
+ *     deviation from the template scaffold.
+ *   - The template scaffold remains the baseline shape. The user request
+ *     LAYERS ON TOP — it can override counts and add structural
+ *     elements, but it does not replace the scaffold when the user has
+ *     not asked for replacement.
+ *
+ * The user-supplied text is wrapped in unambiguous BEGIN / END markers
+ * so embedded quotes inside the request do not corrupt the prompt
+ * boundaries.
+ */
+function buildUserRequestBlock(userRequest: string): string {
+  return `USER REQUEST (the user's own words from the brief intake — execute this faithfully):
+
+<<<USER_REQUEST_BEGIN>>>
+${userRequest}
+<<<USER_REQUEST_END>>>
+
+HOW TO READ THE USER REQUEST:
+
+1. Explicit quantity instructions OVERRIDE the template default. If the user asks for N of something — N subject line variations, N headline options, N CTAs, N taglines, N alternates — generate EXACTLY N. Do not collapse to one. Do not pad to more.
+
+2. Explicit format or structural instructions LAYER ON TOP of the template scaffold. If the user asks to "include a P.S.", "use a numbered list", "open with a question", "split into two sections", or similar, apply them in addition to the scaffold below.
+
+3. General intent statements INFORM tone and word choice only. If the user says "make it punchy", "keep it warm", "no jargon", "match our voice", or similar, let those phrases shape language — do NOT add, remove, or duplicate sections that the template scaffold does not call for. Tone-only language is not a structural override.
+
+4. The template scaffold below is the baseline shape. The user request layers on top of it; it does not replace it. When the user request and the scaffold conflict on a specific count or structural element, the user request wins on that point and the rest of the scaffold remains intact.
+
+When the user has asked for multiple variations of an element (e.g. "5 subject line variations"), present each variation clearly. Use a labeled list ("Subject Line Option 1:", "Subject Line Option 2:", …) so all variations are visible in the output and the user can pick.
+
+The template scaffold and its filled-in fields follow.`;
+}
+
 // ============================================================================
 // Usage Logging (ADDED)
 // ============================================================================
@@ -281,7 +330,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
       );
     }
 
-    const { templateId, formData, applyBrandVoice, brandVoice, personaId, persona } = body;
+    const { templateId, formData, applyBrandVoice, brandVoice, personaId, persona, userRequest } = body;
 
     // Validate required fields
     if (!templateId || typeof templateId !== 'string') {
@@ -364,7 +413,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
     // like Brand Messaging Framework that build their own prompts)
     const systemPromptOverride = formData._systemPromptOverride;
     
-    const prompt = systemPromptOverride
+    const baseAssembledPrompt = systemPromptOverride
       ? systemPromptOverride
       : buildPrompt(
           template.systemPrompt,
@@ -372,6 +421,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<TemplateG
           applyBrandVoice && brandVoice ? brandVoice : undefined,
           persona || undefined
         );
+
+    // When the caller supplies a verbatim `userRequest` (currently WORX DESK,
+    // forwarding the "What exactly do you want?" field), prepend a USER
+    // REQUEST block so the writing model can honor explicit quantity /
+    // format / structural instructions that the template's structured
+    // schema cannot hold. Callers that omit the field (e.g. the AI@WORX
+    // Templates flow) see no change — the assembled prompt is byte-for-
+    // byte identical to today's behavior.
+    const userRequestText =
+      typeof userRequest === 'string' ? userRequest.trim() : '';
+
+    const prompt =
+      userRequestText.length > 0
+        ? `${buildUserRequestBlock(userRequestText)}\n\n${baseAssembledPrompt}`
+        : baseAssembledPrompt;
 
     // ------------------------------------------------------------------------
     // 5. Calculate dynamic timeout and tokens for email sequences
