@@ -153,7 +153,7 @@ export function WorxDeskGeneratingView({
   if (extraction.isExtractingBrief) {
     return (
       <div className="space-y-3">
-        <div className="rounded-xl bg-gradient-to-br from-apple-blue to-apple-purple p-6">
+        <div className="rounded-xl bg-gradient-to-br from-apple-blue to-purple-600 p-6">
           <AIWorxLoader message="Extracting your brief…" />
         </div>
         <p className="text-xs text-apple-text-light text-center">
@@ -169,7 +169,7 @@ export function WorxDeskGeneratingView({
   if (generation.isGenerating) {
     return (
       <div className="space-y-3">
-        <div className="rounded-xl bg-gradient-to-br from-apple-blue to-apple-purple p-6">
+        <div className="rounded-xl bg-gradient-to-br from-apple-blue to-purple-600 p-6">
           <AIWorxLoader message="Writing your copy…" />
         </div>
         <p className="text-xs text-apple-text-light text-center">
