@@ -45,7 +45,7 @@
  */
 
 import mammoth from 'mammoth';
-import { extractText, getDocumentProxy } from 'unpdf';
+import { getDocumentProxy } from 'unpdf';
 import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
@@ -508,13 +508,17 @@ async function parsePdf(buffer: Buffer): Promise<{ text: string; warnings: strin
 
   let extracted: string;
   let totalPages: number;
+  let lineBreaksInserted: number;
+  let paragraphBreaksInserted: number;
   try {
-    const result = await extractText(pdf, { mergePages: true });
+    const result = await extractStructuredPdfText(pdf);
     extracted = result.text;
     totalPages = result.totalPages;
+    lineBreaksInserted = result.lineBreaksInserted;
+    paragraphBreaksInserted = result.paragraphBreaksInserted;
   } catch (err) {
     logger.error('[WORX DESK parse-brief] parsePdf extract failed', {
-      stage: 'extractText',
+      stage: 'extractStructuredPdfText',
       name: err instanceof Error ? err.name : null,
       message: err instanceof Error ? err.message : String(err),
       stack: err instanceof Error ? err.stack : undefined,
@@ -538,6 +542,17 @@ async function parsePdf(buffer: Buffer): Promise<{ text: string; warnings: strin
     characterCount: trimmedLength,
   });
 
+  // Diagnostic for the structured-extraction layer added in Phase 2. Tracks
+  // how aggressively we're inserting line / paragraph breaks across real
+  // uploads so we can tune the tolerances if a particular PDF style starts
+  // misbehaving in Vercel logs.
+  console.log('[WORX DESK parse-brief] parsePdf structured extraction complete', {
+    pages: totalPages,
+    lineBreaksInserted,
+    paragraphBreaksInserted,
+    characterCount: trimmedLength,
+  });
+
   // Soft warning for the in-between case: nonzero but very little text on
   // a large file. Keeps the brief textarea populated so the user can see
   // what was extracted, but flags that the result looks suspicious.
@@ -551,6 +566,229 @@ async function parsePdf(buffer: Buffer): Promise<{ text: string; warnings: strin
   }
 
   return { text: normalized, warnings };
+}
+
+// ============================================================================
+// PDF structured text extraction
+// ============================================================================
+//
+// We extract PDF text per page using `page.getTextContent()` and reconstruct
+// line and paragraph breaks from the resulting items, instead of using
+// `unpdf.extractText(pdf, { mergePages: true })`.
+//
+// The reason: `extractText` returns all items joined with spaces, which
+// flattens a structured brief (headers, bullets, Q&A prompts) into a single
+// continuous blob. The per-page loop lets us reuse PDF.js's `hasEOL` signal
+// and item Y-positions to put line and paragraph breaks back where the
+// reader would expect them. This closes most of the structural gap with
+// the DOCX flow without trying to match it exactly (PDFs are visual, not
+// semantic — there is no concept of a "paragraph" in PDF, only glyph
+// positions and end-of-line flags).
+//
+// Tolerances (documented inline below) were chosen so single-column
+// briefs reconstruct cleanly while multi-column / table layouts degrade
+// gracefully rather than crashing. They are conservative on purpose:
+// missing a paragraph break is fine, false-firing one would split a
+// paragraph mid-sentence.
+
+/**
+ * Narrow subset of pdfjs-dist's `TextItem` we actually consume. Declared
+ * locally so we do not have to import pdfjs-dist types directly (unpdf
+ * does not re-export them from its top-level entry, and pulling from
+ * `unpdf/pdfjs` would couple us to a specific bundled-PDF.js layout).
+ *
+ * Fields match what the PDF.js v5 build inside unpdf 1.6 emits — verified
+ * against node_modules/unpdf/dist/types/src/display/api.d.ts.
+ */
+interface PdfTextItem {
+  /** Glyph text. PDF.js normalizes internal whitespace to plain spaces. */
+  str: string;
+  /** 6-element affine transform. `transform[4]` is x, `transform[5]` is y. */
+  transform: number[];
+  /** Glyph width in device space. */
+  width: number;
+  /** Glyph height in device space. Used to scale line-break tolerances. */
+  height: number;
+  /** True when PDF.js detected an end-of-line after this item. */
+  hasEOL: boolean;
+}
+
+/**
+ * Narrow type guard separating `TextItem` from `TextMarkedContent` in the
+ * `TextContent.items` array. We never enable `includeMarkedContent`, so
+ * marked-content items should not appear in practice, but the union forces
+ * a defensive check.
+ */
+function isTextItem(value: unknown): value is PdfTextItem {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'str' in value &&
+    typeof (value as { str: unknown }).str === 'string' &&
+    'transform' in value &&
+    Array.isArray((value as { transform: unknown }).transform) &&
+    'hasEOL' in value &&
+    typeof (value as { hasEOL: unknown }).hasEOL === 'boolean'
+  );
+}
+
+/** Unicode bullet glyphs we recognize for the lone-bullet line collapser. */
+const BULLET_GLYPHS = '•◦▪●';
+
+/**
+ * After per-page reconstruction, collapse lines that contain ONLY a bullet
+ * glyph (with optional trailing whitespace) into the next non-empty line.
+ * Real-world PDFs sometimes emit the bullet character as its own text item
+ * with `hasEOL: true` separated from its associated text — this puts the
+ * bullet back inline with the text the way a reader sees it on the page.
+ *
+ * Lowercase-letter sub-bullet markers (e.g. "o " used in some Word-exported
+ * PDFs) are deliberately left alone per the Phase-2 spec.
+ */
+function mergeLoneBulletLines(text: string): string {
+  const pattern = new RegExp(`^([${BULLET_GLYPHS}])[ \\t]*\\n+([^\\n].*)$`, 'gm');
+  return text.replace(pattern, '$1 $2');
+}
+
+/**
+ * Append `chunk` to the current line, inserting exactly one space between
+ * the previous text and the new chunk when both sides have non-whitespace
+ * neighbors. Existing whitespace inside `chunk` is preserved.
+ */
+function appendOnSameLine(currentText: string, chunk: string): string {
+  if (chunk.length === 0) {
+    return currentText;
+  }
+
+  const lastChar = currentText.length > 0 ? currentText[currentText.length - 1] : '';
+  const prevEndsInWhitespace = /\s/.test(lastChar);
+  const chunkStartsWithWhitespace = /^\s/.test(chunk);
+
+  if (!prevEndsInWhitespace && !chunkStartsWithWhitespace) {
+    return currentText + ' ' + chunk;
+  }
+
+  return currentText + chunk;
+}
+
+/**
+ * Per-page structured text extractor. Replaces unpdf's `extractText`
+ * helper to give us line / paragraph break reconstruction.
+ *
+ * For each page:
+ *   1. Call `page.getTextContent()` to get the ordered TextItem array.
+ *   2. Walk items in order, maintaining a single `pageText` string.
+ *   3. For each item, decide whether it continues the current visual line
+ *      or starts a new one. Two signals are OR'd together:
+ *
+ *        a. `prevItem.hasEOL === true` — PDF.js explicitly says this is a
+ *           line break in the source content stream. Primary signal.
+ *        b. Y-position delta > sameLineTolerance — the new item sits at a
+ *           visibly different baseline. Fallback for PDF producers that
+ *           do not set `hasEOL` reliably.
+ *
+ *   4. When starting a new line, classify the break as a paragraph break
+ *      ("\\n\\n") when the vertical gap exceeds 1.5x the recent line
+ *      height, OR when the new item sits ABOVE the previous item (which
+ *      means we crossed a column boundary or wrapped to a new section).
+ *      Otherwise insert a single line break ("\\n").
+ *   5. Skip empty items that carry no EOL signal — they are paint
+ *      artifacts, not content.
+ *
+ * Tolerances (proportional to glyph height, so heading + body mix both
+ * scale correctly):
+ *   sameLineTolerance       = max(itemHeight, prevHeight, 1) * 0.5
+ *   paragraphBreakThreshold = max(prevHeight, itemHeight, 1) * 1.5
+ *
+ * After all pages are processed, pages are joined with "\\n\\n" and the
+ * `mergeLoneBulletLines` post-pass runs.
+ *
+ * Returns the reconstructed text plus diagnostic counts the caller logs
+ * for Vercel debugging.
+ */
+async function extractStructuredPdfText(
+  pdf: { numPages: number; getPage: (n: number) => Promise<unknown> },
+): Promise<{
+  text: string;
+  totalPages: number;
+  lineBreaksInserted: number;
+  paragraphBreaksInserted: number;
+}> {
+  const totalPages = pdf.numPages;
+  const pageTexts: string[] = [];
+
+  let lineBreaksInserted = 0;
+  let paragraphBreaksInserted = 0;
+
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    const page = (await pdf.getPage(pageNum)) as {
+      getTextContent: () => Promise<{ items: unknown[] }>;
+    };
+    const content = await page.getTextContent();
+
+    let pageText = '';
+    let prevItem: PdfTextItem | null = null;
+
+    for (const rawItem of content.items) {
+      if (!isTextItem(rawItem)) {
+        continue;
+      }
+
+      // Drop artifacts: empty string AND no EOL signal carries no meaning.
+      if (rawItem.str.length === 0 && !rawItem.hasEOL) {
+        continue;
+      }
+
+      const currentY = typeof rawItem.transform[5] === 'number' ? rawItem.transform[5] : 0;
+
+      if (prevItem === null) {
+        pageText += rawItem.str;
+        prevItem = rawItem;
+        continue;
+      }
+
+      const prevY = typeof prevItem.transform[5] === 'number' ? prevItem.transform[5] : 0;
+      const itemHeight = Math.max(rawItem.height || 0, prevItem.height || 0, 1);
+      const sameLineTolerance = itemHeight * 0.5;
+      const yDiff = Math.abs(currentY - prevY);
+      const isNewLine = prevItem.hasEOL || yDiff > sameLineTolerance;
+
+      if (!isNewLine) {
+        pageText = appendOnSameLine(pageText, rawItem.str);
+      } else {
+        const gap = prevY - currentY; // > 0 when reading downward
+        const lineHeight = Math.max(prevItem.height || 0, rawItem.height || 0, 1);
+        const isParagraphBreak = gap > lineHeight * 1.5 || gap < 0;
+
+        if (isParagraphBreak) {
+          pageText += '\n\n';
+          paragraphBreaksInserted += 1;
+        } else {
+          pageText += '\n';
+          lineBreaksInserted += 1;
+        }
+        pageText += rawItem.str;
+      }
+
+      prevItem = rawItem;
+    }
+
+    pageTexts.push(pageText);
+  }
+
+  let joined = pageTexts.join('\n\n');
+  if (totalPages > 1) {
+    paragraphBreaksInserted += totalPages - 1;
+  }
+
+  joined = mergeLoneBulletLines(joined);
+
+  return {
+    text: joined,
+    totalPages,
+    lineBreaksInserted,
+    paragraphBreaksInserted,
+  };
 }
 
 /**
