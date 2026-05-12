@@ -399,38 +399,68 @@ export function TemplateFormSlideOut({
         >
           Cancel
         </Button>
-        <Button
-          variant={generationSuccess ? 'default' : isGenerating ? 'default' : 'brand'}
-          size="default"
-          onClick={handleGenerate}
-          disabled={isGenerating || !editor || !activeProject || generationSuccess}
-          className={cn(
-            'flex-1',
-            // Animated gradient when generating (override background)
-            isGenerating && 'aiworx-gradient-animated',
-            // Green when success
-            generationSuccess && 'bg-green-500 hover:bg-green-600'
-          )}
-        >
-          {isGenerating ? (
+        {/*
+          Generate Copy action — three explicit render branches so the
+          in-flight state stays vibrant instead of dimming.
+
+          The shadcn <Button> base cva includes `disabled:opacity-50`,
+          which previously knocked the entire button (including its
+          aiworx-gradient-animated background) down to 50% opacity during
+          loading, collapsing the "currently generating" state into the
+          same visual as "form-incomplete." Mirrors the WorxDeskSlideOut
+          streaming-case fix:
+
+            - isGenerating  → native <button disabled aria-busy>
+                              with the canonical gradient class string
+                              (no shadcn disabled-opacity ancestor).
+            - generationSuccess → shadcn <Button> with bg-green-500.
+            - otherwise → shadcn <Button variant="brand"> with native
+                          disabled:opacity-50 covering the form-
+                          incomplete dim, exactly as before.
+        */}
+        {isGenerating ? (
+          <button
+            type="button"
+            disabled
+            aria-busy="true"
+            className={cn(
+              'flex-1 h-10 px-4 py-2 rounded-md',
+              'inline-flex items-center justify-center whitespace-nowrap',
+              'text-sm font-medium text-white',
+              'aiworx-gradient-animated cursor-wait',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+            )}
+          >
             <div className="flex flex-col items-center gap-1">
               <AIWorxButtonLoader />
               {getLoadingMessage() && (
                 <span className="text-xs">{getLoadingMessage()}</span>
               )}
             </div>
-          ) : generationSuccess ? (
-            <>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Generated!
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generate Copy
-            </>
-          )}
-        </Button>
+          </button>
+        ) : generationSuccess ? (
+          <Button
+            variant="default"
+            size="default"
+            onClick={handleGenerate}
+            disabled
+            className={cn('flex-1', 'bg-green-500 hover:bg-green-600')}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Generated!
+          </Button>
+        ) : (
+          <Button
+            variant="brand"
+            size="default"
+            onClick={handleGenerate}
+            disabled={!editor || !activeProject}
+            className="flex-1"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Generate Copy
+          </Button>
+        )}
       </div>
     </StickyActionBar>
   );
