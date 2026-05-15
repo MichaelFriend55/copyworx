@@ -161,7 +161,7 @@ const FAQ_ITEMS = [
   {
     question: 'What Happens When My Trial Ends? Will I Be Charged Automatically?',
     answer:
-      "If you don't cancel during the 7-day trial, your subscription starts at $49/month on day 8. We send a reminder email two days before that happens, so there are no surprises. You can cancel anytime from your account settings – before or after the trial ends.",
+      "If you don't cancel during the 7-day trial, your subscription starts at $39/month on day 8. We send a reminder email two days before that happens, so there are no surprises. You can cancel anytime from your account settings – before or after the trial ends.",
   },
   {
     question: 'Can I Cancel Anytime?',
@@ -468,7 +468,7 @@ export default function HomePage() {
 
       {/* ========================================================================
           PRICING SECTION
-          Single $49/month plan with 7-day free trial. This card is the only
+          Single $39/month plan with 7-day free trial. This card is the only
           pricing surface on the marketing site — the standalone /pricing
           route was retired and now redirects here. Sits between the white
           FAQ section and the gradient final CTA; bg-[#F5F5F7] keeps the
@@ -485,7 +485,7 @@ export default function HomePage() {
               One Plan. Everything Included.
             </h2>
             <p className="text-lg md:text-xl text-ink-600 leading-relaxed">
-              No tiers, no limits, no surprises. Try every feature free for 7 days, then $49/month.
+              No tiers, no limits, no surprises. Try every feature free for 7 days, then $39/month.
             </p>
           </div>
 
@@ -511,7 +511,7 @@ export default function HomePage() {
                 {/* Price */}
                 <div className="mb-5 text-center">
                   <span className="font-sans text-6xl font-bold text-ink-900">
-                    $49
+                    $39
                   </span>
                   <span className="text-ink-500 ml-2 text-lg">/month</span>
                   <p className="text-sm text-ink-500 mt-2">

@@ -39,7 +39,7 @@ async function safeJson<T = Record<string, unknown>>(
 }
 
 /**
- * Subscribe CTA: starts the Stripe Checkout flow for the $49/month plan.
+ * Subscribe CTA: starts the Stripe Checkout flow for the $39/month plan.
  * Renders a full-width gradient button matching the homepage primary CTA.
  */
 export function SubscribeButton() {

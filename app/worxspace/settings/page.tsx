@@ -302,7 +302,7 @@ export default function SettingsPage() {
                       <CardTitle className="text-lg">Subscription</CardTitle>
                     </div>
                     <CardDescription>
-                      CopyWorx Studio™ — $49/month
+                      CopyWorx Studio™ – $39/month
                     </CardDescription>
                   </CardHeader>
 

@@ -1,6 +1,6 @@
 /**
  * @file app/api/stripe/create-checkout-session/route.ts
- * @description Creates a Stripe Checkout session for the $49/month subscription
+ * @description Creates a Stripe Checkout session for the $39/month subscription
  *
  * Flow:
  * 1. Authenticate user via Clerk
